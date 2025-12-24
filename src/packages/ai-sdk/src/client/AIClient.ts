@@ -90,22 +90,32 @@ export class SwipeSavvyAI {
       const newData = xhr.responseText.substring(buffer.length);
       buffer = xhr.responseText;
 
-      const lines = newData.split('\n');
+      // Only process complete lines (ending with \n)
+      const lastNewlineIndex = buffer.lastIndexOf('\n');
+      if (lastNewlineIndex === -1) return; // No complete lines yet
+
+      const completeData = buffer.substring(0, lastNewlineIndex + 1);
+      const lines = completeData.split('\n');
+
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') continue;
-          
-          try {
-            const event: ChatEvent = JSON.parse(data);
-            if (resolveNext) {
-              resolveNext(event);
-              resolveNext = null;
-            } else {
-              eventQueue.push(event);
-            }
-          } catch (e) {
-            console.error('Failed to parse SSE event:', data, e);
+        const trimmedLine = line.trim();
+        if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+        const data = trimmedLine.slice(6).trim();
+        if (data === '[DONE]') continue;
+        
+        try {
+          const event: ChatEvent = JSON.parse(data);
+          if (resolveNext) {
+            resolveNext(event);
+            resolveNext = null;
+          } else {
+            eventQueue.push(event);
+          }
+        } catch (e) {
+          // Skip incomplete JSON - it will be completed in next chunk
+          if (data.length > 0) {
+            console.debug('Skipping incomplete SSE chunk, waiting for complete data');
           }
         }
       }
