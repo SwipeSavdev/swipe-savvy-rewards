@@ -38,9 +38,11 @@ export class SwipeSavvyAI {
   constructor(config: AIClientConfig) {
     this.config = config;
     this.mockMode = process.env.MOCK_API === 'true' || Constants.expoConfig?.extra?.MOCK_API === 'true';
+    
     console.log('🔧 AI Client Mock Mode:', this.mockMode, {
       processEnv: process.env.MOCK_API,
-      expoConfig: Constants.expoConfig?.extra?.MOCK_API
+      expoConfig: Constants.expoConfig?.extra?.MOCK_API,
+      baseUrl: config.baseUrl || Constants.expoConfig?.extra?.AI_API_BASE_URL
     });
     
     this.client = axios.create({
@@ -61,60 +63,112 @@ export class SwipeSavvyAI {
     );
   }
 
+  /**
+   * Send a chat message with streaming response (React Native compatible)
+   */
   async *chat(request: ChatRequest): AsyncIterable<ChatEvent> {
     if (this.mockMode) {
       yield* this.mockChatStream(request);
       return;
     }
 
-    const response = await fetch(`${this.config.baseUrl}/api/v1/chat`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.config.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: request.message,
-        user_id: this.config.userId,
-        session_id: request.session_id,
-        context: request.context,
-      }),
-    });
+    // Use XMLHttpRequest for React Native streaming support
+    const xhr = new XMLHttpRequest();
+    let buffer = '';
+    let isComplete = false;
+    const eventQueue: ChatEvent[] = [];
+    let resolveNext: ((value: ChatEvent) => void) | null = null;
+    let rejectNext: ((error: Error) => void) | null = null;
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    xhr.open('POST', `${this.config.baseUrl}/api/v1/chat`);
+    xhr.setRequestHeader('Authorization', `Bearer ${this.config.accessToken}`);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('X-Request-ID', this.generateRequestId());
 
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
+    // Handle streaming data
+    xhr.onprogress = () => {
+      const newData = xhr.responseText.substring(buffer.length);
+      buffer = xhr.responseText;
 
-    if (!reader) {
-      throw new Error('No response body');
-    }
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-
+      const lines = newData.split('\n');
       for (const line of lines) {
         if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') break;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
           
           try {
             const event: ChatEvent = JSON.parse(data);
-            yield event;
+            if (resolveNext) {
+              resolveNext(event);
+              resolveNext = null;
+            } else {
+              eventQueue.push(event);
+            }
           } catch (e) {
-            console.error('Failed to parse event:', e);
+            console.error('Failed to parse SSE event:', data, e);
           }
         }
+      }
+    };
+
+    xhr.onload = () => {
+      isComplete = true;
+      if (resolveNext) {
+        resolveNext({ type: 'done', final: true } as ChatEvent);
+        resolveNext = null;
+      }
+    };
+
+    xhr.onerror = () => {
+      const error = new Error('Network request failed');
+      if (rejectNext) {
+        rejectNext(error);
+        rejectNext = null;
+      }
+      isComplete = true;
+    };
+
+    xhr.send(JSON.stringify({
+      message: request.message,
+      user_id: this.config.userId,
+      session_id: request.session_id,
+      context: request.context,
+    }));
+
+    // Generator that yields events from queue or waits for next event
+    while (!isComplete || eventQueue.length > 0) {
+      if (eventQueue.length > 0) {
+        yield eventQueue.shift()!;
+      } else if (!isComplete) {
+        // Wait for next event
+        try {
+          const event = await new Promise<ChatEvent>((resolve, reject) => {
+            resolveNext = resolve;
+            rejectNext = reject;
+            // Timeout after 30 seconds
+            setTimeout(() => {
+              if (resolveNext === resolve) {
+                reject(new Error('Stream timeout'));
+                resolveNext = null;
+              }
+            }, 30000);
+          });
+          yield event;
+        } catch (error) {
+          if (!isComplete) {
+            throw error;
+          }
+          break;
+        }
+      } else {
+        break;
       }
     }
   }
 
+  /**
+   * Get conversation history
+   */
   async getConversation(sessionId: string) {
     if (this.mockMode) {
       return {
@@ -127,6 +181,9 @@ export class SwipeSavvyAI {
     return response.data;
   }
 
+  /**
+   * Mock chat stream for testing
+   */
   private async *mockChatStream(request: ChatRequest): AsyncIterable<ChatEvent> {
     yield {
       type: 'thinking',

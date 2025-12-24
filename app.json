@@ -57,8 +57,8 @@
       "eas": {
         "projectId": "your-project-id"
       },
-      "MOCK_API": "true",
-      "AI_API_BASE_URL": "http://localhost:8000",
+      "MOCK_API": "false",
+      "AI_API_BASE_URL": "http://192.168.1.142:8000",
       "DEBUG_MODE": "true"
     }
   }
