@@ -8,17 +8,40 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "jsx": "react-native",
-    "lib": ["esnext"],
-    "types": ["jest", "@testing-library/jest-native"],
+    "lib": [
+      "esnext"
+    ],
+    "types": [
+      "jest",
+      "@testing-library/jest-native"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@features/*": ["src/features/*"],
-      "@shared/*": ["src/shared/*"],
-      "@design-system/*": ["src/design-system/*"],
-      "@ai-sdk/*": ["src/packages/ai-sdk/src/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@features/*": [
+        "src/features/*"
+      ],
+      "@shared/*": [
+        "src/shared/*"
+      ],
+      "@design-system/*": [
+        "src/design-system/*"
+      ],
+      "@ai-sdk/*": [
+        "src/packages/ai-sdk/src/*"
+      ]
     }
   },
-  "include": ["src", "**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+  "include": [
+    "src",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ]
 }
