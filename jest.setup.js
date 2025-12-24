@@ -1,4 +1,4 @@
-import '@testing-library/jest-native/extend-expect';
+require('@testing-library/jest-native/extend-expect');
 
 // Mock expo-constants
 jest.mock('expo-constants', () => ({
@@ -8,6 +8,17 @@ jest.mock('expo-constants', () => ({
       AI_API_BASE_URL: 'http://localhost:8000',
       DEBUG_MODE: 'true',
     },
+  },
+}));
+
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+    removeItem: jest.fn(),
+    clear: jest.fn(),
   },
 }));
 
@@ -26,11 +37,14 @@ global.fetch = jest.fn();
 
 // Setup XMLHttpRequest mock
 class MockXMLHttpRequest {
-  responseText = '';
-  status = 200;
-  onprogress = null;
-  onload = null;
-  onerror = null;
+  constructor() {
+    this.responseText = '';
+    this.status = 200;
+    this.readyState = 0;
+    this.onprogress = null;
+    this.onload = null;
+    this.onerror = null;
+  }
   
   open() {}
   setRequestHeader() {}
@@ -38,4 +52,4 @@ class MockXMLHttpRequest {
   abort() {}
 }
 
-global.XMLHttpRequest = MockXMLHttpRequest as any;
+global.XMLHttpRequest = MockXMLHttpRequest;
