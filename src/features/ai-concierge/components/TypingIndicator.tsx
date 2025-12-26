@@ -42,7 +42,7 @@ export function TypingIndicator({ text }: TypingIndicatorProps) {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View testID="typing-indicator" style={styles.container}>
       {text ? (
         <Text style={styles.text}>{text}</Text>
       ) : (

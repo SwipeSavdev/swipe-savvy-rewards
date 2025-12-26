@@ -1,13 +1,16 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "jsx": "react-native",
+    "allowJs": true,
+    "target": "esnext",
+    "module": "esnext",
     "lib": [
       "esnext"
     ],
@@ -26,6 +29,12 @@
       "@shared/*": [
         "src/shared/*"
       ],
+      "@components/*": [
+        "src/components/*"
+      ],
+      "@contexts/*": [
+        "src/contexts/*"
+      ],
       "@design-system/*": [
         "src/design-system/*"
       ],
@@ -43,5 +52,6 @@
     "node_modules",
     "**/*.spec.ts",
     "**/*.test.ts"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }

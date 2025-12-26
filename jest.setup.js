@@ -22,6 +22,29 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   },
 }));
 
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  
+  const MockIcon = (props) => {
+    return React.createElement(Text, props, props.name || 'Icon');
+  };
+  
+  return {
+    Ionicons: MockIcon,
+    MaterialIcons: MockIcon,
+    FontAwesome: MockIcon,
+  };
+});
+
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaProvider: ({ children }) => children,
+  SafeAreaView: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}));
+
 // Mock console methods to reduce noise in tests
 global.console = {
   ...console,

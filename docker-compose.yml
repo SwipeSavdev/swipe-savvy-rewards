@@ -1,0 +1,223 @@
+# Docker Compose for SwipeSavvy Multi-Repository Setup
+version: '3.8'
+
+services:
+  # Mobile App Development Server
+  mobile-app:
+    build:
+      context: ./swipesavvy-mobile-app
+      dockerfile: Dockerfile
+    container_name: swipesavvy-mobile-app
+    ports:
+      - "8081:8081"
+      - "19000:19000"
+      - "19001:19001"
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_BASE_URL=http://api-gateway:8000
+      - REACT_APP_WS_URL=ws://api-gateway:8000/ws
+      - REACT_APP_DEBUG_MODE=true
+    volumes:
+      - ./swipesavvy-mobile-app:/app
+      - /app/node_modules
+    networks:
+      - swipesavvy-network
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Admin Portal
+  admin-portal:
+    build:
+      context: ./swipesavvy-admin-portal
+      dockerfile: Dockerfile
+    container_name: swipesavvy-admin-portal
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_BASE_URL=http://api-gateway:8000
+      - REACT_APP_DEBUG_MODE=true
+    volumes:
+      - ./swipesavvy-admin-portal:/app
+      - /app/node_modules
+    networks:
+      - swipesavvy-network
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # AI Agent Service
+  ai-agent:
+    build:
+      context: ./swipesavvy-ai-agent
+      dockerfile: Dockerfile
+    container_name: swipesavvy-ai-agent
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/swipesavvy_ai
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-test}
+    volumes:
+      - ./swipesavvy-ai-agent:/app
+      - /app/node_modules
+    networks:
+      - swipesavvy-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Mobile Wallet Service
+  mobile-wallet:
+    build:
+      context: ./swipesavvy-mobile-wallet
+      dockerfile: Dockerfile
+    container_name: swipesavvy-mobile-wallet
+    ports:
+      - "8001:8001"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/swipesavvy_wallet
+      - STRIPE_API_KEY=${STRIPE_API_KEY:-sk_test}
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./swipesavvy-mobile-wallet:/app
+      - /app/node_modules
+    networks:
+      - swipesavvy-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Customer Website
+  customer-website:
+    build:
+      context: ./swipesavvy-customer-website
+      dockerfile: Dockerfile
+    container_name: swipesavvy-customer-website
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_BASE_URL=http://api-gateway:8000
+      - REACT_APP_WS_URL=ws://api-gateway:8000/ws
+    volumes:
+      - ./swipesavvy-customer-website:/app
+    networks:
+      - swipesavvy-network
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # API Gateway
+  api-gateway:
+    image: nginx:alpine
+    container_name: swipesavvy-api-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - swipesavvy-network
+    depends_on:
+      - ai-agent
+      - mobile-wallet
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: swipesavvy-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=swipesavvy_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - swipesavvy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: swipesavvy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - swipesavvy-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB (Optional - for AI agent)
+  mongodb:
+    image: mongo:6-alpine
+    container_name: swipesavvy-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - swipesavvy-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+  redis-data:
+  mongodb-data:
+
+networks:
+  swipesavvy-network:
+    driver: bridge

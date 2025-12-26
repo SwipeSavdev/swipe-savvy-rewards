@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import Constants from 'expo-constants';
+import { DataService, AIUserContext } from '../services/DataService';
 
 export interface AIClientConfig {
   baseUrl: string;
@@ -34,10 +35,20 @@ export class SwipeSavvyAI {
   private client: AxiosInstance;
   private config: AIClientConfig;
   private mockMode: boolean;
+  private dataService: DataService;
+  private userContext: AIUserContext | null = null;
+  private contextUpdateInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: AIClientConfig) {
     this.config = config;
     this.mockMode = process.env.MOCK_API === 'true' || Constants.expoConfig?.extra?.MOCK_API === 'true';
+    
+    // Initialize data service for fetching user context
+    this.dataService = new DataService(
+      config.baseUrl || Constants.expoConfig?.extra?.AI_API_BASE_URL,
+      config.accessToken,
+      config.userId
+    );
     
     console.log('🔧 AI Client Mock Mode:', this.mockMode, {
       processEnv: process.env.MOCK_API,
@@ -248,6 +259,84 @@ export class SwipeSavvyAI {
     }
 
     return "I understand you're asking about: \"" + message + "\". I'm here to help with your banking needs. You can ask me about your balance, recent transactions, transfers, or bill payments. What would you like to know?";
+  }
+
+  /**
+   * Get user context with caching
+   */
+  async getUserContext(): Promise<AIUserContext | null> {
+    try {
+      this.userContext = await this.dataService.getUserContext();
+      return this.userContext;
+    } catch (error) {
+      console.error('Failed to get user context:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Refresh user context (clear cache and fetch fresh data)
+   */
+  async refreshUserContext(): Promise<AIUserContext | null> {
+    try {
+      this.dataService.clearCache();
+      return await this.getUserContext();
+    } catch (error) {
+      console.error('Failed to refresh user context:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get cached user context
+   */
+  getCachedContext(): AIUserContext | null {
+    return this.userContext;
+  }
+
+  /**
+   * Build system prompt with user data
+   */
+  buildSystemPrompt(context?: AIUserContext): string {
+    const ctx = context || this.userContext;
+    
+    const basePrompt = `You are SwipeSavvy, an intelligent financial AI assistant. You help users manage their personal finances, including checking balances, reviewing transactions, making transfers, paying bills, and earning rewards.
+
+Key Responsibilities:
+- Provide accurate financial information from the user's accounts
+- Help with money transfers and payments
+- Track spending and suggest savings opportunities
+- Explain rewards and loyalty programs
+- Answer questions about accounts and transactions
+- Always confirm sensitive actions before execution`;
+
+    if (!ctx) {
+      return basePrompt;
+    }
+
+    const contextData = `
+
+Current User Context:
+- Name: ${ctx.user.name}
+- Tier: ${ctx.user.tier}
+- Total Balance: $${ctx.totalBalance.toFixed(2)}
+- Monthly Spending: $${ctx.monthlySpending.toFixed(2)}
+
+Accounts:
+${ctx.accounts.map(acc => `- ${acc.name}: $${acc.balance.toFixed(2)}`).join('\n')}
+
+Cards:
+${ctx.cards.map(card => `- ${card.issuer} ${card.type} (•••• ${card.lastFour}): ${card.status}`).join('\n')}
+
+Recent Rewards:
+${ctx.rewards.slice(0, 3).map(reward => `- ${reward.name}: ${reward.description}`).join('\n')}
+
+Linked Banks:
+${ctx.linkedBanks.map(bank => `- ${bank.bank}: ${bank.status}`).join('\n')}
+
+Use this context to provide personalized assistance. When users ask about their finances, refer to their actual data. Always be helpful, accurate, and proactive about financial wellness.`;
+
+    return basePrompt + contextData;
   }
 
   private delay(ms: number): Promise<void> {

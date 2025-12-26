@@ -20,6 +20,8 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   return (
     <View style={styles.container}>
       <TextInput
+        testID="chat-input"
+        accessibilityLabel="Message input field"
         style={styles.input}
         placeholder="Ask me anything..."
         value={message}
@@ -30,6 +32,9 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         maxLength={500}
       />
       <TouchableOpacity
+        testID="send-button"
+        accessibilityLabel="Send message"
+        accessibilityRole="button"
         style={[styles.sendButton, (!message.trim() || disabled) && styles.sendButtonDisabled]}
         onPress={handleSend}
         disabled={!message.trim() || disabled}

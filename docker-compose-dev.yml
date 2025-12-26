@@ -1,0 +1,64 @@
+# Simplified Docker Compose for SwipeSavvy Development
+# Skips external image pulls, focuses on local builds
+version: '3.8'
+
+services:
+  # AI Agent Service (Main API Gateway)
+  ai-agent:
+    build:
+      context: ./swipesavvy-ai-agents
+      dockerfile: Dockerfile
+    container_name: swipesavvy-ai-agent
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-test}
+      - DEBUG=true
+    volumes:
+      - ./swipesavvy-ai-agents:/app
+      - /app/node_modules
+    networks:
+      - swipesavvy-network
+    restart: unless-stopped
+
+  # Mobile Wallet Service
+  mobile-wallet:
+    build:
+      context: ./swipesavvy-mobile-wallet
+      dockerfile: Dockerfile
+    container_name: swipesavvy-mobile-wallet
+    ports:
+      - "8001:8001"
+    environment:
+      - NODE_ENV=development
+      - STRIPE_API_KEY=${STRIPE_API_KEY:-sk_test}
+      - DEBUG=true
+    volumes:
+      - ./swipesavvy-mobile-wallet:/app
+      - /app/node_modules
+    networks:
+      - swipesavvy-network
+    restart: unless-stopped
+
+  # Customer Website
+  customer-website:
+    build:
+      context: ./swipesavvy-customer-website
+      dockerfile: Dockerfile
+    container_name: swipesavvy-customer-website
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+      - API_BASE_URL=http://localhost:8000
+      - DEBUG=true
+    volumes:
+      - ./swipesavvy-customer-website:/app
+    networks:
+      - swipesavvy-network
+    restart: unless-stopped
+
+networks:
+  swipesavvy-network:
+    driver: bridge

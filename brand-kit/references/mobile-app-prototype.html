@@ -1,0 +1,2284 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SwipeSavvy Mobile Wallet — Refactored Modern UI (Screen-by-Screen)</title>
+  <style>
+    /* ==========================================================
+       SwipeSavvy — Modern Tech-Focused Mobile UI (Single HTML)
+       - Clean alignment + responsive layout
+       - Translucent modern icons (SVG)
+       - Light/Dark mode (theme tokens)
+       - Screen-by-screen gallery + interactive phone preview
+       ========================================================== */
+
+    /* -------- Reset / Base -------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 20% 10%, color-mix(in oklab, var(--brand-navy) 18%, transparent) 0%, transparent 60%),
+                  radial-gradient(900px 700px at 90% 0%, color-mix(in oklab, var(--brand-yellow) 14%, transparent) 0%, transparent 55%),
+                  var(--bg);
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+    :focus-visible { outline: 3px solid color-mix(in oklab, var(--brand-yellow) 70%, white); outline-offset: 2px; }
+    ::selection { background: color-mix(in oklab, var(--brand-yellow) 40%, transparent); }
+
+    /* -------- Brand + Theme Tokens -------- */
+    :root {
+      /* Brand colors (from your guide) */
+      --brand-navy: #235393;
+      --brand-deep: #132136;
+      --brand-green: #60BA46;
+      --brand-yellow: #FAB915;
+
+      /* Spacing scale (4dp baseline) */
+      --s0: 0px;
+      --s1: 4px;
+      --s2: 8px;
+      --s3: 12px;
+      --s4: 16px;
+      --s5: 20px;
+      --s6: 24px;
+      --s7: 32px;
+      --s8: 40px;
+      --s9: 48px;
+      --s10: 56px;
+
+      /* Radius */
+      --r-sm: 10px;
+      --r-md: 14px;
+      --r-lg: 18px;
+      --r-xl: 24px;
+      --r-pill: 999px;
+
+      /* Elevation */
+      --shadow-1: 0 1px 1px rgba(0,0,0,.06), 0 10px 30px rgba(0,0,0,.06);
+      --shadow-2: 0 2px 2px rgba(0,0,0,.08), 0 18px 60px rgba(0,0,0,.12);
+
+      /* Type */
+      --h1: clamp(22px, 2.2vw, 28px);
+      --h2: 18px;
+      --h3: 15px;
+      --body: 14px;
+      --meta: 12px;
+
+      /* Layout */
+      --page-max: 1280px;
+      --ui-blur: 14px;
+      --stroke: 1px;
+
+      /* Icon translucency */
+      --icon-inactive: 0.55;
+      --icon-active: 1;
+
+      /* Anim */
+      --ease: cubic-bezier(.2,.8,.2,1);
+      --dur: 180ms;
+    }
+
+    /* Light theme */
+    html[data-theme="light"]{
+      --bg: #F6F6F6;
+      --panel: rgba(255,255,255,0.82);
+      --panel-solid: #FFFFFF;
+      --panel-2: rgba(255,255,255,0.65);
+      --stroke-color: rgba(19,33,54,0.12);
+      --text: #132136;
+      --muted: rgba(19,33,54,0.62);
+      --muted-2: rgba(19,33,54,0.45);
+      --ghost: rgba(35,83,147,0.06);
+      --ghost-2: rgba(35,83,147,0.10);
+      --danger: #D64545;
+      --success-bg: rgba(96,186,70,0.14);
+      --warning-bg: rgba(250,185,21,0.16);
+      --nav-glass: rgba(255,255,255,0.78);
+      --nav-shadow: 0 -12px 40px rgba(19,33,54,0.10);
+      --statusbar: rgba(255,255,255,0.55);
+    }
+
+    /* Dark theme */
+    html[data-theme="dark"]{
+      --bg: #0B111B;
+      --panel: rgba(19,33,54,0.62);
+      --panel-solid: #121C2B;
+      --panel-2: rgba(19,33,54,0.46);
+      --stroke-color: rgba(246,246,246,0.12);
+      --text: rgba(246,246,246,0.92);
+      --muted: rgba(246,246,246,0.62);
+      --muted-2: rgba(246,246,246,0.44);
+      --ghost: rgba(96,186,70,0.08);
+      --ghost-2: rgba(35,83,147,0.18);
+      --danger: #FF6B6B;
+      --success-bg: rgba(96,186,70,0.18);
+      --warning-bg: rgba(250,185,21,0.16);
+      --nav-glass: rgba(18,28,43,0.72);
+      --nav-shadow: 0 -18px 56px rgba(0,0,0,0.45);
+      --statusbar: rgba(18,28,43,0.55);
+    }
+
+    /* -------- Page Shell (Guide + Preview) -------- */
+    .page {
+      max-width: var(--page-max);
+      margin: 0 auto;
+      padding: clamp(16px, 2vw, 28px);
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: clamp(16px, 2vw, 28px);
+      align-items: start;
+    }
+
+    @media (max-width: 980px){
+      .page { grid-template-columns: 1fr; }
+    }
+
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s4);
+      padding: var(--s5) var(--s6);
+      border-radius: var(--r-xl);
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel);
+      backdrop-filter: blur(var(--ui-blur));
+      -webkit-backdrop-filter: blur(var(--ui-blur));
+      box-shadow: var(--shadow-1);
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--s3);
+      min-width: 260px;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: linear-gradient(135deg,
+        color-mix(in oklab, var(--brand-navy) 92%, black) 0%,
+        color-mix(in oklab, var(--brand-deep) 80%, black) 60%,
+        color-mix(in oklab, var(--brand-green) 38%, black) 100%);
+      box-shadow: 0 10px 30px rgba(35,83,147,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .brand-mark::after{
+      content:"";
+      position:absolute; inset:-30%;
+      background: radial-gradient(circle at 30% 30%, rgba(250,185,21,0.35) 0%, transparent 45%);
+      transform: rotate(18deg);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: var(--h1);
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: var(--s3);
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s2);
+      padding: 10px 12px;
+      border-radius: var(--r-pill);
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      backdrop-filter: blur(var(--ui-blur));
+      -webkit-backdrop-filter: blur(var(--ui-blur));
+      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s2);
+      user-select: none;
+    }
+    .switch {
+      width: 44px;
+      height: 26px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--brand-navy) 20%, var(--panel-solid));
+      border: var(--stroke) solid var(--stroke-color);
+      position: relative;
+      cursor: pointer;
+      transition: transform var(--dur) var(--ease);
+    }
+    .switch::after{
+      content:"";
+      width: 20px; height: 20px;
+      border-radius: 999px;
+      position: absolute; top: 2px; left: 2px;
+      background: linear-gradient(180deg, var(--panel-solid), color-mix(in oklab, var(--panel-solid) 70%, black));
+      box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+      transition: left var(--dur) var(--ease), transform var(--dur) var(--ease);
+    }
+    html[data-theme="dark"] .switch::after{ left: 22px; }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: var(--r-pill);
+      padding: 10px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s2);
+      background: var(--panel-2);
+      color: var(--text);
+      border: var(--stroke) solid var(--stroke-color);
+      transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+    }
+    .btn:hover { transform: translateY(-1px); background: color-mix(in oklab, var(--panel-2) 88%, var(--brand-navy)); }
+    .btn:active { transform: translateY(0px); }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--brand-navy), color-mix(in oklab, var(--brand-deep) 80%, black));
+      color: white;
+      border: 0;
+      box-shadow: 0 18px 50px rgba(35,83,147,0.30);
+    }
+    .btn.primary:hover { background: linear-gradient(135deg, color-mix(in oklab, var(--brand-navy) 88%, black), var(--brand-deep)); }
+    .btn.ghost {
+      background: transparent;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: var(--s2);
+    }
+
+    /* -------- Left: Screen List / Guide -------- */
+    .left {
+      display: grid;
+      gap: var(--s6);
+      align-content: start;
+    }
+
+    .panel {
+      padding: var(--s6);
+      border-radius: var(--r-xl);
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel);
+      backdrop-filter: blur(var(--ui-blur));
+      -webkit-backdrop-filter: blur(var(--ui-blur));
+      box-shadow: var(--shadow-1);
+    }
+
+    .panel h2 {
+      margin: 0 0 var(--s3);
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .screen-list {
+      display: grid;
+      gap: var(--s2);
+    }
+
+    .screen-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s3);
+      padding: 10px 12px;
+      border-radius: var(--r-lg);
+      border: var(--stroke) solid transparent;
+      background: transparent;
+      cursor: pointer;
+      transition: background var(--dur) var(--ease), transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+    .screen-item:hover { background: var(--ghost); transform: translateY(-1px); }
+    .screen-item[aria-current="true"]{
+      background: color-mix(in oklab, var(--ghost-2) 70%, transparent);
+      border-color: color-mix(in oklab, var(--brand-navy) 40%, var(--stroke-color));
+    }
+
+    .screen-item .meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .chip {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      color: var(--muted);
+    }
+
+    .guide-grid {
+      display: grid;
+      gap: var(--s4);
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .guide-grid b { color: var(--text); }
+    .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    /* -------- Right: Phone Preview -------- */
+    .right {
+      display: grid;
+      gap: var(--s6);
+      align-content: start;
+      justify-items: center;
+    }
+
+    .phone {
+      width: min(420px, 92vw);
+      aspect-ratio: 390 / 844; /* modern iPhone-ish */
+      border-radius: 44px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.30));
+      padding: 12px;
+      box-shadow: var(--shadow-2);
+      position: sticky;
+      top: 110px;
+    }
+    @media (max-width: 980px){
+      .phone { position: relative; top: 0; }
+    }
+
+    .device {
+      width: 100%;
+      height: 100%;
+      border-radius: 36px;
+      overflow: hidden;
+      background: var(--panel-solid);
+      border: 1px solid rgba(255,255,255,0.14);
+      position: relative;
+    }
+
+    .statusbar {
+      height: 40px;
+      background: var(--statusbar);
+      backdrop-filter: blur(var(--ui-blur));
+      -webkit-backdrop-filter: blur(var(--ui-blur));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      font-size: 12px;
+      color: var(--muted);
+      border-bottom: var(--stroke) solid var(--stroke-color);
+    }
+
+    .status-left { display:flex; align-items:center; gap: 8px; }
+    .status-right { display:flex; align-items:center; gap: 8px; }
+
+    .app {
+      height: calc(100% - 40px);
+      display: grid;
+      grid-template-rows: 60px 1fr 78px; /* topbar, content, bottom nav */
+      background:
+        radial-gradient(600px 400px at 20% 0%, color-mix(in oklab, var(--brand-navy) 18%, transparent) 0%, transparent 60%),
+        radial-gradient(480px 360px at 90% 10%, color-mix(in oklab, var(--brand-green) 14%, transparent) 0%, transparent 55%),
+        var(--bg);
+    }
+
+    .appbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: color-mix(in oklab, var(--panel) 70%, transparent);
+      backdrop-filter: blur(var(--ui-blur));
+      -webkit-backdrop-filter: blur(var(--ui-blur));
+      border-bottom: var(--stroke) solid var(--stroke-color);
+    }
+    .appbar .title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .appbar .title strong {
+      font-size: 16px;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .appbar .title span {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .icon-btn {
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+    }
+    .icon-btn:hover { transform: translateY(-1px); background: color-mix(in oklab, var(--panel-2) 82%, var(--brand-navy)); }
+    .icon-btn:active { transform: translateY(0px); }
+
+    .content {
+      overflow: auto;
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in oklab, var(--brand-navy) 35%, transparent) transparent;
+    }
+    .content::-webkit-scrollbar { width: 10px; }
+    .content::-webkit-scrollbar-thumb {
+      background: color-mix(in oklab, var(--brand-navy) 22%, transparent);
+      border-radius: 999px;
+      border: 3px solid transparent;
+      background-clip: padding-box;
+    }
+
+    .bottomnav {
+      background: var(--nav-glass);
+      backdrop-filter: blur(var(--ui-blur));
+      -webkit-backdrop-filter: blur(var(--ui-blur));
+      border-top: var(--stroke) solid var(--stroke-color);
+      box-shadow: var(--nav-shadow);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      padding: 10px 10px 14px;
+      gap: 6px;
+      position: relative;
+    }
+
+    .navitem {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      padding: 10px 8px 8px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+      user-select: none;
+    }
+    .navitem:hover { background: color-mix(in oklab, var(--ghost-2) 55%, transparent); transform: translateY(-1px); }
+    .navitem .label { font-size: 11px; letter-spacing: 0.01em; }
+    .navitem svg { opacity: var(--icon-inactive); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
+    .navitem.active {
+      background: color-mix(in oklab, var(--ghost-2) 70%, transparent);
+      color: var(--text);
+    }
+    .navitem.active svg { opacity: var(--icon-active); transform: translateY(-1px); }
+    .navdot{
+      width: 6px; height: 6px;
+      border-radius: 999px;
+      background: transparent;
+    }
+    .navitem.active .navdot{
+      background: var(--brand-yellow);
+      box-shadow: 0 0 0 6px color-mix(in oklab, var(--brand-yellow) 18%, transparent);
+    }
+
+    /* -------- Reusable App Components -------- */
+    .card {
+      border-radius: var(--r-xl);
+      background: var(--panel);
+      border: var(--stroke) solid var(--stroke-color);
+      backdrop-filter: blur(var(--ui-blur));
+      -webkit-backdrop-filter: blur(var(--ui-blur));
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .card.pad { padding: 16px; }
+
+    .row { display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+    .col { display:flex; flex-direction:column; gap: 6px; min-width: 0; }
+
+    .kpi-title { font-size: 12px; color: var(--muted); }
+    .kpi-value { font-size: 26px; letter-spacing: -0.02em; font-weight: 780; line-height: 1.1; }
+    .kpi-sub { font-size: 12px; color: var(--muted); }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-radius: var(--r-pill);
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      padding: 4px;
+      gap: 6px;
+    }
+    .segmented button{
+      border: 0;
+      padding: 10px 12px;
+      border-radius: var(--r-pill);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+    }
+    .segmented button[aria-pressed="true"]{
+      background: color-mix(in oklab, var(--brand-navy) 75%, var(--panel-solid));
+      color: white;
+      box-shadow: 0 12px 24px rgba(35,83,147,0.22);
+    }
+
+    .pillbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip2 {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 12px;
+      user-select: none;
+    }
+    .chip2 strong { color: var(--text); font-weight: 650; }
+
+    .cta {
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content: space-between;
+      padding: 14px 14px;
+      border-radius: var(--r-xl);
+      background: linear-gradient(135deg,
+        color-mix(in oklab, var(--brand-navy) 92%, black) 0%,
+        color-mix(in oklab, var(--brand-deep) 88%, black) 70%);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 22px 60px rgba(35,83,147,0.26);
+    }
+    .cta .small { font-size: 12px; opacity: 0.85; }
+    .cta .big { font-size: 16px; font-weight: 720; letter-spacing: -0.01em; }
+
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+    .action {
+      padding: 12px;
+      border-radius: var(--r-xl);
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+      min-height: 52px;
+    }
+    .action:hover { transform: translateY(-1px); background: color-mix(in oklab, var(--panel-2) 84%, var(--brand-navy)); }
+    .action .txt { display:flex; flex-direction:column; gap: 2px; min-width:0; }
+    .action .txt b { font-size: 13px; }
+    .action .txt span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+    .item {
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--r-xl);
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      min-height: 56px;
+    }
+    .item .main { min-width: 0; flex: 1; display:flex; flex-direction:column; gap: 2px; }
+    .item .main b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item .main span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .amount {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .amount.negative { color: color-mix(in oklab, var(--danger) 80%, var(--text)); }
+    .amount.positive { color: color-mix(in oklab, var(--brand-green) 92%, var(--text)); }
+
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--brand-navy), var(--brand-deep));
+      box-shadow: 0 18px 46px rgba(35,83,147,0.22);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      flex: 0 0 auto;
+    }
+
+    .iconbox {
+      width: 44px; height: 44px;
+      border-radius: 16px;
+      background: color-mix(in oklab, var(--brand-navy) 14%, var(--panel-solid));
+      border: var(--stroke) solid var(--stroke-color);
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+    .iconbox.green { background: color-mix(in oklab, var(--brand-green) 12%, var(--panel-solid)); }
+    .iconbox.yellow { background: color-mix(in oklab, var(--brand-yellow) 16%, var(--panel-solid)); }
+    .iconbox.deep { background: color-mix(in oklab, var(--brand-deep) 14%, var(--panel-solid)); }
+
+    .divider {
+      height: 1px;
+      background: var(--stroke-color);
+      margin: 6px 0;
+    }
+
+    .progress {
+      height: 10px;
+      background: color-mix(in oklab, var(--stroke-color) 55%, transparent);
+      border-radius: 999px;
+      overflow: hidden;
+      border: var(--stroke) solid var(--stroke-color);
+    }
+    .progress > i {
+      display: block;
+      height: 100%;
+      width: var(--p, 50%);
+      background: linear-gradient(90deg, var(--brand-yellow), color-mix(in oklab, var(--brand-green) 70%, var(--brand-yellow)));
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(250,185,21,0.22);
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+    .label { font-size: 12px; color: var(--muted); }
+    .input, .select {
+      width: 100%;
+      border-radius: 16px;
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 12px 12px;
+      outline: none;
+      transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+    .input:focus, .select:focus {
+      border-color: color-mix(in oklab, var(--brand-navy) 50%, var(--stroke-color));
+      box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-navy) 18%, transparent);
+    }
+    .input.big {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      padding: 14px 12px;
+    }
+
+    .btnfull{
+      width: 100%;
+      justify-content: center;
+      padding: 14px 14px;
+      border-radius: 18px;
+    }
+
+    /* -------- Savvy AI floating button + overlay -------- */
+    .fab {
+      position: absolute;
+      right: 16px;
+      bottom: 92px;
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--brand-green), color-mix(in oklab, var(--brand-navy) 70%, var(--brand-green)));
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 24px 70px rgba(96,186,70,0.30);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform var(--dur) var(--ease);
+      z-index: 6;
+    }
+    .fab:hover { transform: translateY(-2px); }
+    .fab:active { transform: translateY(0px); }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.28);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      z-index: 10;
+    }
+    .overlay.open { display: block; }
+
+    .sheet {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      border-radius: 22px 22px 0 0;
+      background: var(--panel-solid);
+      border-top: var(--stroke) solid var(--stroke-color);
+      box-shadow: 0 -24px 70px rgba(0,0,0,0.25);
+      transform: translateY(110%);
+      transition: transform 260ms var(--ease);
+      max-height: 74%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+    .overlay.open .sheet { transform: translateY(0%); }
+
+    .sheethead {
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: var(--stroke) solid var(--stroke-color);
+      background: color-mix(in oklab, var(--panel) 70%, transparent);
+    }
+    .grab {
+      width: 46px; height: 5px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--stroke-color) 60%, transparent);
+      margin: 8px auto 0;
+    }
+    .chat {
+      padding: 14px;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      background:
+        radial-gradient(420px 260px at 20% 0%, color-mix(in oklab, var(--brand-green) 10%, transparent) 0%, transparent 55%),
+        var(--panel-solid);
+    }
+    .bubble {
+      max-width: 85%;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .bubble.me {
+      margin-left: auto;
+      background: linear-gradient(135deg, var(--brand-navy), var(--brand-deep));
+      color: white;
+      border: 0;
+      box-shadow: 0 14px 40px rgba(35,83,147,0.25);
+    }
+    .chips {
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chips button{
+      border: var(--stroke) solid var(--stroke-color);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+    }
+    .chips button:hover { transform: translateY(-1px); background: color-mix(in oklab, var(--panel-2) 84%, var(--brand-navy)); }
+
+    .composer {
+      padding: 12px;
+      border-top: var(--stroke) solid var(--stroke-color);
+      display:flex;
+      gap: 10px;
+      align-items: center;
+      background: color-mix(in oklab, var(--panel) 70%, transparent);
+    }
+
+    /* -------- Screen container switching -------- */
+    .screen { display: none; }
+    .screen.active { display: grid; gap: 16px; animation: fadeIn 180ms var(--ease) both; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+
+    /* -------- Small helpers -------- */
+    .muted { color: var(--muted); }
+    .tiny { font-size: 12px; color: var(--muted); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .hr { height: 1px; background: var(--stroke-color); }
+
+    /* -------- Accessibility note on reduced motion -------- */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===================== TOPBAR (Guide Controls) ===================== -->
+  <header class="topbar" role="banner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <h1>SwipeSavvy — Mobile Wallet Redesign</h1>
+        <p>Modern, sleek, tech-focused UI • Screen-by-screen prototype (Light/Dark)</p>
+      </div>
+    </div>
+
+    <div class="toolbar" role="toolbar" aria-label="Design controls">
+      <div class="pill toggle" title="Toggle theme (also available in Settings screen)">
+        <span class="note">Dark</span>
+        <div class="switch" id="themeSwitch" role="switch" aria-checked="false" tabindex="0"></div>
+      </div>
+
+      <button class="btn" id="resetBtn" type="button" title="Reset to Home screen">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+
+      <button class="btn primary" id="openSavvyBtn" type="button" title="Open Savvy AI overlay">
+        <span aria-hidden="true">✨</span> Savvy
+      </button>
+    </div>
+  </header>
+
+  <main class="page" role="main">
+    <!-- ===================== LEFT PANEL (SCREEN LIST + RULES) ===================== -->
+    <aside class="left" aria-label="Screen picker and design rules">
+      <section class="panel">
+        <h2>Screens (tap to preview)</h2>
+        <div class="screen-list" id="screenList">
+          <!-- Primary Tabs -->
+          <button class="screen-item" data-screen="home" aria-current="true">
+            <div>
+              <div><b>Home</b> <span class="meta">Balances + actions + feed</span></div>
+            </div>
+            <span class="chip">Tab</span>
+          </button>
+          <button class="screen-item" data-screen="wallet">
+            <div>
+              <div><b>Wallet</b> <span class="meta">Cards + DDA/Savings + linked banks</span></div>
+            </div>
+            <span class="chip">Tab</span>
+          </button>
+          <button class="screen-item" data-screen="pay">
+            <div>
+              <div><b>Pay</b> <span class="meta">Send/Request + funding source</span></div>
+            </div>
+            <span class="chip">Tab</span>
+          </button>
+          <button class="screen-item" data-screen="rewards">
+            <div>
+              <div><b>Rewards</b> <span class="meta">Earn + boosts + tiers</span></div>
+            </div>
+            <span class="chip">Tab</span>
+          </button>
+          <button class="screen-item" data-screen="profile">
+            <div>
+              <div><b>Profile</b> <span class="meta">Security + preferences + appearance</span></div>
+            </div>
+            <span class="chip">Tab</span>
+          </button>
+
+          <div class="divider" aria-hidden="true"></div>
+
+          <!-- Deep Screens -->
+          <button class="screen-item" data-screen="cardDetail">
+            <div>
+              <div><b>Card Detail</b> <span class="meta">Freeze + limits + transactions</span></div>
+            </div>
+            <span class="chip">Flow</span>
+          </button>
+          <button class="screen-item" data-screen="transferReview">
+            <div>
+              <div><b>Transfer Review</b> <span class="meta">Confirm + fees + arrival</span></div>
+            </div>
+            <span class="chip">Flow</span>
+          </button>
+          <button class="screen-item" data-screen="donatePoints">
+            <div>
+              <div><b>Donate Points</b> <span class="meta">Cause + impact preview</span></div>
+            </div>
+            <span class="chip">Flow</span>
+          </button>
+          <button class="screen-item" data-screen="challenges">
+            <div>
+              <div><b>Challenges</b> <span class="meta">Gamification + streaks</span></div>
+            </div>
+            <span class="chip">Flow</span>
+          </button>
+          <button class="screen-item" data-screen="communityImpact">
+            <div>
+              <div><b>Community Impact</b> <span class="meta">Goal + leaderboard + feed</span></div>
+            </div>
+            <span class="chip">Flow</span>
+          </button>
+          <button class="screen-item" data-screen="settings">
+            <div>
+              <div><b>Settings</b> <span class="meta">Theme + privacy + devices</span></div>
+            </div>
+            <span class="chip">Flow</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Alignment + Responsiveness Rules</h2>
+        <div class="guide-grid">
+          <div>• <b>One inset:</b> all content aligns to a consistent <span class="kbd">16dp</span> edge inset.</div>
+          <div>• <b>One rhythm:</b> vertical spacing uses <span class="kbd">8/12/16</span> increments; no random gaps.</div>
+          <div>• <b>Wrap, don’t squash:</b> actions reflow (2×2 on compact), cards wrap, text never clips balances.</div>
+          <div>• <b>Translucent icons:</b> inactive icons at <span class="kbd">55%</span> opacity for a modern “glass” feel.</div>
+          <div>• <b>Dark mode parity:</b> theme is a token swap; layout/constraints don’t change.</div>
+          <div class="tiny">Tip: Use the bottom nav inside the phone to switch core tabs quickly.</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Interaction shortcuts</h2>
+        <div class="guide-grid">
+          <div>• Click <span class="kbd">✨ Savvy</span> to open the AI concierge overlay.</div>
+          <div>• Use <span class="kbd">Reset</span> to jump back to Home.</div>
+          <div>• Theme toggle is mirrored in <span class="kbd">Settings → Appearance</span>.</div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ===================== RIGHT PANEL (PHONE PREVIEW) ===================== -->
+    <section class="right" aria-label="Phone preview">
+      <div class="phone" aria-label="Mobile device frame">
+        <div class="device">
+          <!-- Status bar -->
+          <div class="statusbar" aria-hidden="true">
+            <div class="status-left">
+              <span id="clock">9:41</span>
+              <span class="mono">LTE</span>
+            </div>
+            <div class="status-right">
+              <span class="mono">100%</span>
+              <span aria-hidden="true">▮▮▮</span>
+            </div>
+          </div>
+
+          <!-- App -->
+          <div class="app">
+            <!-- App bar -->
+            <div class="appbar">
+              <div class="title">
+                <strong id="appTitle">Home</strong>
+                <span id="appSubtitle">Balances • Rewards • Activity</span>
+              </div>
+              <div class="row" style="gap:10px;">
+                <button class="icon-btn" id="notifBtn" type="button" aria-label="Notifications">
+                  <!-- bell -->
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 22a2.2 2.2 0 0 0 2.2-2.2H9.8A2.2 2.2 0 0 0 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <button class="icon-btn" id="searchBtn" type="button" aria-label="Search">
+                  <!-- search -->
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Content area (screens switch here) -->
+            <div class="content" id="content">
+
+              <!-- ===================== SCREEN: HOME ===================== -->
+              <section class="screen active" id="screen-home" aria-label="Home screen">
+                <div class="cta" role="group" aria-label="Balances">
+                  <div class="col">
+                    <div class="small">Available (Checking)</div>
+                    <div class="big mono">$4,250.25</div>
+                    <div class="small">Savings <span class="mono">$4,500.25</span></div>
+                  </div>
+                  <button class="btn primary" type="button" style="border-radius: 16px; padding: 10px 12px;" data-nav="pay">
+                    Send
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M7 17l10-10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                      <path d="M9 7h8v8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Points</div>
+                      <div class="kpi-value mono">12,450</div>
+                      <div class="kpi-sub">Impact donated: <span class="mono">3,200</span> pts</div>
+                    </div>
+                    <div class="col" style="align-items:flex-end;">
+                      <div class="tiny">Next tier: <b style="color:var(--text)">Silver</b></div>
+                      <div class="progress" style="width: 130px; --p: 68%;">
+                        <i></i>
+                      </div>
+                      <div class="tiny"><span class="mono">1,150</span> pts to go</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col">
+                    <div class="kpi-title">Quick actions</div>
+                    <div class="tiny">One tap, always aligned</div>
+                  </div>
+                  <button class="btn" type="button" data-nav="donatePoints" title="Donate points">Donate</button>
+                </div>
+
+                <div class="grid2" aria-label="Quick actions">
+                  <div class="action" role="button" tabindex="0" data-nav="pay">
+                    <div class="iconbox">
+                      <!-- send -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M21 3L10 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M21 3l-7 18-4-9-9-4 20-5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="txt">
+                      <b>Send</b>
+                      <span>To people or bank</span>
+                    </div>
+                  </div>
+
+                  <div class="action" role="button" tabindex="0" data-nav="pay">
+                    <div class="iconbox deep">
+                      <!-- request -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M7 10l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M4 21h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </div>
+                    <div class="txt">
+                      <b>Request</b>
+                      <span>Split & collect</span>
+                    </div>
+                  </div>
+
+                  <div class="action" role="button" tabindex="0" data-nav="wallet">
+                    <div class="iconbox yellow">
+                      <!-- scan -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M7 3H5a2 2 0 0 0-2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M17 3h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M7 21H5a2 2 0 0 1-2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M17 21h2a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M7 12h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </div>
+                    <div class="txt">
+                      <b>Scan/Pay</b>
+                      <span>Fast checkout</span>
+                    </div>
+                  </div>
+
+                  <div class="action" role="button" tabindex="0" data-nav="rewards">
+                    <div class="iconbox green">
+                      <!-- rewards -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 17l-5 3 1.5-5.8L4 10.8l6-.5L12 5l2 5.3 6 .5-4.5 3.4L17 20l-5-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="txt">
+                      <b>Rewards</b>
+                      <span>Boosts & tiers</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col">
+                    <div class="kpi-title">Recent activity</div>
+                    <div class="tiny">Money + points (clear labels)</div>
+                  </div>
+                  <button class="btn ghost" type="button" data-nav="wallet" title="View all">
+                    View all
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="list" role="list" aria-label="Recent transactions">
+                  <div class="item" role="listitem">
+                    <div class="iconbox">
+                      <!-- bag -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M7 7V6a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M6 7h12l-1 14H7L6 7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="main">
+                      <b>Amazon</b>
+                      <span>Card purchase • +120 pts</span>
+                    </div>
+                    <div class="amount negative">-$45.99</div>
+                  </div>
+
+                  <div class="item" role="listitem">
+                    <div class="iconbox green">
+                      <!-- arrow down -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M7 14l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="main">
+                      <b>Top-up</b>
+                      <span>Linked bank • Instant</span>
+                    </div>
+                    <div class="amount positive">+$200.00</div>
+                  </div>
+
+                  <div class="item" role="listitem">
+                    <div class="iconbox yellow">
+                      <!-- heart -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 21s-7-4.4-9.4-8.7C.5 8.4 2.7 5 6.5 5c1.8 0 3.2 1 3.9 2 0 0 .9-2 3.6-2C18 5 20 8 19.4 12.3 18.4 18 12 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="main">
+                      <b>Donation</b>
+                      <span>Food Relief • 1,000 pts</span>
+                    </div>
+                    <div class="amount">—</div>
+                  </div>
+                </div>
+
+                <!-- FAB for Savvy -->
+                <button class="fab" id="fab" aria-label="Open Savvy AI concierge">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 2l1.2 4.2L17.4 7.4 13.2 8.6 12 13l-1.2-4.4L6.6 7.4l4.2-1.2L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M19 13l.8 2.8L22.6 17l-2.8.8L19 20.6l-.8-2.8L15.4 17l2.8-.8L19 13Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </section>
+
+              <!-- ===================== SCREEN: WALLET ===================== -->
+              <section class="screen" id="screen-wallet" aria-label="Wallet screen">
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Your cards</div>
+                      <div class="tiny">Swipe-ready, token-ready</div>
+                    </div>
+                    <button class="btn" type="button" data-nav="cardDetail">Manage</button>
+                  </div>
+
+                  <div style="margin-top: 12px; display:grid; gap: 10px;">
+                    <!-- Card carousel (simplified to stacked previews for HTML) -->
+                    <div class="card" style="padding: 14px; background: linear-gradient(135deg, var(--brand-navy), var(--brand-deep)); border: 1px solid rgba(255,255,255,0.12);">
+                      <div class="row" style="align-items:flex-start;">
+                        <div class="col" style="color:white;">
+                          <div class="tiny" style="color:rgba(255,255,255,0.72)">Default • Debit</div>
+                          <div style="font-size: 18px; font-weight: 780; letter-spacing:-0.02em;">SwipeSavvy Card</div>
+                          <div class="tiny mono" style="color:rgba(255,255,255,0.72); margin-top:6px;">•••• 1042</div>
+                        </div>
+                        <div class="chip2" style="border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.82);">
+                          <span aria-hidden="true">●</span> Active
+                        </div>
+                      </div>
+                      <div class="row" style="margin-top: 12px;">
+                        <div class="tiny" style="color:rgba(255,255,255,0.72)">This month: <span class="mono">$612.88</span></div>
+                        <button class="btn" type="button" style="background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.14); color: white;" data-nav="cardDetail">Details</button>
+                      </div>
+                    </div>
+
+                    <div class="card" style="padding: 14px; background: color-mix(in oklab, var(--panel) 85%, var(--brand-navy));">
+                      <div class="row">
+                        <div class="col">
+                          <div class="tiny">Travel</div>
+                          <div style="font-weight: 750; letter-spacing:-0.01em;">Virtual Card</div>
+                          <div class="tiny mono">•••• 7721</div>
+                        </div>
+                        <span class="chip2"><strong>2%</strong> boosts</span>
+                      </div>
+                    </div>
+
+                    <button class="btn btnfull" type="button" title="Add card">
+                      <span aria-hidden="true">＋</span> Add a card
+                    </button>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Accounts</div>
+                      <div class="tiny">DDA + Savings</div>
+                    </div>
+                    <button class="btn" type="button" data-nav="pay">Move</button>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="grid2">
+                    <div class="card pad" style="background: color-mix(in oklab, var(--panel) 88%, var(--brand-navy));">
+                      <div class="kpi-title">Checking</div>
+                      <div class="kpi-value mono">$4,250.25</div>
+                      <div class="tiny">Available</div>
+                    </div>
+                    <div class="card pad" style="background: color-mix(in oklab, var(--panel) 88%, var(--brand-green));">
+                      <div class="kpi-title">Savings</div>
+                      <div class="kpi-value mono">$4,500.25</div>
+                      <div class="tiny">Goal: <span class="mono">$10,000</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Linked accounts</div>
+                      <div class="tiny">Fund transactions via account linking</div>
+                    </div>
+                    <button class="btn" type="button" title="Add bank">Link</button>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="list" role="list">
+                    <div class="item" role="listitem">
+                      <div class="iconbox">
+                        <!-- bank -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M4 10V8l8-4 8 4v2" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                          <path d="M6 10v9M10 10v9M14 10v9M18 10v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Chase Bank</b>
+                        <span>•••• 1920 • Connected</span>
+                      </div>
+                      <span class="chip2" style="background: var(--success-bg); color: color-mix(in oklab, var(--brand-green) 90%, var(--text)); border-color: color-mix(in oklab, var(--brand-green) 25%, var(--stroke-color));">
+                        Connected
+                      </span>
+                    </div>
+
+                    <div class="item" role="listitem">
+                      <div class="iconbox">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M4 10V8l8-4 8 4v2" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                          <path d="M12 12v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Wells Fargo</b>
+                        <span>•••• 4481 • Needs relink</span>
+                      </div>
+                      <span class="chip2" style="background: var(--warning-bg); color: color-mix(in oklab, var(--brand-yellow) 85%, var(--text)); border-color: color-mix(in oklab, var(--brand-yellow) 25%, var(--stroke-color));">
+                        Relink
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ===================== SCREEN: PAY ===================== -->
+              <section class="screen" id="screen-pay" aria-label="Pay screen">
+                <div class="segmented" role="group" aria-label="Send or Request">
+                  <button type="button" class="seg-btn" aria-pressed="true" data-seg="send">Send</button>
+                  <button type="button" class="seg-btn" aria-pressed="false" data-seg="request">Request</button>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Recipient</div>
+                      <div class="tiny">People, bank, or username</div>
+                    </div>
+                    <button class="btn" type="button" title="Pick from contacts">
+                      Contacts
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div style="margin-top: 12px;" class="pillbar">
+                    <span class="chip2"><strong>Jordan</strong> • @jordan</span>
+                    <span class="chip2"><strong>Emma</strong> • @emma</span>
+                    <span class="chip2"><strong>Bank</strong> • ACH</span>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="field">
+                    <div class="label">Amount</div>
+                    <input class="input big" type="text" inputmode="decimal" value="$50.00" aria-label="Amount" />
+                  </div>
+
+                  <div class="divider"></div>
+
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">From</div>
+                      <div class="tiny">Funding source</div>
+                    </div>
+                    <select class="select" aria-label="Funding source" style="max-width: 210px;">
+                      <option>Checking • $4,250.25</option>
+                      <option>Savings • $4,500.25</option>
+                      <option>Chase •••• 1920</option>
+                    </select>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="row">
+                    <span class="chip2">Fee: <strong class="mono">$0.00</strong></span>
+                    <span class="chip2">Arrival: <strong>Instant</strong></span>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Message</div>
+                      <div class="tiny">Optional note</div>
+                    </div>
+                  </div>
+                  <input class="input" type="text" placeholder="What’s it for?" aria-label="Memo"/>
+                </div>
+
+                <button class="btn primary btnfull" type="button" data-nav="transferReview">
+                  Review & confirm
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M9 18l6-6-6-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+
+                <div class="tiny">Agentic AI can prepare actions, but money movement always requires confirmation.</div>
+              </section>
+
+              <!-- ===================== SCREEN: REWARDS (Earn) ===================== -->
+              <section class="screen" id="screen-rewards" aria-label="Rewards screen">
+                <div class="card pad" style="background: linear-gradient(135deg, color-mix(in oklab, var(--brand-yellow) 92%, white), color-mix(in oklab, var(--brand-yellow) 72%, var(--brand-green))); border: 0;">
+                  <div class="row" style="align-items:flex-start;">
+                    <div class="col">
+                      <div class="kpi-title" style="color: rgba(19,33,54,0.72)">Available points</div>
+                      <div class="kpi-value mono" style="color: var(--brand-deep)">12,450</div>
+                      <div class="tiny" style="color: rgba(19,33,54,0.62)">Est. value <span class="mono">$124.50</span></div>
+                    </div>
+                    <button class="btn" type="button" data-nav="donatePoints" style="background: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.55);">
+                      Donate
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 21s-7-4.4-9.4-8.7C.5 8.4 2.7 5 6.5 5c1.8 0 3.2 1 3.9 2 0 0 .9-2 3.6-2C18 5 20 8 19.4 12.3 18.4 18 12 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="row">
+                    <div class="tiny" style="color: rgba(19,33,54,0.65)">Tier progress: <b>Silver</b></div>
+                    <div class="progress" style="width: 160px; --p: 68%;">
+                      <i></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col">
+                    <div class="kpi-title">Boosts for you</div>
+                    <div class="tiny">Earn more without clutter</div>
+                  </div>
+                  <button class="btn" type="button" data-nav="challenges">Challenges</button>
+                </div>
+
+                <div class="list" role="list" aria-label="Boost offers">
+                  <div class="item" role="listitem">
+                    <div class="iconbox green">
+                      <!-- fuel -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M4 20V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M14 9H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M18 20v-8l-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M18 14a2 2 0 0 0 2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </div>
+                    <div class="main">
+                      <b>2× points on Fuel</b>
+                      <span>Activate • valid this week</span>
+                    </div>
+                    <span class="chip2"><strong>+2%</strong></span>
+                  </div>
+
+                  <div class="item" role="listitem">
+                    <div class="iconbox yellow">
+                      <!-- coffee -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M3 8h12v6a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M15 10h2a3 3 0 0 1 0 6h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M6 3s1 1.2 0 2.2M10 3s1 1.2 0 2.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </div>
+                    <div class="main">
+                      <b>Local cafés</b>
+                      <span>+150 pts per visit</span>
+                    </div>
+                    <button class="btn" type="button">Activate</button>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Impact snapshot</div>
+                      <div class="tiny">Donation capability built-in</div>
+                    </div>
+                    <button class="btn" type="button" data-nav="communityImpact">Community</button>
+                  </div>
+                  <div style="margin-top: 12px;" class="grid3">
+                    <div class="card pad" style="background: var(--panel-2);">
+                      <div class="tiny">You donated</div>
+                      <div class="mono" style="font-weight: 800; font-size: 16px;">3,200</div>
+                      <div class="tiny">pts total</div>
+                    </div>
+                    <div class="card pad" style="background: var(--panel-2);">
+                      <div class="tiny">Rank</div>
+                      <div style="font-weight: 800; font-size: 16px;">#42</div>
+                      <div class="tiny">this month</div>
+                    </div>
+                    <div class="card pad" style="background: var(--panel-2);">
+                      <div class="tiny">Streak</div>
+                      <div style="font-weight: 800; font-size: 16px;">4</div>
+                      <div class="tiny">weeks</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ===================== SCREEN: PROFILE ===================== -->
+              <section class="screen" id="screen-profile" aria-label="Profile screen">
+                <div class="card pad">
+                  <div class="row">
+                    <div class="row" style="gap: 12px;">
+                      <div class="avatar" aria-hidden="true">JA</div>
+                      <div class="col">
+                        <div style="font-weight: 780; letter-spacing:-0.01em;">Jordan Anderson</div>
+                        <div class="tiny">KYC: <b style="color: var(--text)">Tier 2 • Approved</b></div>
+                      </div>
+                    </div>
+                    <span class="chip2">Silver Tier</span>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="row">
+                    <span class="chip2">Security: <strong>Biometrics</strong></span>
+                    <span class="chip2">Privacy: <strong>Masked</strong></span>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="kpi-title">Preferences</div>
+                  <div class="list" style="margin-top: 10px;">
+                    <div class="item" role="button" tabindex="0" data-nav="settings">
+                      <div class="iconbox">
+                        <!-- settings -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/>
+                          <path d="M19.4 15a7.9 7.9 0 0 0 .1-2l2-1.2-2-3.4-2.3.7a7.7 7.7 0 0 0-1.7-1l-.3-2.4h-4l-.3 2.4a7.7 7.7 0 0 0-1.7 1L6.9 8.4l-2 3.4 2 1.2a7.9 7.9 0 0 0 .1 2l-2 1.2 2 3.4 2.3-.7a7.7 7.7 0 0 0 1.7 1l.3 2.4h4l.3-2.4a7.7 7.7 0 0 0 1.7-1l2.3.7 2-3.4-2-1.2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Settings</b>
+                        <span>Appearance, privacy, notifications</span>
+                      </div>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+
+                    <div class="item" role="button" tabindex="0">
+                      <div class="iconbox">
+                        <!-- lock -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M6 11h12v10H6V11Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Security</b>
+                        <span>PIN, biometrics, trusted devices</span>
+                      </div>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+
+                    <div class="item" role="button" tabindex="0">
+                      <div class="iconbox">
+                        <!-- help -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M12 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M9.1 9a3 3 0 1 1 5.7 1c0 2-3 2-3 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Support</b>
+                        <span>Help center & contact</span>
+                      </div>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <button class="btn btnfull" type="button" style="color: var(--danger); border-color: color-mix(in oklab, var(--danger) 35%, var(--stroke-color)); background: color-mix(in oklab, var(--danger) 8%, transparent);">
+                  Log out
+                </button>
+              </section>
+
+              <!-- ===================== SCREEN: CARD DETAIL ===================== -->
+              <section class="screen" id="screen-cardDetail" aria-label="Card detail screen">
+                <div class="card" style="padding: 16px; background: linear-gradient(135deg, var(--brand-navy), var(--brand-deep)); border: 1px solid rgba(255,255,255,0.12);">
+                  <div class="row" style="align-items:flex-start;">
+                    <div class="col" style="color:white;">
+                      <div class="tiny" style="color:rgba(255,255,255,0.72)">SwipeSavvy Card • Default</div>
+                      <div style="font-size: 20px; font-weight: 800; letter-spacing:-0.02em;">•••• 1042</div>
+                      <div class="tiny mono" style="color:rgba(255,255,255,0.72); margin-top: 6px;">Token: Active • Apple Pay</div>
+                    </div>
+                    <span class="chip2" style="border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.82);">
+                      ● Active
+                    </span>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="grid2">
+                    <button class="btn btnfull" type="button" style="background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.14); color: white;">
+                      Freeze card
+                    </button>
+                    <button class="btn btnfull" type="button" style="background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.14); color: white;">
+                      Set limits
+                    </button>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Funding source</div>
+                      <div class="tiny">Default for this card</div>
+                    </div>
+                    <span class="chip2"><strong>Checking</strong></span>
+                  </div>
+                  <div style="margin-top: 12px;" class="row">
+                    <span class="chip2">Daily limit: <strong class="mono">$1,000</strong></span>
+                    <span class="chip2">Online: <strong>On</strong></span>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col">
+                    <div class="kpi-title">Card transactions</div>
+                    <div class="tiny">Authorized/settled separated (audit-friendly)</div>
+                  </div>
+                </div>
+
+                <div class="list" role="list">
+                  <div class="item" role="listitem">
+                    <div class="iconbox">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M7 7V6a5 5 0 0 1 10 0v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M6 7h12l-1 14H7L6 7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="main">
+                      <b>Grocery Mart</b>
+                      <span>Settled • +64 pts</span>
+                    </div>
+                    <div class="amount negative">-$32.10</div>
+                  </div>
+
+                  <div class="item" role="listitem">
+                    <div class="iconbox">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M8 7l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="main">
+                      <b>Online subscription</b>
+                      <span>Authorized • pending settlement</span>
+                    </div>
+                    <div class="amount negative">-$9.99</div>
+                  </div>
+                </div>
+
+                <button class="btn btnfull" type="button" data-nav="wallet">Back to Wallet</button>
+              </section>
+
+              <!-- ===================== SCREEN: TRANSFER REVIEW ===================== -->
+              <section class="screen" id="screen-transferReview" aria-label="Transfer review screen">
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Review transfer</div>
+                      <div class="tiny">Confirm before sending</div>
+                    </div>
+                    <span class="chip2" style="background: var(--warning-bg); color: color-mix(in oklab, var(--brand-yellow) 85%, var(--text));">
+                      Requires confirm
+                    </span>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="card pad">
+                    <div class="row">
+                      <div class="col">
+                        <div class="tiny">To</div>
+                        <div style="font-weight: 800;">Jordan • @jordan</div>
+                      </div>
+                      <div class="col" style="align-items:flex-end;">
+                        <div class="tiny">Amount</div>
+                        <div class="mono" style="font-weight: 900; font-size: 20px;">$50.00</div>
+                      </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="row">
+                      <div class="col">
+                        <div class="tiny">From</div>
+                        <div style="font-weight: 700;">Checking</div>
+                      </div>
+                      <div class="col" style="align-items:flex-end;">
+                        <div class="tiny">Fee</div>
+                        <div class="mono" style="font-weight: 800;">$0.00</div>
+                      </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="row">
+                      <div class="col">
+                        <div class="tiny">Arrival</div>
+                        <div style="font-weight: 700;">Instant</div>
+                      </div>
+                      <div class="col" style="align-items:flex-end;">
+                        <div class="tiny">Memo</div>
+                        <div class="mono" style="font-weight: 700;">Pizza 🍕</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tiny" style="margin-top: 10px;">
+                    Savvy can assist, but execution always requires your confirmation (biometric step for large amounts).
+                  </div>
+                </div>
+
+                <button class="btn primary btnfull" type="button">
+                  Confirm & send
+                </button>
+                <button class="btn btnfull" type="button" data-nav="pay">Edit</button>
+              </section>
+
+              <!-- ===================== SCREEN: DONATE POINTS ===================== -->
+              <section class="screen" id="screen-donatePoints" aria-label="Donate points screen">
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Donate points</div>
+                      <div class="tiny">Turn rewards into impact</div>
+                    </div>
+                    <span class="chip2">Available: <strong class="mono">12,450</strong></span>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="pillbar" aria-label="Quick amounts">
+                    <span class="chip2"><strong>500</strong> pts</span>
+                    <span class="chip2"><strong>1,000</strong> pts</span>
+                    <span class="chip2"><strong>5,000</strong> pts</span>
+                    <span class="chip2"><strong>Custom</strong></span>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="kpi-title">Choose a cause</div>
+                  <div class="list" style="margin-top: 10px;">
+                    <div class="item" role="button" tabindex="0">
+                      <div class="iconbox yellow">
+                        <!-- bowl/meal -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M4 11h16v2a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6v-2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                          <path d="M6 11c0-4 3-7 6-7s6 3 6 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Food Relief</b>
+                        <span>1,000 pts ≈ supports 10 meals</span>
+                      </div>
+                      <span class="chip2">Popular</span>
+                    </div>
+
+                    <div class="item" role="button" tabindex="0">
+                      <div class="iconbox">
+                        <!-- water droplet -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M12 2s7 7.2 7 13a7 7 0 1 1-14 0c0-5.8 7-13 7-13Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Clean Water</b>
+                        <span>1,000 pts ≈ supports 30 days</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Impact preview</div>
+                      <div class="tiny">Donation: <b class="mono">1,000 pts</b></div>
+                    </div>
+                    <span class="chip2">Share: <strong>On</strong></span>
+                  </div>
+                  <div style="margin-top: 12px;" class="card pad">
+                    <div style="font-weight: 800;">You’ll contribute to Food Relief</div>
+                    <div class="tiny">This updates community impact totals immediately.</div>
+                  </div>
+                </div>
+
+                <button class="btn primary btnfull" type="button">
+                  Confirm donation
+                </button>
+                <button class="btn btnfull" type="button" data-nav="rewards">Back to Rewards</button>
+              </section>
+
+              <!-- ===================== SCREEN: CHALLENGES ===================== -->
+              <section class="screen" id="screen-challenges" aria-label="Challenges screen">
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Challenges</div>
+                      <div class="tiny">Gamification that feels grown-up</div>
+                    </div>
+                    <span class="chip2">Streak: <strong>4w</strong></span>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="grid2">
+                    <div class="card pad" style="background: var(--panel-2);">
+                      <div class="tiny">Weekly mission</div>
+                      <div style="font-weight: 850;">Earn 1,000 pts</div>
+                      <div class="progress" style="margin-top: 10px; --p: 74%;"><i></i></div>
+                      <div class="tiny" style="margin-top: 8px;"><span class="mono">740</span> / 1,000</div>
+                    </div>
+                    <div class="card pad" style="background: var(--panel-2);">
+                      <div class="tiny">Donation mission</div>
+                      <div style="font-weight: 850;">Donate 2× this month</div>
+                      <div class="progress" style="margin-top: 10px; --p: 50%;"><i></i></div>
+                      <div class="tiny" style="margin-top: 8px;">1 / 2</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="kpi-title">Badges</div>
+                  <div style="margin-top: 12px;" class="pillbar">
+                    <span class="chip2">🏅 <strong>Silver Donor</strong></span>
+                    <span class="chip2">⚡ <strong>Fast Mover</strong></span>
+                    <span class="chip2">🌍 <strong>Community Builder</strong></span>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="card pad">
+                    <div class="row">
+                      <div class="col">
+                        <div style="font-weight: 850;">Next badge</div>
+                        <div class="tiny">Donate <span class="mono">2,000</span> more points</div>
+                      </div>
+                      <button class="btn" type="button" data-nav="donatePoints">Donate</button>
+                    </div>
+                  </div>
+                </div>
+
+                <button class="btn btnfull" type="button" data-nav="rewards">Back to Rewards</button>
+              </section>
+
+              <!-- ===================== SCREEN: COMMUNITY IMPACT ===================== -->
+              <section class="screen" id="screen-communityImpact" aria-label="Community impact screen">
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Community goal</div>
+                      <div style="font-weight: 900; font-size: 18px; letter-spacing:-0.02em;">5,000,000 pts this quarter</div>
+                      <div class="tiny">You contributed <b class="mono">3,200</b> pts</div>
+                    </div>
+                  </div>
+                  <div class="progress" style="margin-top: 12px; --p: 41%;">
+                    <i></i>
+                  </div>
+                  <div class="row" style="margin-top: 8px;">
+                    <span class="tiny"><span class="mono">2.05M</span> / 5.00M</span>
+                    <span class="tiny">41%</span>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Leaderboards</div>
+                      <div class="tiny">Opt-in • privacy first</div>
+                    </div>
+                    <span class="chip2">Visible: <strong>On</strong></span>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="list" role="list">
+                    <div class="item" role="listitem">
+                      <div class="iconbox yellow">
+                        <!-- trophy -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M8 4h8v3a4 4 0 0 1-8 0V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                          <path d="M6 4H4v2a4 4 0 0 0 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M18 4h2v2a4 4 0 0 1-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M12 11v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M8 21h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M10 15h4v6h-4v-6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Top Donors</b>
+                        <span>Monthly leaderboard</span>
+                      </div>
+                      <span class="chip2">#42</span>
+                    </div>
+
+                    <div class="item" role="listitem">
+                      <div class="iconbox green">
+                        <!-- star -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M12 17l-5 3 1.5-5.8L4 10.8l6-.5L12 5l2 5.3 6 .5-4.5 3.4L17 20l-5-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Top Earners</b>
+                        <span>Points earned this month</span>
+                      </div>
+                      <span class="chip2">#118</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Impact feed</div>
+                      <div class="tiny">Community updates (anonymizable)</div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="list" role="list">
+                    <div class="item" role="listitem">
+                      <div class="avatar" aria-hidden="true">A</div>
+                      <div class="main">
+                        <b>Alex donated 2,000 pts</b>
+                        <span>Clean Water • 12m ago</span>
+                      </div>
+                      <span class="chip2">🔥</span>
+                    </div>
+
+                    <div class="item" role="listitem">
+                      <div class="avatar" aria-hidden="true">M</div>
+                      <div class="main">
+                        <b>Maya hit Gold Donor</b>
+                        <span>Milestone • 1h ago</span>
+                      </div>
+                      <span class="chip2">🏅</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button class="btn btnfull" type="button" data-nav="donatePoints">Donate points</button>
+              </section>
+
+              <!-- ===================== SCREEN: SETTINGS ===================== -->
+              <section class="screen" id="screen-settings" aria-label="Settings screen">
+                <div class="card pad">
+                  <div class="row">
+                    <div class="col">
+                      <div class="kpi-title">Appearance</div>
+                      <div class="tiny">Theme, motion, text size</div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top: 12px;" class="item">
+                    <div class="iconbox">
+                      <!-- moon -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M21 13a8 8 0 1 1-10-10 6 6 0 0 0 10 10Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="main">
+                      <b>Dark Mode</b>
+                      <span>Follow system (recommended)</span>
+                    </div>
+                    <button class="btn" type="button" id="themeToggleInSettings" aria-label="Toggle theme in settings">
+                      Toggle
+                    </button>
+                  </div>
+
+                  <div style="margin-top: 10px;" class="item">
+                    <div class="iconbox">
+                      <!-- eye -->
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                    </div>
+                    <div class="main">
+                      <b>Privacy</b>
+                      <span>Leaderboard visibility, masking</span>
+                    </div>
+                    <span class="chip2">Masked</span>
+                  </div>
+                </div>
+
+                <div class="card pad">
+                  <div class="kpi-title">Account</div>
+                  <div class="list" style="margin-top: 10px;">
+                    <div class="item">
+                      <div class="iconbox">
+                        <!-- shield -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Security</b>
+                        <span>Biometrics, PIN, devices</span>
+                      </div>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="item">
+                      <div class="iconbox">
+                        <!-- link -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Linked accounts</b>
+                        <span>Connect, relink, remove</span>
+                      </div>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="item">
+                      <div class="iconbox">
+                        <!-- bell -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M12 22a2.2 2.2 0 0 0 2.2-2.2H9.8A2.2 2.2 0 0 0 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <div class="main">
+                        <b>Notifications</b>
+                        <span>Transfers, security, rewards</span>
+                      </div>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <button class="btn btnfull" type="button" data-nav="profile">Back to Profile</button>
+              </section>
+            </div>
+
+            <!-- Bottom nav -->
+            <nav class="bottomnav" aria-label="Primary navigation">
+              <button class="navitem active" data-tab="home" aria-label="Home tab">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+                <div class="label">Home</div>
+                <div class="navdot" aria-hidden="true"></div>
+              </button>
+
+              <button class="navitem" data-tab="wallet" aria-label="Wallet tab">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M3 9h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M16 15h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <div class="label">Wallet</div>
+                <div class="navdot" aria-hidden="true"></div>
+              </button>
+
+              <button class="navitem" data-tab="pay" aria-label="Pay tab">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 7h10v10H7V7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M12 3v4M12 17v4M3 12h4M17 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <div class="label">Pay</div>
+                <div class="navdot" aria-hidden="true"></div>
+              </button>
+
+              <button class="navitem" data-tab="rewards" aria-label="Rewards tab">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 17l-5 3 1.5-5.8L4 10.8l6-.5L12 5l2 5.3 6 .5-4.5 3.4L17 20l-5-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+                <div class="label">Rewards</div>
+                <div class="navdot" aria-hidden="true"></div>
+              </button>
+
+              <button class="navitem" data-tab="profile" aria-label="Profile tab">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <div class="label">Profile</div>
+                <div class="navdot" aria-hidden="true"></div>
+              </button>
+            </nav>
+
+            <!-- Savvy overlay -->
+            <div class="overlay" id="savvyOverlay" aria-hidden="true">
+              <div class="sheet" role="dialog" aria-label="Savvy AI concierge">
+                <div class="grab" aria-hidden="true"></div>
+                <div class="sheethead">
+                  <div class="row" style="gap:10px;">
+                    <div class="iconbox green" style="width: 38px; height: 38px; border-radius: 14px;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 2l1.2 4.2L17.4 7.4 13.2 8.6 12 13l-1.2-4.4L6.6 7.4l4.2-1.2L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M19 13l.8 2.8L22.6 17l-2.8.8L19 20.6l-.8-2.8L15.4 17l2.8-.8L19 13Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="col" style="gap:2px;">
+                      <b style="letter-spacing:-0.01em;">Savvy Concierge</b>
+                      <span class="tiny">Suggests + prepares actions. You confirm.</span>
+                    </div>
+                  </div>
+
+                  <button class="icon-btn" id="closeSavvy" type="button" aria-label="Close Savvy">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="chat" aria-label="Chat messages">
+                  <div class="bubble">Hi Jordan — want to <b>maximize points</b> this week or <b>donate</b> to a cause?</div>
+                  <div class="chips" aria-label="Suggested actions">
+                    <button type="button" data-nav="donatePoints">Donate 1,000 pts</button>
+                    <button type="button" data-nav="pay">Send $50 to Jordan</button>
+                    <button type="button" data-nav="rewards">Show boosts</button>
+                  </div>
+                  <div class="bubble me">Show me the best boosts today.</div>
+                  <div class="bubble">Done. You have <b>2× points on Fuel</b> active. Want me to set a weekly donation goal?</div>
+                </div>
+
+                <div class="composer">
+                  <input class="input" type="text" placeholder="Ask Savvy…" aria-label="Ask Savvy" />
+                  <button class="btn primary" type="button" aria-label="Send message">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M21 3L10 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                      <path d="M21 3l-7 18-4-9-9-4 20-5Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /app -->
+        </div><!-- /device -->
+      </div><!-- /phone -->
+    </section>
+  </main>
+
+  <script>
+    // ==========================================================
+    // Interactions: screen switching, bottom tabs, dark mode,
+    // and Savvy overlay. Minimal JS, clean handoff.
+    // ==========================================================
+
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const screens = [
+      { id: "home", title: "Home", subtitle: "Balances • Rewards • Activity", tab: "home" },
+      { id: "wallet", title: "Wallet", subtitle: "Cards • DDA/Savings • Linked banks", tab: "wallet" },
+      { id: "pay", title: "Pay", subtitle: "Send/Request • Funding • Review", tab: "pay" },
+      { id: "rewards", title: "Rewards", subtitle: "Boosts • Tiers • Impact", tab: "rewards" },
+      { id: "profile", title: "Profile", subtitle: "Account • Security • Preferences", tab: "profile" },
+
+      // deep screens
+      { id: "cardDetail", title: "Card Detail", subtitle: "Controls • Tokenization • Activity", tab: "wallet" },
+      { id: "transferReview", title: "Review", subtitle: "Confirm • Fees • Arrival", tab: "pay" },
+      { id: "donatePoints", title: "Donate Points", subtitle: "Causes • Preview • Confirm", tab: "rewards" },
+      { id: "challenges", title: "Challenges", subtitle: "Missions • Badges • Streaks", tab: "rewards" },
+      { id: "communityImpact", title: "Community", subtitle: "Goal • Leaderboard • Feed", tab: "rewards" },
+      { id: "settings", title: "Settings", subtitle: "Appearance • Privacy • Notifications", tab: "profile" },
+    ];
+
+    function setActiveScreen(id) {
+      // screens inside phone
+      $$(".screen").forEach(s => s.classList.toggle("active", s.id === `screen-${id}`));
+
+      // left list highlight
+      $$(".screen-item").forEach(btn => btn.setAttribute("aria-current", btn.dataset.screen === id ? "true" : "false"));
+
+      // top title/subtitle
+      const meta = screens.find(s => s.id === id) || screens[0];
+      $("#appTitle").textContent = meta.title;
+      $("#appSubtitle").textContent = meta.subtitle;
+
+      // bottom nav active tab
+      setActiveTab(meta.tab);
+
+      // close overlay when navigating
+      closeSavvy();
+      // scroll content to top
+      $("#content").scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function setActiveTab(tabId) {
+      $$(".navitem").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tabId));
+    }
+
+    // Left panel screen list click
+    $("#screenList").addEventListener("click", (e) => {
+      const btn = e.target.closest(".screen-item");
+      if (!btn) return;
+      setActiveScreen(btn.dataset.screen);
+    });
+
+    // In-app nav triggers (buttons with data-nav)
+    document.addEventListener("click", (e) => {
+      const nav = e.target.closest("[data-nav]");
+      if (!nav) return;
+      const target = nav.dataset.nav;
+      if (target) setActiveScreen(target);
+    });
+
+    // Bottom nav tabs
+    $$(".navitem").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tab = btn.dataset.tab;
+        // map primary tabs to screens
+        if (tab === "home") setActiveScreen("home");
+        if (tab === "wallet") setActiveScreen("wallet");
+        if (tab === "pay") setActiveScreen("pay");
+        if (tab === "rewards") setActiveScreen("rewards");
+        if (tab === "profile") setActiveScreen("profile");
+      });
+    });
+
+    // Segmented control (Send/Request) demo
+    $$(".segmented .seg-btn").forEach(b => {
+      b.addEventListener("click", () => {
+        $$(".segmented .seg-btn").forEach(x => x.setAttribute("aria-pressed", "false"));
+        b.setAttribute("aria-pressed", "true");
+      });
+    });
+
+    // Theme toggle
+    const themeSwitch = $("#themeSwitch");
+    const themeToggleInSettings = $("#themeToggleInSettings");
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      const isDark = theme === "dark";
+      themeSwitch.setAttribute("aria-checked", isDark ? "true" : "false");
+      localStorage.setItem("ss_theme", theme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      setTheme(current === "dark" ? "light" : "dark");
+    }
+
+    themeSwitch.addEventListener("click", toggleTheme);
+    themeSwitch.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleTheme(); }
+    });
+    themeToggleInSettings.addEventListener("click", toggleTheme);
+
+    // Init theme from storage
+    const saved = localStorage.getItem("ss_theme");
+    if (saved === "dark" || saved === "light") setTheme(saved);
+
+    // Reset button
+    $("#resetBtn").addEventListener("click", () => setActiveScreen("home"));
+
+    // Clock (simple)
+    function updateClock(){
+      const d = new Date();
+      const hh = d.getHours();
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      const hour12 = ((hh + 11) % 12) + 1;
+      $("#clock").textContent = `${hour12}:${mm}`;
+    }
+    updateClock();
+    setInterval(updateClock, 20000);
+
+    // Savvy overlay
+    const overlay = $("#savvyOverlay");
+    function openSavvy(){
+      overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden", "false");
+    }
+    function closeSavvy(){
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden", "true");
+    }
+    $("#openSavvyBtn").addEventListener("click", openSavvy);
+    $("#fab").addEventListener("click", openSavvy);
+    $("#closeSavvy").addEventListener("click", closeSavvy);
+    overlay.addEventListener("click", (e) => {
+      // click outside sheet closes
+      if (e.target === overlay) closeSavvy();
+    });
+
+    // Start on Home
+    setActiveScreen("home");
+  </script>
+</body>
+</html>
