@@ -1,0 +1,163 @@
+// Services for Savvy AI to fetch platform data
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+
+export interface PlatformMetrics {
+  // User Metrics
+  totalUsers: number;
+  activeUsers: number;
+  newUsersThisMonth: number;
+  userRetentionRate: number;
+  
+  // Financial Metrics
+  totalRevenue: number;
+  monthlyRevenue: number;
+  averageTransactionValue: number;
+  transactionCount: number;
+  
+  // Engagement Metrics
+  conversionRate: number;
+  averageSessionDuration: number;
+  featureAdoptionRate: Record<string, number>;
+  
+  // Mobile App Metrics
+  mobileActiveUsers: number;
+  appCrashRate: number;
+  averageRating: number;
+  
+  // Platform Health
+  apiResponseTime: number;
+  systemUptime: number;
+  errorRate: number;
+}
+
+export interface ConversationContext {
+  currentPage?: string;
+  userRole?: 'admin' | 'merchant' | 'user';
+  platform?: 'mobile' | 'admin' | 'backend';
+  selectedSegment?: string;
+  timeRange?: string;
+}
+
+class SavvyAIService {
+  private baseURL = API_BASE_URL;
+
+  // Fetch cross-platform analytics data
+  async getPlatformMetrics(): Promise<PlatformMetrics> {
+    try {
+      const response = await axios.get(`${this.baseURL}/analytics/platform-metrics`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch platform metrics:', error);
+      // Return mock data for development
+      return this.getMockMetrics();
+    }
+  }
+
+  // Get specific application data
+  async getApplicationMetrics(platform: 'mobile' | 'admin' | 'backend') {
+    try {
+      const response = await axios.get(`${this.baseURL}/analytics/${platform}-metrics`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch ${platform} metrics:`, error);
+      return null;
+    }
+  }
+
+  // Get user behavior and engagement data
+  async getUserBehaviorAnalytics() {
+    try {
+      const response = await axios.get(`${this.baseURL}/analytics/user-behavior`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch user behavior data:', error);
+      return null;
+    }
+  }
+
+  // Get campaign performance data
+  async getCampaignPerformance() {
+    try {
+      const response = await axios.get(`${this.baseURL}/analytics/campaigns`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch campaign data:', error);
+      return null;
+    }
+  }
+
+  // Generate AI recommendations based on data
+  async generateRecommendations(context: ConversationContext): Promise<string> {
+    try {
+      const response = await axios.post(
+        `${this.baseURL}/ai/recommendations`,
+        context
+      );
+      return response.data.recommendations;
+    } catch (error) {
+      console.error('Failed to generate recommendations:', error);
+      return this.getDefaultRecommendations(context);
+    }
+  }
+
+  // Get insights specific to user segment
+  async getSegmentInsights(segmentId: string) {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/analytics/segments/${segmentId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch segment insights:', error);
+      return null;
+    }
+  }
+
+  // Analyze cross-platform user journeys
+  async getUserJourneyAnalysis(userId: string) {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/analytics/user-journey/${userId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch user journey:', error);
+      return null;
+    }
+  }
+
+  private getMockMetrics(): PlatformMetrics {
+    return {
+      totalUsers: 45230,
+      activeUsers: 18450,
+      newUsersThisMonth: 3200,
+      userRetentionRate: 0.68,
+      totalRevenue: 2450000,
+      monthlyRevenue: 185000,
+      averageTransactionValue: 124.5,
+      transactionCount: 1485,
+      conversionRate: 0.042,
+      averageSessionDuration: 8.5,
+      featureAdoptionRate: {
+        financialDashboard: 0.92,
+        transfers: 0.78,
+        challenges: 0.65,
+        notifications: 0.88,
+      },
+      mobileActiveUsers: 14200,
+      appCrashRate: 0.002,
+      averageRating: 4.6,
+      apiResponseTime: 145,
+      systemUptime: 0.9995,
+      errorRate: 0.0008,
+    };
+  }
+
+  private getDefaultRecommendations(context: ConversationContext): string {
+    return `Based on your current platform (${context.platform}), here are some recommendations for improving user engagement and revenue. Would you like me to dive deeper into any specific area?`;
+  }
+}
+
+export const savvyAIService = new SavvyAIService();
