@@ -208,3 +208,8 @@ export const IconBox: React.FC<IconBoxProps> = ({
 
   return <View style={[styles.iconBox, style]}>{icon}</View>;
 };
+// Export all components from this file
+export { TierProgressBar } from './TierProgressBar';
+export { AmountChipSelector } from './AmountChipSelector';
+export { PlatformGoalMeter } from './PlatformGoalMeter';
+export { FeeDisclosure } from './FeeDisclosure';
