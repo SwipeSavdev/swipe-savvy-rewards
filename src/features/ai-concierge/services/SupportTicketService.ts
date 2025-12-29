@@ -18,7 +18,7 @@ export class SupportTicketService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: `${API_BASE_URL}/api/support`,
+      baseURL: `${API_BASE_URL}/api/v1/admin/support`,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',

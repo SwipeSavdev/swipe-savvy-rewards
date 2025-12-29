@@ -1,9 +1,9 @@
 /**
  * DataService - Central API service for all app data operations
- * Handles all communications with backend at port 8002
+ * Handles all communications with backend at port 8000
  */
 
-const API_BASE_URL = 'http://localhost:8002/api';
+const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 export interface Transaction {
   id: string;
