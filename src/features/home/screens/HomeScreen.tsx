@@ -385,7 +385,7 @@ export function HomeScreen() {
             <Text style={styles.quickActionsTitle}>Quick actions</Text>
             <Text style={styles.pointsLabel}>One tap, always aligned</Text>
           </View>
-          <Button onPress={() => (navigation as any).navigate('Rewards')} variant="ghost">
+          <Button onPress={() => (navigation as any).navigate('AIConcierge')} variant="ghost">
             Donate
           </Button>
         </View>
@@ -432,7 +432,7 @@ export function HomeScreen() {
 
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => (navigation as any).navigate('Rewards')}
+              onPress={() => (navigation as any).navigate('AIConcierge')}
             >
               <IconBox
                 icon={<MaterialCommunityIcons name="star" size={20} color={BRAND_COLORS.green} />}
@@ -446,7 +446,7 @@ export function HomeScreen() {
           <View style={styles.actionRow}>
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => (navigation as any).navigate('Cards')}
+              onPress={() => (navigation as any).navigate('Accounts')}
             >
               <IconBox
                 icon={<MaterialCommunityIcons name="credit-card-plus" size={20} color={BRAND_COLORS.navy} />}
@@ -458,7 +458,7 @@ export function HomeScreen() {
 
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => (navigation as any).navigate('Analytics')}
+              onPress={() => (navigation as any).navigate('Accounts')}
             >
               <IconBox
                 icon={<MaterialCommunityIcons name="chart-line" size={20} color={BRAND_COLORS.green} />}
@@ -470,7 +470,7 @@ export function HomeScreen() {
 
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => (navigation as any).navigate('SavingsGoals')}
+              onPress={() => (navigation as any).navigate('Accounts')}
             >
               <IconBox
                 icon={<MaterialCommunityIcons name="target" size={20} color={BRAND_COLORS.yellow} />}

@@ -1,5 +1,6 @@
 {
   "expo": {
+    "owner": "swipesavvyapp",
     "name": "SwipeSavvy",
     "slug": "swipesavvy-mobile-app",
     "version": "1.0.0",

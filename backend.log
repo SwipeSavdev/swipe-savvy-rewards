@@ -1,0 +1,19 @@
+2025-12-26 12:48:06,439 - __main__ - INFO - Connecting to database at localhost:5432/swipesavvy_agents
+2025-12-26 12:48:06,475 - __main__ - INFO - ✅ Database connection successful
+2025-12-26 12:48:06,476 - __main__ - INFO - Registering Phase 4 routes...
+2025-12-26 12:48:06,476 - __main__ - INFO - ⚠️  Phase 4 routes module commented out - enable when phase_4_routes fully integrates
+/Users/macbookpro/Documents/swipesavvy-mobile-app/main.py:277: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+2025-12-26 12:48:06,494 - __main__ - INFO - Starting Uvicorn server...
+INFO:     Started server process [15089]
+INFO:     Waiting for application startup.
+2025-12-26 12:48:06,500 - __main__ - INFO - 🚀 Starting SwipeSavvy Backend API Server...
+2025-12-26 12:48:06,503 - __main__ - INFO - ✅ Analytics tables verified
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8888 (Press CTRL+C to quit)
+INFO:     127.0.0.1:64811 - "GET /health HTTP/1.1" 200 OK

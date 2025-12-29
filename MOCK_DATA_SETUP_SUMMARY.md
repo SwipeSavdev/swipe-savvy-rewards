@@ -69,7 +69,7 @@
 
 ### Step 1: Navigate to Database Directory
 ```bash
-cd /Users/macbookpro/Documents/swipesavvy-mobile-app/database
+cd /Users/macbookpro/Documents/swipesavvy-mobile-app/tools/database
 ```
 
 ### Step 2: Initialize Database (if not done)
@@ -211,7 +211,7 @@ psql -U swipesavvy_backend -d swipesavvy_db \
 ### Key Files Location
 All files are in:
 ```
-/Users/macbookpro/Documents/swipesavvy-mobile-app/database/
+/Users/macbookpro/Documents/swipesavvy-mobile-app/tools/database/
 ```
 
 Specific files:
@@ -279,7 +279,7 @@ DELETE FROM campaign_optimizations;
 All components are ready. Proceed with:
 
 ```bash
-cd /Users/macbookpro/Documents/swipesavvy-mobile-app/database
+cd /Users/macbookpro/Documents/swipesavvy-mobile-app/tools/database
 ./ingest_mock_data.sh
 ```
 

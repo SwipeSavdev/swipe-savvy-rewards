@@ -25,7 +25,7 @@ This guide explains how to populate the SwipeSavvy database with realistic sampl
 Ensure the database is initialized with the schema:
 
 ```bash
-cd /Users/macbookpro/Documents/swipesavvy-mobile-app/database
+cd /Users/macbookpro/Documents/swipesavvy-mobile-app/tools/database
 ./init_database.sh production
 ```
 
@@ -63,14 +63,14 @@ export DB_PASSWORD=your_production_password
 ### Option 1: Using the Shell Wrapper (Recommended)
 
 ```bash
-chmod +x /Users/macbookpro/Documents/swipesavvy-mobile-app/database/ingest_mock_data.sh
+chmod +x /Users/macbookpro/Documents/swipesavvy-mobile-app/tools/database/ingest_mock_data.sh
 ./ingest_mock_data.sh
 ```
 
 ### Option 2: Direct Python Execution
 
 ```bash
-python3 /Users/macbookpro/Documents/swipesavvy-mobile-app/database/ingest_mock_data.py
+python3 /Users/macbookpro/Documents/swipesavvy-mobile-app/tools/database/ingest_mock_data.py
 ```
 
 ### Option 3: Docker Container

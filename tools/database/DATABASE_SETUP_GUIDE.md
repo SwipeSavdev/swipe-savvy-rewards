@@ -136,8 +136,8 @@ sudo yum install postgresql-server postgresql-contrib
 ### Step 1: Download Schema Files
 
 ```bash
-# Clone or download the database directory
-cd /path/to/swipesavvy-mobile-app/database
+# Navigate to the database setup directory
+cd /path/to/swipesavvy-mobile-app/tools/database
 
 # Verify files exist
 ls -la
