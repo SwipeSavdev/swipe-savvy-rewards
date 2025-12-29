@@ -1,0 +1,3 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -workspace /Users/macbookpro/Documents/swipesavvy-mobile-app-v2/swipesavvy-mobile-app-v2/ios/swipesavvymobileappv2.xcworkspace -configuration Debug -scheme swipesavvymobileappv2 -destination id=C077429C-28F3-438C-B3DC-74BD394395E9
+

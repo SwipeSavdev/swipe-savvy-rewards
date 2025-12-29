@@ -1,0 +1,2125 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#132136" />
+  <meta name="description" content="Swipe Savvy — modern debit rewards for consumers and a real-time cohort CDP + action layer for merchants." />
+  <title>Swipe Savvy + Shop Savvy — Rewards for consumers. Cohorts for merchants.</title>
+
+  <style>
+    /* =========================================================
+       Swipe Savvy — Unified Consumer + Merchant Site (Single HTML)
+       - Modern, clean, Gen-Z/Millennial friendly
+       - Includes app-home hero mock + merchant cohort CDP sections
+       - Includes Savvy AI Support widget + self-serve support center
+       ========================================================= */
+
+    :root{
+      /* Brand */
+      --brand-navy: #235393;
+      --brand-deep: #132136;
+      --brand-green:#60BA46;
+      --brand-yellow:#FAB915;
+
+      /* Neutrals */
+      --white: #ffffff;
+      --black: #000000;
+
+      /* Layout */
+      --maxw: 1180px;
+      --gutter: clamp(16px, 4vw, 28px);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 12px;
+
+      /* Motion */
+      --ease-out: cubic-bezier(.2,.8,.2,1);
+      --shadow-soft: 0 18px 50px rgba(0,0,0,.22);
+      --shadow-float: 0 30px 80px rgba(0,0,0,.33);
+
+      /* Typography */
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+      /* Theme (default: dark) */
+      --bg: #0b1220;
+      --bg2:#0c1628;
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.72);
+      --subtle: rgba(255,255,255,.10);
+      --subtle-2: rgba(255,255,255,.16);
+      --panel: rgba(255,255,255,.06);
+      --panel-2: rgba(255,255,255,.10);
+      --stroke: rgba(255,255,255,.14);
+      --stroke-2: rgba(255,255,255,.22);
+
+      --primary: var(--brand-yellow);
+      --primary-ink: #1b1405;
+      --success: var(--brand-green);
+      --link: #9cc7ff;
+
+      /* App preview */
+      --app-bg: #0a1222;
+      --app-card: rgba(255,255,255,.08);
+      --app-card2: rgba(255,255,255,.12);
+    }
+
+    html[data-theme="light"]{
+      --bg: #f7f8fb;
+      --bg2:#ffffff;
+      --text: #0f172a;
+      --muted: rgba(15,23,42,.72);
+      --subtle: rgba(15,23,42,.06);
+      --subtle-2: rgba(15,23,42,.10);
+      --panel: rgba(255,255,255,.72);
+      --panel-2: rgba(255,255,255,.90);
+      --stroke: rgba(15,23,42,.12);
+      --stroke-2: rgba(15,23,42,.18);
+      --link: #1e4dd8;
+
+      --shadow-soft: 0 18px 50px rgba(15,23,42,.12);
+      --shadow-float: 0 30px 90px rgba(15,23,42,.18);
+
+      --app-bg: #0b1220;
+      --app-card: rgba(255,255,255,.10);
+      --app-card2: rgba(255,255,255,.14);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% -10%, color-mix(in oklab, var(--brand-navy) 40%, transparent) 0%, transparent 60%),
+        radial-gradient(900px 650px at 95% 0%, color-mix(in oklab, var(--brand-yellow) 22%, transparent) 0%, transparent 58%),
+        radial-gradient(900px 700px at 80% 110%, color-mix(in oklab, var(--brand-green) 16%, transparent) 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      overflow-x:hidden;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    img{ max-width:100%; display:block; }
+    button, input, textarea{ font: inherit; }
+    :focus-visible{ outline: 3px solid color-mix(in oklab, var(--brand-yellow) 65%, white); outline-offset: 2px; border-radius: 10px; }
+    ::selection{ background: color-mix(in oklab, var(--brand-yellow) 35%, transparent); }
+
+    /* Layout helpers */
+    .wrap{ width:min(var(--maxw), calc(100% - 2*var(--gutter))); margin-inline:auto; }
+    .section{ padding: clamp(56px, 6vw, 88px) 0; }
+    .grid-2{ display:grid; grid-template-columns: 1.1fr .9fr; gap: clamp(20px, 4vw, 48px); align-items:center; }
+    .grid-3{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+    .grid-4{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+    @media (max-width: 980px){
+      .grid-2{ grid-template-columns: 1fr; }
+      .grid-3{ grid-template-columns: 1fr; }
+      .grid-4{ grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px){
+      .grid-4{ grid-template-columns: 1fr; }
+    }
+
+    /* Header */
+    .skip-link{
+      position:absolute; left:-999px; top:auto; width:1px; height:1px; overflow:hidden;
+    }
+    .skip-link:focus{ left: 14px; top: 12px; width:auto; height:auto; padding:10px 12px; background: var(--panel-2); border:1px solid var(--stroke); border-radius: 12px; z-index:9999; }
+
+    header{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(14px);
+      background: color-mix(in oklab, var(--bg) 78%, transparent);
+      border-bottom: 1px solid var(--stroke);
+    }
+
+    .nav{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 14px 0;
+      gap: 16px;
+    }
+    .brand{
+      display:flex; align-items:center; gap: 12px;
+      min-width: 220px;
+    }
+    .brand img{ height: 34px; width:auto; }
+    .brand .tag{
+      font-size: 12px;
+      padding: 4px 10px;
+      border: 1px solid var(--stroke);
+      background: var(--panel);
+      border-radius: 999px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    nav .links{
+      display:flex; gap: 14px; align-items:center;
+      padding: 6px 10px;
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      background: var(--panel);
+    }
+    nav .links a{
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 999px;
+      transition: background .18s var(--ease-out), color .18s var(--ease-out);
+      white-space:nowrap;
+    }
+    nav .links a:hover{ background: var(--subtle); color: var(--text); }
+
+    .nav-actions{ display:flex; align-items:center; gap: 10px; }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 650;
+      letter-spacing: .2px;
+      transition: transform .18s var(--ease-out), background .18s var(--ease-out), border-color .18s var(--ease-out);
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); background: color-mix(in oklab, var(--panel) 70%, transparent); border-color: var(--stroke-2); }
+    .btn:active{ transform: translateY(0); }
+    .btn-primary{
+      border-color: color-mix(in oklab, var(--brand-yellow) 55%, var(--stroke));
+      background: linear-gradient(180deg, color-mix(in oklab, var(--brand-yellow) 95%, white) 0%, var(--brand-yellow) 100%);
+      color: var(--primary-ink);
+      box-shadow: 0 18px 40px rgba(250,185,21,.18);
+    }
+    .btn-primary:hover{ background: linear-gradient(180deg, color-mix(in oklab, var(--brand-yellow) 90%, white) 0%, color-mix(in oklab, var(--brand-yellow) 92%, white) 100%); }
+    .btn-ghost{ background: transparent; }
+    .icon{ width:18px; height:18px; }
+
+    .theme-toggle{
+      width: 44px; height: 42px;
+      border-radius: 999px;
+      display:inline-grid; place-items:center;
+      border:1px solid var(--stroke);
+      background: var(--panel);
+      cursor:pointer;
+      transition: transform .18s var(--ease-out);
+    }
+    .theme-toggle:hover{ transform: translateY(-1px); }
+
+    .menu-btn{ display:none; }
+    .drawer{ display:none; }
+
+    @media (max-width: 980px){
+      nav .links{ display:none; }
+      .menu-btn{ display:inline-flex; }
+      .drawer{
+        display:block;
+        padding: 0 0 14px 0;
+      }
+      .drawer[hidden]{ display:none; }
+      .drawer .panel{
+        display:grid;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--panel);
+      }
+      .drawer a{
+        padding: 12px 12px;
+        border-radius: 12px;
+        color: var(--muted);
+        border: 1px solid transparent;
+      }
+      .drawer a:hover{
+        background: var(--subtle);
+        color: var(--text);
+        border-color: var(--stroke);
+      }
+    }
+
+    /* Hero */
+    .hero{ padding: clamp(38px, 5vw, 64px) 0 clamp(26px, 4vw, 44px); }
+    .kicker{
+      display:inline-flex; align-items:center; gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: color-mix(in oklab, var(--panel) 80%, transparent);
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: .2px;
+    }
+    .dot{
+      width: 9px; height: 9px; border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, white 0%, var(--brand-yellow) 45%, color-mix(in oklab, var(--brand-yellow) 55%, transparent) 100%);
+      box-shadow: 0 0 0 6px rgba(250,185,21,.12);
+    }
+
+    h1{
+      margin: 14px 0 10px;
+      font-size: clamp(34px, 4.1vw, 56px);
+      line-height: 1.03;
+      letter-spacing: -0.02em;
+    }
+    .grad{
+      background: linear-gradient(90deg, var(--brand-yellow), color-mix(in oklab, var(--brand-green) 75%, var(--brand-yellow)));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    p.lead{
+      margin: 0 0 18px;
+      font-size: clamp(16px, 1.3vw, 18px);
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 60ch;
+    }
+
+    .cta-row{ display:flex; flex-wrap:wrap; gap: 12px; margin: 18px 0 18px; }
+    .micro{ display:flex; flex-wrap:wrap; gap: 10px; margin-top: 10px; }
+    .pill{
+      display:inline-flex; align-items:center; gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Hero visual: app mock + card */
+    .hero-visual{ position:relative; min-height: 520px; }
+    .mock-stack{
+      position:relative;
+      width: min(520px, 100%);
+      margin-inline:auto;
+      display:grid;
+      place-items:center;
+    }
+
+    .blob{
+      position:absolute; inset: -30% -25%;
+      background:
+        radial-gradient(60% 50% at 30% 30%, rgba(250,185,21,.26) 0%, transparent 60%),
+        radial-gradient(60% 60% at 75% 70%, rgba(96,186,70,.18) 0%, transparent 65%),
+        radial-gradient(55% 55% at 70% 20%, rgba(35,83,147,.26) 0%, transparent 62%);
+      filter: blur(20px);
+      opacity: .9;
+      transform: translateZ(0);
+      pointer-events:none;
+    }
+
+    .phone{
+      position:relative;
+      width: min(340px, 86vw);
+      aspect-ratio: 10 / 20;
+      border-radius: 42px;
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+      border: 1px solid color-mix(in oklab, var(--stroke) 70%, transparent);
+      box-shadow: var(--shadow-float);
+      padding: 14px;
+      transform: rotate(-2.3deg);
+    }
+    .phone::before{
+      content:"";
+      position:absolute; inset: 10px;
+      border-radius: 34px;
+      background: radial-gradient(140% 120% at 20% 0%, rgba(35,83,147,.35) 0%, transparent 55%),
+                  radial-gradient(120% 120% at 90% 40%, rgba(250,185,21,.22) 0%, transparent 56%),
+                  radial-gradient(110% 110% at 80% 100%, rgba(96,186,70,.15) 0%, transparent 60%),
+                  var(--app-bg);
+      z-index: 0;
+    }
+    .phone::after{
+      content:"";
+      position:absolute; top: 18px; left: 50%;
+      width: 42%;
+      height: 22px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: rgba(0,0,0,.36);
+      border: 1px solid rgba(255,255,255,.08);
+      z-index: 2;
+    }
+
+    .screen{
+      position:relative;
+      height: 100%;
+      border-radius: 34px;
+      overflow:hidden;
+      z-index: 1;
+      padding: 18px 14px 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .status{
+      display:flex; align-items:center; justify-content:space-between;
+      font-size: 11px;
+      color: rgba(255,255,255,.75);
+      letter-spacing:.2px;
+    }
+    .status .icons{ display:flex; align-items:center; gap: 8px; }
+    .status svg{ width: 14px; height: 14px; opacity: .9; }
+
+    .appbar{
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap: 10px;
+      padding-top: 2px;
+    }
+    .appbar .title{
+      font-weight: 820;
+      font-size: 16px;
+      letter-spacing: -.02em;
+    }
+    .appbar .sub{
+      margin-top: 2px;
+      color: rgba(255,255,255,.7);
+      font-size: 12px;
+    }
+    .appbar .actions{ display:flex; gap: 8px; }
+    .chipbtn{
+      width: 34px; height: 34px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+      display:grid; place-items:center;
+    }
+    .chipbtn svg{ width: 18px; height: 18px; opacity: .95; }
+
+    .card{
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.14);
+      padding: 12px 12px;
+      box-shadow: 0 14px 28px rgba(0,0,0,.18);
+    }
+
+    .balance{
+      display:flex; justify-content:space-between; align-items:flex-start;
+      gap: 10px;
+    }
+    .balance .label{ font-size: 12px; color: rgba(255,255,255,.72); }
+    .balance .val{ font-size: 22px; font-weight: 860; letter-spacing:-.02em; margin-top: 2px; }
+    .balance .cta{
+      display:inline-flex; align-items:center; gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(250,185,21,.92);
+      color: #221805;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,.18);
+      white-space:nowrap;
+    }
+    .balance .cta svg{ width: 16px; height: 16px; }
+
+    .minirow{
+      display:flex; gap: 10px;
+      margin-top: 10px;
+    }
+    .mini{
+      flex:1;
+      border-radius: 16px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 10px 10px;
+    }
+    .mini .k{ font-size: 11px; color: rgba(255,255,255,.72); }
+    .mini .v{ font-size: 13px; font-weight: 760; margin-top: 2px; }
+
+    .points{
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+    }
+    .points .left{ display:flex; flex-direction:column; gap: 4px; }
+    .points .left strong{ font-size: 13px; }
+    .points .left span{ font-size: 11px; color: rgba(255,255,255,.70); }
+    .ring{
+      width: 44px; height: 44px; border-radius: 999px;
+      background:
+        conic-gradient(from 90deg, rgba(250,185,21,.95) 0 68%, rgba(255,255,255,.10) 68% 100%);
+      display:grid; place-items:center;
+      border: 1px solid rgba(255,255,255,.14);
+    }
+    .ring b{
+      font-size: 12px;
+      background: rgba(0,0,0,.32);
+      border: 1px solid rgba(255,255,255,.12);
+      width: 30px; height: 30px;
+      border-radius: 999px;
+      display:grid; place-items:center;
+    }
+
+    .quick{
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .qbtn{
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 12px 12px;
+      display:flex; gap: 10px; align-items:center;
+    }
+    .qbtn .ic{
+      width: 34px; height: 34px;
+      border-radius: 14px;
+      display:grid; place-items:center;
+      background: rgba(35,83,147,.35);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .qbtn:nth-child(2) .ic{ background: rgba(96,186,70,.22); }
+    .qbtn .t{
+      display:flex; flex-direction:column;
+      gap: 1px;
+    }
+    .qbtn .t strong{ font-size: 12px; }
+    .qbtn .t span{ font-size: 10px; color: rgba(255,255,255,.7); }
+
+    .tx{
+      display:flex; flex-direction:column; gap: 8px;
+    }
+    .tx .row{
+      display:flex; justify-content:space-between; align-items:center; gap: 10px;
+      padding: 10px 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .tx .who{ display:flex; align-items:center; gap: 10px; }
+    .tx .dot{
+      width: 12px; height: 12px; border-radius: 5px;
+      box-shadow: none;
+      background: rgba(250,185,21,.9);
+    }
+    .tx .meta{ display:flex; flex-direction:column; gap: 2px; }
+    .tx .meta strong{ font-size: 12px; }
+    .tx .meta span{ font-size: 10px; color: rgba(255,255,255,.68); }
+    .tx .amt{ font-weight: 840; font-size: 12px; }
+
+    .navdock{
+      margin-top:auto;
+      display:grid; grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 10px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+    }
+    .navdock .n{
+      display:grid; place-items:center;
+      padding: 8px 0;
+      border-radius: 16px;
+      color: rgba(255,255,255,.72);
+    }
+    .navdock .n.active{
+      background: rgba(250,185,21,.18);
+      color: rgba(255,255,255,.92);
+      border: 1px solid rgba(250,185,21,.35);
+    }
+    .navdock svg{ width: 18px; height: 18px; }
+
+    .card-float{
+      position:absolute;
+      width: min(520px, 92%);
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%) rotate(2.2deg);
+      filter: drop-shadow(0 30px 70px rgba(0,0,0,.45));
+    }
+    .card-float img{ border-radius: 26px; }
+
+    .floating-stats{
+      position:absolute;
+      right: -14px;
+      top: 12px;
+      display:grid;
+      gap: 12px;
+      width: min(260px, 44vw);
+      opacity: .95;
+    }
+    .stat{
+      display:flex; align-items:flex-start; justify-content:space-between; gap: 12px;
+      padding: 14px 14px;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: color-mix(in oklab, var(--panel) 86%, transparent);
+      box-shadow: var(--shadow-soft);
+    }
+    .stat strong{ display:block; font-size: 13px; }
+    .stat span{ display:block; font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .badge{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: var(--subtle);
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    @media (max-width: 980px){
+      .hero-visual{ min-height: 560px; }
+      .floating-stats{ display:none; }
+      .card-float{ bottom: -10px; }
+      .phone{ transform: none; }
+    }
+
+    /* Sections */
+    .section-head{
+      display:flex; align-items:flex-end; justify-content:space-between; gap: 18px;
+      margin-bottom: 18px;
+    }
+    .section-head h2{
+      margin: 0;
+      font-size: clamp(24px, 2.4vw, 34px);
+      letter-spacing:-.02em;
+      line-height:1.12;
+    }
+    .section-head p{
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 70ch;
+    }
+
+    .feature{
+      border-radius: var(--radius-lg);
+      padding: 18px 18px;
+      border: 1px solid var(--stroke);
+      background: color-mix(in oklab, var(--panel) 92%, transparent);
+      box-shadow: var(--shadow-soft);
+    }
+    .feature h3{ margin: 12px 0 8px; font-size: 16px; letter-spacing:-.01em; }
+    .feature p{ margin: 0; color: var(--muted); line-height: 1.6; font-size: 14px; }
+    .miniicon{
+      width: 44px; height: 44px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      display:grid; place-items:center;
+    }
+    .miniicon svg{ width: 22px; height: 22px; }
+
+    .steps{
+      display:grid; gap: 12px;
+    }
+    .step{
+      display:flex; gap: 14px; align-items:flex-start;
+      padding: 16px 16px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--stroke);
+      background: color-mix(in oklab, var(--panel) 92%, transparent);
+    }
+    .step .num{
+      width: 34px; height: 34px;
+      border-radius: 12px;
+      background: rgba(250,185,21,.18);
+      border: 1px solid rgba(250,185,21,.35);
+      display:grid; place-items:center;
+      font-weight: 860;
+      color: rgba(255,255,255,.9);
+    }
+    .step h4{ margin: 0; font-size: 15px; }
+    .step p{ margin: 6px 0 0; color: var(--muted); line-height: 1.6; font-size: 14px; }
+
+    /* Merchant dashboard mock (from previous v3) */
+    .dash-mock{
+      width: min(560px, 100%);
+      margin-inline:auto;
+      border-radius: 26px;
+      border: 1px solid var(--stroke);
+      background: color-mix(in oklab, var(--panel) 88%, transparent);
+      box-shadow: var(--shadow-float);
+      overflow:hidden;
+    }
+    .dash-head{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 16px 16px;
+      border-bottom: 1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+    }
+    .dash-title{ font-weight: 850; letter-spacing:-.01em; }
+    .dash-sub{ margin-top: 2px; font-size: 12px; color: var(--muted); }
+    .dash-kpis{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      padding: 14px 16px 12px;
+    }
+    .dash-kpi{
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 12px 12px;
+      background: rgba(255,255,255,.05);
+    }
+    .dash-label{ font-size: 12px; color: var(--muted); }
+    .dash-value{ font-size: 20px; font-weight: 900; margin-top: 4px; letter-spacing:-.02em; }
+    .dash-meta{ margin-top: 4px; font-size: 12px; color: var(--muted); }
+    .dash-meta.up{ color: color-mix(in oklab, var(--brand-green) 70%, white); }
+    .dash-meta.down{ color: color-mix(in oklab, #ff6767 70%, white); }
+    .dash-chart{ padding: 4px 16px 10px; }
+    .dash-actions{
+      display:flex; flex-wrap:wrap; gap: 10px;
+      padding: 12px 16px 16px;
+    }
+
+    @media (max-width: 560px){
+      .dash-kpis{ grid-template-columns: 1fr; }
+    }
+
+    /* CDP table */
+    .table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow:hidden;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: color-mix(in oklab, var(--panel) 92%, transparent);
+      box-shadow: var(--shadow-soft);
+    }
+    .table th, .table td{
+      text-align:left;
+      padding: 14px 14px;
+      border-bottom: 1px solid var(--stroke);
+      vertical-align: top;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .table th{
+      color: var(--text);
+      font-weight: 800;
+      font-size: 13px;
+      background: rgba(255,255,255,.04);
+    }
+    .table tr:last-child td{ border-bottom: none; }
+    .mono{ font-family: var(--mono); font-size: 12px; color: color-mix(in oklab, var(--text) 92%, transparent); }
+
+    /* Support center */
+    .support-shell{
+      border-radius: 26px;
+      border: 1px solid var(--stroke);
+      background: color-mix(in oklab, var(--panel) 92%, transparent);
+      box-shadow: var(--shadow-float);
+      overflow:hidden;
+    }
+    .support-top{
+      padding: 16px 16px;
+      border-bottom: 1px solid var(--stroke);
+      display:flex; flex-wrap:wrap; gap: 12px;
+      align-items:center;
+      justify-content:space-between;
+      background: rgba(255,255,255,.04);
+    }
+    .tabs{ display:flex; gap: 8px; flex-wrap:wrap; }
+    .tab{
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      cursor:pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .tab[aria-selected="true"]{
+      background: rgba(250,185,21,.18);
+      border-color: rgba(250,185,21,.35);
+      color: var(--text);
+    }
+    .support-search{
+      display:flex; gap: 10px; align-items:center;
+      width: min(520px, 100%);
+    }
+    .support-search input{
+      flex:1;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.12);
+      color: var(--text);
+    }
+    html[data-theme="light"] .support-search input{ background: rgba(255,255,255,.7); }
+    .support-body{
+      display:grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 0;
+      min-height: 420px;
+    }
+    .support-list{
+      border-right: 1px solid var(--stroke);
+      padding: 14px;
+    }
+    .support-list .hint{
+      color: var(--muted);
+      font-size: 13px;
+      margin: 0 0 10px;
+      line-height:1.5;
+    }
+    .article{
+      padding: 12px 12px;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      margin-bottom: 10px;
+      cursor:pointer;
+    }
+    .article:hover{ background: rgba(255,255,255,.07); }
+    .article h4{ margin: 0 0 6px; font-size: 14px; }
+    .article p{ margin: 0; color: var(--muted); font-size: 13px; line-height:1.5; }
+
+    .support-view{
+      padding: 18px 18px;
+    }
+    .support-view h3{ margin: 0 0 10px; font-size: 18px; letter-spacing:-.01em; }
+    .support-view p{ margin: 0 0 10px; color: var(--muted); line-height:1.7; }
+    .support-view ul{ margin: 10px 0 0 18px; color: var(--muted); line-height:1.7; }
+    .support-view code{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.14);
+      color: color-mix(in oklab, var(--text) 92%, transparent);
+    }
+
+    @media (max-width: 980px){
+      .support-body{ grid-template-columns: 1fr; }
+      .support-list{ border-right:none; border-bottom:1px solid var(--stroke); }
+    }
+
+    /* Reference cards */
+    .refgrid{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    @media (max-width: 980px){ .refgrid{ grid-template-columns: 1fr; } }
+    .ref{
+      border-radius: 20px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      padding: 14px 14px;
+    }
+    .ref .top{ display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+    .ref strong{ font-size: 14px; }
+    .ref p{ margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height:1.55; }
+    .ref a{ color: var(--link); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* Footer */
+    footer{
+      padding: 28px 0 40px;
+      border-top: 1px solid var(--stroke);
+      background: color-mix(in oklab, var(--bg) 76%, transparent);
+    }
+    .foot{
+      display:flex; justify-content:space-between; gap: 16px; flex-wrap:wrap;
+      align-items:center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .foot a{ color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* Floating Savvy AI widget */
+    .ai-fab{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 60;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap: 10px;
+    }
+    .ai-button{
+      display:inline-flex; align-items:center; gap: 10px;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in oklab, var(--brand-yellow) 55%, var(--stroke));
+      background: linear-gradient(180deg, rgba(250,185,21,.98), rgba(250,185,21,.86));
+      color: var(--primary-ink);
+      font-weight: 900;
+      box-shadow: 0 22px 60px rgba(250,185,21,.22);
+      cursor:pointer;
+    }
+    .ai-panel{
+      width: min(360px, calc(100vw - 40px));
+      border-radius: 22px;
+      border: 1px solid var(--stroke);
+      background: color-mix(in oklab, var(--panel) 92%, transparent);
+      box-shadow: var(--shadow-float);
+      overflow:hidden;
+      display:none;
+    }
+    .ai-panel[aria-hidden="false"]{ display:block; }
+    .ai-head{
+      padding: 12px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+      border-bottom: 1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+    }
+    .ai-head strong{ font-size: 13px; }
+    .ai-head span{ font-size: 12px; color: var(--muted); }
+    .ai-close{
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      width: 36px; height: 32px;
+      display:grid; place-items:center;
+      cursor:pointer;
+    }
+    .ai-chat{
+      max-height: 340px;
+      overflow:auto;
+      padding: 12px 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .bubble{
+      max-width: 92%;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .bubble.me{
+      align-self:flex-end;
+      background: rgba(250,185,21,.14);
+      border-color: rgba(250,185,21,.30);
+      color: var(--text);
+    }
+    .bubble .small{
+      display:block;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ai-input{
+      display:flex;
+      gap: 8px;
+      padding: 12px 12px;
+      border-top: 1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+    }
+    .ai-input input{
+      flex:1;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.12);
+      color: var(--text);
+    }
+    html[data-theme="light"] .ai-input input{ background: rgba(255,255,255,.75); }
+    .ai-input button{
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(250,185,21,.35);
+      background: rgba(250,185,21,.18);
+      color: var(--text);
+      font-weight: 850;
+      cursor:pointer;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ scroll-behavior:auto !important; transition:none !important; animation:none !important; }
+      .btn:hover, .theme-toggle:hover{ transform:none; }
+      .phone, .card-float{ transform:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header>
+    <div class="wrap">
+      <div class="nav">
+        <div class="brand" aria-label="Swipe Savvy">
+          <img src="assets/logos/swipe_savvy_color.png" alt="Swipe Savvy" />
+          <span class="tag">Unified consumer + merchant</span>
+        </div>
+
+        <nav class="links" aria-label="Primary navigation">
+          <a href="#consumer">Consumers</a>
+          <a href="#merchants">Merchants</a>
+          <a href="#cdp">CDP &amp; Cohorts</a>
+          <a href="#support">Support</a>
+          <a href="#references">References</a>
+        </nav>
+
+        <div class="nav-actions">
+          <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M21 12.6A8.5 8.5 0 1 1 11.4 3 6.5 6.5 0 0 0 21 12.6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <a class="btn btn-ghost" href="#merchant-demo">Request demo</a>
+          <a class="btn btn-primary" href="#consumer-cta">
+            Join waitlist
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+
+          <button class="btn menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="drawer" id="drawer" hidden>
+        <div class="panel" aria-label="Mobile navigation">
+          <a href="#consumer">Consumers</a>
+          <a href="#merchants">Merchants</a>
+          <a href="#cdp">CDP &amp; Cohorts</a>
+          <a href="#support">Support</a>
+          <a href="#references">References</a>
+          <a href="#consumer-cta">Join waitlist</a>
+          <a href="#merchant-demo">Request demo</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- =========================
+         CONSUMER HERO
+         ========================= -->
+    <section class="hero" id="consumer">
+      <div class="wrap grid-2">
+        <div>
+          <div class="kicker">
+            <span class="dot" aria-hidden="true"></span>
+            For consumers — millennials &amp; Gen‑Z
+          </div>
+
+          <h1>Swipe smarter. <span class="grad">Earn rewards on debit</span> — automatically.</h1>
+
+          <p class="lead">
+            Shop smarter, earn points, make an impact. Every purchase with your <strong>Shop Savvy Visa Debit</strong> card builds rewards you can use right away or give back through the Swipe Savvy app.
+          </p>
+
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#consumer-cta">
+              Get early access
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <a class="btn btn-ghost" href="#consumer-features">Explore features</a>
+          </div>
+
+          <div class="micro" aria-label="Quick highlights">
+            <div class="pill">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 12l4 4 12-12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              No credit check
+            </div>
+            <div class="pill">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 2v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 7h7a3 3 0 0 1 0 6H10a3 3 0 0 0 0 6H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Redeem or donate points
+            </div>
+            <div class="pill">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 10c0 6-9 12-9 12S3 16 3 10a4.5 4.5 0 0 1 9 0 4.5 4.5 0 0 1 9 0Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+              Boosts by category
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-label="Swipe Savvy app homepage preview + Shop Savvy Visa card">
+          <div class="mock-stack">
+            <div class="blob" aria-hidden="true"></div>
+
+            <!-- App homepage mock (CSS “sample image”) -->
+            <div class="phone" aria-label="Swipe Savvy mobile app homepage sample">
+              <div class="screen">
+                <div class="status">
+                  <span>9:41</span>
+                  <span class="icons" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M2 17h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 13h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 5h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M7 10a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 14a9 9 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 18a13 13 0 0 1 18 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M6 7h12v10H6z" stroke="currentColor" stroke-width="2"/><path d="M8 5h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  </span>
+                </div>
+
+                <div class="appbar">
+                  <div>
+                    <div class="title">Home</div>
+                    <div class="sub">You’re on track this week</div>
+                  </div>
+                  <div class="actions" aria-hidden="true">
+                    <div class="chipbtn"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-4.4 7-11a7 7 0 0 0-14 0c0 6.6 7 11 7 11Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="2"/></svg></div>
+                    <div class="chipbtn"><svg viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 1 1-12 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 2v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="balance">
+                    <div>
+                      <div class="label">Available</div>
+                      <div class="val">$1,248.40</div>
+                    </div>
+                    <div class="cta">
+                      Send
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M22 2 11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M22 2 15 22l-4-9-9-4 20-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div class="minirow" aria-label="Quick balances">
+                    <div class="mini">
+                      <div class="k">This week</div>
+                      <div class="v">$312.18</div>
+                    </div>
+                    <div class="mini">
+                      <div class="k">Earned points</div>
+                      <div class="v">+1,420</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="points">
+                    <div class="left">
+                      <strong>Points to next boost</strong>
+                      <span>680 / 1,000 • Grocery 2×</span>
+                    </div>
+                    <div class="ring" aria-label="68% to next boost"><b>68%</b></div>
+                  </div>
+                </div>
+
+                <div class="quick" aria-label="Quick actions">
+                  <div class="qbtn">
+                    <div class="ic" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3l2.2 6.8H21l-5.5 4 2.1 6.7L12 16.9 6.4 20.5 8.5 13.8 3 9.8h6.8L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="t">
+                      <strong>Redeem</strong>
+                      <span>Gift cards or cash</span>
+                    </div>
+                  </div>
+
+                  <div class="qbtn">
+                    <div class="ic" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 21s-7-4.4-7-11a7 7 0 0 1 14 0c0 6.6-7 11-7 11Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M9.5 10.5 11 12l3.5-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="t">
+                      <strong>Donate</strong>
+                      <span>Support causes</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tx" aria-label="Recent activity">
+                  <div class="row">
+                    <div class="who">
+                      <span class="dot" aria-hidden="true"></span>
+                      <div class="meta">
+                        <strong>Local Coffee</strong>
+                        <span>+48 points • 2m ago</span>
+                      </div>
+                    </div>
+                    <div class="amt">-$8.20</div>
+                  </div>
+
+                  <div class="row">
+                    <div class="who">
+                      <span class="dot" style="background: rgba(96,186,70,.9)" aria-hidden="true"></span>
+                      <div class="meta">
+                        <strong>Groceries</strong>
+                        <span>+210 points • yesterday</span>
+                      </div>
+                    </div>
+                    <div class="amt">-$62.14</div>
+                  </div>
+                </div>
+
+                <div class="navdock" aria-label="Bottom navigation (static)">
+                  <div class="n active" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
+                  <div class="n" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 18V10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 18V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 18V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 18V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+                  <div class="n" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
+                  <div class="n" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/></svg></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-float" aria-label="Shop Savvy Visa debit rewards card">
+              <img
+                src="assets/cards/shop_savvy_hero_card_w1024.png"
+                srcset="assets/cards/shop_savvy_hero_card_w1024.png 1024w, assets/cards/shop_savvy_hero_card_w2048.png 2048w"
+                sizes="(max-width: 980px) 92vw, 520px"
+                alt="Shop Savvy debit rewards card with Visa mark" />
+            </div>
+
+            <div class="floating-stats" aria-hidden="true">
+              <div class="stat">
+                <div>
+                  <strong>Points you’ll actually use</strong>
+                  <span>Redeem for perks or donate to causes.</span>
+                </div>
+                <div class="badge">Flexible</div>
+              </div>
+
+              <div class="stat">
+                <div>
+                  <strong>Savvy AI concierge</strong>
+                  <span>Friendly nudges + budget help.</span>
+                </div>
+                <div class="badge">New</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         CONSUMER FEATURES
+         ========================= -->
+    <section class="section" id="consumer-features">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Built for how you shop, spend, and save.</h2>
+            <p>Clean design, instant insights, and rewards that keep up with real life — not “points math”.</p>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <article class="feature">
+            <div class="miniicon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3l2.2 6.8H21l-5.5 4 2.1 6.7L12 16.9 6.4 20.5 8.5 13.8 3 9.8h6.8L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Earn points on debit</h3>
+            <p>Swipe as usual with Shop Savvy Visa Debit. Points accrue automatically — no coupon hunting, no spreadsheets.</p>
+          </article>
+
+          <article class="feature">
+            <div class="miniicon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" fill="none">
+                <path d="M21 12a9 9 0 1 1-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M12 7v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Real‑time spend insights</h3>
+            <p>Track spend, see category trends, and get gentle alerts before you go off‑budget.</p>
+          </article>
+
+          <article class="feature">
+            <div class="miniicon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" fill="none">
+                <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Savvy AI concierge</h3>
+            <p>Ask questions like “can I afford this?” or “why was my spend higher?” and get clear, friendly answers.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         CONSUMER HOW IT WORKS
+         ========================= -->
+    <section class="section" id="consumer-how">
+      <div class="wrap grid-2">
+        <div>
+          <div class="section-head">
+            <div>
+              <h2>How it works</h2>
+              <p>A modern wallet experience that makes debit feel rewarding — without changing your habits.</p>
+            </div>
+          </div>
+
+          <div class="steps">
+            <div class="step">
+              <div class="num">1</div>
+              <div>
+                <h4>Join early access</h4>
+                <p>Get notified when Shop Savvy Visa Debit and the Swipe Savvy app are available in your area.</p>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="num">2</div>
+              <div>
+                <h4>Swipe like normal</h4>
+                <p>Earn points automatically on eligible spend. Unlock boosts for categories you use most.</p>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="num">3</div>
+              <div>
+                <h4>Redeem or donate</h4>
+                <p>Use points for perks — or donate to causes you care about, right in the app.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature" aria-label="Consumer trust & safety">
+          <h3 style="margin-top:0">Security-first by default</h3>
+          <p>Built with modern privacy and security patterns. Sensitive actions require confirmation. You control notifications and visibility.</p>
+          <p style="margin-top:12px"><span class="badge">Coming soon</span> Expand this section with your exact compliance, issuer, and privacy policy details.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         CONSUMER CTA
+         ========================= -->
+    <section class="section" id="consumer-cta">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Get early access</h2>
+            <p>Join the waitlist for consumers. We’ll email you when onboarding opens.</p>
+          </div>
+        </div>
+
+        <div class="support-shell" style="overflow:visible">
+          <div class="support-top" style="border-bottom:none">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <img src="assets/logos/shop_savvy_color.png" alt="Shop Savvy" style="height:28px;width:auto" />
+              <span class="badge">Shop Savvy Visa Debit</span>
+              <span class="badge">Swipe Savvy App</span>
+            </div>
+
+            <form id="waitlistForm" class="support-search" style="max-width:560px">
+              <input required type="email" name="email" placeholder="Email address" aria-label="Email address" />
+              <button class="btn btn-primary" type="submit">Join</button>
+            </form>
+          </div>
+          <div style="padding: 0 16px 16px; color: var(--muted); font-size: 13px;">
+            By joining, you agree to receive product updates. Unsubscribe anytime.
+            <span id="waitlistMsg" style="display:inline-block; margin-left: 10px; color: color-mix(in oklab, var(--brand-green) 70%, white); font-weight: 700;"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         MERCHANTS HERO
+         ========================= -->
+    <section class="section" id="merchants">
+      <div class="wrap grid-2">
+        <div>
+          <div class="kicker">
+            <span class="dot" aria-hidden="true"></span>
+            Swipe Savvy for merchants
+          </div>
+
+          <h1 style="font-size: clamp(32px, 3.8vw, 52px);">Turn purchases into <span class="grad">real‑time COHORTS</span> — and actions.</h1>
+
+          <p class="lead">
+            Swipe Savvy can become the most powerful CDP solution for merchants: live cohort intelligence plus an activation layer that
+            triggers offers, journeys, and loyalty changes the moment behavior shifts.
+          </p>
+
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#merchant-demo">
+              Request a demo
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <a class="btn btn-ghost" href="#cdp">Explore CDP &amp; cohorts</a>
+          </div>
+
+          <div class="micro" aria-label="Merchant highlights">
+            <div class="pill">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 12l4 4 12-12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Live cohorts (no refresh)
+            </div>
+            <div class="pill">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+              Instant activation
+            </div>
+            <div class="pill">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 18V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 18V10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M12 18V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M16 18V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M20 18V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              Lift measurement
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="dash-mock" aria-label="Merchant cohort dashboard sample">
+            <div class="dash-head">
+              <div>
+                <div class="dash-title">Cohorts — Live</div>
+                <div class="dash-sub">Updated just now • last 24h</div>
+              </div>
+              <span class="badge">Realtime</span>
+            </div>
+
+            <div class="dash-kpis">
+              <div class="dash-kpi">
+                <div class="dash-label">New‑to‑brand</div>
+                <div class="dash-value">12,481</div>
+                <div class="dash-meta up">+8% vs last week</div>
+              </div>
+              <div class="dash-kpi">
+                <div class="dash-label">Churn risk</div>
+                <div class="dash-value">3,912</div>
+                <div class="dash-meta down">‑3% vs last week</div>
+              </div>
+              <div class="dash-kpi">
+                <div class="dash-label">High‑value</div>
+                <div class="dash-value">1,144</div>
+                <div class="dash-meta up">+2% vs last week</div>
+              </div>
+            </div>
+
+            <div class="dash-chart" aria-hidden="true">
+              <svg viewBox="0 0 320 120" width="100%" height="120" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stop-color="var(--brand-yellow)" stop-opacity="0.9"/>
+                    <stop offset="1" stop-color="var(--brand-green)" stop-opacity="0.9"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0 92 C 40 86, 55 44, 88 58 C 118 72, 132 86, 160 70 C 194 50, 216 20, 248 40 C 276 58, 292 82, 320 62"
+                      fill="none" stroke="url(#g1)" stroke-width="4" stroke-linecap="round"/>
+                <path d="M0 110 L0 92 C 40 86, 55 44, 88 58 C 118 72, 132 86, 160 70 C 194 50, 216 20, 248 40 C 276 58, 292 82, 320 62 L320 110 Z"
+                      fill="url(#g1)" opacity="0.14"/>
+              </svg>
+            </div>
+
+            <div class="dash-actions" aria-label="Example activation">
+              <span class="badge">Trigger: enters “Churn risk”</span>
+              <span class="badge">Action: send offer</span>
+              <span class="badge">Channel: push / email</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         MERCHANT BENEFITS
+         ========================= -->
+    <section class="section" id="merchant-benefits">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Why merchants use Swipe Savvy</h2>
+            <p>A merchant‑side rewards engine that connects <strong>cohort intelligence</strong> to <strong>real actions</strong> — not dashboards you never use.</p>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <article class="feature">
+            <div class="miniicon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" fill="none">
+                <path d="M4 18V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 18V10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M12 18V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M16 18V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M20 18V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>Real‑time cohort CDP</h3>
+            <p>Define cohorts once. They update continuously with real purchase behavior (no nightly refresh cycles).</p>
+          </article>
+
+          <article class="feature">
+            <div class="miniicon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Event‑based activation</h3>
+            <p>Trigger actions on <em>enter / exit cohort</em>, frequency changes, spend thresholds, and category shifts.</p>
+          </article>
+
+          <article class="feature">
+            <div class="miniicon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" fill="none">
+                <path d="M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>Measure cohort lift</h3>
+            <p>Run holdouts, see incrementality, and understand which cohort actions actually move revenue.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         CDP + COHORTS DEEP DIVE
+         ========================= -->
+    <section class="section" id="cdp">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>CDP + real‑time COHORTS + action</h2>
+            <p>
+              Positioning for merchants: Swipe Savvy becomes an operating system for retention — <strong>cohort intelligence</strong> plus an <strong>activation layer</strong> that acts immediately.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid-2" style="align-items:start">
+          <div class="feature">
+            <h3 style="margin-top:0">How it’s different</h3>
+            <p>
+              Most CDPs stop at segmentation. Swipe Savvy is designed to connect the segmentation to action — in real time — using behavioral events and transaction streams.
+            </p>
+            <ul>
+              <li><strong>Real-time cohort membership:</strong> who is “at risk” updates as soon as spend patterns change.</li>
+              <li><strong>Enter/exit triggers:</strong> cohorts double as automation triggers.</li>
+              <li><strong>Closed-loop measurement:</strong> lift tracking by cohort + campaign + channel.</li>
+            </ul>
+          </div>
+
+          <div class="feature">
+            <h3 style="margin-top:0">Activation examples</h3>
+            <p>When cohort membership changes, you can trigger actions like:</p>
+            <ul>
+              <li><strong>Offers:</strong> push, email, SMS, in-app banners</li>
+              <li><strong>Loyalty rules:</strong> tier upgrades, multipliers, bonus points</li>
+              <li><strong>Journeys:</strong> win-back sequences, onboarding, VIP nurture</li>
+              <li><strong>Audiences:</strong> export to ad platforms or remarketing</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="height: 18px"></div>
+
+        <h3 style="margin: 0 0 10px; font-size: 18px; letter-spacing:-.01em;">Cohort templates (starter set)</h3>
+        <table class="table" aria-label="Cohort template table">
+          <thead>
+            <tr>
+              <th>Cohort</th>
+              <th>Definition (example)</th>
+              <th>Instant action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>New‑to‑brand</strong></td>
+              <td class="mono">first_purchase_within(14d)</td>
+              <td>Onboarding journey + personalized next-best offer</td>
+            </tr>
+            <tr>
+              <td><strong>Churn risk</strong></td>
+              <td class="mono">days_since_last_purchase &gt; baseline_p95</td>
+              <td>Win‑back offer + reminder sequence + store locator nudge</td>
+            </tr>
+            <tr>
+              <td><strong>High‑value</strong></td>
+              <td class="mono">lifetime_value &gt; threshold AND freq_30d ≥ 3</td>
+              <td>VIP tier + early access + surprise perk</td>
+            </tr>
+            <tr>
+              <td><strong>Category switcher</strong></td>
+              <td class="mono">category_mix_change(7d)</td>
+              <td>Cross‑sell bundle + content recommendations</td>
+            </tr>
+            <tr>
+              <td><strong>Deal seeker</strong></td>
+              <td class="mono">promo_redemptions_30d ≥ 2</td>
+              <td>Dynamic offer ladder + time‑boxed bundles</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="height: 18px"></div>
+
+        <div class="grid-2" style="align-items:start">
+          <div class="feature">
+            <h3 style="margin-top:0">Real‑time means real‑time</h3>
+            <p>
+              As transactions arrive, cohorts update immediately. This enables actions like:
+            </p>
+            <ul>
+              <li><strong>“Saved” customers:</strong> stop win-back messages once someone returns</li>
+              <li><strong>Instant rewards:</strong> apply multipliers the moment a customer hits a threshold</li>
+              <li><strong>Smart throttling:</strong> limit outreach to protect margins</li>
+            </ul>
+          </div>
+
+          <div class="feature">
+            <h3 style="margin-top:0">Measurement loop</h3>
+            <p>
+              Every activation should have a measurable outcome. Suggested loop:
+            </p>
+            <ul>
+              <li><strong>Define cohort</strong> (who/why)</li>
+              <li><strong>Trigger action</strong> (offer/journey)</li>
+              <li><strong>Measure lift</strong> (holdout, incrementality)</li>
+              <li><strong>Iterate</strong> (adjust thresholds, creatives, channels)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         MERCHANT DEMO CTA
+         ========================= -->
+    <section class="section" id="merchant-demo">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Request a merchant demo</h2>
+            <p>Tell us about your business — we’ll follow up with an activation + cohort CDP walkthrough.</p>
+          </div>
+        </div>
+
+        <div class="support-shell" style="overflow:visible">
+          <div class="support-top" style="border-bottom:none">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <img src="assets/logos/swipe_savvy_color.png" alt="Swipe Savvy" style="height:26px;width:auto" />
+              <span class="badge">Merchant CDP</span>
+              <span class="badge">Real-time cohorts</span>
+            </div>
+
+            <form id="demoForm" class="support-search" style="max-width:700px">
+              <input required type="email" name="email" placeholder="Work email" aria-label="Work email" />
+              <input required type="text" name="company" placeholder="Company" aria-label="Company" />
+              <button class="btn btn-primary" type="submit">Send</button>
+            </form>
+          </div>
+          <div style="padding: 0 16px 16px; color: var(--muted); font-size: 13px;">
+            We’ll reach out within 1–2 business days.
+            <span id="demoMsg" style="display:inline-block; margin-left: 10px; color: color-mix(in oklab, var(--brand-green) 70%, white); font-weight: 700;"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         SUPPORT (CONSUMERS + MERCHANTS)
+         ========================= -->
+    <section class="section" id="support">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Support center</h2>
+            <p>
+              Self‑serve answers for consumers and merchants. Use search below — or the <strong>Savvy AI Support</strong> widget in the corner.
+            </p>
+          </div>
+        </div>
+
+        <div class="support-shell" role="region" aria-label="Support center">
+          <div class="support-top">
+            <div class="tabs" role="tablist" aria-label="Support audience tabs">
+              <button class="tab" id="tabConsumer" role="tab" aria-selected="true" aria-controls="supportPanel" data-audience="consumer">Consumers</button>
+              <button class="tab" id="tabMerchant" role="tab" aria-selected="false" aria-controls="supportPanel" data-audience="merchant">Merchants</button>
+            </div>
+
+            <form class="support-search" id="supportSearchForm">
+              <input id="supportQuery" type="search" placeholder="Ask a question (e.g., “How do points work?” or “What is a real-time cohort?”)" aria-label="Search support" />
+              <button class="btn" type="submit">Search</button>
+            </form>
+          </div>
+
+          <div class="support-body" id="supportPanel">
+            <div class="support-list" aria-label="Support articles list">
+              <p class="hint">Tip: click an article to open it. Results update based on your role tab.</p>
+              <div id="supportArticles"></div>
+            </div>
+
+            <div class="support-view" aria-label="Support article viewer">
+              <h3 id="articleTitle">Start here</h3>
+              <p id="articleBody">Search above or choose an article on the left. The Savvy AI widget uses the same knowledge base.</p>
+              <div id="articleExtra"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         REFERENCES
+         ========================= -->
+    <section class="section" id="references">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>References &amp; handoff links</h2>
+            <p>Everything you need to keep building (and to hand to Claude for coding). These links open local files included in the ZIP.</p>
+          </div>
+        </div>
+
+        <div class="refgrid">
+          <div class="ref">
+            <div class="top">
+              <strong>Mobile app reference (HTML)</strong>
+              <span class="badge">Provided</span>
+            </div>
+            <p>
+              Used to build the hero “homepage sample” styling.
+              <a href="references/mobile-app-prototype.html" target="_blank" rel="noreferrer">Open mobile app prototype</a>
+            </p>
+          </div>
+
+          <div class="ref">
+            <div class="top">
+              <strong>Brand tokens (JSON)</strong>
+              <span class="badge">Handoff</span>
+            </div>
+            <p>
+              Colors, radii, typography — ready for Tailwind/Next.js setup.
+              <a href="handoff/design-tokens.json" target="_blank" rel="noreferrer">Open design tokens</a>
+            </p>
+          </div>
+
+          <div class="ref">
+            <div class="top">
+              <strong>Logos used</strong>
+              <span class="badge">Assets</span>
+            </div>
+            <p>
+              Swipe Savvy logo (company + merchant rewards engine) and Shop Savvy logo (Visa debit references).
+              <span class="mono">assets/logos/</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap foot">
+      <div>© <span id="year"></span> Swipe Savvy • Shop Savvy Visa Debit (design prototype)</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="#support">Support</a>
+        <a href="#references">References</a>
+        <a href="#consumer-cta">Join waitlist</a>
+        <a href="#merchant-demo">Request demo</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating Savvy AI widget -->
+  <div class="ai-fab" aria-label="Savvy AI support widget">
+    <div class="ai-panel" id="aiPanel" aria-hidden="true">
+      <div class="ai-head">
+        <div>
+          <strong>Savvy AI Support</strong>
+          <span>Self‑serve (docs-based)</span>
+        </div>
+        <button class="ai-close" id="aiClose" aria-label="Close support chat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="ai-chat" id="aiChat" aria-label="Chat messages">
+        <div class="bubble">
+          Hi — ask me anything about Swipe Savvy (consumers) or the merchant cohort CDP.
+          <span class="small">Example: “How do I redeem points?” or “What triggers an enter/exit cohort action?”</span>
+        </div>
+      </div>
+      <form class="ai-input" id="aiForm">
+        <input id="aiInput" type="text" placeholder="Ask Savvy AI…" aria-label="Ask a question" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+
+    <button class="ai-button" id="aiToggle" aria-label="Open Savvy AI support">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      Savvy AI
+    </button>
+  </div>
+
+  <script>
+    // ----------------------------
+    // Small helpers
+    // ----------------------------
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    // Year
+    $('#year').textContent = new Date().getFullYear();
+
+    // Theme
+    const themeToggle = $('#themeToggle');
+    const storedTheme = localStorage.getItem('swipe_theme');
+    if(storedTheme){ document.documentElement.setAttribute('data-theme', storedTheme); }
+
+    themeToggle?.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('swipe_theme', next);
+    });
+
+    // Mobile nav drawer
+    const menuBtn = $('#menuBtn');
+    const drawer = $('#drawer');
+    menuBtn?.addEventListener('click', () => {
+      const isOpen = menuBtn.getAttribute('aria-expanded') === 'true';
+      menuBtn.setAttribute('aria-expanded', String(!isOpen));
+      drawer.hidden = isOpen;
+    });
+    $$('#drawer a').forEach(a => a.addEventListener('click', () => {
+      drawer.hidden = true;
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }));
+
+    // Fake form submits (wire these to backend later)
+    const waitlistForm = $('#waitlistForm');
+    const waitlistMsg = $('#waitlistMsg');
+    waitlistForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = new FormData(waitlistForm).get('email');
+      waitlistMsg.textContent = email ? 'Added — check your inbox soon.' : 'Thanks!';
+      waitlistForm.reset();
+      setTimeout(() => waitlistMsg.textContent = '', 6000);
+    });
+
+    const demoForm = $('#demoForm');
+    const demoMsg = $('#demoMsg');
+    demoForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      demoMsg.textContent = 'Request received — we’ll reach out.';
+      demoForm.reset();
+      setTimeout(() => demoMsg.textContent = '', 7000);
+    });
+
+    // ----------------------------
+    // Support knowledge base (local demo)
+    // In production: replace "searchDocs()" with vector search + LLM answers.
+    // ----------------------------
+    const SUPPORT_DOCS = [
+      // Consumers
+      {
+        id: 'c-start',
+        audience: 'consumer',
+        title: 'Getting started (consumer)',
+        summary: 'Join the waitlist, get access, and set up Shop Savvy Visa Debit inside Swipe Savvy.',
+        body: [
+          'Join the consumer waitlist from the site.',
+          'When onboarding opens, you’ll receive an invite link.',
+          'Inside Swipe Savvy, you’ll be able to connect your Shop Savvy Visa Debit and start earning points automatically.',
+          'Tip: keep notifications on so you don’t miss boosts and reward milestones.'
+        ]
+      },
+      {
+        id: 'c-points',
+        audience: 'consumer',
+        title: 'How points work',
+        summary: 'Earn points automatically on eligible debit purchases. Boosts increase your earn rate.',
+        body: [
+          'Swipe like normal with Shop Savvy Visa Debit.',
+          'Points are added after eligible transactions post.',
+          'Boosts can increase points on certain categories (e.g., grocery, coffee, rides).',
+          'You’ll see points earned per transaction in the Activity feed.'
+        ]
+      },
+      {
+        id: 'c-redeem',
+        audience: 'consumer',
+        title: 'Redeeming points',
+        summary: 'Redeem for perks (gift cards, cash-style options) or convert to donations.',
+        body: [
+          'Open Rewards → Redeem.',
+          'Choose a reward type (perk, gift card, etc.).',
+          'Confirm redemption. You’ll see a receipt inside Rewards History.',
+          'If a reward isn’t available yet, it will show as “Coming soon.”'
+        ]
+      },
+      {
+        id: 'c-donate',
+        audience: 'consumer',
+        title: 'Donating points to causes',
+        summary: 'Donate points directly to supported organizations in a few taps.',
+        body: [
+          'Open Rewards → Donate.',
+          'Pick a cause and choose an amount of points.',
+          'Confirm donation. You’ll get an in-app receipt.',
+          'You can set donation goals (e.g., donate 5% of points each month).'
+        ]
+      },
+      {
+        id: 'c-security',
+        audience: 'consumer',
+        title: 'Security & privacy basics',
+        summary: 'Security-first patterns for modern wallets (prototype section — customize for compliance).',
+        body: [
+          'Sensitive actions require confirmation.',
+          'You control notification settings and permissions.',
+          'For production, add your issuer details, privacy policy, and compliance posture here.'
+        ]
+      },
+
+      // Merchants
+      {
+        id: 'm-overview',
+        audience: 'merchant',
+        title: 'Swipe Savvy for merchants (overview)',
+        summary: 'A real-time cohort CDP + activation layer designed for retention and measurable lift.',
+        body: [
+          'Define cohorts once (New-to-brand, Churn risk, High-value, etc.).',
+          'Cohorts update continuously as transactions arrive.',
+          'Use cohort enter/exit events to trigger actions (offers, journeys, loyalty changes).',
+          'Measure lift with holdouts and cohort-based reporting.'
+        ]
+      },
+      {
+        id: 'm-cohorts',
+        audience: 'merchant',
+        title: 'What is a real-time cohort?',
+        summary: 'A cohort is a living segment that updates instantly as customer behavior changes.',
+        body: [
+          'Traditional segments are static and refreshed nightly/weekly.',
+          'Real-time cohorts update with each new event (purchase, visit, engagement).',
+          'This enables immediate actions: win-back when churn risk increases; stop win-back when the customer returns.',
+          'Use cohorts for both insight and automation triggers.'
+        ]
+      },
+      {
+        id: 'm-activation',
+        audience: 'merchant',
+        title: 'Activation: enter/exit triggers',
+        summary: 'Trigger actions when customers enter or exit a cohort — not just on a schedule.',
+        body: [
+          'Examples:',
+          '• Enter “Churn risk” → send win-back offer',
+          '• Exit “Churn risk” → stop sequence + send welcome-back perk',
+          '• Enter “High-value” → VIP tier + early access',
+          'Actions can route to email, push, SMS, in-app, or audience exports.'
+        ]
+      },
+      {
+        id: 'm-measurement',
+        audience: 'merchant',
+        title: 'Measuring lift & incrementality',
+        summary: 'Use holdouts and cohort-based reporting to measure what actually moved revenue.',
+        body: [
+          'Set a holdout group within the cohort (e.g., 10%).',
+          'Run the same time window and compare outcomes (frequency, AOV, retention).',
+          'Report by cohort + channel + creative.',
+          'Iterate thresholds and offers based on observed lift.'
+        ]
+      },
+      {
+        id: 'm-integrations',
+        audience: 'merchant',
+        title: 'Integrations (POS, eCom, and messaging)',
+        summary: 'Connect transaction streams and push actions to the tools you already use.',
+        body: [
+          'Inputs: POS, eCommerce, loyalty systems, web/app events.',
+          'Outputs: email/SMS providers, push, ad platforms, data warehouse.',
+          'Start with one channel and expand once measurement is solid.'
+        ]
+      }
+    ];
+
+    function tokenize(q){
+      return (q || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g,' ')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 24);
+    }
+
+    function scoreDoc(tokens, doc){
+      const hay = (doc.title + ' ' + doc.summary + ' ' + doc.body.join(' ')).toLowerCase();
+      let score = 0;
+      for(const t of tokens){
+        if(hay.includes(t)) score += 2;
+      }
+      // small bonus for exact phrase
+      const phrase = tokens.join(' ');
+      if(phrase.length > 8 && hay.includes(phrase)) score += 4;
+      return score;
+    }
+
+    function searchDocs(query, audience){
+      const tokens = tokenize(query);
+      const pool = SUPPORT_DOCS.filter(d => !audience || d.audience === audience);
+      const scored = pool
+        .map(d => ({...d, _score: scoreDoc(tokens, d)}))
+        .sort((a,b) => b._score - a._score);
+      // If query is empty, return default top docs for audience
+      if(!tokens.length){
+        return pool.slice(0, 5).map(d => ({...d, _score: 1}));
+      }
+      return scored.filter(d => d._score > 0).slice(0, 6);
+    }
+
+    // Render support center
+    const supportArticles = $('#supportArticles');
+    const articleTitle = $('#articleTitle');
+    const articleBody = $('#articleBody');
+    const articleExtra = $('#articleExtra');
+    const supportQuery = $('#supportQuery');
+    const supportSearchForm = $('#supportSearchForm');
+
+    let currentAudience = 'consumer';
+
+    function openDoc(doc){
+      articleTitle.textContent = doc.title;
+      articleBody.textContent = doc.summary;
+      articleExtra.innerHTML = '';
+      const ul = document.createElement('ul');
+      doc.body.forEach(line => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        ul.appendChild(li);
+      });
+      articleExtra.appendChild(ul);
+    }
+
+    function renderList(query=''){
+      const results = searchDocs(query, currentAudience);
+      supportArticles.innerHTML = '';
+      if(!results.length){
+        supportArticles.innerHTML = '<div class="article"><h4>No results</h4><p>Try a different search, or open Savvy AI for a guided answer.</p></div>';
+        return;
+      }
+      results.forEach((doc, idx) => {
+        const card = document.createElement('div');
+        card.className = 'article';
+        card.tabIndex = 0;
+        card.innerHTML = `<h4>${doc.title}</h4><p>${doc.summary}</p>`;
+        card.addEventListener('click', () => openDoc(doc));
+        card.addEventListener('keydown', (e) => { if(e.key === 'Enter') openDoc(doc); });
+        supportArticles.appendChild(card);
+        if(idx === 0 && query){ openDoc(doc); }
+      });
+    }
+
+    // Tabs
+    const tabConsumer = $('#tabConsumer');
+    const tabMerchant = $('#tabMerchant');
+    function setAudience(a){
+      currentAudience = a;
+      tabConsumer.setAttribute('aria-selected', String(a === 'consumer'));
+      tabMerchant.setAttribute('aria-selected', String(a === 'merchant'));
+      renderList(supportQuery.value || '');
+    }
+    tabConsumer?.addEventListener('click', () => setAudience('consumer'));
+    tabMerchant?.addEventListener('click', () => setAudience('merchant'));
+
+    // Search form
+    supportSearchForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      renderList(supportQuery.value || '');
+    });
+
+    // Initial list
+    renderList('');
+
+    // ----------------------------
+    // Savvy AI widget (docs-based demo)
+    // ----------------------------
+    const aiToggle = $('#aiToggle');
+    const aiPanel = $('#aiPanel');
+    const aiClose = $('#aiClose');
+    const aiChat = $('#aiChat');
+    const aiForm = $('#aiForm');
+    const aiInput = $('#aiInput');
+
+    function setAiOpen(open){
+      aiPanel.setAttribute('aria-hidden', String(!open));
+      if(open){
+        aiInput.focus();
+      }
+    }
+    aiToggle?.addEventListener('click', () => {
+      const isHidden = aiPanel.getAttribute('aria-hidden') === 'true';
+      setAiOpen(isHidden);
+    });
+    aiClose?.addEventListener('click', () => setAiOpen(false));
+
+    function addBubble(text, who='ai'){
+      const div = document.createElement('div');
+      div.className = 'bubble' + (who === 'me' ? ' me' : '');
+      div.textContent = text;
+      aiChat.appendChild(div);
+      aiChat.scrollTop = aiChat.scrollHeight;
+      return div;
+    }
+
+    function answerWithDocs(q){
+      // If user indicates merchant keywords, bias merchant docs; else consumer.
+      const ql = (q||'').toLowerCase();
+      const audienceHint = /(cohort|cdp|merchant|activation|lift|pos|holdout)/.test(ql) ? 'merchant' :
+                           /(points|redeem|donat|debit|card|consumer)/.test(ql) ? 'consumer' : null;
+
+      const results = searchDocs(q, audienceHint);
+      if(!results.length){
+        return {
+          answer: "I couldn’t find a direct match in the demo docs. Try rephrasing, or ask something like “How do points work?” or “What is a real-time cohort?”",
+          sources: []
+        };
+      }
+      const top = results[0];
+      const bullets = top.body.slice(0, 4).map(b => '• ' + b).join('\n');
+      return {
+        answer: `${top.title}\n\n${top.summary}\n\n${bullets}`,
+        sources: results.slice(0, 3).map(r => r.title)
+      };
+    }
+
+    aiForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = (aiInput.value || '').trim();
+      if(!q) return;
+      addBubble(q, 'me');
+      aiInput.value = '';
+      const {answer, sources} = answerWithDocs(q);
+      const b = addBubble(answer, 'ai');
+      if(sources.length){
+        const small = document.createElement('span');
+        small.className = 'small';
+        small.textContent = 'Sources: ' + sources.join(' • ');
+        b.appendChild(small);
+      }
+    });
+
+  </script>
+</body>
+</html>
