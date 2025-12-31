@@ -1,0 +1,16 @@
+env: load .env.local .env
+env: export ENV API_BASE_URL AI_API_BASE_URL WS_URL ENABLE_AI_CONCIERGE ENABLE_VOICE_INPUT ENABLE_BIOMETRIC_AUTH ENABLE_PUSH_NOTIFICATIONS ANALYTICS_ENABLED AI_STREAM_TIMEOUT AI_CACHE_TTL DEBUG_MODE MOCK_API EXPO_NO_DOTENV
+Starting project at /Users/macbookpro/Documents/swipesavvy-mobile-app-v2/swipesavvy-mobile-app
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  @sentry/react-native@7.8.0 - expected version: ~7.2.0
+  react@18.2.0 - expected version: 19.1.0
+  react-dom@18.2.0 - expected version: 19.1.0
+  react-native@0.73.11 - expected version: 0.81.5
+  react-native-reanimated@3.10.1 - expected version: ~4.1.1
+  react-native-svg@15.15.1 - expected version: 15.12.1
+  sentry-expo@7.1.1 - expected version: ~7.0.0
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.

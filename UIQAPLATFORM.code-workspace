@@ -1,0 +1,172 @@
+{
+  "folders": [
+    {
+      "name": "📱 mobile-app",
+      "path": "./swipesavvy-mobile-app"
+    },
+    {
+      "name": "💳 mobile-wallet",
+      "path": "./swipesavvy-mobile-wallet"
+    },
+    {
+      "name": "🖥️  admin-portal",
+      "path": "./swipesavvy-admin-portal"
+    },
+    {
+      "name": "🌐 customer-website",
+      "path": "./swipesavvy-customer-website"
+    },
+    {
+      "name": "🤖 ai-agents",
+      "path": "./swipesavvy-ai-agents"
+    }
+  ],
+  "settings": {
+    "files.eol": "\n",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true,
+      "source.organizeImports": true
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "eslint.workingDirectories": [
+      {
+        "mode": "auto"
+      }
+    ],
+    "javascript.suggest.autoImports": true,
+    "react.preferredTheme": "light",
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.python",
+      "editor.formatOnSave": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.next": true,
+      "**/build": true,
+      "**/__pycache__": true,
+      "**/.venv": true
+    },
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.DS_Store": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules": true,
+      "**/.git/objects": true,
+      "**/dist": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "ms-vscode.vscode-typescript-next",
+      "axe-devtools.axe-devtools",
+      "deque-systems.webaccessibility",
+      "ms-vscode-remote.remote-containers",
+      "github.copilot",
+      "eamodio.gitlens",
+      "codeium.codeium",
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "charliermarsh.ruff",
+      "ms-vscode.makefile-tools",
+      "sonarsource.sonarlint-vscode",
+      "percy.vscode-percy-cli"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Mobile App - Debug",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder:📱 mobile-app}/node_modules/.bin/react-native",
+        "args": [
+          "start"
+        ],
+        "cwd": "${workspaceFolder:📱 mobile-app}",
+        "console": "integratedTerminal"
+      },
+      {
+        "name": "Admin Portal - Dev Server",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder:🖥️  admin-portal}/node_modules/.bin/vite",
+        "args": [],
+        "cwd": "${workspaceFolder:🖥️  admin-portal}",
+        "console": "integratedTerminal"
+      },
+      {
+        "name": "Customer Website - Dev Server",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder:🌐 customer-website}/node_modules/.bin/next",
+        "args": [
+          "dev"
+        ],
+        "cwd": "${workspaceFolder:🌐 customer-website}",
+        "console": "integratedTerminal"
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Install Dependencies (All)",
+        "type": "shell",
+        "command": "bash",
+        "args": [
+          "-c",
+          "for dir in swipesavvy-mobile-app swipesavvy-mobile-wallet swipesavvy-admin-portal swipesavvy-customer-website swipesavvy-ai-agents; do if [ -d \"$dir\" ]; then echo \"Installing $dir...\"; cd \"$dir\" && npm install && cd ..; fi; done"
+        ],
+        "problemMatcher": [],
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "Lint All Repos",
+        "type": "shell",
+        "command": "bash",
+        "args": [
+          "-c",
+          "for dir in swipesavvy-mobile-app swipesavvy-admin-portal swipesavvy-customer-website; do if [ -f \"$dir/package.json\" ]; then echo \"Linting $dir...\"; cd \"$dir\" && npm run lint 2>&1; cd ..; fi; done"
+        ],
+        "problemMatcher": [
+          "$eslint-stylish"
+        ]
+      },
+      {
+        "label": "Type Check All Repos",
+        "type": "shell",
+        "command": "bash",
+        "args": [
+          "-c",
+          "for dir in swipesavvy-mobile-app swipesavvy-admin-portal swipesavvy-customer-website; do if [ -f \"$dir/tsconfig.json\" ]; then echo \"Type checking $dir...\"; cd \"$dir\" && npx tsc --noEmit 2>&1; cd ..; fi; done"
+        ],
+        "problemMatcher": [
+          "$tsc"
+        ]
+      }
+    ]
+  }
+}

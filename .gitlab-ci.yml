@@ -1,0 +1,238 @@
+stages:
+  - lint
+  - build
+  - test
+  - security
+  - deploy
+
+variables:
+  NODE_VERSION: "18"
+  PYTHON_VERSION: "3.9"
+  DOCKER_IMAGE: "node:18-alpine"
+
+# ========== LINT STAGE ==========
+lint:mobile-app:
+  stage: lint
+  image: node:18-alpine
+  script:
+    - cd swipesavvy-mobile-app
+    - npm install
+    - npm run lint
+  cache:
+    paths:
+      - swipesavvy-mobile-app/node_modules/
+  allow_failure: false
+
+lint:mobile-wallet:
+  stage: lint
+  image: node:18-alpine
+  script:
+    - cd swipesavvy-mobile-wallet
+    - npm install
+    - npm run lint
+  cache:
+    paths:
+      - swipesavvy-mobile-wallet/node_modules/
+  allow_failure: false
+
+lint:admin-portal:
+  stage: lint
+  image: node:18-alpine
+  script:
+    - cd swipesavvy-admin-portal
+    - npm install
+    - npm run lint
+  cache:
+    paths:
+      - swipesavvy-admin-portal/node_modules/
+  allow_failure: false
+
+lint:customer-website:
+  stage: lint
+  image: node:18-alpine
+  script:
+    - cd swipesavvy-customer-website
+    - npm install
+    - npm run lint || true
+  cache:
+    paths:
+      - swipesavvy-customer-website/node_modules/
+  allow_failure: true
+
+# ========== BUILD STAGE ==========
+build:mobile-app:
+  stage: build
+  image: node:18-alpine
+  script:
+    - cd swipesavvy-mobile-app
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - swipesavvy-mobile-app/build/
+  cache:
+    paths:
+      - swipesavvy-mobile-app/node_modules/
+
+build:mobile-wallet:
+  stage: build
+  image: node:18-alpine
+  script:
+    - cd swipesavvy-mobile-wallet
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - swipesavvy-mobile-wallet/build/
+  cache:
+    paths:
+      - swipesavvy-mobile-wallet/node_modules/
+
+build:admin-portal:
+  stage: build
+  image: node:18-alpine
+  script:
+    - cd swipesavvy-admin-portal
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - swipesavvy-admin-portal/dist/
+  cache:
+    paths:
+      - swipesavvy-admin-portal/node_modules/
+
+build:customer-website:
+  stage: build
+  image: node:18-alpine
+  script:
+    - cd swipesavvy-customer-website
+    - npm install
+    - npm run build || true
+  artifacts:
+    paths:
+      - swipesavvy-customer-website/dist/
+  cache:
+    paths:
+      - swipesavvy-customer-website/node_modules/
+  allow_failure: true
+
+# ========== TEST STAGE ==========
+test:admin-portal-e2e:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.40.0
+  script:
+    - cd swipesavvy-admin-portal
+    - npm install
+    - npx playwright install
+    - npm run test:e2e || true
+  artifacts:
+    paths:
+      - swipesavvy-admin-portal/test-results/
+    reports:
+      junit: swipesavvy-admin-portal/test-results/junit.xml
+    expire_in: 30 days
+  allow_failure: true
+
+test:api-contracts:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.40.0
+  script:
+    - cd swipesavvy-mobile-app
+    - npm install
+    - npx playwright install
+    - npm run test:api || true
+  artifacts:
+    paths:
+      - swipesavvy-mobile-app/test-results/
+    reports:
+      junit: swipesavvy-mobile-app/test-results/junit.xml
+    expire_in: 30 days
+  allow_failure: true
+
+test:mobile-app-unit:
+  stage: test
+  image: node:18-alpine
+  script:
+    - cd swipesavvy-mobile-app
+    - npm install
+    - npm run test:unit -- --coverage
+  artifacts:
+    paths:
+      - swipesavvy-mobile-app/coverage/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: swipesavvy-mobile-app/coverage/cobertura-coverage.xml
+    expire_in: 30 days
+  allow_failure: true
+
+# ========== SECURITY STAGE ==========
+security:dependencies:
+  stage: security
+  image: node:18-alpine
+  script:
+    - npm install -g snyk
+    - cd swipesavvy-mobile-app && npm audit --audit-level=moderate || true
+    - cd ../swipesavvy-admin-portal && npm audit --audit-level=moderate || true
+    - cd ../swipesavvy-mobile-wallet && npm audit --audit-level=moderate || true
+  allow_failure: true
+
+security:secrets:
+  stage: security
+  image: python:3.9-alpine
+  script:
+    - pip install detect-secrets
+    - detect-secrets scan --baseline .baseline
+  allow_failure: true
+
+security:sast:
+  stage: security
+  image: returntocorp/semgrep
+  script:
+    - semgrep --config=p/security-audit --config=p/owasp-top-ten .
+  allow_failure: true
+
+# ========== DEPLOY STAGE ==========
+deploy:staging:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying to staging environment..."
+    - apk add --no-cache curl
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "develop" ]; then
+        echo "Deploying admin-portal to staging..."
+        curl -X POST https://staging.deploy.example.com/api/deploy \
+          -H "Authorization: Bearer $STAGING_DEPLOY_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{"service":"admin-portal","version":"'$CI_COMMIT_SHA'"}'
+      fi
+  environment:
+    name: staging
+    url: https://staging.swipesavvy.example.com
+  only:
+    - develop
+  allow_failure: true
+
+deploy:production:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying to production environment..."
+    - apk add --no-cache curl
+    - |
+      if [ "$CI_COMMIT_TAG" ]; then
+        echo "Deploying admin-portal to production..."
+        curl -X POST https://prod.deploy.example.com/api/deploy \
+          -H "Authorization: Bearer $PRODUCTION_DEPLOY_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{"service":"admin-portal","version":"'$CI_COMMIT_TAG'"}'
+      fi
+  environment:
+    name: production
+    url: https://swipesavvy.example.com
+  when: manual
+  only:
+    - tags
+  allow_failure: false

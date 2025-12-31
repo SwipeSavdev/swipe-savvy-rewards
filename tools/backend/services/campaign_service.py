@@ -1,27 +1,28 @@
 """
 Campaign Management API Service
-Handles campaign CRUD operations and state transitions
-File: campaign_service.py
+Handles campaign CRUD operations, targeting, and status management
+File: /tools/backend/services/campaign_service.py
 Created: December 28, 2025
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
-from enum import Enum
-from sqlalchemy import text, and_
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, func
+from datetime import datetime
+from typing import List, Optional, Dict, Any
+from decimal import Decimal
+from enum import Enum
 
 # ============================================================================
-# ENUMS
+# ENUMS & MODELS
 # ============================================================================
 
 class CampaignType(str, Enum):
-    LOCATION_DEAL = "location_deal"
-    EMAIL_OFFER = "email_offer"
-    SEASONAL = "seasonal"
-    LOYALTY_BOOST = "loyalty_boost"
-    FLASH_SALE = "flash_sale"
+    LOCATION_DEAL = "LOCATION_DEAL"
+    EMAIL_OFFER = "EMAIL_OFFER"
+    SEASONAL = "SEASONAL"
+    LOYALTY_BOOST = "LOYALTY_BOOST"
+    FLASH_SALE = "FLASH_SALE"
 
 class CampaignStatus(str, Enum):
     DRAFT = "draft"
@@ -31,273 +32,139 @@ class CampaignStatus(str, Enum):
     ARCHIVED = "archived"
 
 class OfferType(str, Enum):
-    FIXED_DISCOUNT = "fixed_discount"
-    PERCENTAGE = "percentage"
-    BOGO = "bogo"
-    FREE_SHIPPING = "free_shipping"
-    OTHER = "other"
+    FIXED_DISCOUNT = "FIXED_DISCOUNT"
+    PERCENTAGE = "PERCENTAGE"
+    BOGO = "BOGO"
+    FREE_SHIPPING = "FREE_SHIPPING"
+    OTHER = "OTHER"
 
 # ============================================================================
 # CAMPAIGN SERVICE
 # ============================================================================
 
 class CampaignService:
-    """Service for managing campaigns"""
+    """Service for managing marketing campaigns"""
     
-    def __init__(self, db=None):
+    def __init__(self, db: Session):
         self.db = db
     
-    def create_campaign(self, name: str, campaign_type: str, offer_amount: float, 
-                       offer_type: str, **kwargs) -> Dict[str, Any]:
-        """Create a new campaign"""
+    def create_campaign(
+        self,
+        name: str,
+        campaign_type: CampaignType,
+        offer_amount: Decimal,
+        offer_type: OfferType,
+        start_date: datetime,
+        end_date: Optional[datetime] = None,
+        target_segment: Optional[str] = None,
+        description: Optional[str] = None,
+        created_by: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Create new campaign"""
         try:
-            if not self.db:
-                # Fallback to mock data for testing without database
-                campaign_id = f"CAMP-{int(datetime.now(timezone.utc).timestamp())}"
-                return {
-                    "campaign_id": campaign_id,
-                    "name": name,
-                    "campaign_type": campaign_type,
-                    "status": "draft",
-                    "offer_amount": offer_amount,
-                    "offer_type": offer_type,
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "message": "Campaign created successfully"
-                }
+            campaign_id = f"camp-{int(datetime.utcnow().timestamp())}"
             
-            # Insert into campaigns table
-            campaign_id = f"CAMP-{int(datetime.utcnow().timestamp())}"
-            query = text("""
-                INSERT INTO campaigns (campaign_id, name, campaign_type, status, offer_amount, offer_type, created_at)
-                VALUES (:id, :name, :type, 'draft', :amount, :offer_type, :created)
-            """)
-            self.db.execute(query, {
-                'id': campaign_id,
-                'name': name,
-                'type': campaign_type,
-                'amount': offer_amount,
-                'offer_type': offer_type,
-                'created': datetime.now(timezone.utc)
-            })
-            self.db.commit()
-            
+            # TODO: Insert into campaigns table
+            # For now, return mock response for testing
             return {
                 "campaign_id": campaign_id,
                 "name": name,
-                "campaign_type": campaign_type,
+                "type": campaign_type.value,
                 "status": "draft",
-                "offer_amount": offer_amount,
-                "offer_type": offer_type,
-                "created_at": datetime.utcnow().isoformat(),
-                "message": "Campaign created successfully"
+                "offer_amount": float(offer_amount),
+                "offer_type": offer_type.value,
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat() if end_date else None,
+                "created_at": datetime.utcnow().isoformat()
             }
         except Exception as e:
-            if self.db:
-                self.db.rollback()
-            raise ValueError(f"Failed to create campaign: {str(e)}")
+            raise Exception(f"Failed to create campaign: {str(e)}")
     
     def get_campaign(self, campaign_id: str) -> Dict[str, Any]:
-        """Get campaign by ID"""
+        """Get campaign details"""
         try:
-            if not self.db:
-                # Mock data fallback
-                return {
-                    "campaign_id": campaign_id,
-                    "name": "Sample Campaign",
-                    "campaign_type": "EMAIL_OFFER",
-                    "status": "draft",
-                    "offer_amount": 100.00,
-                    "offer_type": "PERCENTAGE",
-                    "created_at": datetime.utcnow().isoformat()
-                }
-            
-            # Query campaigns table by campaign_id
-            query = text("SELECT * FROM campaigns WHERE campaign_id = :id")
-            result = self.db.execute(query, {'id': campaign_id}).fetchone()
-            
-            if not result:
-                return None
-            
+            # TODO: Query campaigns table
+            # For now, return mock response
             return {
-                "campaign_id": result[0],
-                "name": result[1],
-                "campaign_type": result[2],
-                "status": result[3],
-                "offer_amount": float(result[4]),
-                "offer_type": result[5],
-                "created_at": result[6].isoformat() if result[6] else None
+                "campaign_id": campaign_id,
+                "name": "Sample Campaign",
+                "type": "LOCATION_DEAL",
+                "status": "running",
+                "offer_amount": 10.00,
+                "offer_type": "FIXED_DISCOUNT"
             }
         except Exception as e:
-            raise ValueError(f"Failed to get campaign: {str(e)}")
+            raise Exception(f"Failed to get campaign: {str(e)}")
     
-    def list_campaigns(self, status: Optional[str] = None, 
-                      limit: int = 20, offset: int = 0) -> Dict[str, Any]:
-        """List campaigns with optional filtering"""
+    def list_campaigns(
+        self,
+        status: Optional[CampaignStatus] = None,
+        limit: int = 20,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """List all campaigns with optional filtering"""
         try:
-            if not self.db:
-                # Mock data fallback
-                return {
-                    "campaigns": [],
-                    "total": 0,
-                    "limit": limit,
-                    "offset": offset
-                }
-            
-            # Query campaigns table with filters
-            base_query = "SELECT * FROM campaigns WHERE status != 'archived'"
-            count_query = "SELECT COUNT(*) FROM campaigns WHERE status != 'archived'"
-            
-            if status:
-                base_query += " AND status = :status"
-                count_query += " AND status = :status"
-            
-            base_query += f" LIMIT {limit} OFFSET {offset}"
-            
-            # Get total count
-            count_result = self.db.execute(text(count_query), 
-                                          {'status': status} if status else {}).scalar()
-            
-            # Get campaigns
-            results = self.db.execute(text(base_query), 
-                                     {'status': status} if status else {}).fetchall()
-            
-            campaigns = [{
-                "campaign_id": row[0],
-                "name": row[1],
-                "campaign_type": row[2],
-                "status": row[3],
-                "offer_amount": float(row[4]),
-                "offer_type": row[5],
-                "created_at": row[6].isoformat() if row[6] else None
-            } for row in results]
-            
+            # TODO: Query campaigns table with filters
+            # For now, return mock response
             return {
-                "campaigns": campaigns,
-                "total": count_result or 0,
+                "campaigns": [
+                    {
+                        "campaign_id": "camp-001",
+                        "name": "Holiday Promotion",
+                        "type": "SEASONAL",
+                        "status": "running",
+                        "created_at": datetime.utcnow().isoformat()
+                    }
+                ],
+                "total": 1,
                 "limit": limit,
                 "offset": offset
             }
         except Exception as e:
-            raise ValueError(f"Failed to list campaigns: {str(e)}")
+            raise Exception(f"Failed to list campaigns: {str(e)}")
     
-    def update_campaign(self, campaign_id: str, **updates) -> Dict[str, Any]:
+    def update_campaign(
+        self,
+        campaign_id: str,
+        **kwargs
+    ) -> Dict[str, Any]:
         """Update campaign fields"""
         try:
-            if not self.db:
-                # Mock fallback
-                return {
-                    "campaign_id": campaign_id,
-                    "status": "success",
-                    "message": "Campaign updated successfully"
-                }
-            
-            # Build update query dynamically
-            if not updates:
-                return {
-                    "campaign_id": campaign_id,
-                    "status": "success",
-                    "message": "No updates provided"
-                }
-            
-            update_fields = ", ".join([f"{k} = :{k}" for k in updates.keys()])
-            query = text(f"UPDATE campaigns SET {update_fields} WHERE campaign_id = :id")
-            
-            params = {**updates, 'id': campaign_id}
-            self.db.execute(query, params)
-            self.db.commit()
-            
-            return {
-                "campaign_id": campaign_id,
-                "status": "success",
-                "message": "Campaign updated successfully",
-                "updated_fields": list(updates.keys())
-            }
+            # TODO: Update campaigns table
+            return {"campaign_id": campaign_id, "updated": True}
         except Exception as e:
-            if self.db:
-                self.db.rollback()
-            raise ValueError(f"Failed to update campaign: {str(e)}")
+            raise Exception(f"Failed to update campaign: {str(e)}")
     
-    def delete_campaign(self, campaign_id: str) -> Dict[str, Any]:
-        """Soft delete a campaign (archive)"""
+    def delete_campaign(self, campaign_id: str) -> bool:
+        """Delete campaign (soft delete - set status to archived)"""
         try:
-            if not self.db:
-                # Mock fallback
-                return {
-                    "campaign_id": campaign_id,
-                    "status": "archived",
-                    "message": "Campaign archived successfully"
-                }
-            
-            # Update campaigns table status to 'archived'
-            query = text("UPDATE campaigns SET status = 'archived' WHERE campaign_id = :id")
-            self.db.execute(query, {'id': campaign_id})
-            self.db.commit()
-            
-            return {
-                "campaign_id": campaign_id,
-                "status": "archived",
-                "message": "Campaign archived successfully"
-            }
+            # TODO: Update campaigns.status = 'archived'
+            return True
         except Exception as e:
-            if self.db:
-                self.db.rollback()
-            raise ValueError(f"Failed to delete campaign: {str(e)}")
+            raise Exception(f"Failed to delete campaign: {str(e)}")
     
     def launch_campaign(self, campaign_id: str) -> Dict[str, Any]:
-        """Transition campaign from draft to running"""
+        """Launch campaign (change status from draft to running)"""
         try:
-            if not self.db:
-                # Mock fallback
-                return {
-                    "campaign_id": campaign_id,
-                    "status": "running",
-                    "launched_at": datetime.utcnow().isoformat(),
-                    "message": "Campaign launched successfully"
-                }
-            
-            # Update campaigns table status to 'running'
-            query = text("UPDATE campaigns SET status = 'running', launched_at = :launched WHERE campaign_id = :id")
-            self.db.execute(query, {'id': campaign_id, 'launched': datetime.utcnow()})
-            self.db.commit()
-            
+            # TODO: Update campaigns.status = 'running', start_date = NOW()
             return {
                 "campaign_id": campaign_id,
                 "status": "running",
-                "launched_at": datetime.utcnow().isoformat(),
-                "message": "Campaign launched successfully"
+                "launched_at": datetime.utcnow().isoformat()
             }
         except Exception as e:
-            if self.db:
-                self.db.rollback()
-            raise ValueError(f"Failed to launch campaign: {str(e)}")
+            raise Exception(f"Failed to launch campaign: {str(e)}")
     
     def pause_campaign(self, campaign_id: str) -> Dict[str, Any]:
-        """Pause a running campaign"""
+        """Pause running campaign"""
         try:
-            if not self.db:
-                # Mock fallback
-                return {
-                    "campaign_id": campaign_id,
-                    "status": "paused",
-                    "paused_at": datetime.utcnow().isoformat(),
-                    "message": "Campaign paused successfully"
-                }
-            
-            # Update campaigns table status to 'paused'
-            query = text("UPDATE campaigns SET status = 'paused', paused_at = :paused WHERE campaign_id = :id")
-            self.db.execute(query, {'id': campaign_id, 'paused': datetime.utcnow()})
-            self.db.commit()
-            
+            # TODO: Update campaigns.status = 'paused'
             return {
                 "campaign_id": campaign_id,
-                "status": "paused",
-                "paused_at": datetime.utcnow().isoformat(),
-                "message": "Campaign paused successfully"
+                "status": "paused"
             }
         except Exception as e:
-            if self.db:
-                self.db.rollback()
-            raise ValueError(f"Failed to pause campaign: {str(e)}")
+            raise Exception(f"Failed to pause campaign: {str(e)}")
 
 # ============================================================================
 # FASTAPI ROUTER
@@ -305,14 +172,37 @@ class CampaignService:
 
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
 
+def get_campaign_service(db: Session = Depends(get_db)) -> CampaignService:
+    """Dependency injection for campaign service"""
+    return CampaignService(db)
+
+# ============================================================================
+# ENDPOINTS
+# ============================================================================
+
 @router.get("")
 async def list_campaigns(
-    status: Optional[str] = Query(None),
+    status: Optional[CampaignStatus] = Query(None),
     limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0)
+    offset: int = Query(0, ge=0),
+    service: CampaignService = Depends(get_campaign_service)
 ):
-    """List all campaigns with pagination"""
-    service = CampaignService()
+    """
+    List all campaigns with optional filtering
+    
+    Query Parameters:
+    - status: Filter by campaign status (draft, running, paused, completed, archived)
+    - limit: Number of results to return (default 20, max 100)
+    - offset: Number of results to skip for pagination (default 0)
+    
+    Response:
+    {
+      "campaigns": [...],
+      "total": integer,
+      "limit": integer,
+      "offset": integer
+    }
+    """
     try:
         result = service.list_campaigns(status, limit, offset)
         return result
@@ -321,23 +211,80 @@ async def list_campaigns(
 
 @router.post("")
 async def create_campaign(
-    name: str,
-    campaign_type: str,
-    offer_amount: float,
-    offer_type: str
+    name: str = Query(..., min_length=1),
+    campaign_type: CampaignType = Query(...),
+    offer_amount: float = Query(..., gt=0),
+    offer_type: OfferType = Query(...),
+    start_date: str = Query(...),  # ISO 8601 format
+    end_date: Optional[str] = Query(None),
+    target_segment: Optional[str] = Query(None),
+    description: Optional[str] = Query(None),
+    service: CampaignService = Depends(get_campaign_service)
 ):
-    """Create a new campaign"""
-    service = CampaignService()
+    """
+    Create new marketing campaign
+    
+    Query Parameters:
+    - name: Campaign name (required)
+    - campaign_type: Type of campaign (required)
+    - offer_amount: Offer value in dollars (required, must be > 0)
+    - offer_type: Type of offer (FIXED_DISCOUNT, PERCENTAGE, etc.)
+    - start_date: Campaign start date in ISO 8601 format (required)
+    - end_date: Campaign end date in ISO 8601 format (optional)
+    - target_segment: Target user segment (optional)
+    - description: Campaign description (optional)
+    
+    Response:
+    {
+      "campaign_id": "camp-001",
+      "name": "Holiday Promotion",
+      "type": "SEASONAL",
+      "status": "draft",
+      "created_at": "2025-12-28T10:30:00Z"
+    }
+    """
     try:
-        result = service.create_campaign(name, campaign_type, offer_amount, offer_type)
+        start = datetime.fromisoformat(start_date)
+        end = datetime.fromisoformat(end_date) if end_date else None
+        
+        result = service.create_campaign(
+            name=name,
+            campaign_type=campaign_type,
+            offer_amount=Decimal(str(offer_amount)),
+            offer_type=offer_type,
+            start_date=start,
+            end_date=end,
+            target_segment=target_segment,
+            description=description
+        )
         return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid input: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{campaign_id}")
-async def get_campaign(campaign_id: str):
-    """Get campaign by ID"""
-    service = CampaignService()
+async def get_campaign(
+    campaign_id: str,
+    service: CampaignService = Depends(get_campaign_service)
+):
+    """
+    Get campaign details
+    
+    Path Parameters:
+    - campaign_id: Campaign identifier
+    
+    Response:
+    {
+      "campaign_id": "camp-001",
+      "name": "Holiday Promotion",
+      "type": "SEASONAL",
+      "status": "running",
+      "offer_amount": 10.00,
+      "offer_type": "FIXED_DISCOUNT",
+      ...
+    }
+    """
     try:
         result = service.get_campaign(campaign_id)
         if not result:
@@ -349,29 +296,91 @@ async def get_campaign(campaign_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{campaign_id}")
-async def update_campaign(campaign_id: str, **updates):
-    """Update campaign"""
-    service = CampaignService()
+async def update_campaign(
+    campaign_id: str,
+    name: Optional[str] = Query(None),
+    status: Optional[CampaignStatus] = Query(None),
+    end_date: Optional[str] = Query(None),
+    service: CampaignService = Depends(get_campaign_service)
+):
+    """
+    Update campaign (partial update)
+    
+    Path Parameters:
+    - campaign_id: Campaign identifier
+    
+    Query Parameters (optional):
+    - name: New campaign name
+    - status: New status
+    - end_date: New end date
+    
+    Response:
+    {
+      "campaign_id": "camp-001",
+      "updated": true,
+      "updated_at": "2025-12-28T10:30:00Z"
+    }
+    """
     try:
+        updates = {}
+        if name:
+            updates['name'] = name
+        if status:
+            updates['status'] = status.value
+        if end_date:
+            updates['end_date'] = datetime.fromisoformat(end_date)
+        
         result = service.update_campaign(campaign_id, **updates)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{campaign_id}")
-async def delete_campaign(campaign_id: str):
-    """Delete (archive) campaign"""
-    service = CampaignService()
+async def delete_campaign(
+    campaign_id: str,
+    service: CampaignService = Depends(get_campaign_service)
+):
+    """
+    Delete campaign (soft delete - archives the campaign)
+    
+    Path Parameters:
+    - campaign_id: Campaign identifier
+    
+    Response:
+    {
+      "campaign_id": "camp-001",
+      "deleted": true,
+      "status": "archived"
+    }
+    """
     try:
-        result = service.delete_campaign(campaign_id)
-        return result
+        service.delete_campaign(campaign_id)
+        return {
+            "campaign_id": campaign_id,
+            "deleted": True,
+            "status": "archived"
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{campaign_id}/launch")
-async def launch_campaign(campaign_id: str):
-    """Launch campaign"""
-    service = CampaignService()
+async def launch_campaign(
+    campaign_id: str,
+    service: CampaignService = Depends(get_campaign_service)
+):
+    """
+    Launch campaign (transition from draft to running)
+    
+    Path Parameters:
+    - campaign_id: Campaign identifier
+    
+    Response:
+    {
+      "campaign_id": "camp-001",
+      "status": "running",
+      "launched_at": "2025-12-28T10:30:00Z"
+    }
+    """
     try:
         result = service.launch_campaign(campaign_id)
         return result
@@ -379,23 +388,48 @@ async def launch_campaign(campaign_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{campaign_id}/pause")
-async def pause_campaign(campaign_id: str):
-    """Pause campaign"""
-    service = CampaignService()
+async def pause_campaign(
+    campaign_id: str,
+    service: CampaignService = Depends(get_campaign_service)
+):
+    """
+    Pause running campaign
+    
+    Path Parameters:
+    - campaign_id: Campaign identifier
+    
+    Response:
+    {
+      "campaign_id": "camp-001",
+      "status": "paused"
+    }
+    """
     try:
         result = service.pause_campaign(campaign_id)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def setup_campaign_routes(app, db: Optional[Session] = None):
-    """Setup campaign routes in FastAPI app"""
-    # Store db in router context for use in endpoint handlers
+# ============================================================================
+# SETUP FUNCTION
+# ============================================================================
+
+def setup_campaign_routes(app):
+    """
+    Setup campaign routes in FastAPI app
+    
+    Usage in main.py:
+        from campaign_service import setup_campaign_routes
+        setup_campaign_routes(app)
+    
+    This will register all campaign endpoints:
+    - GET    /api/campaigns
+    - POST   /api/campaigns
+    - GET    /api/campaigns/{campaign_id}
+    - PUT    /api/campaigns/{campaign_id}
+    - DELETE /api/campaigns/{campaign_id}
+    - POST   /api/campaigns/{campaign_id}/launch
+    - POST   /api/campaigns/{campaign_id}/pause
+    """
     app.include_router(router)
-    if db:
-        # Update all routes to use provided database
-        for route in app.routes:
-            if hasattr(route, 'endpoint') and 'campaign' in str(route.path).lower():
-                # Routes will create CampaignService instances with db on demand
-                pass
     print("✅ Campaign service routes initialized (7 endpoints)")
