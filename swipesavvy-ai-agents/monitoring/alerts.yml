@@ -1,0 +1,126 @@
+groups:
+  - name: swipesavvy_alerts
+    interval: 30s
+    rules:
+      # Critical Alerts
+      - alert: ServiceDown
+        expr: up{job=~"swipesavvy-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: |
+          rate(http_requests_total{status=~"5.."}[5m]) 
+          / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High latency on {{ $labels.job }}"
+          description: "P95 latency is {{ $value }}s (threshold: 2s)"
+
+      # Warning Alerts
+      - alert: HighMemoryUsage
+        expr: process_memory_bytes > 2000000000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.job }}"
+          description: "Memory usage is {{ $value | humanize }}B (threshold: 2GB)"
+
+      - alert: HighCPUUsage
+        expr: process_cpu_percent > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.job }}"
+          description: "CPU usage is {{ $value }}% (threshold: 80%)"
+
+      - alert: CircuitBreakerOpen
+        expr: circuit_breaker_state == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Circuit breaker open on {{ $labels.job }}"
+          description: "Circuit breaker has been open for 5 minutes"
+
+      - alert: HighRateLimitHits
+        expr: rate(rate_limit_hits_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate limit hits on {{ $labels.job }}"
+          description: "Rate limit being hit {{ $value }} times per second"
+
+      # Database Alerts
+      - alert: DatabaseConnectionPoolExhausted
+        expr: database_connections_active / database_connections_max > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "{{ $value | humanizePercentage }} of connections in use"
+
+      # Together.AI Alerts
+      - alert: TogetherAPIHighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(together_api_latency_seconds_bucket[5m])
+          ) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Together.AI API latency"
+          description: "P95 latency is {{ $value }}s (threshold: 5s)"
+
+      - alert: TogetherAPIErrors
+        expr: rate(together_api_calls_total{status="error"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Together.AI API errors detected"
+          description: "Error rate: {{ $value }} errors/second"
+
+      # Guardrails Alerts
+      - alert: HighSafetyViolations
+        expr: rate(guardrails_violations_total[5m]) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of safety violations"
+          description: "{{ $value }} violations per second detected"
+
+      - alert: PIIDetectionSpike
+        expr: |
+          rate(guardrails_pii_detections_total[5m]) > 
+          rate(guardrails_pii_detections_total[1h] offset 1h) * 2
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Spike in PII detections"
+          description: "PII detections doubled compared to 1 hour ago"

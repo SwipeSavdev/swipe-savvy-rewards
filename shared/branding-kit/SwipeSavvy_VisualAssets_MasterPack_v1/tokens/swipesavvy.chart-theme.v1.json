@@ -1,0 +1,93 @@
+{
+  "name": "SwipeSavvy.InternalPortal",
+  "version": "1.0.0",
+  "fonts": {
+    "title": "Hermes",
+    "body": "Barlow",
+    "fallback": "Calibri, Arial, sans-serif"
+  },
+  "palette": {
+    "series": [
+      "#235393",
+      "#60BA46",
+      "#FAB915",
+      "#747676",
+      "#4B4D4D"
+    ],
+    "neutral": {
+      "grid": "rgba(19,33,54,0.12)",
+      "gridDark": "rgba(246,246,246,0.12)"
+    }
+  },
+  "echarts": {
+    "textStyle": {
+      "fontFamily": "Barlow, Calibri, Arial, sans-serif"
+    },
+    "title": {
+      "textStyle": {
+        "fontFamily": "Hermes, Calibri, Arial, sans-serif",
+        "fontWeight": "400"
+      }
+    },
+    "tooltip": {
+      "trigger": "axis",
+      "backgroundColor": "rgba(19,33,54,0.92)",
+      "borderColor": "rgba(246,246,246,0.10)",
+      "textStyle": {
+        "color": "#F6F6F6"
+      }
+    },
+    "grid": {
+      "left": 12,
+      "right": 12,
+      "top": 28,
+      "bottom": 12,
+      "containLabel": true
+    },
+    "axisLine": {
+      "lineStyle": {
+        "color": "rgba(19,33,54,0.18)"
+      }
+    },
+    "splitLine": {
+      "lineStyle": {
+        "color": "rgba(19,33,54,0.08)"
+      }
+    }
+  },
+  "chartjs": {
+    "font": {
+      "family": "Barlow, Calibri, Arial, sans-serif"
+    },
+    "plugins": {
+      "legend": {
+        "labels": {
+          "usePointStyle": true
+        }
+      },
+      "tooltip": {
+        "backgroundColor": "rgba(19,33,54,0.92)",
+        "titleColor": "#F6F6F6",
+        "bodyColor": "#F6F6F6"
+      }
+    },
+    "scales": {
+      "x": {
+        "grid": {
+          "color": "rgba(19,33,54,0.08)"
+        },
+        "ticks": {
+          "color": "#747676"
+        }
+      },
+      "y": {
+        "grid": {
+          "color": "rgba(19,33,54,0.08)"
+        },
+        "ticks": {
+          "color": "#747676"
+        }
+      }
+    }
+  }
+}

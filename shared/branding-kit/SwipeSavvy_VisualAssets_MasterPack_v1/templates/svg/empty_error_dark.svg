@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="520" viewBox="0 0 800 520">
+<rect x="0" y="0" width="800" height="520" rx="0" fill="#132136" />
+<rect x="80" y="80" width="640" height="360" rx="24" fill="rgba(246,246,246,0.06)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<circle cx="400.0" cy="190" r="92" fill="rgba(35,83,147,0.35)" />
+<g transform="translate(358.0,148.0) scale(3.5)" style="color:#235393;opacity:1.0;"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity="0.08" stroke="currentColor"></circle><path d="M9 9l6 6"></path><path d="M15 9l-6 6"></path></g>
+<text x="400.0" y="330" font-family="Hermes, Calibri, Arial, sans-serif" font-size="20" font-weight="700" fill="#F6F6F6" text-anchor="middle">Something went wrong</text>
+<text x="400.0" y="360" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="400" fill="rgba(246,246,246,0.72)" text-anchor="middle">Retry in a moment or check the system status dashboard.</text>
+<rect x="310.0" y="392" width="180" height="42" rx="12" fill="#235393" />
+<text x="400.0" y="420" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="700" fill="#F6F6F6" text-anchor="middle">Refresh</text>
+</svg>

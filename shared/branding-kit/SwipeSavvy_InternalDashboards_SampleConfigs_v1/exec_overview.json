@@ -1,0 +1,245 @@
+{
+  "dashboard_id": "exec_overview",
+  "title": "Executive Overview",
+  "description": "Health snapshot across growth, volume, risk, and reliability.",
+  "allowed_roles": [
+    "admin",
+    "leadership_view",
+    "finance_analyst",
+    "ops_specialist",
+    "risk_analyst",
+    "engineering_oncall"
+  ],
+  "default_time_range": {
+    "preset": "last_30_days",
+    "timezone": "UTC"
+  },
+  "global_filters": [
+    {
+      "id": "country",
+      "type": "multi_select",
+      "dimension": "country"
+    },
+    {
+      "id": "channel",
+      "type": "multi_select",
+      "dimension": "channel"
+    },
+    {
+      "id": "currency_base",
+      "type": "single_select",
+      "dimension": "currency_base",
+      "default": "USD"
+    }
+  ],
+  "layout": {
+    "type": "grid",
+    "breakpoints": {
+      "lg": {
+        "columns": 12,
+        "rowHeight": 16
+      },
+      "md": {
+        "columns": 8,
+        "rowHeight": 16
+      },
+      "sm": {
+        "columns": 4,
+        "rowHeight": 16
+      }
+    }
+  },
+  "theme_support": [
+    "light",
+    "dark",
+    "system"
+  ],
+  "widgets": [
+    {
+      "widget_id": "kpi_new_users",
+      "title": "New Users",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "users__new_count",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "count"
+      },
+      "drilldown": {
+        "to": "growth_engagement",
+        "carry_filters": true
+      }
+    },
+    {
+      "widget_id": "kpi_active_accounts",
+      "title": "Active Accounts",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "accounts__active_count",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 3,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "count"
+      },
+      "drilldown": {
+        "to": "growth_engagement",
+        "carry_filters": true
+      }
+    },
+    {
+      "widget_id": "kpi_tpv",
+      "title": "TPV (Settled)",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "transactions__tpv_settled__base",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 6,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "currency"
+      },
+      "drilldown": {
+        "to": "transactions_monetization",
+        "carry_filters": true
+      }
+    },
+    {
+      "widget_id": "kpi_api_error",
+      "title": "API Error Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "reliability__api_error_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 9,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      },
+      "drilldown": {
+        "to": "reliability_integrations",
+        "carry_filters": true
+      }
+    },
+    {
+      "widget_id": "tpv_daily",
+      "title": "TPV (Daily)",
+      "viz_type": "line_chart",
+      "query": {
+        "metric_id": "transactions__tpv_settled__base",
+        "time_grain": "day",
+        "dimensions": [
+          "date"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 6,
+          "w": 8,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "currency",
+        "currency": "USD"
+      }
+    },
+    {
+      "widget_id": "auth_success",
+      "title": "Card Auth Success Rate",
+      "viz_type": "line_chart",
+      "query": {
+        "metric_id": "cards__auth_success_rate__pct",
+        "time_grain": "day",
+        "dimensions": [
+          "date"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 8,
+          "y": 6,
+          "w": 4,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "anomalies",
+      "title": "Anomalies & Alerts",
+      "viz_type": "table",
+      "query": {
+        "metric_id": "alerts__top_anomalies",
+        "dimensions": [
+          "severity",
+          "metric",
+          "message"
+        ],
+        "measures": [
+          "delta_pct",
+          "current_value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 17,
+          "w": 12,
+          "h": 9
+        }
+      }
+    }
+  ]
+}

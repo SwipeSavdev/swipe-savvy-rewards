@@ -1,0 +1,66 @@
+/* Swipe Savvy Internal Portal - Design Tokens v1
+   Generated: 2025-12-22T06:35:14Z
+*/
+
+:root {
+  --ss-brand-navy: #235393;
+  --ss-brand-deep: #132136;
+  --ss-brand-green: #60BA46;
+  --ss-brand-yellow: #FAB915;
+  --ss-brand-black: #000000;
+  --ss-brand-darkGrey: #4B4D4D;
+  --ss-brand-ashGrey: #747676;
+  --ss-brand-white: #F6F6F6;
+
+  --ss-font-headline: "Hermes", Calibri, Arial, sans-serif;
+  --ss-font-body: "Barlow", Calibri, Arial, sans-serif;
+
+  --ss-opacity-icon-inactive: 0.55;
+  --ss-opacity-icon-disabled: 0.35;
+
+  --ss-radius-md: 12px;
+  --ss-radius-lg: 16px;
+  --ss-radius-pill: 999px;
+
+  --ss-space-1: 4px;
+  --ss-space-2: 8px;
+  --ss-space-3: 12px;
+  --ss-space-4: 16px;
+  --ss-space-6: 24px;
+  --ss-space-8: 32px;
+
+  /* Theme: Light */
+  --ss-bg: #F6F6F6;
+  --ss-surface: #FFFFFF;
+  --ss-surface-alt: rgba(19,33,54,0.03);
+  --ss-text: #132136;
+  --ss-text-muted: #4B4D4D;
+  --ss-border: rgba(19,33,54,0.12);
+
+  --ss-primary: #235393;
+  --ss-primary-soft: rgba(35,83,147,0.12);
+  --ss-success: #60BA46;
+  --ss-warning: #FAB915;
+  --ss-danger: #E5484D;
+  --ss-danger-soft: rgba(229,72,77,0.12);
+
+  --ss-shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --ss-shadow-md: 0 6px 18px rgba(0,0,0,0.10);
+  --ss-focus-ring: 0 0 0 3px rgba(35,83,147,0.25);
+}
+
+[data-theme="dark"] {
+  --ss-bg: #132136;
+  --ss-surface: rgba(246,246,246,0.06);
+  --ss-surface-alt: rgba(246,246,246,0.10);
+  --ss-text: #F6F6F6;
+  --ss-text-muted: rgba(246,246,246,0.72);
+  --ss-border: rgba(246,246,246,0.12);
+
+  --ss-primary: #235393;
+  --ss-primary-soft: rgba(35,83,147,0.35);
+  --ss-success: #60BA46;
+  --ss-warning: #FAB915;
+  --ss-danger: #FF6B6B;
+  --ss-danger-soft: rgba(255,107,107,0.22);
+}

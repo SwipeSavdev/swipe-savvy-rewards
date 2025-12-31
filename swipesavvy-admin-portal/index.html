@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="SwipeSavvy Admin Portal" />
+    <title>SwipeSavvy Admin Portal</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body, #root {
+        width: 100%;
+        height: 100%;
+        display: flex;
+      }
+      #root {
+        flex-direction: column;
+        background: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 18px; color: #333;">
+        Loading SwipeSavvy Admin Portal...
+      </div>
+    </div>
+    <script>
+      console.log('index.html: Page loaded, root element:', document.getElementById('root'))
+      window.addEventListener('error', (event) => {
+        console.error('Global error:', event.error)
+        document.body.innerHTML = '<pre style="color: red; padding: 20px; white-space: pre-wrap; word-break: break-word;">ERROR: ' + event.error?.message + '\n' + event.error?.stack + '</pre>'
+      })
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('Unhandled rejection:', event.reason)
+        document.body.innerHTML = '<pre style="color: red; padding: 20px; white-space: pre-wrap; word-break: break-word;">REJECTION: ' + (event.reason?.message || event.reason) + '</pre>'
+      })
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

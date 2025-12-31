@@ -1,0 +1,218 @@
+{
+  "dashboard_id": "rewards_impact_internal",
+  "title": "Rewards & Community Impact",
+  "description": "Points earned, donated, top causes.",
+  "allowed_roles": [
+    "admin",
+    "product_analyst",
+    "ops_specialist",
+    "leadership_view"
+  ],
+  "default_time_range": {
+    "preset": "last_30_days",
+    "timezone": "UTC"
+  },
+  "global_filters": [
+    {
+      "id": "country",
+      "type": "multi_select",
+      "dimension": "country"
+    },
+    {
+      "id": "cause_id",
+      "type": "multi_select",
+      "dimension": "cause_id"
+    }
+  ],
+  "layout": {
+    "type": "grid",
+    "breakpoints": {
+      "lg": {
+        "columns": 12,
+        "rowHeight": 16
+      },
+      "md": {
+        "columns": 8,
+        "rowHeight": 16
+      },
+      "sm": {
+        "columns": 4,
+        "rowHeight": 16
+      }
+    }
+  },
+  "theme_support": [
+    "light",
+    "dark",
+    "system"
+  ],
+  "widgets": [
+    {
+      "widget_id": "kpi_points_earned",
+      "title": "Points Earned",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "rewards__points_earned_total",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "kpi_points_donated",
+      "title": "Points Donated",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "rewards__points_donated_total",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 3,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "kpi_donation_rate",
+      "title": "Donation Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "rewards__points_donation_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 6,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_top_cause",
+      "title": "Top Cause",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "rewards__top_cause__label",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 9,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "text"
+      }
+    },
+    {
+      "widget_id": "points_trend",
+      "title": "Points Earned vs Donated",
+      "viz_type": "line_chart",
+      "query": {
+        "metric_id": "rewards__points_net__count",
+        "time_grain": "day",
+        "dimensions": [
+          "date"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 6,
+          "w": 8,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "top_causes",
+      "title": "Top Causes",
+      "viz_type": "bar_chart",
+      "query": {
+        "metric_id": "rewards__points_donated_by_cause",
+        "dimensions": [
+          "cause_id"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 8,
+          "y": 6,
+          "w": 4,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "donation_events",
+      "title": "Donation events (anonymized)",
+      "viz_type": "table",
+      "query": {
+        "metric_id": "rewards__donation_events",
+        "dimensions": [
+          "event_time",
+          "cause_id",
+          "user_hash"
+        ],
+        "measures": [
+          "points"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 17,
+          "w": 12,
+          "h": 9
+        }
+      }
+    }
+  ]
+}

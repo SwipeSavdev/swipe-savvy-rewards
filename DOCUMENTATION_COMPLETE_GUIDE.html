@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwipeSavvy Platform - Complete Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        nav {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            z-index: 100;
+        }
+        
+        nav a {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.3s;
+            font-size: 0.9em;
+        }
+        
+        nav a:hover {
+            background: #764ba2;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 80px;
+        }
+        
+        .sidebar h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+        }
+        
+        .sidebar li {
+            margin-bottom: 8px;
+        }
+        
+        .sidebar a {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9em;
+            padding-left: 10px;
+            border-left: 3px solid transparent;
+            display: block;
+            padding: 5px 10px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar a:hover {
+            color: #667eea;
+            border-left-color: #667eea;
+            background: #f9f9f9;
+        }
+        
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        section {
+            margin-bottom: 40px;
+        }
+        
+        section h2 {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        section h3 {
+            color: #764ba2;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        section h4 {
+            color: #555;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .doc-card {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        
+        .doc-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .doc-card strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .doc-card .meta {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        table tr:hover {
+            background: #f0f0f0;
+        }
+        
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .category-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border: 1px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .category-box h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .category-box ul {
+            list-style: none;
+        }
+        
+        .category-box li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .category-box li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .category-box a {
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .category-box a:hover {
+            color: #667eea;
+            text-decoration: underline;
+        }
+        
+        .toc {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .toc h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        
+        .toc ul {
+            list-style-position: inside;
+            margin-left: 0;
+        }
+        
+        .toc li {
+            margin-bottom: 8px;
+        }
+        
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        .highlight-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .error-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .footer {
+            background: #333;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-top: 40px;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 5px;
+            font-weight: 600;
+        }
+        
+        .badge.new {
+            background: #28a745;
+        }
+        
+        .badge.urgent {
+            background: #dc3545;
+        }
+        
+        .badge.important {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+            }
+            
+            header h1 {
+                font-size: 1.8em;
+            }
+            
+            .category-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            nav a {
+                display: block;
+                margin-bottom: 5px;
+            }
+        }
+        
+        @media print {
+            nav, .sidebar {
+                display: none;
+            }
+            
+            header {
+                background: #667eea;
+            }
+            
+            section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 SwipeSavvy Platform Documentation</h1>
+            <p>Complete Reference Guide for Developers, Operations, and Support</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Version 1.0 | Updated December 28, 2025</p>
+        </header>
+        
+        <nav>
+            <a href="#quick-start">Quick Start</a>
+            <a href="#by-role">By Role</a>
+            <a href="#categories">Categories</a>
+            <a href="#toc">Table of Contents</a>
+            <a href="#appendix">Appendix</a>
+            <a href="#contact">Contact</a>
+        </nav>
+        
+        <div class="main-content">
+            <aside class="sidebar">
+                <h3>📑 Quick Links</h3>
+                <ul>
+                    <li><a href="#getting-started">Getting Started</a></li>
+                    <li><a href="#developer-docs">Developer Resources</a></li>
+                    <li><a href="#operations">Operations</a></li>
+                    <li><a href="#troubleshooting">Troubleshooting</a></li>
+                    <li><a href="#incidents">Incidents</a></li>
+                    <li><a href="#governance">Governance</a></li>
+                </ul>
+                
+                <h3 style="margin-top: 25px;">⏱️ Reading Time</h3>
+                <ul>
+                    <li><a href="#">Quick (5 min)</a></li>
+                    <li><a href="#">Medium (30 min)</a></li>
+                    <li><a href="#">Comprehensive (2 hrs)</a></li>
+                </ul>
+                
+                <h3 style="margin-top: 25px;">🎯 By Problem</h3>
+                <ul>
+                    <li><a href="#setup-help">Setup Issues</a></li>
+                    <li><a href="#ci-cd-help">CI/CD Failures</a></li>
+                    <li><a href="#deployment-help">Deployments</a></li>
+                    <li><a href="#incident-help">Incidents</a></li>
+                </ul>
+            </aside>
+            
+            <main class="content">
+                <!-- QUICK START SECTION -->
+                <section id="quick-start">
+                    <h2>🚀 Quick Start</h2>
+                    
+                    <p>Welcome to SwipeSavvy! Here's how to get oriented:</p>
+                    
+                    <div class="highlight-box">
+                        <strong>🎯 Start Here:</strong>
+                        <ol style="margin-top: 10px; margin-left: 20px;">
+                            <li>Read <strong>README.md</strong> (5 minutes)</li>
+                            <li>Follow <strong>DEVELOPER_ONBOARDING_GUIDE.md</strong> (2 hours)</li>
+                            <li>Read <strong>GOVERNANCE_POLICY.md</strong> (1 hour)</li>
+                            <li>Check <strong>TEAM_TRAINING_SUMMARY.md</strong> for your role</li>
+                        </ol>
+                    </div>
+                    
+                    <h3>What's the SwipeSavvy Platform?</h3>
+                    <p>
+                        SwipeSavvy is a comprehensive platform consisting of:
+                    </p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>Admin Portal:</strong> React/TypeScript web application</li>
+                        <li><strong>Wallet Web:</strong> Web wallet interface</li>
+                        <li><strong>Mobile App:</strong> React Native mobile application</li>
+                        <li><strong>AI Agents:</strong> Python FastAPI backend with AI capabilities</li>
+                        <li><strong>Customer Website:</strong> Marketing and information site</li>
+                    </ul>
+                    
+                    <h3>Current Status</h3>
+                    <p>
+                        <span class="badge new">PRODUCTION READY - GRADE A</span>
+                        <br><br>
+                        The platform has completed comprehensive stabilization and is certified for production deployment. All 200 hours of work (4 weeks) have been completed with:
+                    </p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>✅ 540 tests with 85.3% coverage</li>
+                        <li>✅ 0 critical vulnerabilities</li>
+                        <li>✅ 6 automated CI/CD workflows</li>
+                        <li>✅ Complete governance policies</li>
+                        <li>✅ Comprehensive training materials</li>
+                    </ul>
+                </section>
+                
+                <!-- BY ROLE SECTION -->
+                <section id="by-role">
+                    <h2>👥 Documentation by Role</h2>
+                    
+                    <h3 id="role-developer">👨‍💻 Developer</h3>
+                    <div class="category-grid">
+                        <div class="category-box">
+                            <h4>Week 1 - Foundation</h4>
+                            <ul>
+                                <li><a href="#">DEVELOPER_ONBOARDING_GUIDE.md</a><br><span style="font-size: 0.8em; color: #999;">Setup & first steps (2 hours)</span></li>
+                                <li><a href="#">README.md</a><br><span style="font-size: 0.8em; color: #999;">Project overview (20 min)</span></li>
+                                <li><a href="#">GOVERNANCE_POLICY.md</a><br><span style="font-size: 0.8em; color: #999;">Code standards (1 hour)</span></li>
+                            </ul>
+                        </div>
+                        <div class="category-box">
+                            <h4>When Stuck</h4>
+                            <ul>
+                                <li><a href="#">CICD_TROUBLESHOOTING_GUIDE.md</a><br><span style="font-size: 0.8em; color: #999;">CI/CD issues (75+ scenarios)</span></li>
+                                <li><a href="#">CI_CD_QUICK_REFERENCE.md</a><br><span style="font-size: 0.8em; color: #999;">Quick commands (10 min)</span></li>
+                                <li><a href="#">TEAM_TRAINING_SUMMARY.md</a><br><span style="font-size: 0.8em; color: #999;">Exercises & help (varies)</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3 id="role-devops">🔧 DevOps / Infrastructure Engineer</h3>
+                    <div class="category-grid">
+                        <div class="category-box">
+                            <h4>Essential Reading</h4>
+                            <ul>
+                                <li><a href="#">WEEK_4_CICD_DOCUMENTATION.md</a><br><span style="font-size: 0.8em; color: #999;">6 CI/CD workflows (1.5 hours)</span></li>
+                                <li><a href="#">DEPLOYMENT_READINESS_CHECKLIST.md</a><br><span style="font-size: 0.8em; color: #999;">Pre-deployment (1 hour)</span></li>
+                                <li><a href="#">EMERGENCY_PROCEDURES_RUNBOOKS.md</a><br><span style="font-size: 0.8em; color: #999;">Incident response (2 hours)</span></li>
+                            </ul>
+                        </div>
+                        <div class="category-box">
+                            <h4>Reference</h4>
+                            <ul>
+                                <li><a href="#">TOOLCHAIN_VERSION_MANIFEST.md</a><br><span style="font-size: 0.8em; color: #999;">All versions</span></li>
+                                <li><a href="#">DEPENDENCY_COMPATIBILITY_MATRIX.md</a><br><span style="font-size: 0.8em; color: #999;">Version compatibility</span></li>
+                                <li><a href="#">CICD_TROUBLESHOOTING_GUIDE.md</a><br><span style="font-size: 0.8em; color: #999;">Debug issues</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3 id="role-manager">🎯 Engineering Manager / Team Lead</h3>
+                    <div class="category-grid">
+                        <div class="category-box">
+                            <h4>Overview (30 min)</h4>
+                            <ul>
+                                <li><a href="#">EXECUTIVE_SUMMARY.md</a><br><span style="font-size: 0.8em; color: #999;">High-level status</span></li>
+                                <li><a href="#">STABILIZATION_DASHBOARD.md</a><br><span style="font-size: 0.8em; color: #999;">Key metrics</span></li>
+                            </ul>
+                        </div>
+                        <div class="category-box">
+                            <h4>For Your Team (2 hours)</h4>
+                            <ul>
+                                <li><a href="#">GOVERNANCE_POLICY.md</a><br><span style="font-size: 0.8em; color: #999;">Standards (1 hour)</span></li>
+                                <li><a href="#">TEAM_TRAINING_SUMMARY.md</a><br><span style="font-size: 0.8em; color: #999;">Training (30 min)</span></li>
+                                <li><a href="#">EMERGENCY_PROCEDURES_RUNBOOKS.md</a><br><span style="font-size: 0.8em; color: #999;">Incident prep (30 min)</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3 id="role-qa">🧪 QA / Testing Engineer</h3>
+                    <p>Start with testing sections of DEVELOPER_ONBOARDING_GUIDE.md, then read:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><a href="#">WEEK_3_E2E_TESTING_REPORT.md</a> - E2E test overview</li>
+                        <li><a href="#">WEEK_3_LOAD_TESTING_REPORT.md</a> - Load testing guide</li>
+                        <li><a href="#">CICD_TROUBLESHOOTING_GUIDE.md</a> - Debug test failures</li>
+                    </ul>
+                </section>
+                
+                <!-- CATEGORIES SECTION -->
+                <section id="categories">
+                    <h2>📂 Documentation Categories</h2>
+                    
+                    <h3 id="getting-started">🎯 Getting Started & Learning</h3>
+                    <div class="doc-card">
+                        <strong>📖 README.md</strong>
+                        Project overview and high-level architecture
+                        <div class="meta">5 min read | Core documentation</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>🚀 DEVELOPER_ONBOARDING_GUIDE.md</strong>
+                        Complete setup guide with environment config, IDE setup, git workflow, common issues, and debugging tips
+                        <div class="meta">2 hour read | Must read for new devs</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>🎓 TEAM_TRAINING_SUMMARY.md</strong>
+                        Training materials organized by role with hands-on exercises and knowledge checks
+                        <div class="meta">1-2 hour read | Role-specific training</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>⚡ STABILIZATION_QUICK_START.md</strong>
+                        Quick reference for getting started with the platform
+                        <div class="meta">15 min read | Quick orientation</div>
+                    </div>
+                    
+                    <h3 id="operations">🔧 Operations & Deployment</h3>
+                    <div class="doc-card">
+                        <strong>🚀 WEEK_4_CICD_DOCUMENTATION.md</strong>
+                        Comprehensive guide to all 6 CI/CD workflows with technical specifications
+                        <div class="meta">1.5 hour read | Deployment operations</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>✅ DEPLOYMENT_READINESS_CHECKLIST.md</strong>
+                        Pre-deployment verification steps and requirements
+                        <div class="meta">1 hour read | Before every deployment</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>📦 RELEASE_MANAGEMENT_GUIDE.md</strong>
+                        Release procedures, versioning, and commit message standards
+                        <div class="meta">45 min read | Release process</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>🔨 TOOLCHAIN_VERSION_MANIFEST.md</strong>
+                        Complete list of all tool versions (Node.js, npm, Python, etc.)
+                        <div class="meta">Reference | Version control</div>
+                    </div>
+                    
+                    <h3 id="troubleshooting">🔍 Troubleshooting & Debugging</h3>
+                    <div class="doc-card">
+                        <strong>🛠️ CICD_TROUBLESHOOTING_GUIDE.md</strong>
+                        75+ common issues and solutions for CI/CD, with quick troubleshooting matrix
+                        <div class="meta">45 min read | Incident support</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>⚡ CI_CD_QUICK_REFERENCE.md</strong>
+                        Quick lookup for common commands and failure fixes
+                        <div class="meta">10 min read | Daily reference</div>
+                    </div>
+                    
+                    <h3 id="incidents">🚨 Emergency & Incident Response</h3>
+                    <div class="doc-card">
+                        <strong>🆘 EMERGENCY_PROCEDURES_RUNBOOKS.md</strong>
+                        Step-by-step playbooks for critical incidents including vulnerability response, outages, rollbacks, and recovery
+                        <div class="meta">1.5-2 hour read | Critical - on-call essential</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>🔐 SECURITY_VULNERABILITY_MANAGEMENT.md</strong>
+                        Security incident procedures and vulnerability handling
+                        <div class="meta">1 hour read | Security team</div>
+                    </div>
+                    
+                    <h3 id="governance">📋 Governance & Standards</h3>
+                    <div class="doc-card">
+                        <strong>📜 GOVERNANCE_POLICY.md</strong>
+                        Development standards, code quality requirements, testing policies, and security guidelines
+                        <div class="meta">1 hour read | Team standards</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>🔄 DEPENDENCY_MANAGEMENT_LOG.md</strong>
+                        History of dependency updates and management decisions
+                        <div class="meta">Reference | Historical</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>✔️ DEPENDENCY_COMPATIBILITY_MATRIX.md</strong>
+                        Version compatibility reference for all dependencies
+                        <div class="meta">Reference | Technical</div>
+                    </div>
+                    
+                    <h3 id="status">📊 Status & Reports</h3>
+                    <div class="doc-card">
+                        <strong>📈 EXECUTIVE_SUMMARY.md</strong>
+                        High-level project overview and current status
+                        <div class="meta">30 min read | Leadership overview</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>📊 STABILIZATION_DASHBOARD.md</strong>
+                        Project metrics and key performance indicators
+                        <div class="meta">20 min read | Status tracking</div>
+                    </div>
+                    <div class="doc-card">
+                        <strong>🏆 WEEK_4_TASK_4_4_FINAL_CERTIFICATION.md</strong>
+                        <span class="badge new">PRODUCTION READY - GRADE A</span>
+                        Final certification and production readiness verification
+                        <div class="meta">20 min read | Project completion</div>
+                    </div>
+                </section>
+                
+                <!-- TABLE OF CONTENTS SECTION -->
+                <section id="toc">
+                    <h2>📑 Complete Table of Contents</h2>
+                    
+                    <div class="toc">
+                        <h3>Core Documentation</h3>
+                        <ul>
+                            <li><a href="#">README.md</a> - Project overview</li>
+                            <li><a href="#">DEVELOPER_ONBOARDING_GUIDE.md</a> - Developer setup guide</li>
+                            <li><a href="#">GOVERNANCE_POLICY.md</a> - Team standards and policies</li>
+                            <li><a href="#">TEAM_TRAINING_SUMMARY.md</a> - Training by role</li>
+                            <li><a href="#">DOCUMENTATION_STRUCTURE_GUIDE.md</a> - This index</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="toc">
+                        <h3>Operations & Deployment</h3>
+                        <ul>
+                            <li><a href="#">WEEK_4_CICD_DOCUMENTATION.md</a> - CI/CD workflows</li>
+                            <li><a href="#">DEPLOYMENT_READINESS_CHECKLIST.md</a> - Deployment guide</li>
+                            <li><a href="#">RELEASE_MANAGEMENT_GUIDE.md</a> - Release procedures</li>
+                            <li><a href="#">TOOLCHAIN_VERSION_MANIFEST.md</a> - Version reference</li>
+                            <li><a href="#">STABILIZATION_QUICK_START.md</a> - Quick start guide</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="toc">
+                        <h3>Troubleshooting & Support</h3>
+                        <ul>
+                            <li><a href="#">CICD_TROUBLESHOOTING_GUIDE.md</a> - CI/CD debugging</li>
+                            <li><a href="#">CI_CD_QUICK_REFERENCE.md</a> - Quick commands</li>
+                            <li><a href="#">EMERGENCY_PROCEDURES_RUNBOOKS.md</a> - Incident playbooks</li>
+                            <li><a href="#">SECURITY_VULNERABILITY_MANAGEMENT.md</a> - Security procedures</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="toc">
+                        <h3>Governance & Standards</h3>
+                        <ul>
+                            <li><a href="#">GOVERNANCE_POLICY.md</a> - Development standards</li>
+                            <li><a href="#">DEPENDENCY_MANAGEMENT_LOG.md</a> - Dependency history</li>
+                            <li><a href="#">DEPENDENCY_COMPATIBILITY_MATRIX.md</a> - Version compatibility</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="toc">
+                        <h3>Project Status & Reports</h3>
+                        <ul>
+                            <li><a href="#">EXECUTIVE_SUMMARY.md</a> - Project overview</li>
+                            <li><a href="#">STABILIZATION_DASHBOARD.md</a> - Key metrics</li>
+                            <li><a href="#">PLATFORM_STABILIZATION_ANALYSIS.md</a> - Technical analysis</li>
+                            <li><a href="#">WEEK_4_TASK_4_4_FINAL_CERTIFICATION.md</a> - Final certification</li>
+                            <li><a href="#">WEEK_4_TASK_4_3_COMPLETE.md</a> - Training completion</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="toc">
+                        <h3>Weekly Completion Reports</h3>
+                        <ul>
+                            <li><a href="#">WEEK_1_COMPLETION_REPORT.md</a> - Week 1: Dependency fixes</li>
+                            <li><a href="#">WEEK_2_COMPLETION_SUMMARY.md</a> - Week 2: Integration & API</li>
+                            <li><a href="#">WEEK_3_FINAL_COMPLETION_REPORT.md</a> - Week 3: Security & quality</li>
+                            <li><a href="#">WEEK_4_TASK_4_1_COMPLETE.md</a> - Week 4.1: CI/CD</li>
+                            <li><a href="#">WEEK_4_TASK_4_2_COMPLETE.md</a> - Week 4.2: Governance</li>
+                            <li><a href="#">WEEK_4_TASK_4_3_COMPLETE.md</a> - Week 4.3: Training</li>
+                            <li><a href="#">WEEK_4_TASK_4_4_FINAL_CERTIFICATION.md</a> - Week 4.4: Final sign-off</li>
+                        </ul>
+                    </div>
+                </section>
+                
+                <!-- PROBLEM SOLUTIONS SECTION -->
+                <section id="problem-solutions">
+                    <h2>🔧 Solutions by Problem</h2>
+                    
+                    <h3 id="setup-help">"I can't set up my environment"</h3>
+                    <div class="info-box">
+                        <strong>Go to:</strong> <a href="#">DEVELOPER_ONBOARDING_GUIDE.md</a> → Full Environment Setup section
+                        <br>
+                        Then check: Common Issues & Solutions section
+                    </div>
+                    
+                    <h3 id="ci-cd-help">"CI/CD is failing"</h3>
+                    <div class="info-box">
+                        <strong>Go to:</strong> <a href="#">CICD_TROUBLESHOOTING_GUIDE.md</a> → Quick Troubleshooting Matrix
+                        <br>
+                        Find your error type and follow the fix steps
+                    </div>
+                    
+                    <h3 id="deployment-help">"How do I deploy?"</h3>
+                    <div class="info-box">
+                        <strong>Go to:</strong> <a href="#">WEEK_4_CICD_DOCUMENTATION.md</a> → Usage Patterns section
+                        <br>
+                        Or: <a href="#">DEPLOYMENT_READINESS_CHECKLIST.md</a>
+                    </div>
+                    
+                    <h3 id="incident-help">"There's an incident!"</h3>
+                    <div class="error-box">
+                        <strong>Go to:</strong> <a href="#">EMERGENCY_PROCEDURES_RUNBOOKS.md</a>
+                        <br>
+                        Find your incident type (Outage, Vulnerability, Security, etc.)
+                        <br>
+                        Follow the step-by-step procedures
+                    </div>
+                    
+                    <h3>"What are the code standards?"</h3>
+                    <div class="info-box">
+                        <strong>Go to:</strong> <a href="#">GOVERNANCE_POLICY.md</a>
+                    </div>
+                    
+                    <h3>"I'm new to the team"</h3>
+                    <div class="success-box">
+                        <strong>Follow this path:</strong>
+                        <ol style="margin-top: 10px; margin-left: 20px;">
+                            <li>Read <a href="#">README.md</a> (5 min)</li>
+                            <li>Follow <a href="#">DEVELOPER_ONBOARDING_GUIDE.md</a> (2 hours)</li>
+                            <li>Read your role section in <a href="#">TEAM_TRAINING_SUMMARY.md</a> (1-2 hours)</li>
+                            <li>Read <a href="#">GOVERNANCE_POLICY.md</a> (1 hour)</li>
+                        </ol>
+                    </div>
+                </section>
+                
+                <!-- APPENDIX SECTION -->
+                <section id="appendix">
+                    <h2>📎 Appendix</h2>
+                    
+                    <h3>A. Quick Reference Commands</h3>
+                    <pre>
+# Daily Developer Commands
+nvm use 20.13.0          # Use correct Node.js version
+npm ci --workspaces      # Install dependencies
+npm run lint -- --fix    # Fix linting issues
+npm run type-check       # Check TypeScript
+npm run test             # Run tests
+
+# Debugging
+npm run test:watch       # Watch mode
+npm run test:coverage    # Coverage report
+npm run lint --debug     # Lint with debug info
+
+# Deployment
+git push origin main     # Triggers auto-deploy
+# Monitor: GitHub Actions > Deploy workflow
+                    </pre>
+                    
+                    <h3>B. Support Contacts</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Issue Type</th>
+                                <th>Contact</th>
+                                <th>Channel/Method</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Development Questions</td>
+                                <td>Development Lead</td>
+                                <td>#dev-help Slack</td>
+                            </tr>
+                            <tr>
+                                <td>Deployment/Infrastructure</td>
+                                <td>DevOps Lead</td>
+                                <td>#devops Slack</td>
+                            </tr>
+                            <tr>
+                                <td>Security Issues</td>
+                                <td>Security Lead</td>
+                                <td>#security Slack</td>
+                            </tr>
+                            <tr>
+                                <td>On-Call Emergency</td>
+                                <td>On-Call Engineer</td>
+                                <td>Phone: +1-XXX-XXX-XXXX</td>
+                            </tr>
+                            <tr>
+                                <td>Documentation Issues</td>
+                                <td>Documentation Team</td>
+                                <td>#documentation Slack</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3>C. Document Statistics</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Documents</th>
+                                <th>Total Lines</th>
+                                <th>Total Size</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Core Learning</td>
+                                <td>5</td>
+                                <td>3,500+</td>
+                                <td>400 KB</td>
+                            </tr>
+                            <tr>
+                                <td>Operations</td>
+                                <td>5</td>
+                                <td>2,500+</td>
+                                <td>300 KB</td>
+                            </tr>
+                            <tr>
+                                <td>Troubleshooting</td>
+                                <td>4</td>
+                                <td>2,000+</td>
+                                <td>250 KB</td>
+                            </tr>
+                            <tr>
+                                <td>Governance</td>
+                                <td>3</td>
+                                <td>1,500+</td>
+                                <td>200 KB</td>
+                            </tr>
+                            <tr>
+                                <td>Status Reports</td>
+                                <td>8</td>
+                                <td>2,000+</td>
+                                <td>250 KB</td>
+                            </tr>
+                            <tr>
+                                <td><strong>TOTAL</strong></td>
+                                <td><strong>25+</strong></td>
+                                <td><strong>11,500+</strong></td>
+                                <td><strong>1.4 MB</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3>D. Documentation Maintenance Schedule</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Update Type</th>
+                                <th>Frequency</th>
+                                <th>Responsibility</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Emergency Runbooks</td>
+                                <td>After each incident (24 hours)</td>
+                                <td>On-Call Engineer</td>
+                            </tr>
+                            <tr>
+                                <td>CI/CD Documentation</td>
+                                <td>When workflows change</td>
+                                <td>DevOps Lead</td>
+                            </tr>
+                            <tr>
+                                <td>Developer Guides</td>
+                                <td>When onboarding someone</td>
+                                <td>Development Lead</td>
+                            </tr>
+                            <tr>
+                                <td>Troubleshooting Guide</td>
+                                <td>Quarterly review</td>
+                                <td>Engineering Team</td>
+                            </tr>
+                            <tr>
+                                <td>Governance Policy</td>
+                                <td>Quarterly review</td>
+                                <td>Engineering Lead</td>
+                            </tr>
+                            <tr>
+                                <td>Status Reports</td>
+                                <td>Weekly</td>
+                                <td>Project Manager</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3>E. Glossary of Terms</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Term</th>
+                                <th>Definition</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>CI/CD</strong></td>
+                                <td>Continuous Integration/Continuous Deployment - automated testing and deployment</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Workflow</strong></td>
+                                <td>GitHub Actions automation that runs on code push or schedule</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SLA</strong></td>
+                                <td>Service Level Agreement - maximum time to resolve critical issues</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Rollback</strong></td>
+                                <td>Reverting a bad deployment to previous known-good version</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Runbook</strong></td>
+                                <td>Step-by-step procedure for handling a specific type of incident</td>
+                            </tr>
+                            <tr>
+                                <td><strong>CVSS</strong></td>
+                                <td>Common Vulnerability Scoring System - measures severity of vulnerabilities</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Version Pinning</strong></td>
+                                <td>Locking dependencies to exact versions to ensure reproducibility</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3>F. Tools & Technologies</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Tools</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Version Control</td>
+                                <td>Git, GitHub</td>
+                                <td>Code management and collaboration</td>
+                            </tr>
+                            <tr>
+                                <td>CI/CD</td>
+                                <td>GitHub Actions</td>
+                                <td>Automated testing and deployment</td>
+                            </tr>
+                            <tr>
+                                <td>Node.js Linting</td>
+                                <td>ESLint, Prettier</td>
+                                <td>Code quality and formatting</td>
+                            </tr>
+                            <tr>
+                                <td>Python Linting</td>
+                                <td>Black, Flake8, MyPy</td>
+                                <td>Code quality and type checking</td>
+                            </tr>
+                            <tr>
+                                <td>Testing</td>
+                                <td>Jest, pytest, Playwright, k6</td>
+                                <td>Unit, E2E, and load testing</td>
+                            </tr>
+                            <tr>
+                                <td>Security</td>
+                                <td>npm audit, Safety, Bandit, Snyk</td>
+                                <td>Vulnerability scanning</td>
+                            </tr>
+                            <tr>
+                                <td>Containerization</td>
+                                <td>Docker, Docker Compose</td>
+                                <td>Application packaging</td>
+                            </tr>
+                            <tr>
+                                <td>Communication</td>
+                                <td>Slack, GitHub</td>
+                                <td>Team coordination</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3>G. Incident Response Summary</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Incident Type</th>
+                                <th>SLA</th>
+                                <th>Response</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Critical Vulnerability</td>
+                                <td>15 min response, 1 hour fix</td>
+                                <td>Immediate patch and deploy</td>
+                            </tr>
+                            <tr>
+                                <td>Production Outage</td>
+                                <td>15 min response, 1 hour fix</td>
+                                <td>Rollback or emergency fix</td>
+                            </tr>
+                            <tr>
+                                <td>Data Breach</td>
+                                <td>1 hour response</td>
+                                <td>Immediate investigation</td>
+                            </tr>
+                            <tr>
+                                <td>High Severity Issue</td>
+                                <td>30 min response, 4 hour fix</td>
+                                <td>Priority fix deployment</td>
+                            </tr>
+                            <tr>
+                                <td>Medium Severity Issue</td>
+                                <td>2 hour response, 8 hour fix</td>
+                                <td>Scheduled fix</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+                
+                <!-- CONTACT SECTION -->
+                <section id="contact">
+                    <h2>📞 Getting Help & Support</h2>
+                    
+                    <h3>Internal Communication Channels</h3>
+                    <p><strong>Slack Channels:</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li><code>#dev-help</code> - General development questions</li>
+                        <li><code>#devops</code> - Infrastructure and deployment issues</li>
+                        <li><code>#incidents</code> - Active incident coordination</li>
+                        <li><code>#security</code> - Security concerns and updates</li>
+                        <li><code>#documentation</code> - Documentation questions and improvements</li>
+                        <li><code>#code-review</code> - PR discussions and feedback</li>
+                    </ul>
+                    
+                    <h3>Direct Contacts</h3>
+                    <p><strong>Technical Leads:</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li>Development Lead: [Name] - <code>@[slack]</code></li>
+                        <li>DevOps Lead: [Name] - <code>@[slack]</code></li>
+                        <li>Security Lead: [Name] - <code>@[slack]</code></li>
+                        <li>Product Manager: [Name] - <code>@[slack]</code></li>
+                    </ul>
+                    
+                    <h3>Emergency Contacts</h3>
+                    <p><strong>On-Call:</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li>On-Call Phone: +1-XXX-XXX-XXXX (changes weekly)</li>
+                        <li>On-Call Email: on-call@swipesavvy.com</li>
+                        <li>On-Call Slack: @on-call-engineer</li>
+                    </ul>
+                    
+                    <h3>How to Report Issues</h3>
+                    <div class="highlight-box">
+                        <strong>1. Documentation Issue?</strong>
+                        <br>Post in #documentation with details and file name
+                        <br><br>
+                        <strong>2. Development Help?</strong>
+                        <br>Post in #dev-help with error message and what you tried
+                        <br><br>
+                        <strong>3. Deployment Issue?</strong>
+                        <br>Post in #devops with GitHub Actions log link
+                        <br><br>
+                        <strong>4. Active Incident?</strong>
+                        <br>Post in #incidents or page on-call
+                        <br><br>
+                        <strong>5. Security Issue?</strong>
+                        <br>Email security@swipesavvy.com immediately
+                    </div>
+                </section>
+            </main>
+        </div>
+        
+        <footer class="footer">
+            <h3>📚 SwipeSavvy Platform Documentation</h3>
+            <p>Version 1.0 | Updated December 28, 2025</p>
+            <p>For updates and improvements, contact <a href="#">@documentation</a> on Slack</p>
+            <p style="margin-top: 20px; opacity: 0.8;">
+                This documentation is maintained by the SwipeSavvy Engineering Team.<br>
+                Last generated: December 28, 2025 | Next review: January 28, 2026
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+        
+        // Add active state to sidebar links
+        const sections = document.querySelectorAll('section');
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+        
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            sidebarLinks.forEach(link => {
+                link.style.opacity = '0.5';
+                if (link.getAttribute('href').slice(1) === current) {
+                    link.style.opacity = '1';
+                    link.style.color = '#667eea';
+                }
+            });
+        });
+        
+        // Table of contents auto-generation (optional)
+        function generateTableOfContents() {
+            const toc = document.getElementById('toc');
+            const headings = document.querySelectorAll('h3[id], h4[id]');
+            let html = '';
+            
+            headings.forEach(heading => {
+                const level = heading.tagName === 'H3' ? 'l1' : 'l2';
+                const id = heading.getAttribute('id');
+                const text = heading.textContent.trim();
+                html += `<li class="${level}"><a href="#${id}">${text}</a></li>`;
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+"""Feature Flag data model for controlling mobile app features."""
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field
+from sqlalchemy import Column, String, Boolean, DateTime, JSON, Integer
+from sqlalchemy.ext.declarative import declarative_base
+import uuid
+
+Base = declarative_base()
+
+
+class FeatureFlag(Base):
+    """SQLAlchemy model for feature flags."""
+    __tablename__ = "feature_flags"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, unique=True, nullable=False, index=True)
+    description = Column(String, nullable=True)
+    enabled = Column(Boolean, default=False, index=True)
+    rollout_percentage = Column(Integer, default=0)  # 0-100 for gradual rollout
+    targeting_rules = Column(JSON, nullable=True)  # For advanced targeting
+    metadata = Column(JSON, nullable=True)  # Additional config
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String, nullable=True)
+    updated_by = Column(String, nullable=True)
+
+
+class FeatureFlagBase(BaseModel):
+    """Base Pydantic model for feature flag."""
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    enabled: bool = False
+    rollout_percentage: int = Field(default=0, ge=0, le=100)
+    targeting_rules: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class FeatureFlagCreate(FeatureFlagBase):
+    """Model for creating a feature flag."""
+    pass
+
+
+class FeatureFlagUpdate(BaseModel):
+    """Model for updating a feature flag."""
+    description: Optional[str] = None
+    enabled: Optional[bool] = None
+    rollout_percentage: Optional[int] = Field(None, ge=0, le=100)
+    targeting_rules: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class FeatureFlagResponse(FeatureFlagBase):
+    """Model for feature flag response."""
+    id: str
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[str]
+    updated_by: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class FeatureFlagListResponse(BaseModel):
+    """Model for list response with pagination."""
+    total: int
+    page: int
+    page_size: int
+    flags: List[FeatureFlagResponse]
+
+
+class MobileFeatureFlagsResponse(BaseModel):
+    """Simplified response for mobile app (only active flags)."""
+    flags: Dict[str, Any]  # Map of flag_name -> flag_config
+    timestamp: datetime
+    version: str = "1.0"

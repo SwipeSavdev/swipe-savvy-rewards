@@ -1,0 +1,232 @@
+{
+  "dashboard_id": "money_movement_ops",
+  "title": "Money Movement Ops",
+  "description": "Transfers/top-ups/withdrawals operational health.",
+  "allowed_roles": [
+    "admin",
+    "ops_specialist",
+    "engineering_oncall",
+    "support_agent"
+  ],
+  "default_time_range": {
+    "preset": "last_30_days",
+    "timezone": "UTC"
+  },
+  "global_filters": [
+    {
+      "id": "country",
+      "type": "multi_select",
+      "dimension": "country"
+    },
+    {
+      "id": "channel",
+      "type": "multi_select",
+      "dimension": "channel"
+    },
+    {
+      "id": "currency_base",
+      "type": "single_select",
+      "dimension": "currency_base",
+      "default": "USD"
+    },
+    {
+      "id": "provider",
+      "type": "multi_select",
+      "dimension": "provider"
+    }
+  ],
+  "layout": {
+    "type": "grid",
+    "breakpoints": {
+      "lg": {
+        "columns": 12,
+        "rowHeight": 16
+      },
+      "md": {
+        "columns": 8,
+        "rowHeight": 16
+      },
+      "sm": {
+        "columns": 4,
+        "rowHeight": 16
+      }
+    }
+  },
+  "theme_support": [
+    "light",
+    "dark",
+    "system"
+  ],
+  "widgets": [
+    {
+      "widget_id": "kpi_transfer_success",
+      "title": "Transfer Success",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "ops__transfer_success_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_topup_success",
+      "title": "Top-up Success",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "ops__topup_success_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 3,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_withdraw_fail",
+      "title": "Withdrawal Fail",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "ops__withdrawal_failure_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 6,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_recon_mismatch",
+      "title": "Recon Mismatch",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "ops__recon_mismatch_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 9,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "success_rates",
+      "title": "Success rates by type",
+      "viz_type": "line_chart",
+      "query": {
+        "metric_id": "ops__money_movement_success_rate__pct",
+        "time_grain": "day",
+        "dimensions": [
+          "date",
+          "transaction_type"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 6,
+          "w": 8,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "settlement_p95",
+      "title": "Settlement time p95",
+      "viz_type": "line_chart",
+      "query": {
+        "metric_id": "ops__settlement_time_p95__sec",
+        "time_grain": "day",
+        "dimensions": [
+          "date"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 8,
+          "y": 6,
+          "w": 4,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "duration",
+        "unit": "sec"
+      }
+    },
+    {
+      "widget_id": "failures",
+      "title": "Failures (provider+reason)",
+      "viz_type": "table",
+      "query": {
+        "metric_id": "ops__failures_table",
+        "dimensions": [
+          "transaction_type",
+          "provider",
+          "failure_reason"
+        ],
+        "measures": [
+          "count"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 17,
+          "w": 12,
+          "h": 9
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "meta": {
+    "product": "Swipe Savvy Mobile Wallet",
+    "version": "v3",
+    "generated_at": "2025-12-21",
+    "notes": [
+      "Brand palette per Swipe Savvy Brand Quick Reference / Identity Usage Guide.",
+      "Typography: Hermes (display) + Barlow (body). Use Calibri/Arial fallback while drafting if fonts not installed."
+    ]
+  },
+  "color": {
+    "brand": {
+      "navy": "#235393",
+      "deep": "#132136",
+      "green": "#60BA46",
+      "yellow": "#FAB915"
+    },
+    "neutral": {
+      "black": "#000000",
+      "darkGrey": "#4B4D4D",
+      "ashGrey": "#747676",
+      "white": "#F6F6F6",
+      "surface": "#FFFFFF",
+      "border": "#E7E8EA"
+    },
+    "theme": {
+      "light": {
+        "bg": "#F6F6F6",
+        "surface": "#FFFFFF",
+        "surfaceAlt": "#F7F9FC",
+        "textPrimary": "#132136",
+        "textSecondary": "#747676",
+        "navBg": "#FFFFFF"
+      },
+      "dark": {
+        "bg": "#0B1627",
+        "surface": "#10233F",
+        "surfaceAlt": "#0F2342",
+        "textPrimary": "#FFFFFF",
+        "textSecondary": "#C8CFDA",
+        "navBg": "#0F1A2C"
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "display": [
+        "Hermes",
+        "Calibri",
+        "Arial",
+        "system-ui"
+      ],
+      "body": [
+        "Barlow",
+        "Calibri",
+        "Arial",
+        "system-ui"
+      ],
+      "mono": [
+        "SF Mono",
+        "Consolas",
+        "Menlo",
+        "monospace"
+      ]
+    },
+    "scale": {
+      "h4_screenTitle": 32,
+      "h5_cardTitle": 24,
+      "label": 12,
+      "body": 14,
+      "caption": 12,
+      "navLabel": 10
+    }
+  },
+  "layout": {
+    "grid": {
+      "columns_phone": 4,
+      "gutter_dp": 12,
+      "margin_dp": {
+        "compact": 16,
+        "standard": 16,
+        "large": 20
+      },
+      "baseline_dp": 4
+    },
+    "breakpoints_dp": {
+      "compact_max": 360,
+      "standard_max": 414,
+      "large_min": 415,
+      "tablet_min": 600
+    },
+    "maxContentWidth_dp": 420,
+    "safeArea": {
+      "topMin_dp": 12,
+      "bottomMin_dp": 12,
+      "note": "Always respect OS safe areas; add extra padding for devices with home indicator/notch."
+    }
+  },
+  "spacing_dp": {
+    "0": 0,
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 20,
+    "6": 24,
+    "7": 32,
+    "8": 40,
+    "9": 48
+  },
+  "radius_dp": {
+    "card": 12,
+    "button": 12,
+    "pill": 999,
+    "sheet": 20,
+    "avatar": 999
+  },
+  "elevation": {
+    "shadowSm": {
+      "y": 2,
+      "blur": 10,
+      "opacity": 0.08
+    }
+  },
+  "components": {
+    "bottomNav": {
+      "height_dp": 84,
+      "iconSize_dp": 24,
+      "hitTargetMin_dp": 44,
+      "inactiveOpacity": {
+        "light": 0.45,
+        "dark": 0.55
+      },
+      "activeTreatment": "soft bubble highlight + yellow dot indicator"
+    },
+    "card": {
+      "padding_dp": 16,
+      "gap_dp": 12
+    },
+    "listRow": {
+      "minHeight_dp": 56,
+      "leadingIcon_dp": 24,
+      "trailingIcon_dp": 20
+    },
+    "formField": {
+      "height_dp": 56,
+      "labelToFieldGap_dp": 6,
+      "fieldInternalPadding_dp": 12
+    }
+  },
+  "responsivenessRules": [
+    "Use constraints/Auto Layout: pin containers to margins, allow height to grow with content.",
+    "Never truncate monetary values; wrap or scale down carefully.",
+    "On compact widths, reflow 4-item quick actions into 2x2 grid; stack two-up stat cards when needed.",
+    "CTA buttons stay sticky above bottom nav and above keyboard (use insets).",
+    "For large widths, increase side padding and cap max content width (~420dp) to maintain readable line length."
+  ],
+  "accessibility": [
+    "Maintain sufficient contrast for text and interactive elements.",
+    "Do not rely on color alone for status; pair with icons/text labels.",
+    "Support Dynamic Type / font scaling; allow wrapping and scroll when needed."
+  ]
+}

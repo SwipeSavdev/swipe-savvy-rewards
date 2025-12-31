@@ -1,0 +1,67 @@
+# SwipeSavvy AI Agents - Pinned Production Dependencies
+# Generated: December 28, 2025
+# Python: 3.11.8
+# All dependencies pinned to exact versions for reproducibility
+
+# LLM & AI Frameworks
+together==1.3.0
+openai==1.6.0
+sentence-transformers==2.2.2
+tiktoken==0.5.2
+
+# Database & ORM
+psycopg2-binary==2.9.10
+sqlalchemy==2.0.23
+redis==5.0.1
+
+# Vector Databases
+pinecone-client==3.0.2
+pgvector==0.2.2
+
+# Web Framework
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.2
+pydantic-settings==2.1.0
+
+# Security & PII Detection
+presidio-analyzer==2.2.28
+presidio-anonymizer==2.2.28
+spacy==3.7.2
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0
+httpx==0.25.2
+
+# Monitoring & Logging
+sentry-sdk==1.38.0
+python-json-logger==2.0.7
+
+# Authentication & Crypto
+pyjwt==2.8.1
+cryptography==41.0.7
+
+# Rate Limiting
+slowapi==0.1.9
+
+# Background Tasks
+celery==5.3.4
+kombu==5.3.4
+
+# Data Science
+scikit-learn==1.3.2
+pandas==2.1.3
+numpy==1.26.2
+
+# Testing (Development)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Code Quality (Development)
+black==23.12.1
+flake8==6.1.0
+mypy==1.7.1
+isort==5.13.2

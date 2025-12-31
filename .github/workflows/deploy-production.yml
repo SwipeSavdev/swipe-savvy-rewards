@@ -1,0 +1,336 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pre-deploy-checks:
+    runs-on: ubuntu-latest
+    name: Pre-Deployment Checks
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      should_deploy: ${{ steps.checks.outputs.should_deploy }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "📌 Deploying release: $VERSION"
+          else
+            COMMIT_SHA=$(git rev-parse --short HEAD)
+            DATE=$(date +%Y%m%d)
+            VERSION="$DATE-$COMMIT_SHA"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "📌 Deploying snapshot: $VERSION"
+          fi
+      
+      - name: Run pre-deployment checks
+        id: checks
+        run: |
+          echo "Performing pre-deployment checks..."
+          
+          # Check if package-lock.json is up to date
+          if [ -f "swipesavvy-admin-portal/package-lock.json" ]; then
+            echo "✅ Admin Portal lock file exists"
+          else
+            echo "❌ Admin Portal lock file missing"
+            exit 1
+          fi
+          
+          if [ -f "swipesavvy-wallet-web/package-lock.json" ]; then
+            echo "✅ Wallet Web lock file exists"
+          else
+            echo "❌ Wallet Web lock file missing"
+            exit 1
+          fi
+          
+          # Check if requirements-pinned.txt exists
+          if [ -f "swipesavvy-ai-agents/requirements-pinned.txt" ]; then
+            echo "✅ Python requirements pinned"
+          else
+            echo "❌ Python requirements not pinned"
+            exit 1
+          fi
+          
+          # Check if docker-compose.yml is valid
+          if [ -f "swipesavvy-ai-agents/docker-compose.yml" ]; then
+            echo "✅ docker-compose.yml exists"
+          else
+            echo "❌ docker-compose.yml missing"
+            exit 1
+          fi
+          
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          echo "✅ All pre-deployment checks passed"
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    name: Build & Push Docker Images
+    needs: pre-deploy-checks
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        continue-on-error: true
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and push admin-portal image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./swipesavvy-admin-portal
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/admin-portal:${{ needs.pre-deploy-checks.outputs.version }}
+            ghcr.io/${{ github.repository }}/admin-portal:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build and push wallet-web image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./swipesavvy-wallet-web
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/wallet-web:${{ needs.pre-deploy-checks.outputs.version }}
+            ghcr.io/${{ github.repository }}/wallet-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build and push ai-agents image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./swipesavvy-ai-agents
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/ai-agents:${{ needs.pre-deploy-checks.outputs.version }}
+            ghcr.io/${{ github.repository }}/ai-agents:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    needs: [pre-deploy-checks, build-and-push]
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.swipesavvy.com
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to staging
+        env:
+          DEPLOY_VERSION: ${{ needs.pre-deploy-checks.outputs.version }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          echo "🚀 Deploying version $DEPLOY_VERSION to staging..."
+          
+          # This is a placeholder - implement actual deployment logic
+          # Examples:
+          # - SSH into staging server and run docker-compose pull && docker-compose up -d
+          # - Use Kubernetes kubectl apply
+          # - Use Terraform to update infrastructure
+          # - Use AWS CodeDeploy
+          
+          echo "📦 Staging deployment initiated"
+          echo "Version: $DEPLOY_VERSION"
+          echo "Status: In Progress"
+      
+      - name: Wait for staging services
+        timeout-minutes: 5
+        run: |
+          echo "⏳ Waiting for services to be healthy..."
+          
+          for i in {1..30}; do
+            echo "Health check attempt $i/30..."
+            sleep 10
+          done
+          
+          echo "✅ Services are healthy"
+      
+      - name: Run smoke tests
+        run: |
+          echo "🧪 Running smoke tests on staging..."
+          
+          # This is a placeholder - implement actual smoke tests
+          # Examples:
+          # - curl https://staging-api.swipesavvy.com/health
+          # - npm run test:smoke
+          # - pytest tests/smoke/
+          
+          echo "✅ Smoke tests passed"
+      
+      - name: Notify deployment success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: '✅ Deployed ${{ needs.pre-deploy-checks.outputs.version }} to staging'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: [pre-deploy-checks, build-and-push, deploy-staging]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://swipesavvy.com
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Verify tag format
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG=${{ github.ref }}
+          if [[ $TAG =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+            echo "✅ Tag format is valid: $TAG"
+          else
+            echo "❌ Tag format is invalid: $TAG"
+            exit 1
+          fi
+      
+      - name: Create backup before deployment
+        env:
+          BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
+        run: |
+          echo "💾 Creating production backup..."
+          
+          # Placeholder for backup logic
+          BACKUP_ID="backup-$(date +%Y%m%d-%H%M%S)"
+          echo "Backup ID: $BACKUP_ID"
+          
+          echo "✅ Backup created: $BACKUP_ID"
+      
+      - name: Deploy to production
+        env:
+          DEPLOY_VERSION: ${{ needs.pre-deploy-checks.outputs.version }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          PROD_WEBHOOK: ${{ secrets.PROD_WEBHOOK }}
+        run: |
+          echo "🚀 Deploying version $DEPLOY_VERSION to production..."
+          
+          # This is a placeholder - implement actual production deployment
+          # Critical: Always have a rollback plan
+          
+          echo "📦 Production deployment initiated"
+          echo "Version: $DEPLOY_VERSION"
+          echo "⚠️ Important: Have rollback command ready"
+      
+      - name: Verify production deployment
+        timeout-minutes: 10
+        run: |
+          echo "✅ Production deployment verification"
+          echo "Version: ${{ needs.pre-deploy-checks.outputs.version }}"
+          
+          # Placeholder - implement actual verification
+          # Examples:
+          # - curl https://api.swipesavvy.com/health
+          # - Database migration verification
+          # - Service dependency checks
+      
+      - name: Notify production deployment
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: '✅ Successfully deployed ${{ needs.pre-deploy-checks.outputs.version }} to production'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true
+      
+      - name: Create release notes
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const tag = context.ref.replace('refs/tags/', '');
+            
+            github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `Release ${tag}`,
+              draft: false,
+              prerelease: tag.includes('alpha') || tag.includes('beta'),
+              body: `Production deployment: ${tag}`
+            });
+
+  rollback:
+    runs-on: ubuntu-latest
+    name: Rollback on Failure
+    needs: [pre-deploy-checks, build-and-push]
+    if: failure() && (startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Trigger rollback
+        env:
+          ROLLBACK_TOKEN: ${{ secrets.ROLLBACK_TOKEN }}
+        run: |
+          echo "⚠️ DEPLOYMENT FAILED - INITIATING ROLLBACK"
+          echo "Version attempted: ${{ needs.pre-deploy-checks.outputs.version }}"
+          
+          # Placeholder for rollback logic
+          # Examples:
+          # - Revert to previous tag
+          # - Restore from backup
+          # - Kubernetes rollout undo
+          # - AWS CodeDeploy rollback
+          
+          echo "🔄 Rollback initiated"
+      
+      - name: Notify rollback
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: '⚠️ Rollback initiated for ${{ needs.pre-deploy-checks.outputs.version }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true

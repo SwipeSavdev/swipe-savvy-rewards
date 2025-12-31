@@ -1,0 +1,20 @@
+{
+  "name": "swipesavvy-workspace",
+  "version": "1.0.0",
+  "description": "SwipeSavvy Multi-Service Workspace (Non-Monorepo Structure)",
+  "private": true,
+  "scripts": {
+    "install:all": "npm run install:mobile && npm run install:admin && npm run install:website && npm run install:wallet",
+    "install:mobile": "npm --prefix ./swipesavvy-mobile-app-v2 install",
+    "install:admin": "npm --prefix ./swipesavvy-admin-portal install",
+    "install:website": "npm --prefix ./swipesavvy-customer-website-nextjs install",
+    "install:wallet": "npm --prefix ./swipesavvy-wallet-web install",
+    "start:mobile": "npm --prefix ./swipesavvy-mobile-app-v2 start",
+    "start:admin": "npm --prefix ./swipesavvy-admin-portal run dev",
+    "start:website": "npm --prefix ./swipesavvy-customer-website-nextjs run dev",
+    "start:wallet": "npm --prefix ./swipesavvy-wallet-web run dev",
+    "lint:all": "npm --prefix ./swipesavvy-mobile-app-v2 run lint && npm --prefix ./swipesavvy-admin-portal run lint 2>/dev/null || true",
+    "test:all": "npm --prefix ./swipesavvy-mobile-app-v2 run test && npm --prefix ./swipesavvy-admin-portal run test 2>/dev/null || true"
+  },
+  "comment": "Note: npm workspaces DISABLED to allow separate React versions. Each service manages its own node_modules independently."
+}

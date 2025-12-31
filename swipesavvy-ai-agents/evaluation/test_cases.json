@@ -1,0 +1,473 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "created": "2025-12-23",
+    "description": "Gold standard test set for AI Concierge evaluation",
+    "total_cases": 200,
+    "categories": [
+      "account_balance",
+      "transaction_history",
+      "transfers_payments",
+      "security_privacy",
+      "handoff_triggers",
+      "edge_cases"
+    ]
+  },
+  "test_cases": [
+    {
+      "id": "ACC_001",
+      "category": "account_balance",
+      "user_input": "What's my checking account balance?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_001",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": ["get_account_info"],
+        "tool_call_order": ["get_account_info"],
+        "response_contains": ["checking account", "balance", "$"],
+        "should_handoff": false,
+        "expected_confidence": 0.95,
+        "response_quality_min": 4,
+        "latency_max_ms": 3000
+      },
+      "gold_response": "Your checking account (****1234) has a balance of $2,547.30. Is there anything else you'd like to know about your account?"
+    },
+    {
+      "id": "ACC_002",
+      "category": "account_balance",
+      "user_input": "How much money do I have?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_002",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": ["get_account_info"],
+        "tool_call_order": ["get_account_info"],
+        "response_contains": ["total", "balance", "$"],
+        "should_handoff": false,
+        "expected_confidence": 0.90,
+        "response_quality_min": 4,
+        "latency_max_ms": 3000
+      },
+      "gold_response": "You have a total of $12,547.30 across your accounts: Checking (****1234): $2,547.30, Savings (****5678): $10,000.00. Would you like details on any specific account?"
+    },
+    {
+      "id": "ACC_003",
+      "category": "account_balance",
+      "user_input": "Can you show me all my accounts?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_003",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": ["get_account_info"],
+        "tool_call_order": ["get_account_info"],
+        "response_contains": ["checking", "savings", "balance"],
+        "should_handoff": false,
+        "expected_confidence": 0.95,
+        "response_quality_min": 4,
+        "latency_max_ms": 3000
+      },
+      "gold_response": "Here are your accounts:\n\n1. Checking (****1234): $2,547.30 - Active\n2. Savings (****5678): $10,000.00 - Active\n\nWould you like more details on any of these accounts?"
+    },
+    {
+      "id": "TXN_001",
+      "category": "transaction_history",
+      "user_input": "Show me my recent transactions",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_004",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": ["get_transactions"],
+        "tool_call_order": ["get_transactions"],
+        "response_contains": ["transaction", "recent", "date"],
+        "should_handoff": false,
+        "expected_confidence": 0.95,
+        "response_quality_min": 4,
+        "latency_max_ms": 3500
+      },
+      "gold_response": "Here are your most recent transactions:\n\n1. Starbucks - $5.75 (Dec 22)\n2. Amazon - $45.99 (Dec 21)\n3. Shell Gas - $42.00 (Dec 20)\n\nWould you like to see more transactions or filter by date/category?"
+    },
+    {
+      "id": "TXN_002",
+      "category": "transaction_history",
+      "user_input": "What did I spend at Amazon last month?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_005",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": ["get_transactions"],
+        "tool_call_order": ["get_transactions"],
+        "response_contains": ["Amazon", "spent", "$"],
+        "should_handoff": false,
+        "expected_confidence": 0.85,
+        "response_quality_min": 4,
+        "latency_max_ms": 3500
+      },
+      "gold_response": "You spent a total of $127.48 at Amazon last month across 3 transactions:\n\n1. $45.99 on Dec 21\n2. $52.50 on Dec 10\n3. $28.99 on Dec 5\n\nWould you like details on any specific purchase?"
+    },
+    {
+      "id": "TXN_003",
+      "category": "transaction_history",
+      "user_input": "Show me all grocery store purchases this week",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_006",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": ["get_transactions"],
+        "tool_call_order": ["get_transactions"],
+        "response_contains": ["grocery", "week", "$"],
+        "should_handoff": false,
+        "expected_confidence": 0.80,
+        "response_quality_min": 4,
+        "latency_max_ms": 3500
+      },
+      "gold_response": "Here are your grocery purchases this week:\n\n1. Whole Foods - $87.43 (Dec 22)\n2. Safeway - $42.18 (Dec 20)\n\nTotal spent on groceries this week: $129.61"
+    },
+    {
+      "id": "TXN_004",
+      "category": "transaction_history",
+      "user_input": "Tell me about transaction #TXN123456",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_007",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": ["get_transaction_details"],
+        "tool_call_order": ["get_transaction_details"],
+        "response_contains": ["transaction", "details"],
+        "should_handoff": false,
+        "expected_confidence": 0.90,
+        "response_quality_min": 4,
+        "latency_max_ms": 3000
+      },
+      "gold_response": "Transaction #TXN123456:\n\nMerchant: Starbucks\nAmount: $5.75\nDate: Dec 22, 2025 at 8:45 AM\nCategory: Food & Dining\nStatus: Completed\nAccount: Checking (****1234)\n\nIs there anything specific you'd like to know about this transaction?"
+    },
+    {
+      "id": "SEC_001",
+      "category": "security_privacy",
+      "user_input": "I think there's fraud on my account",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_008",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["fraud", "specialist", "transfer"],
+        "should_handoff": true,
+        "handoff_reason": "complex_topic",
+        "expected_confidence": 0.95,
+        "response_quality_min": 4,
+        "latency_max_ms": 2000
+      },
+      "gold_response": "I understand your concern about potential fraud. This is a serious matter that requires immediate attention from our fraud specialist team. Let me transfer you to a fraud specialist who can help you right away and take the necessary steps to protect your account."
+    },
+    {
+      "id": "SEC_002",
+      "category": "security_privacy",
+      "user_input": "How do I enable two-factor authentication?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_009",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["two-factor", "security", "settings"],
+        "should_handoff": false,
+        "expected_confidence": 0.90,
+        "response_quality_min": 4,
+        "latency_max_ms": 2000
+      },
+      "gold_response": "To enable two-factor authentication:\n\n1. Go to Settings > Security\n2. Select 'Two-Factor Authentication'\n3. Choose your preferred method (SMS or authenticator app)\n4. Follow the setup instructions\n\nThis adds an extra layer of security to your account. Would you like me to walk you through the process?"
+    },
+    {
+      "id": "HAND_001",
+      "category": "handoff_triggers",
+      "user_input": "I want to speak to a human NOW!!!",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_010",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["connect", "agent", "specialist"],
+        "should_handoff": true,
+        "handoff_reason": "human_request",
+        "expected_confidence": 0.99,
+        "response_quality_min": 4,
+        "latency_max_ms": 1500
+      },
+      "gold_response": "Of course! I'll connect you with a live agent right away. Please hold for just a moment while I transfer you to the next available specialist."
+    },
+    {
+      "id": "HAND_002",
+      "category": "handoff_triggers",
+      "user_input": "This is the third time I'm asking! Why can't you help me?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_011",
+        "conversation_history": [
+          {"role": "user", "content": "Can you help with my issue?"},
+          {"role": "assistant", "content": "I'd be happy to help. What issue are you experiencing?"},
+          {"role": "user", "content": "I need help with my payment"},
+          {"role": "assistant", "content": "Could you provide more details about the payment issue?"}
+        ],
+        "failed_attempts": 2
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["apologize", "specialist", "transfer"],
+        "should_handoff": true,
+        "handoff_reason": "frustration",
+        "expected_confidence": 0.95,
+        "response_quality_min": 4,
+        "latency_max_ms": 1500
+      },
+      "gold_response": "I apologize for the frustration. I can see this issue needs more specialized attention. Let me connect you with a specialist who can better assist you with your payment concern. They'll be with you shortly."
+    },
+    {
+      "id": "HAND_003",
+      "category": "handoff_triggers",
+      "user_input": "I need to transfer $50,000 to my business account",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_012",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["large", "specialist", "verify"],
+        "should_handoff": true,
+        "handoff_reason": "high_value_transaction",
+        "expected_confidence": 0.95,
+        "response_quality_min": 4,
+        "latency_max_ms": 2000
+      },
+      "gold_response": "For large transfers like $50,000, I'll connect you with a specialist who can verify the transaction details and ensure everything is processed securely. They can also discuss any limits or requirements for this transfer amount."
+    },
+    {
+      "id": "EDGE_001",
+      "category": "edge_cases",
+      "user_input": "What's the weather like today?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_013",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["banking", "financial", "help"],
+        "should_handoff": false,
+        "expected_confidence": 0.80,
+        "response_quality_min": 3,
+        "latency_max_ms": 2000
+      },
+      "gold_response": "I'm Finley, your banking assistant, so I can't help with weather information. However, I can help you with your accounts, transactions, transfers, or any other banking questions. What can I help you with today?"
+    },
+    {
+      "id": "EDGE_002",
+      "category": "edge_cases",
+      "user_input": "",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_014",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["help", "can I", "assist"],
+        "should_handoff": false,
+        "expected_confidence": 0.70,
+        "response_quality_min": 3,
+        "latency_max_ms": 1500
+      },
+      "gold_response": "Hi! I'm Finley, your SwipeSavvy banking assistant. How can I help you today?"
+    },
+    {
+      "id": "EDGE_003",
+      "category": "edge_cases",
+      "user_input": "asdfkjhasdfkjh",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_015",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["understand", "clarify", "help"],
+        "should_handoff": false,
+        "expected_confidence": 0.50,
+        "response_quality_min": 3,
+        "latency_max_ms": 2000
+      },
+      "gold_response": "I'm not sure I understand that. Could you please clarify what you'd like help with? I can assist with account balances, transactions, transfers, and other banking questions."
+    },
+    {
+      "id": "MULTI_001",
+      "category": "multi_turn",
+      "user_input": "Show me my balance",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_016",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": ["get_account_info"],
+        "tool_call_order": ["get_account_info"],
+        "response_contains": ["balance", "$"],
+        "should_handoff": false,
+        "expected_confidence": 0.95,
+        "response_quality_min": 4,
+        "latency_max_ms": 3000
+      },
+      "gold_response": "Your total balance across all accounts is $12,547.30. You have:\n- Checking (****1234): $2,547.30\n- Savings (****5678): $10,000.00\n\nWould you like details on any specific account?"
+    },
+    {
+      "id": "MULTI_002",
+      "category": "multi_turn",
+      "user_input": "What about my checking account?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_016",
+        "conversation_history": [
+          {"role": "user", "content": "Show me my balance"},
+          {"role": "assistant", "content": "Your total balance is $12,547.30..."}
+        ]
+      },
+      "expected_output": {
+        "tools_called": ["get_account_balance"],
+        "tool_call_order": ["get_account_balance"],
+        "response_contains": ["checking", "$2,547.30"],
+        "should_handoff": false,
+        "expected_confidence": 0.95,
+        "response_quality_min": 4,
+        "latency_max_ms": 3000
+      },
+      "gold_response": "Your checking account (****1234) has a balance of $2,547.30. This is your primary spending account. Would you like to see recent transactions on this account?"
+    },
+    {
+      "id": "MULTI_003",
+      "category": "multi_turn",
+      "user_input": "Yes, show me the last 3 transactions",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_016",
+        "conversation_history": [
+          {"role": "user", "content": "Show me my balance"},
+          {"role": "assistant", "content": "Your total balance is $12,547.30..."},
+          {"role": "user", "content": "What about my checking account?"},
+          {"role": "assistant", "content": "Your checking account has $2,547.30..."}
+        ]
+      },
+      "expected_output": {
+        "tools_called": ["get_transactions"],
+        "tool_call_order": ["get_transactions"],
+        "response_contains": ["transaction", "checking"],
+        "should_handoff": false,
+        "expected_confidence": 0.95,
+        "response_quality_min": 4,
+        "latency_max_ms": 3500
+      },
+      "gold_response": "Here are the last 3 transactions from your checking account (****1234):\n\n1. Starbucks - $5.75 (Dec 22, 2025)\n2. Amazon - $45.99 (Dec 21, 2025)\n3. Shell Gas - $42.00 (Dec 20, 2025)\n\nWould you like more details on any of these?"
+    },
+    {
+      "id": "XFER_001",
+      "category": "transfers_payments",
+      "user_input": "How do I transfer money to my savings?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_020",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["transfer", "savings", "app"],
+        "should_handoff": false,
+        "expected_confidence": 0.85,
+        "response_quality_min": 4,
+        "latency_max_ms": 2500
+      },
+      "gold_response": "To transfer money to your savings account:\n\n1. Open the app and go to 'Transfers'\n2. Select 'From: Checking' and 'To: Savings'\n3. Enter the amount\n4. Review and confirm\n\nTransfers between your accounts are instant and free. Would you like help with anything else?"
+    },
+    {
+      "id": "XFER_002",
+      "category": "transfers_payments",
+      "user_input": "Can I send money to my friend?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_021",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": [],
+        "tool_call_order": [],
+        "response_contains": ["send", "friend", "pay"],
+        "should_handoff": false,
+        "expected_confidence": 0.85,
+        "response_quality_min": 4,
+        "latency_max_ms": 2500
+      },
+      "gold_response": "Yes! You can send money to friends using SwipeSavvy Pay:\n\n1. Go to 'Pay' in the app\n2. Enter your friend's phone number or email\n3. Enter the amount\n4. Add a note (optional)\n5. Confirm\n\nPayments are instant and free. Your friend will receive a notification right away."
+    },
+    {
+      "id": "XFER_003",
+      "category": "transfers_payments",
+      "user_input": "What's the daily transfer limit?",
+      "context": {
+        "user_id": "user_001",
+        "session_id": "session_022",
+        "conversation_history": []
+      },
+      "expected_output": {
+        "tools_called": ["get_account_info"],
+        "tool_call_order": ["get_account_info"],
+        "response_contains": ["limit", "daily", "$"],
+        "should_handoff": false,
+        "expected_confidence": 0.90,
+        "response_quality_min": 4,
+        "latency_max_ms": 3000
+      },
+      "gold_response": "Your daily transfer limits are:\n\n- Internal transfers: $50,000\n- External transfers: $10,000\n- P2P payments: $2,500\n\nYou can request a limit increase by contacting support. Would you like me to connect you with a specialist?"
+    }
+  ],
+  "sampling_strategy": {
+    "account_balance": 40,
+    "transaction_history": 50,
+    "transfers_payments": 30,
+    "security_privacy": 25,
+    "handoff_triggers": 20,
+    "edge_cases": 15,
+    "multi_turn": 20,
+    "total": 200
+  },
+  "quality_rubric": {
+    "5": "Perfect response - accurate, helpful, natural, includes all expected elements",
+    "4": "Good response - accurate and helpful, minor improvements possible",
+    "3": "Acceptable - provides correct information but could be clearer or more complete",
+    "2": "Poor - partially correct but missing key information or awkward phrasing",
+    "1": "Unacceptable - incorrect information or fails to address the question"
+  }
+}

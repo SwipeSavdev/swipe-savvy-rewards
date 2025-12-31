@@ -1,0 +1,217 @@
+{
+  "dashboard_id": "growth_engagement",
+  "title": "Growth & Engagement",
+  "description": "Acquisition, activation, retention.",
+  "allowed_roles": [
+    "admin",
+    "leadership_view",
+    "product_analyst",
+    "finance_analyst"
+  ],
+  "default_time_range": {
+    "preset": "last_30_days",
+    "timezone": "UTC"
+  },
+  "global_filters": [
+    {
+      "id": "country",
+      "type": "multi_select",
+      "dimension": "country"
+    },
+    {
+      "id": "channel",
+      "type": "multi_select",
+      "dimension": "channel"
+    },
+    {
+      "id": "currency_base",
+      "type": "single_select",
+      "dimension": "currency_base",
+      "default": "USD"
+    },
+    {
+      "id": "kyc_tier",
+      "type": "multi_select",
+      "dimension": "kyc_tier"
+    }
+  ],
+  "layout": {
+    "type": "grid",
+    "breakpoints": {
+      "lg": {
+        "columns": 12,
+        "rowHeight": 16
+      },
+      "md": {
+        "columns": 8,
+        "rowHeight": 16
+      },
+      "sm": {
+        "columns": 4,
+        "rowHeight": 16
+      }
+    }
+  },
+  "theme_support": [
+    "light",
+    "dark",
+    "system"
+  ],
+  "widgets": [
+    {
+      "widget_id": "kpi_kyc_approval",
+      "title": "KYC Approval Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "users__kyc_approval_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_first_txn",
+      "title": "First Txn Conversion",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "users__first_txn_conversion__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 3,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_d7_retention",
+      "title": "D7 Retention",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "users__d7_retention_transacting__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 6,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_dau_mau",
+      "title": "DAU / MAU",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "users__dau_mau__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 9,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "activation_funnel",
+      "title": "Activation Funnel",
+      "viz_type": "funnel",
+      "query": {
+        "metric_id": "growth__activation_funnel",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 6,
+          "w": 7,
+          "h": 11
+        }
+      }
+    },
+    {
+      "widget_id": "retention_cohorts",
+      "title": "Retention Cohorts",
+      "viz_type": "cohort",
+      "query": {
+        "metric_id": "growth__retention_cohort",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 7,
+          "y": 6,
+          "w": 5,
+          "h": 11
+        }
+      }
+    },
+    {
+      "widget_id": "dropoff",
+      "title": "Drop-off Drivers",
+      "viz_type": "table",
+      "query": {
+        "metric_id": "growth__dropoff_reasons",
+        "dimensions": [
+          "step",
+          "reason"
+        ],
+        "measures": [
+          "users"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 17,
+          "w": 12,
+          "h": 9
+        }
+      }
+    }
+  ]
+}

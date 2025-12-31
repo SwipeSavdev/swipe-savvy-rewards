@@ -1,0 +1,23 @@
+{
+  "brand": {
+    "name": "Shop Savvy",
+    "colors": {
+      "primaryBlue": "#1F4F91",
+      "accentYellow": "#FFC20E",
+      "accentGreen": "#6BC14A",
+      "neutralBlack": "#000000",
+      "neutralWhite": "#FFFFFF",
+      "neutralGray": "#8A8A8A"
+    },
+    "logo": {
+      "colored": "logos/shopsavvy-colored.png",
+      "white": "logos/shopsavvy-white.png",
+      "black": "logos/shopsavvy-black.png"
+    }
+  },
+  "usage": {
+    "icon": "Use colored on light backgrounds",
+    "inverse": "Use white on dark backgrounds",
+    "monochrome": "Use black for print or single-color"
+  }
+}

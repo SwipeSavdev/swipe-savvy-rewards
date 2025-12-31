@@ -1,0 +1,96 @@
+version: 2
+updates:
+  # Python dependencies via pip
+  - package-ecosystem: "pip"
+    directory: "/swipesavvy-ai-agents"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "security-team"
+    labels:
+      - "dependencies"
+      - "python"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      # Ignore major version bumps unless critical security fix
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+
+  # Python dependencies for admin portal
+  - package-ecosystem: "pip"
+    directory: "/swipesavvy-admin-portal"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:15"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "security-team"
+    labels:
+      - "dependencies"
+      - "python"
+
+  # npm dependencies for customer website
+  - package-ecosystem: "npm"
+    directory: "/swipesavvy-customer-website-nextjs"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:30"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "security-team"
+    labels:
+      - "dependencies"
+      - "npm"
+
+  # npm dependencies for wallet web
+  - package-ecosystem: "npm"
+    directory: "/swipesavvy-wallet-web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:45"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "security-team"
+    labels:
+      - "dependencies"
+      - "npm"
+
+  # npm dependencies for mobile app
+  - package-ecosystem: "npm"
+    directory: "/swipesavvy-mobile-app-v2"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "security-team"
+    labels:
+      - "dependencies"
+      - "npm"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:15"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "security-team"
+    labels:
+      - "dependencies"
+      - "github-actions"

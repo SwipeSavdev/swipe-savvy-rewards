@@ -1,0 +1,229 @@
+{
+  "dashboard_id": "card_tokenization",
+  "title": "Card & Tokenization",
+  "description": "Provisioning, token lifecycle, declines.",
+  "allowed_roles": [
+    "admin",
+    "ops_specialist",
+    "engineering_oncall",
+    "support_agent"
+  ],
+  "default_time_range": {
+    "preset": "last_30_days",
+    "timezone": "UTC"
+  },
+  "global_filters": [
+    {
+      "id": "country",
+      "type": "multi_select",
+      "dimension": "country"
+    },
+    {
+      "id": "channel",
+      "type": "multi_select",
+      "dimension": "channel"
+    },
+    {
+      "id": "currency_base",
+      "type": "single_select",
+      "dimension": "currency_base",
+      "default": "USD"
+    },
+    {
+      "id": "wallet_type",
+      "type": "multi_select",
+      "dimension": "wallet_type"
+    }
+  ],
+  "layout": {
+    "type": "grid",
+    "breakpoints": {
+      "lg": {
+        "columns": 12,
+        "rowHeight": 16
+      },
+      "md": {
+        "columns": 8,
+        "rowHeight": 16
+      },
+      "sm": {
+        "columns": 4,
+        "rowHeight": 16
+      }
+    }
+  },
+  "theme_support": [
+    "light",
+    "dark",
+    "system"
+  ],
+  "widgets": [
+    {
+      "widget_id": "kpi_active_cards",
+      "title": "Active Cards",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "cards__active_count",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "kpi_token_success",
+      "title": "Tokenization Success",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "cards__tokenization_success_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 3,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_decline_rate",
+      "title": "Decline Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "cards__decline_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 6,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_token_active",
+      "title": "Token Active Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "cards__token_active_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 9,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "token_trend",
+      "title": "Tokenization Trend",
+      "viz_type": "line_chart",
+      "query": {
+        "metric_id": "cards__tokenization_success_rate__pct",
+        "time_grain": "day",
+        "dimensions": [
+          "date"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 6,
+          "w": 7,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "declines",
+      "title": "Declines by Reason",
+      "viz_type": "bar_chart",
+      "query": {
+        "metric_id": "cards__declines_by_reason__count",
+        "dimensions": [
+          "decline_reason"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 7,
+          "y": 6,
+          "w": 5,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "provisioning_events",
+      "title": "Provisioning Events",
+      "viz_type": "table",
+      "query": {
+        "metric_id": "cards__provisioning_events",
+        "dimensions": [
+          "event_type",
+          "wallet_type",
+          "token_status"
+        ],
+        "measures": [
+          "count"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 17,
+          "w": 12,
+          "h": 9
+        }
+      }
+    }
+  ]
+}

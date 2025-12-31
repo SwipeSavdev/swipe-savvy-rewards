@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database with pgvector extension
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: swipesavvy-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-swipesavvy_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-swipesavvy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_change_in_prod}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema:/docker-entrypoint-initdb.d
+    networks:
+      - swipesavvy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-swipesavvy}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Guardrails Service
+  guardrails:
+    build:
+      context: .
+      dockerfile: services/guardrails-service/Dockerfile
+    container_name: swipesavvy-guardrails
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8002:8002"
+    networks:
+      - swipesavvy-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # RAG Service
+  rag:
+    build:
+      context: .
+      dockerfile: services/rag-service/Dockerfile
+    container_name: swipesavvy-rag
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-swipesavvy_ai}
+      - POSTGRES_USER=${POSTGRES_USER:-swipesavvy}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dev_password_change_in_prod}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - swipesavvy-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Concierge Service
+  concierge:
+    build:
+      context: .
+      dockerfile: services/concierge-service/Dockerfile
+    container_name: swipesavvy-concierge
+    environment:
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY}
+      - RAG_SERVICE_URL=http://rag:8001
+      - GUARDRAILS_SERVICE_URL=http://guardrails:8002
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    depends_on:
+      rag:
+        condition: service_healthy
+      guardrails:
+        condition: service_healthy
+    networks:
+      - swipesavvy-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  swipesavvy-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+

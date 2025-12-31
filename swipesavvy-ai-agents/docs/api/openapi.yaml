@@ -1,0 +1,358 @@
+openapi: 3.0.3
+info:
+  title: SwipeSavvy AI Agents API
+  description: |
+    AI-powered conversational agents for banking operations.
+    Supports natural language interactions for account management, 
+    transactions, transfers, and bill payments.
+  version: 1.0.0-alpha
+  contact:
+    name: SwipeSavvy Engineering
+    email: engineering@swipesavvy.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://api.swipesavvy.com
+    description: Production
+
+tags:
+  - name: Chat
+    description: Conversational AI endpoints
+  - name: Health
+    description: Service health and monitoring
+  - name: Guardrails
+    description: Content safety and PII protection
+  - name: RAG
+    description: Knowledge retrieval
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Basic service health status
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                timestamp: 1703347200.0
+                version: 1.0.0-alpha
+                uptime: 3600.5
+
+  /ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness probe
+      description: Check if service is ready to accept traffic
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Service readiness status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+
+  /live:
+    get:
+      tags:
+        - Health
+      summary: Liveness probe
+      description: Check if service is alive and responsive
+      operationId: livenessCheck
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LivenessResponse'
+
+  /metrics:
+    get:
+      tags:
+        - Health
+      summary: Prometheus metrics
+      description: Metrics in Prometheus format
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/chat:
+    post:
+      tags:
+        - Chat
+      summary: Send chat message
+      description: |
+        Send a natural language message to the AI agent.
+        The agent will process the message, execute appropriate tools,
+        and return a response.
+      operationId: sendChatMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            examples:
+              balance_inquiry:
+                summary: Balance inquiry
+                value:
+                  message: "What's my account balance?"
+                  session_id: "session_12345"
+                  user_id: "user_67890"
+              transfer:
+                summary: Money transfer
+                value:
+                  message: "Transfer $100 to account 54321"
+                  session_id: "session_12345"
+                  user_id: "user_67890"
+              bill_payment:
+                summary: Bill payment
+                value:
+                  message: "Pay my electricity bill $150"
+                  session_id: "session_12345"
+                  user_id: "user_67890"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              example:
+                message: "Your current account balance is $1,234.56"
+                session_id: "session_12345"
+                timestamp: 1703347200.0
+                guardrails_passed: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/guardrails/check:
+    post:
+      tags:
+        - Guardrails
+      summary: Check content safety
+      description: |
+        Validate text for safety violations, PII, and prompt injection attempts.
+        Returns safety status and masked text if PII is detected.
+      operationId: checkGuardrails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardrailRequest'
+      responses:
+        '200':
+          description: Guardrails check results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuardrailResponse'
+
+  /api/v1/rag/search:
+    post:
+      tags:
+        - RAG
+      summary: Semantic search
+      description: Search knowledge base using semantic similarity
+      operationId: semanticSearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RAGSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RAGSearchResponse'
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+        - session_id
+        - user_id
+      properties:
+        message:
+          type: string
+          description: User's natural language message
+          example: "What's my account balance?"
+        session_id:
+          type: string
+          description: Unique session identifier
+          example: "session_12345"
+        user_id:
+          type: string
+          description: Unique user identifier
+          example: "user_67890"
+
+    ChatResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: AI agent's response
+        session_id:
+          type: string
+          description: Session identifier
+        timestamp:
+          type: number
+          format: float
+          description: Response timestamp
+        guardrails_passed:
+          type: boolean
+          description: Whether content passed safety checks
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: number
+          format: float
+        version:
+          type: string
+        uptime:
+          type: number
+          format: float
+
+    ReadinessResponse:
+      type: object
+      properties:
+        ready:
+          type: boolean
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+        timestamp:
+          type: number
+          format: float
+
+    LivenessResponse:
+      type: object
+      properties:
+        alive:
+          type: boolean
+        timestamp:
+          type: number
+          format: float
+        memory_usage_mb:
+          type: number
+          format: float
+        cpu_percent:
+          type: number
+          format: float
+
+    GuardrailRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+        check_safety:
+          type: boolean
+          default: true
+        check_pii:
+          type: boolean
+          default: true
+        check_injection:
+          type: boolean
+          default: true
+
+    GuardrailResponse:
+      type: object
+      properties:
+        is_safe:
+          type: boolean
+        has_pii:
+          type: boolean
+        is_injection:
+          type: boolean
+        masked_text:
+          type: string
+        safety_violations:
+          type: array
+          items:
+            type: object
+        pii_matches:
+          type: array
+          items:
+            type: object
+
+    RAGSearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+        limit:
+          type: integer
+          default: 5
+
+    RAGSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+        query:
+          type: string
+        count:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        detail:
+          type: string
+        timestamp:
+          type: number
+          format: float

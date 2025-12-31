@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "name": "Swipe Savvy Visual Assets Token Pack",
+    "version": "1.0.0",
+    "generated_at": "2025-12-22T06:35:14Z"
+  },
+  "brand": {
+    "colors": {
+      "navy": "#235393",
+      "deep": "#132136",
+      "green": "#60BA46",
+      "yellow": "#FAB915",
+      "black": "#000000",
+      "darkGrey": "#4B4D4D",
+      "ashGrey": "#747676",
+      "white": "#F6F6F6"
+    },
+    "typography": {
+      "headlineFont": "Hermes",
+      "bodyFont": "Barlow",
+      "fallback": "Calibri, Arial, sans-serif"
+    }
+  },
+  "opacity": {
+    "iconInactive": 0.55,
+    "iconDisabled": 0.35,
+    "surfaceOverlay": 0.08,
+    "borderSubtle": 0.12
+  },
+  "radius": {
+    "xs": 8,
+    "sm": 10,
+    "md": 12,
+    "lg": 16,
+    "xl": 20,
+    "pill": 999
+  },
+  "spacing": {
+    "base": 4,
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 40
+  },
+  "shadow": {
+    "sm": "0 1px 2px rgba(0,0,0,0.06)",
+    "md": "0 6px 18px rgba(0,0,0,0.10)",
+    "focusRing": "0 0 0 3px rgba(35,83,147,0.25)"
+  },
+  "themes": {
+    "light": {
+      "bg": "#F6F6F6",
+      "surface": "#FFFFFF",
+      "surfaceAlt": "rgba(19,33,54,0.03)",
+      "textPrimary": "#132136",
+      "textSecondary": "#4B4D4D",
+      "border": "rgba(19,33,54,0.12)",
+      "primary": "#235393",
+      "primarySoft": "rgba(35,83,147,0.12)",
+      "success": "#60BA46",
+      "warning": "#FAB915",
+      "danger": "#E5484D",
+      "dangerSoft": "rgba(229,72,77,0.12)"
+    },
+    "dark": {
+      "bg": "#132136",
+      "surface": "rgba(246,246,246,0.06)",
+      "surfaceAlt": "rgba(246,246,246,0.10)",
+      "textPrimary": "#F6F6F6",
+      "textSecondary": "rgba(246,246,246,0.72)",
+      "border": "rgba(246,246,246,0.12)",
+      "primary": "#235393",
+      "primarySoft": "rgba(35,83,147,0.35)",
+      "success": "#60BA46",
+      "warning": "#FAB915",
+      "danger": "#FF6B6B",
+      "dangerSoft": "rgba(255,107,107,0.22)"
+    }
+  }
+}

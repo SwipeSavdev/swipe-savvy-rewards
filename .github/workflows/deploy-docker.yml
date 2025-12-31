@@ -1,0 +1,114 @@
+name: Build & Deploy - Docker
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'swipesavvy-*/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/deploy-docker.yml'
+
+jobs:
+  build-docker-images:
+    runs-on: ubuntu-latest
+    name: Build Docker Images
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Admin Portal image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./swipesavvy-admin-portal
+          push: false
+          tags: swipesavvy-admin-portal:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build Wallet Web image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./swipesavvy-wallet-web
+          push: false
+          tags: swipesavvy-wallet-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build AI Agents image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./swipesavvy-ai-agents
+          push: false
+          tags: swipesavvy-ai-agents:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  validate-docker-compose:
+    runs-on: ubuntu-latest
+    name: Validate Docker Compose
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate docker-compose.yml
+        run: |
+          docker-compose config -f docker-compose.yml > /dev/null
+          echo "✅ docker-compose.yml is valid"
+      
+      - name: Check service definitions
+        run: |
+          echo "Checking service definitions..."
+          for service in api postgres redis; do
+            if grep -q "$service:" docker-compose.yml; then
+              echo "✅ Service '$service' defined"
+            else
+              echo "⚠️ Service '$service' not found (may be optional)"
+            fi
+          done
+      
+      - name: Verify environment variables
+        run: |
+          if [ -f ".env.example" ]; then
+            echo "✅ Found .env.example"
+          else
+            echo "⚠️ Missing .env.example"
+          fi
+          
+          for repo in swipesavvy-admin-portal swipesavvy-wallet-web swipesavvy-mobile-app swipesavvy-ai-agents; do
+            if [ -f "$repo/.env.example" ]; then
+              echo "✅ Found .env.example in $repo"
+            else
+              echo "⚠️ Missing .env.example in $repo"
+            fi
+          done
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    needs: [build-docker-images, validate-docker-compose]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy notification
+        run: |
+          echo "🚀 Deployment to staging would happen here"
+          echo "In production, this would:"
+          echo "1. Build and push Docker images to container registry"
+          echo "2. Update staging environment with new images"
+          echo "3. Run smoke tests against staging"
+          echo "4. Notify team of deployment"
+
+  rollback-on-failure:
+    runs-on: ubuntu-latest
+    name: Rollback on Failure
+    needs: [deploy-staging]
+    if: failure() && github.ref == 'refs/heads/main'
+    steps:
+      - name: Rollback notification
+        run: |
+          echo "⚠️ Deployment to staging failed"
+          echo "Rollback would be triggered in production environment"

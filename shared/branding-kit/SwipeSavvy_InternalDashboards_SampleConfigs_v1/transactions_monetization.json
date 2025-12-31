@@ -1,0 +1,234 @@
+{
+  "dashboard_id": "transactions_monetization",
+  "title": "Transactions & Monetization",
+  "description": "TPV, fees, refunds, declines, FX.",
+  "allowed_roles": [
+    "admin",
+    "leadership_view",
+    "finance_analyst",
+    "product_analyst"
+  ],
+  "default_time_range": {
+    "preset": "last_30_days",
+    "timezone": "UTC"
+  },
+  "global_filters": [
+    {
+      "id": "country",
+      "type": "multi_select",
+      "dimension": "country"
+    },
+    {
+      "id": "channel",
+      "type": "multi_select",
+      "dimension": "channel"
+    },
+    {
+      "id": "currency_base",
+      "type": "single_select",
+      "dimension": "currency_base",
+      "default": "USD"
+    },
+    {
+      "id": "txn_type",
+      "type": "multi_select",
+      "dimension": "transaction_type"
+    },
+    {
+      "id": "merchant_category",
+      "type": "multi_select",
+      "dimension": "merchant_category"
+    }
+  ],
+  "layout": {
+    "type": "grid",
+    "breakpoints": {
+      "lg": {
+        "columns": 12,
+        "rowHeight": 16
+      },
+      "md": {
+        "columns": 8,
+        "rowHeight": 16
+      },
+      "sm": {
+        "columns": 4,
+        "rowHeight": 16
+      }
+    }
+  },
+  "theme_support": [
+    "light",
+    "dark",
+    "system"
+  ],
+  "widgets": [
+    {
+      "widget_id": "kpi_tpv",
+      "title": "TPV (Settled)",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "transactions__tpv_settled__base",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "currency"
+      }
+    },
+    {
+      "widget_id": "kpi_net_fees",
+      "title": "Net Fees",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "transactions__fees_net__base",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 3,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "currency"
+      }
+    },
+    {
+      "widget_id": "kpi_refund_rate",
+      "title": "Refund Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "transactions__refund_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 6,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_decline_rate",
+      "title": "Decline Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "cards__decline_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 9,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "tpv_by_type",
+      "title": "TPV by Type",
+      "viz_type": "bar_chart",
+      "query": {
+        "metric_id": "transactions__tpv_by_type__base",
+        "dimensions": [
+          "transaction_type"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 6,
+          "w": 7,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "currency",
+        "currency": "USD"
+      }
+    },
+    {
+      "widget_id": "declines_by_reason",
+      "title": "Declines by Reason",
+      "viz_type": "bar_chart",
+      "query": {
+        "metric_id": "cards__declines_by_reason__count",
+        "dimensions": [
+          "decline_reason"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 7,
+          "y": 6,
+          "w": 5,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "merchant_table",
+      "title": "Top Merchants/Categories",
+      "viz_type": "table",
+      "query": {
+        "metric_id": "transactions__tpv_by_merchant",
+        "dimensions": [
+          "merchant_category",
+          "merchant_id"
+        ],
+        "measures": [
+          "tpv",
+          "refund_rate"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 17,
+          "w": 12,
+          "h": 9
+        }
+      }
+    }
+  ]
+}

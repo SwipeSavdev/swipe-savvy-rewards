@@ -1,0 +1,30 @@
+{
+  "folders": [
+    { "path": "../swipesavvy-mobile-app" },
+    { "path": "../swipesavvy-mobile-wallet-native" },
+    { "path": "../shared/branding-kit" }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "eslint.workingDirectories": [
+      { "mode": "auto" }
+    ],
+    "files.exclude": {
+      "**/.DS_Store": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.expo": true,
+      "**/ios/Pods": true,
+      "**/ios/build": true,
+      "**/android/.gradle": true,
+      "**/android/build": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "msjsdiag.vscode-react-native"
+    ]
+  }
+}

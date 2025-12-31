@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "name": "Swipe Savvy Mobile Wallet",
+    "version": "5.0",
+    "notes": "Draft tokens for alignment + responsiveness + dark mode. Replace draft fonts with Hermes (headers) + Barlow (body) before production per brand guide."
+  },
+  "color": {
+    "brand": {
+      "navy": "#235393",
+      "deep": "#132136",
+      "green": "#60BA46",
+      "yellow": "#FAB915",
+      "black": "#000000",
+      "darkGrey": "#4B4D4D",
+      "ashGrey": "#747676",
+      "white": "#F6F6F6"
+    },
+    "light": {
+      "bg": "#F6F6F6",
+      "surface": "#FFFFFF",
+      "surfaceAlt": "#EAF2FF",
+      "textPrimary": "#132136",
+      "textSecondary": "#747676",
+      "border": "#D8E2F2"
+    },
+    "dark": {
+      "bg": "#132136",
+      "surface": "#0D1626",
+      "surfaceAlt": "#1B2A45",
+      "textPrimary": "#FFFFFF",
+      "textSecondary": "#C9D3E6",
+      "border": "#2A3B57"
+    },
+    "semantic": {
+      "success": "#60BA46",
+      "highlight": "#FAB915",
+      "primaryAction": "#235393",
+      "danger": "#D64545"
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "header": "Hermes (or Calibri fallback)",
+      "body": "Barlow (or Calibri fallback)",
+      "mono": "Consolas"
+    },
+    "size": {
+      "h4": 32,
+      "h5": 24,
+      "h6": 20,
+      "body": 18,
+      "caption": 16
+    },
+    "mobile": {
+      "screenTitle": 20,
+      "cardTitle": 14,
+      "body": 12,
+      "label": 10
+    }
+  },
+  "spacing": {
+    "scale": [
+      4,
+      8,
+      12,
+      16,
+      20,
+      24,
+      32,
+      40,
+      48
+    ],
+    "baseline": 4,
+    "pageMargin": {
+      "compact": 16,
+      "standard": 16,
+      "large": 20
+    },
+    "cardPadding": 16,
+    "gutter": 16
+  },
+  "radius": {
+    "card": 16,
+    "pill": 18,
+    "button": 14
+  },
+  "elevation": {
+    "navPill": {
+      "shadow": "soft",
+      "blur": 20,
+      "y": 8,
+      "opacity": 0.18
+    }
+  },
+  "navigation": {
+    "bottomNav": {
+      "height": 72,
+      "iconSize": 24,
+      "inactiveOpacity": {
+        "light": 0.45,
+        "dark": 0.55
+      },
+      "active": {
+        "bubble": true,
+        "indicatorDot": true
+      },
+      "label": {
+        "enabled": true
+      }
+    }
+  },
+  "breakpoints": {
+    "compact": {
+      "maxWidthDp": 360,
+      "notes": "reflow actions to 2x2, stack secondary cards"
+    },
+    "standard": {
+      "minWidthDp": 361,
+      "maxWidthDp": 414,
+      "notes": "two-up stats, single-row actions if space"
+    },
+    "large": {
+      "minWidthDp": 415,
+      "notes": "increase margins, apply max content width"
+    }
+  },
+  "layout": {
+    "grid": {
+      "columns": 4,
+      "gutterDp": 16
+    },
+    "tapTargetMin": 44,
+    "neverTruncate": [
+      "moneyAmount",
+      "balance",
+      "accountLast4"
+    ]
+  }
+}

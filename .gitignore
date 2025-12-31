@@ -1,0 +1,105 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.production.local
+.env.staging.local
+
+# Secrets and Keys
+*.key
+*.pem
+*.p8
+*.p12
+*.pfx
+*.jks
+secrets/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.venv
+venv/
+ENV/
+env/
+.venv/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+.npm/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+migrations/versions/*.py
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+*.tar.gz
+*.zip
+
+# Local development
+.cache/
+tmp/
+temp/
+local/
+mock-data/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/

@@ -1,0 +1,206 @@
+{
+  "meta": {
+    "name": "Swipe Savvy Mobile Wallet Design Tokens (Draft)",
+    "version": "0.1",
+    "generated": "2025-12-21T21:31:31.965014Z",
+    "notes": [
+      "Draft tokens aligned to Swipe Savvy brand palette and typography guidance.",
+      "Fonts in mockups use Calibri as a fallback; swap to Hermes (headlines) and Barlow (body) for final production assets."
+    ]
+  },
+  "color": {
+    "brand": {
+      "navy": {
+        "value": "#235393",
+        "usage": "Primary actions, links, key UI accents"
+      },
+      "deep": {
+        "value": "#132136",
+        "usage": "Headers, primary text, dark surfaces"
+      },
+      "green": {
+        "value": "#60BA46",
+        "usage": "Success, confirmations, impact/donation"
+      },
+      "yellow": {
+        "value": "#FAB915",
+        "usage": "Rewards emphasis, progress highlight"
+      },
+      "black": {
+        "value": "#000000",
+        "usage": "High-contrast text when needed"
+      },
+      "darkGrey": {
+        "value": "#4B4D4D",
+        "usage": "Secondary text, icons"
+      },
+      "ashGrey": {
+        "value": "#747676",
+        "usage": "Tertiary text, hints"
+      },
+      "white": {
+        "value": "#F6F6F6",
+        "usage": "App background"
+      },
+      "pureWhite": {
+        "value": "#FFFFFF",
+        "usage": "Card surfaces"
+      }
+    },
+    "semantic": {
+      "bg": {
+        "value": "{color.brand.white}"
+      },
+      "surface": {
+        "value": "{color.brand.pureWhite}"
+      },
+      "textPrimary": {
+        "value": "{color.brand.deep}"
+      },
+      "textSecondary": {
+        "value": "{color.brand.ashGrey}"
+      },
+      "border": {
+        "value": "#E6E6E6"
+      },
+      "infoSurface": {
+        "value": "#EEF3FB"
+      },
+      "successSurface": {
+        "value": "#F0FBF1"
+      },
+      "rewardSurface": {
+        "value": "#FFF8E8"
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "headline": {
+        "value": "Hermes",
+        "fallback": [
+          "Calibri",
+          "Arial",
+          "sans-serif"
+        ]
+      },
+      "body": {
+        "value": "Barlow",
+        "fallback": [
+          "Calibri",
+          "Arial",
+          "sans-serif"
+        ]
+      },
+      "mono": {
+        "value": "Consolas",
+        "fallback": [
+          "Menlo",
+          "monospace"
+        ]
+      }
+    },
+    "scale": {
+      "h1": {
+        "px": 60
+      },
+      "h2": {
+        "px": 48
+      },
+      "h3": {
+        "px": 36
+      },
+      "h4": {
+        "px": 32
+      },
+      "h5": {
+        "px": 24
+      },
+      "h6": {
+        "px": 20
+      },
+      "body": {
+        "px": 18
+      },
+      "footer": {
+        "px": 16
+      }
+    }
+  },
+  "spacing": {
+    "xs": {
+      "value": 4
+    },
+    "sm": {
+      "value": 8
+    },
+    "md": {
+      "value": 12
+    },
+    "lg": {
+      "value": 16
+    },
+    "xl": {
+      "value": 24
+    },
+    "2xl": {
+      "value": 32
+    }
+  },
+  "radius": {
+    "sm": {
+      "value": 8
+    },
+    "md": {
+      "value": 12
+    },
+    "lg": {
+      "value": 16
+    },
+    "pill": {
+      "value": 999
+    }
+  },
+  "elevation": {
+    "card": {
+      "shadow": "0 2px 12px rgba(19,33,54,0.10)"
+    },
+    "sheet": {
+      "shadow": "0 -4px 24px rgba(19,33,54,0.16)"
+    }
+  },
+  "components": {
+    "button": {
+      "primary": {
+        "bg": "{color.brand.navy}",
+        "text": "{color.brand.pureWhite}"
+      },
+      "secondary": {
+        "bg": "{color.brand.pureWhite}",
+        "text": "{color.brand.navy}",
+        "border": "{color.brand.navy}"
+      },
+      "success": {
+        "bg": "{color.brand.green}",
+        "text": "{color.brand.pureWhite}"
+      }
+    },
+    "chip": {
+      "reward": {
+        "bg": "{color.semantic.rewardSurface}",
+        "text": "{color.semantic.textPrimary}",
+        "border": "#F2E3BF"
+      },
+      "impact": {
+        "bg": "{color.semantic.successSurface}",
+        "text": "{color.semantic.textPrimary}",
+        "border": "#D6F0DA"
+      }
+    },
+    "bottomNav": {
+      "height": 56,
+      "activeColor": "{color.brand.navy}",
+      "inactiveColor": "{color.brand.ashGrey}"
+    }
+  }
+}

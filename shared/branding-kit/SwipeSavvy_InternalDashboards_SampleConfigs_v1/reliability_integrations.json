@@ -1,0 +1,218 @@
+{
+  "dashboard_id": "reliability_integrations",
+  "title": "Reliability & Integrations",
+  "description": "API latency/errors, provider uptime, webhook failures.",
+  "allowed_roles": [
+    "admin",
+    "engineering_oncall",
+    "ops_specialist"
+  ],
+  "default_time_range": {
+    "preset": "last_30_days",
+    "timezone": "UTC"
+  },
+  "global_filters": [
+    {
+      "id": "service",
+      "type": "multi_select",
+      "dimension": "service"
+    },
+    {
+      "id": "provider",
+      "type": "multi_select",
+      "dimension": "provider"
+    }
+  ],
+  "layout": {
+    "type": "grid",
+    "breakpoints": {
+      "lg": {
+        "columns": 12,
+        "rowHeight": 16
+      },
+      "md": {
+        "columns": 8,
+        "rowHeight": 16
+      },
+      "sm": {
+        "columns": 4,
+        "rowHeight": 16
+      }
+    }
+  },
+  "theme_support": [
+    "light",
+    "dark",
+    "system"
+  ],
+  "widgets": [
+    {
+      "widget_id": "kpi_api_error",
+      "title": "API Error Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "reliability__api_error_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_api_p95",
+      "title": "API p95 Latency",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "reliability__api_latency_p95__ms",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 3,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "duration"
+      }
+    },
+    {
+      "widget_id": "kpi_provider_uptime",
+      "title": "Provider Uptime",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "reliability__provider_uptime__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 6,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_webhook_fail",
+      "title": "Webhook Fail Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "reliability__webhook_failure_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 9,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "latency_errors",
+      "title": "Latency + Error Trend",
+      "viz_type": "line_chart",
+      "query": {
+        "metric_id": "reliability__api_latency_p95__ms",
+        "time_grain": "day",
+        "dimensions": [
+          "date"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 6,
+          "w": 8,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "duration",
+        "unit": "ms"
+      }
+    },
+    {
+      "widget_id": "provider_incidents",
+      "title": "Provider incidents",
+      "viz_type": "bar_chart",
+      "query": {
+        "metric_id": "reliability__provider_incidents__count",
+        "dimensions": [
+          "provider"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 8,
+          "y": 6,
+          "w": 4,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "webhook_failures",
+      "title": "Webhook failures",
+      "viz_type": "table",
+      "query": {
+        "metric_id": "reliability__webhook_failures_table",
+        "dimensions": [
+          "provider",
+          "event_type",
+          "failure_reason"
+        ],
+        "measures": [
+          "count"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 17,
+          "w": 12,
+          "h": 9
+        }
+      }
+    }
+  ]
+}

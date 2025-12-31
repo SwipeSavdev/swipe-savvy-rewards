@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "swipesavvy-ai-support": {
+      "command": "python3",
+      "args": [
+        "/Users/macbookpro/Documents/swipesavvy-mobile-app-v2/mcp_support_server.py"
+      ],
+      "description": "SwipeSavvy AI Support Concierge - Intelligent issue resolution with ML learning",
+      "env": {
+        "PYTHONPATH": "/Users/macbookpro/Documents/swipesavvy-mobile-app-v2"
+      }
+    }
+  }
+}

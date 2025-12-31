@@ -1,0 +1,101 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/#draft",
+  "name": "SwipeSavvy Mobile Wallet — Design Tokens",
+  "version": "2.0-modern-aligned",
+  "updated": "2025-12-21",
+  "brandPalette": {
+    "navyBlue": "#235393",
+    "deepBlue": "#132136",
+    "vibrantGreen": "#60BA46",
+    "vibrantYellow": "#FAB915",
+    "black": "#000000",
+    "darkGrey": "#4B4D4D",
+    "ashGrey": "#747676",
+    "white": "#F6F6F6"
+  },
+  "typography": {
+    "headlines": {
+      "brandFont": "Hermes Regular",
+      "fallback": "Calibri"
+    },
+    "body": {
+      "brandFont": "Barlow",
+      "fallback": "Calibri"
+    },
+    "sizesPx": {
+      "screenTitle": 32,
+      "cardTitle": 24,
+      "label": 20,
+      "body": 18,
+      "caption": 16
+    }
+  },
+  "layout": {
+    "gridUnit": 8,
+    "screenPadding": 16,
+    "sectionGap": 16,
+    "cardGap": 12,
+    "radius": {
+      "card": 16,
+      "pill": 999,
+      "iconButton": 14
+    }
+  },
+  "components": {
+    "bottomNav": {
+      "height": 56,
+      "glass": {
+        "light": {
+          "background": "#FFFFFF",
+          "opacity": 0.86,
+          "border": "#E6E8EC"
+        },
+        "dark": {
+          "background": "#132136",
+          "opacity": 0.82,
+          "border": "#22324A"
+        }
+      },
+      "icon": {
+        "size": 24,
+        "stroke": 1.8,
+        "inactiveOpacityLight": 0.45,
+        "inactiveOpacityDark": 0.55,
+        "labelSize": 10
+      },
+      "activeIndicator": {
+        "type": "dot",
+        "color": "#FAB915",
+        "size": 4
+      }
+    },
+    "cards": {
+      "surface": {
+        "light": "#FFFFFF",
+        "dark": {
+          "base": "#132136",
+          "overlay": "#235393",
+          "overlayOpacity": 0.45,
+          "note": "Use Navy overlay on Deep Blue to avoid introducing off-brand solid colors."
+        }
+      },
+      "border": {
+        "light": "#E6E8EC",
+        "dark": "#22324A"
+      }
+    }
+  },
+  "darkMode": {
+    "default": "followSystem",
+    "manualOverride": true,
+    "background": "#132136",
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#F6F6F6"
+    },
+    "accents": {
+      "success": "#60BA46",
+      "highlight": "#FAB915"
+    }
+  }
+}

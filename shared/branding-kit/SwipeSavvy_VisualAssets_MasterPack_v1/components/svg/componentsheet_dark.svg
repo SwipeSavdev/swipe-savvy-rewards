@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+<rect x="0" y="0" width="1440" height="900" rx="0" fill="#132136" />
+<text x="40" y="50" font-family="Hermes, Calibri, Arial, sans-serif" font-size="22" font-weight="400" fill="#F6F6F6">Swipe Savvy — Internal Portal UI Components (Dark Mode)</text>
+<text x="40" y="78" font-family="Barlow, Calibri, Arial, sans-serif" font-size="13" font-weight="400" fill="rgba(246,246,246,0.72)" text-anchor="start">Buttons, inputs, cards, tables, nav, and feedback components (SVG source).</text>
+<text x="40" y="120" font-family="Barlow, Calibri, Arial, sans-serif" font-size="16" font-weight="600" fill="#F6F6F6" text-anchor="start">Buttons</text>
+<rect x="40" y="140" width="160" height="44" rx="12" fill="#235393" />
+<text x="120" y="168" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="600" fill="#F6F6F6" text-anchor="middle">Primary</text>
+<rect x="220" y="140" width="160" height="44" rx="12" fill="rgba(35,83,147,0.35)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<text x="300" y="168" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="600" fill="#235393" text-anchor="middle">Secondary</text>
+<rect x="400" y="140" width="160" height="44" rx="12" fill="transparent" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<text x="480" y="168" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="600" fill="#F6F6F6" text-anchor="middle">Tertiary</text>
+<rect x="580" y="140" width="160" height="44" rx="12" fill="#FF6B6B" />
+<text x="660" y="168" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="600" fill="#F6F6F6" text-anchor="middle">Danger</text>
+<text x="40" y="220" font-family="Barlow, Calibri, Arial, sans-serif" font-size="16" font-weight="600" fill="#F6F6F6" text-anchor="start">Inputs</text>
+<rect x="40" y="240" width="320" height="44" rx="12" fill="rgba(246,246,246,0.06)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<g transform="translate(54,252) scale(0.8333333333333334)" style="color:rgba(246,246,246,0.72);opacity:0.9;">
+<circle cx="11" cy="11" r="6"></circle>
+<line x1="16" y1="16" x2="21" y2="21"></line>
+</g>
+<text x="84" y="268" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="400" fill="rgba(246,246,246,0.72)" text-anchor="start">Search transactions, users…</text>
+<rect x="380" y="240" width="220" height="44" rx="12" fill="rgba(246,246,246,0.06)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<text x="400" y="268" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="400" fill="#F6F6F6" text-anchor="start">Last 30 days</text>
+<g transform="translate(560,252) scale(0.8333333333333334)" style="color:rgba(246,246,246,0.72);opacity:0.9;"><path d="M6 9l6 6 6-6"></path></g>
+<text x="40" y="320" font-family="Barlow, Calibri, Arial, sans-serif" font-size="16" font-weight="600" fill="#F6F6F6" text-anchor="start">Navigation (translucent icons)</text>
+<rect x="40" y="340" width="260" height="520" rx="16" fill="rgba(246,246,246,0.06)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<text x="70" y="380" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="700" fill="#F6F6F6" text-anchor="start">Master Portal</text>
+<rect x="60" y="398" width="220" height="44" rx="12" fill="rgba(35,83,147,0.35)" />
+<g transform="translate(76,408) scale(0.9166666666666666)" style="color:#235393;opacity:1.0;">
+<rect x="3" y="3" width="8" height="8" rx="2"></rect>
+<rect x="13" y="3" width="8" height="8" rx="2"></rect>
+<rect x="3" y="13" width="8" height="8" rx="2"></rect>
+<rect x="13" y="13" width="8" height="8" rx="2"></rect>
+</g>
+<text x="112" y="424" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="600" fill="#235393" text-anchor="start">Dashboard</text>
+<g transform="translate(76,464) scale(0.9166666666666666)" style="color:#F6F6F6;opacity:0.55;">
+<line x1="4" y1="20" x2="20" y2="20"></line>
+<rect x="5" y="11" width="3" height="9" rx="1"></rect>
+<rect x="10.5" y="7" width="3" height="13" rx="1"></rect>
+<rect x="16" y="13" width="3" height="7" rx="1"></rect>
+</g>
+<text x="112" y="480" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="500" fill="#F6F6F6" text-anchor="start">Transactions</text>
+<g transform="translate(76,520) scale(0.9166666666666666)" style="color:#F6F6F6;opacity:0.55;">
+<path d="M12 2.8l7 3.2v6.2c0 5-3.2 8.7-7 9.8-3.8-1.1-7-4.8-7-9.8V6l7-3.2z"></path>
+<path d="M12 8v5"></path>
+<circle cx="12" cy="15.8" r="0.9"></circle>
+</g>
+<text x="112" y="536" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="500" fill="#F6F6F6" text-anchor="start">Risk &amp; Fraud</text>
+<g transform="translate(76,576) scale(0.9166666666666666)" style="color:#F6F6F6;opacity:0.55;">
+<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"></path>
+</g>
+<text x="112" y="592" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="500" fill="#F6F6F6" text-anchor="start">Reliability</text>
+<g transform="translate(76,632) scale(0.9166666666666666)" style="color:#F6F6F6;opacity:0.55;">
+<path d="M4 12a8 8 0 0 1 16 0"></path>
+<rect x="3.5" y="12" width="3.5" height="6" rx="1.5"></rect>
+<rect x="17" y="12" width="3.5" height="6" rx="1.5"></rect>
+<path d="M17 18c0 1.7-1.6 3-3.5 3H12"></path>
+</g>
+<text x="112" y="648" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="500" fill="#F6F6F6" text-anchor="start">Support</text>
+<g transform="translate(76,688) scale(0.9166666666666666)" style="color:#F6F6F6;opacity:0.55;">
+<circle cx="12" cy="12" r="3"></circle>
+<path d="M19.4 15a7.8 7.8 0 0 0 .1-6l-2 1.2a6 6 0 0 0-1.7-1.7L17 6.6a7.8 7.8 0 0 0-6-.1l.2 2.3a6 6 0 0 0-1.7 1.7L6.6 10.5a7.8 7.8 0 0 0-.1 6l2.3-.2a6 6 0 0 0 1.7 1.7l-.2 2.3a7.8 7.8 0 0 0 6 .1l-1.2-2a6 6 0 0 0 1.7-1.7l2.6.4z"></path>
+</g>
+<text x="112" y="704" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="500" fill="#F6F6F6" text-anchor="start">Settings</text>
+<text x="340" y="320" font-family="Barlow, Calibri, Arial, sans-serif" font-size="16" font-weight="600" fill="#F6F6F6" text-anchor="start">KPI Cards</text>
+<rect x="340" y="340" width="260" height="120" rx="16" fill="rgba(246,246,246,0.06)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<text x="358" y="370" font-family="Barlow, Calibri, Arial, sans-serif" font-size="13" font-weight="400" fill="rgba(246,246,246,0.72)" text-anchor="start">TPV (Settled)</text>
+<text x="358" y="408" font-family="Barlow, Calibri, Arial, sans-serif" font-size="24" font-weight="700" fill="#F6F6F6" text-anchor="start">$4.82M</text>
+<text x="358" y="438" font-family="Barlow, Calibri, Arial, sans-serif" font-size="13" font-weight="600" fill="#60BA46" text-anchor="start">+8.1%</text>
+<rect x="620" y="340" width="260" height="120" rx="16" fill="rgba(246,246,246,0.06)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<text x="638" y="370" font-family="Barlow, Calibri, Arial, sans-serif" font-size="13" font-weight="400" fill="rgba(246,246,246,0.72)" text-anchor="start">Auth Success</text>
+<text x="638" y="408" font-family="Barlow, Calibri, Arial, sans-serif" font-size="24" font-weight="700" fill="#F6F6F6" text-anchor="start">96.4%</text>
+<text x="638" y="438" font-family="Barlow, Calibri, Arial, sans-serif" font-size="13" font-weight="600" fill="#FAB915" text-anchor="start">-0.3%</text>
+<rect x="900" y="340" width="260" height="120" rx="16" fill="rgba(246,246,246,0.06)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<text x="918" y="370" font-family="Barlow, Calibri, Arial, sans-serif" font-size="13" font-weight="400" fill="rgba(246,246,246,0.72)" text-anchor="start">Chargebacks</text>
+<text x="918" y="408" font-family="Barlow, Calibri, Arial, sans-serif" font-size="24" font-weight="700" fill="#F6F6F6" text-anchor="start">0.18%</text>
+<text x="918" y="438" font-family="Barlow, Calibri, Arial, sans-serif" font-size="13" font-weight="600" fill="#FF6B6B" text-anchor="start">+0.04%</text>
+<text x="340" y="500" font-family="Barlow, Calibri, Arial, sans-serif" font-size="16" font-weight="600" fill="#F6F6F6" text-anchor="start">Chart Container</text>
+<rect x="340" y="520" width="840" height="260" rx="16" fill="rgba(246,246,246,0.06)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<text x="360" y="550" font-family="Barlow, Calibri, Arial, sans-serif" font-size="14" font-weight="700" fill="#F6F6F6" text-anchor="start">Transaction Volume (Daily)</text>
+<line x1="370" y1="740" x2="1140" y2="740" stroke="rgba(246,246,246,0.12)" stroke-width="1"/>
+<line x1="370" y1="580" x2="370" y2="740" stroke="rgba(246,246,246,0.12)" stroke-width="1"/>
+<path d="M 380 720 L 450 680 L 520 700 L 590 640 L 660 610 L 730 630 L 800 590 L 870 600 L 940 560 L 1010 580 L 1080 540 L 1130 550" fill="none" stroke="#235393" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 380 720 L 450 680 L 520 700 L 590 640 L 660 610 L 730 630 L 800 590 L 870 600 L 940 560 L 1010 580 L 1080 540 L 1130 550 L 1130 740 L 380 740 Z" fill="#235393" fill-opacity="0.18" stroke="none"/>
+<text x="340" y="820" font-family="Barlow, Calibri, Arial, sans-serif" font-size="16" font-weight="600" fill="#F6F6F6" text-anchor="start">Table (virtualization-ready)</text>
+<rect x="340" y="840" width="840" height="44" rx="12" fill="rgba(246,246,246,0.06)" stroke="rgba(246,246,246,0.12)" stroke-width="1" />
+<text x="360" y="868" font-family="Barlow, Calibri, Arial, sans-serif" font-size="12" font-weight="700" fill="rgba(246,246,246,0.72)" text-anchor="start">Transaction ID</text>
+<text x="560" y="868" font-family="Barlow, Calibri, Arial, sans-serif" font-size="12" font-weight="700" fill="rgba(246,246,246,0.72)" text-anchor="start">Type</text>
+<text x="700" y="868" font-family="Barlow, Calibri, Arial, sans-serif" font-size="12" font-weight="700" fill="rgba(246,246,246,0.72)" text-anchor="start">Status</text>
+<text x="820" y="868" font-family="Barlow, Calibri, Arial, sans-serif" font-size="12" font-weight="700" fill="rgba(246,246,246,0.72)" text-anchor="start">Amount</text>
+<text x="960" y="868" font-family="Barlow, Calibri, Arial, sans-serif" font-size="12" font-weight="700" fill="rgba(246,246,246,0.72)" text-anchor="start">Country</text>
+<text x="1080" y="868" font-family="Barlow, Calibri, Arial, sans-serif" font-size="12" font-weight="700" fill="rgba(246,246,246,0.72)" text-anchor="start">Time</text>
+</svg>

@@ -1,0 +1,43 @@
+{
+  "folders": [
+    { "path": "../swipesavvy-admin-portal" },
+    { "path": "../swipesavvy-wallet-web" },
+    { "path": "../swipesavvy-customer-website" },
+    { "path": "../swipesavvy-mobile-app" },
+    { "path": "../swipesavvy-mobile-wallet-native" },
+    { "path": "../swipesavvy-ai-agents" },
+    { "path": "../shared/branding-kit" }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "eslint.workingDirectories": [
+      {
+        "mode": "auto"
+      }
+    ],
+    "files.exclude": {
+      "**/.DS_Store": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.turbo": true,
+      "**/.expo": true,
+      "**/coverage": true,
+      "**/ios/Pods": true,
+      "**/ios/build": true,
+      "**/android/.gradle": true,
+      "**/android/build": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss",
+      "msjsdiag.vscode-react-native",
+      "streetsidesoftware.code-spell-checker"
+    ]
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "dashboard_id": "risk_fraud",
+  "title": "Risk & Fraud Monitoring",
+  "description": "Risk scores, rule triggers, disputes/chargebacks.",
+  "allowed_roles": [
+    "admin",
+    "risk_analyst",
+    "leadership_view"
+  ],
+  "default_time_range": {
+    "preset": "last_30_days",
+    "timezone": "UTC"
+  },
+  "global_filters": [
+    {
+      "id": "country",
+      "type": "multi_select",
+      "dimension": "country"
+    },
+    {
+      "id": "channel",
+      "type": "multi_select",
+      "dimension": "channel"
+    },
+    {
+      "id": "currency_base",
+      "type": "single_select",
+      "dimension": "currency_base",
+      "default": "USD"
+    },
+    {
+      "id": "risk_bucket",
+      "type": "multi_select",
+      "dimension": "risk_bucket"
+    },
+    {
+      "id": "merchant_category",
+      "type": "multi_select",
+      "dimension": "merchant_category"
+    }
+  ],
+  "layout": {
+    "type": "grid",
+    "breakpoints": {
+      "lg": {
+        "columns": 12,
+        "rowHeight": 16
+      },
+      "md": {
+        "columns": 8,
+        "rowHeight": 16
+      },
+      "sm": {
+        "columns": 4,
+        "rowHeight": 16
+      }
+    }
+  },
+  "theme_support": [
+    "light",
+    "dark",
+    "system"
+  ],
+  "widgets": [
+    {
+      "widget_id": "kpi_high_risk_rate",
+      "title": "High-Risk Txn Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "risk__high_risk_txn_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_dispute_rate",
+      "title": "Dispute Rate",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "risk__dispute_rate__pct",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 3,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "pct"
+      }
+    },
+    {
+      "widget_id": "kpi_chargeback",
+      "title": "Chargebacks",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "risk__chargebacks__count",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 6,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "kpi_rule_triggers",
+      "title": "Rules Triggered",
+      "viz_type": "kpi_card",
+      "query": {
+        "metric_id": "risk__rule_trigger_count",
+        "dimensions": [],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 9,
+          "y": 0,
+          "w": 3,
+          "h": 6
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "risk_heatmap",
+      "title": "Risk Score Distribution",
+      "viz_type": "heatmap",
+      "query": {
+        "metric_id": "risk__risk_score_heatmap",
+        "dimensions": [
+          "risk_bucket",
+          "country"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 6,
+          "w": 7,
+          "h": 11
+        }
+      }
+    },
+    {
+      "widget_id": "chargebacks_trend",
+      "title": "Chargebacks Trend",
+      "viz_type": "line_chart",
+      "query": {
+        "metric_id": "risk__chargebacks__count",
+        "time_grain": "day",
+        "dimensions": [
+          "date"
+        ],
+        "measures": [
+          "value"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 7,
+          "y": 6,
+          "w": 5,
+          "h": 11
+        }
+      },
+      "format": {
+        "kind": "count"
+      }
+    },
+    {
+      "widget_id": "high_risk_txns",
+      "title": "High-risk transactions (masked)",
+      "viz_type": "table",
+      "query": {
+        "metric_id": "risk__high_risk_txns_table",
+        "dimensions": [
+          "transaction_id_masked",
+          "risk_score",
+          "rule",
+          "status"
+        ],
+        "measures": [
+          "amount_base"
+        ]
+      },
+      "position": {
+        "lg": {
+          "x": 0,
+          "y": 17,
+          "w": 12,
+          "h": 9
+        }
+      }
+    }
+  ]
+}

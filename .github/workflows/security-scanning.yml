@@ -1,0 +1,227 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  # Python security scanning with Bandit
+  python-security:
+    name: Python Security Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./swipesavvy-ai-agents
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install security scanning tools
+        run: |
+          pip install bandit safety
+      
+      - name: Run Bandit security scan
+        run: |
+          bandit -r app services -f json -o bandit-report.json || echo "Bandit completed with issues"
+      
+      - name: Run Safety vulnerability check
+        run: |
+          safety check --json > safety-report.json || echo "Safety check completed with issues"
+      
+      - name: Upload Bandit results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: bandit-report
+          path: swipesavvy-ai-agents/bandit-report.json
+      
+      - name: Upload Safety results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: safety-report
+          path: swipesavvy-ai-agents/safety-report.json
+
+  # Detect secrets with detect-secrets
+  secrets-detection:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./swipesavvy-ai-agents
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for scanning
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install detect-secrets
+        run: pip install detect-secrets
+      
+      - name: Scan for secrets
+        run: |
+          detect-secrets scan --all-files --force-use-all-plugins \
+            --baseline .secrets.baseline \
+            app services tests || echo "Scan completed"
+      
+      - name: Audit secrets
+        run: detect-secrets audit .secrets.baseline || true
+
+  # Dependency vulnerability scanning
+  dependency-check:
+    name: Dependency Vulnerability Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./swipesavvy-ai-agents
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Generate dependencies report
+        run: pip freeze > requirements-lock.txt
+      
+      - name: Check dependencies with Safety
+        run: safety check --file requirements-lock.txt --json > dependency-report.json || true
+      
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: dependency-report
+          path: swipesavvy-ai-agents/dependency-report.json
+
+  # Code quality with Pylint
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./swipesavvy-ai-agents
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pylint
+      
+      - name: Run Pylint
+        run: |
+          pylint app services --exit-zero \
+            --output-format=json > pylint-report.json || true
+      
+      - name: Upload Pylint results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: pylint-report
+          path: swipesavvy-ai-agents/pylint-report.json
+
+  # Configuration validation
+  config-validation:
+    name: Configuration Validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./swipesavvy-ai-agents
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Checking for hardcoded secrets..."
+          if grep -r "password.*=.*['\"]" --include="*.py" app services | grep -v "password_hash" | grep -v "get_password_hash"; then
+            echo "❌ ERROR: Hardcoded passwords detected!"
+            exit 1
+          fi
+          echo "✅ No hardcoded passwords found"
+      
+      - name: Check JWT configuration
+        run: |
+          echo "Checking JWT configuration..."
+          if grep -r "JWT_SECRET_KEY.*=.*['\"]" --include="*.py" app | grep -v "os.getenv"; then
+            echo "❌ ERROR: Hardcoded JWT_SECRET_KEY found!"
+            exit 1
+          fi
+          echo "✅ JWT configuration is secure"
+      
+      - name: Check environment files
+        run: |
+          echo "Verifying .env files..."
+          [ -f .env.example ] && echo "✅ .env.example exists" || echo "⚠️ .env.example missing"
+          [ -f .env.staging ] && echo "✅ .env.staging exists" || echo "⚠️ .env.staging missing"
+          [ -f .env.production ] && echo "✅ .env.production exists" || echo "⚠️ .env.production missing"
+
+  # Report summary
+  security-summary:
+    name: Security Scan Summary
+    runs-on: ubuntu-latest
+    needs: [python-security, secrets-detection, dependency-check, code-quality, config-validation]
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: security-reports
+      
+      - name: Generate security report
+        run: |
+          echo "# Security Scan Results" > security-report.md
+          echo "" >> security-report.md
+          echo "## Summary" >> security-report.md
+          echo "- Python Security: ${{ needs.python-security.result }}" >> security-report.md
+          echo "- Secrets Detection: ${{ needs.secrets-detection.result }}" >> security-report.md
+          echo "- Dependency Check: ${{ needs.dependency-check.result }}" >> security-report.md
+          echo "- Code Quality: ${{ needs.code-quality.result }}" >> security-report.md
+          echo "- Config Validation: ${{ needs.config-validation.result }}" >> security-report.md
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('security-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });

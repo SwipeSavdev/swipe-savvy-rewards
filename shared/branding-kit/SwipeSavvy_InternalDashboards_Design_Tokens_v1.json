@@ -1,0 +1,163 @@
+{
+  "meta": {
+    "name": "Swipe Savvy Internal Dashboards Design Tokens (Master Web Portal)",
+    "version": "1.0.0-draft",
+    "generated": "2025-12-22T05:11:02.549919Z",
+    "notes": [
+      "Draft tokens for internal reporting dashboards (employees only).",
+      "Uses Swipe Savvy official palette; additional shades are achieved via alpha overlays (no new brand colors).",
+      "Replace Calibri fallback with Hermes (headlines) and Barlow (body) before publishing final branded assets."
+    ]
+  },
+  "color": {
+    "brand": {
+      "navy": "#235393",
+      "deep": "#132136",
+      "green": "#60BA46",
+      "yellow": "#FAB915",
+      "black": "#000000",
+      "darkGrey": "#4B4D4D",
+      "ashGrey": "#747676",
+      "white": "#F6F6F6",
+      "pureWhite": "#FFFFFF"
+    },
+    "semantic": {
+      "light": {
+        "bg": "{color.brand.white}",
+        "surface": "{color.brand.pureWhite}",
+        "surfaceAlt": "#FFFFFF",
+        "textPrimary": "{color.brand.deep}",
+        "textSecondary": "{color.brand.ashGrey}",
+        "border": "#E6E6E6",
+        "link": "{color.brand.navy}",
+        "success": "{color.brand.green}",
+        "warning": "{color.brand.yellow}",
+        "sidebarBg": "{color.brand.deep}",
+        "sidebarText": "{color.brand.pureWhite}"
+      },
+      "dark": {
+        "bg": "{color.brand.deep}",
+        "surfaceOverlay": "rgba(255,255,255,0.08)",
+        "surfaceOverlayStrong": "rgba(255,255,255,0.12)",
+        "textPrimary": "{color.brand.pureWhite}",
+        "textSecondary": "rgba(255,255,255,0.72)",
+        "border": "rgba(255,255,255,0.10)",
+        "link": "{color.brand.yellow}",
+        "success": "{color.brand.green}",
+        "warning": "{color.brand.yellow}",
+        "sidebarBg": "{color.brand.deep}",
+        "sidebarText": "{color.brand.pureWhite}"
+      }
+    },
+    "charts": {
+      "series": [
+        "{color.brand.navy}",
+        "{color.brand.green}",
+        "{color.brand.yellow}",
+        "{color.brand.ashGrey}"
+      ],
+      "gridLight": "rgba(19,33,54,0.08)",
+      "gridDark": "rgba(255,255,255,0.10)"
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "headline": {
+        "value": "Hermes",
+        "fallback": [
+          "Calibri",
+          "Arial",
+          "sans-serif"
+        ]
+      },
+      "body": {
+        "value": "Barlow",
+        "fallback": [
+          "Calibri",
+          "Arial",
+          "sans-serif"
+        ]
+      },
+      "mono": {
+        "value": "Consolas",
+        "fallback": [
+          "Menlo",
+          "monospace"
+        ]
+      }
+    },
+    "portalScalePx": {
+      "pageTitle": 22,
+      "sectionTitle": 14,
+      "widgetTitle": 11,
+      "body": 11,
+      "caption": 9,
+      "kpiNumber": 26
+    },
+    "lineHeight": {
+      "tight": 1.1,
+      "normal": 1.3,
+      "relaxed": 1.45
+    }
+  },
+  "layout": {
+    "grid": {
+      "columns": 12,
+      "gutterPx": 16,
+      "maxWidthPx": 1440,
+      "contentPaddingPx": 24,
+      "sidebarWidthPx": 240,
+      "topbarHeightPx": 64
+    },
+    "breakpointsPx": {
+      "lg": 1440,
+      "md": 1024,
+      "sm": 768
+    }
+  },
+  "spacingPx": {
+    "0": 0,
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 20,
+    "6": 24,
+    "7": 32,
+    "8": 40,
+    "9": 48
+  },
+  "radiusPx": {
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "pill": 999
+  },
+  "elevation": {
+    "cardShadowLight": "0 8px 24px rgba(19,33,54,0.10)",
+    "cardShadowDark": "0 8px 24px rgba(0,0,0,0.35)"
+  },
+  "components": {
+    "sidebar": {
+      "iconSizePx": 20,
+      "iconOpacityInactive": 0.55,
+      "iconOpacityActive": 1.0,
+      "activePillAlpha": 0.35
+    },
+    "filters": {
+      "chipHeightPx": 32,
+      "chipRadiusPx": 999,
+      "chipPaddingXPx": 12
+    },
+    "table": {
+      "rowHeightPx": 36,
+      "headerHeightPx": 36,
+      "enableVirtualization": true,
+      "defaultPageSize": 50
+    },
+    "exports": {
+      "csvMaxRowsDefault": 10000,
+      "pdfIncludeFilters": true
+    }
+  }
+}

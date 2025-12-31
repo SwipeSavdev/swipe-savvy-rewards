@@ -1,0 +1,265 @@
+name: Dependency & Security Monitoring
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  push:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'requirements.txt'
+      - 'requirements-pinned.txt'
+  workflow_dispatch:
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    name: NPM Dependency Audit
+    strategy:
+      matrix:
+        project: [
+          'swipesavvy-admin-portal',
+          'swipesavvy-wallet-web',
+          'swipesavvy-mobile-app'
+        ]
+      fail-fast: false
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.13.0'
+      
+      - name: Check Node version
+        run: |
+          node --version
+          npm --version
+      
+      - name: Run npm audit for ${{ matrix.project }}
+        working-directory: ${{ matrix.project }}
+        run: |
+          echo "🔍 Running npm audit for ${{ matrix.project }}"
+          npm audit --json > audit-report.json 2>&1 || true
+          npm audit 2>&1 | tee audit-report.txt || true
+      
+      - name: Parse npm audit results
+        working-directory: ${{ matrix.project }}
+        if: always()
+        run: |
+          echo "📋 npm Audit Results for ${{ matrix.project }}"
+          if [ -f audit-report.json ]; then
+            # Extract vulnerability counts
+            CRITICAL=$(grep -o '"critical":[0-9]*' audit-report.json | grep -o '[0-9]*' || echo 0)
+            HIGH=$(grep -o '"high":[0-9]*' audit-report.json | grep -o '[0-9]*' || echo 0)
+            MODERATE=$(grep -o '"moderate":[0-9]*' audit-report.json | grep -o '[0-9]*' || echo 0)
+            
+            echo "Critical: $CRITICAL"
+            echo "High: $HIGH"
+            echo "Moderate: $MODERATE"
+            
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "❌ Critical vulnerabilities found!"
+              exit 1
+            fi
+          fi
+      
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-${{ matrix.project }}
+          path: ${{ matrix.project }}/audit-report.*
+          retention-days: 30
+
+  pip-audit:
+    runs-on: ubuntu-latest
+    name: Python Dependency Audit
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.8'
+      
+      - name: Verify Python version
+        run: |
+          python --version
+          python -m pip --version
+      
+      - name: Install safety tool
+        run: pip install safety bandit
+      
+      - name: Run safety check on requirements
+        working-directory: swipesavvy-ai-agents
+        run: |
+          echo "🔍 Running safety check"
+          safety check --file requirements-pinned.txt --json > safety-report.json 2>&1 || true
+          safety check --file requirements-pinned.txt 2>&1 | tee safety-report.txt || true
+      
+      - name: Run bandit security scan
+        working-directory: swipesavvy-ai-agents
+        run: |
+          echo "🔐 Running bandit security scan"
+          bandit -r app/ -f json -o bandit-report.json 2>&1 || true
+          bandit -r app/ 2>&1 | tee bandit-report.txt || true
+      
+      - name: Parse vulnerability results
+        working-directory: swipesavvy-ai-agents
+        if: always()
+        run: |
+          echo "📊 Python Security Audit Results"
+          
+          if [ -f safety-report.txt ]; then
+            if grep -q "No security vulnerabilities detected" safety-report.txt; then
+              echo "✅ Safety: No vulnerabilities found"
+            else
+              echo "⚠️ Safety check completed"
+              grep -E "Found|WARNING" safety-report.txt | head -10 || true
+            fi
+          fi
+          
+          if [ -f bandit-report.txt ]; then
+            ISSUES=$(grep -c "Issue: " bandit-report.txt || echo 0)
+            echo "Bandit: Found $ISSUES issues"
+          fi
+      
+      - name: Upload audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-audit-reports
+          path: swipesavvy-ai-agents/*-report.*
+          retention-days: 30
+
+  snyk-scan:
+    runs-on: ubuntu-latest
+    name: Snyk Vulnerability Scan
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.13.0'
+      
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+      
+      - name: Run Snyk scan (Node projects)
+        run: |
+          echo "🔍 Running Snyk scan"
+          for dir in swipesavvy-admin-portal swipesavvy-wallet-web swipesavvy-mobile-app; do
+            echo "Scanning $dir..."
+            cd "$dir"
+            snyk test --json-file-output=snyk-report.json 2>&1 || true
+            cd ..
+          done
+        continue-on-error: true
+      
+      - name: Upload Snyk reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-reports
+          path: '**/snyk-report.json'
+          retention-days: 30
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    name: OWASP Dependency Check
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'swipesavvy-platform'
+          path: '.'
+          format: 'JSON'
+          args: >
+            --enableExperimental
+            --exclude node_modules
+            --exclude .venv
+      
+      - name: Upload OWASP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-check
+          path: dependency-check-report.json
+          retention-days: 30
+
+  create-security-report:
+    runs-on: ubuntu-latest
+    name: Create Security Report
+    needs: [npm-audit, pip-audit]
+    if: always()
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all audit artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: audit-reports
+      
+      - name: Generate consolidated security report
+        run: |
+          cat > SECURITY_REPORT.md << 'EOF'
+          # 🔐 Dependency & Security Audit Report
+          
+          Generated: $(date)
+          
+          ## Summary
+          
+          ### NPM Audit Results
+          - swipesavvy-admin-portal: Audit completed
+          - swipesavvy-wallet-web: Audit completed
+          - swipesavvy-mobile-app: Audit completed
+          
+          ### Python Audit Results
+          - swipesavvy-ai-agents: Safety & Bandit scans completed
+          
+          ### Additional Scans
+          - Snyk: Vulnerability scanning
+          - OWASP Dependency Check: Component scanning
+          
+          ## Artifacts
+          - npm-audit-* (per-project npm audit results)
+          - python-audit-reports (Safety & Bandit results)
+          - snyk-reports (Snyk vulnerability results)
+          - owasp-dependency-check (OWASP component analysis)
+          
+          ## Next Steps
+          - Review high/critical vulnerabilities
+          - Update dependencies if needed
+          - Re-run tests after updates
+          - Document accepted vulnerabilities
+          
+          EOF
+          cat SECURITY_REPORT.md
+      
+      - name: Upload consolidated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-summary
+          path: SECURITY_REPORT.md
+          retention-days: 30
+      
+      - name: Comment on PR if applicable
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🔐 Security audit completed. Check artifacts for detailed reports.'
+            })

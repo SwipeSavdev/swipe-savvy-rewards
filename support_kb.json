@@ -1,0 +1,69 @@
+{
+  "issues": {
+    "3dd0f3e03523": {
+      "timestamp": "2025-12-30T11:56:53.604854",
+      "severity": "CRITICAL",
+      "description": "The admin portal is completely down and users cannot login. Database seems to be not responding.",
+      "solution": "Restarted PostgreSQL service and verified database connectivity",
+      "resolution_time_seconds": 300,
+      "tags": [
+        "database",
+        "frontend",
+        "backend",
+        "auth"
+      ],
+      "success": true
+    }
+  },
+  "solutions": {},
+  "patterns": {
+    "database": {
+      "count": 1,
+      "avg_resolution_time": 150.0,
+      "success_count": 1,
+      "weight": 1.0
+    },
+    "frontend": {
+      "count": 1,
+      "avg_resolution_time": 150.0,
+      "success_count": 1,
+      "weight": 1.0
+    },
+    "backend": {
+      "count": 1,
+      "avg_resolution_time": 150.0,
+      "success_count": 1,
+      "weight": 1.0
+    },
+    "auth": {
+      "count": 1,
+      "avg_resolution_time": 150.0,
+      "success_count": 1,
+      "weight": 1.0
+    }
+  },
+  "learning_logs": [
+    {
+      "timestamp": "2025-12-30T11:56:53.604863",
+      "issue_id": "3dd0f3e03523",
+      "severity": "CRITICAL",
+      "tags": [
+        "database",
+        "frontend",
+        "backend",
+        "auth"
+      ],
+      "success": true,
+      "learning": "Successfully resolved CRITICAL issue with tags: ['database', 'frontend', 'backend', 'auth']"
+    }
+  ],
+  "ai_recommendations": {},
+  "statistics": {
+    "total_issues_resolved": 1,
+    "critical_resolved": 1,
+    "moderate_resolved": 0,
+    "low_resolved": 0,
+    "avg_resolution_time": 0,
+    "success_rate": 1.0
+  }
+}

@@ -1,0 +1,534 @@
+"""
+AI Concierge Service - Main Entry Point
+
+Week 8: Added comprehensive logging, error handling, and performance optimizations
+Architecture:
+- FastAPI web service
+- Together.AI (Llama 3.3 70B) for LLM with function calling
+- RAG service for knowledge base retrieval
+- Tool functions for account/transaction queries
+- Guardrails integration for safety
+- Structured logging and metrics
+- Circuit breakers and retry logic
+- Input validation and rate limiting
+
+Status: Phase 1, Week 8 - Quality & Performance Optimization
+"""
+
+from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel
+import os
+import sys
+from pathlib import Path
+import httpx
+from typing import Optional, List, Dict, Any
+from together import Together
+import json
+import time
+
+# Add tools and shared modules to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "shared"))
+
+from tools import get_account_balance, get_account_info, get_transactions, get_transaction_details
+from conversation import get_conversation_manager
+from handoff import get_handoff_manager
+from logging_config import get_logger, log_execution_time
+from resilience import (
+    CircuitBreaker, CircuitBreakerConfig, retry_with_backoff,
+    with_timeout, RateLimiter, validate_user_input, 
+    validate_session_id, validate_user_id, ValidationError
+)
+
+# Initialize structured logger
+logger = get_logger("concierge-agent", log_level=os.getenv("LOG_LEVEL", "INFO"))
+
+# Initialize rate limiter (10 requests per second, burst of 20)
+rate_limiter = RateLimiter(rate=10.0, capacity=20)
+
+# Initialize circuit breakers for external services
+rag_circuit_breaker = CircuitBreaker(CircuitBreakerConfig(
+    failure_threshold=5,
+    success_threshold=2,
+    timeout_seconds=30
+))
+
+llm_circuit_breaker = CircuitBreaker(CircuitBreakerConfig(
+    failure_threshold=3,
+    success_threshold=2,
+    timeout_seconds=60
+))
+
+
+app = FastAPI(
+    title="AI Concierge Service",
+    description="AI-powered customer support agent for SwipeSavvy",
+    version="0.5.0-alpha"
+)
+
+# Middleware for request logging
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all HTTP requests"""
+    start_time = time.time()
+    
+    # Log incoming request
+    logger.info(
+        f"Request received: {request.method} {request.url.path}",
+        http_method=request.method,
+        http_path=request.url.path,
+        client_ip=request.client.host if request.client else "unknown"
+    )
+    
+    # Process request
+    response = await call_next(request)
+    
+    # Log response
+    duration_ms = (time.time() - start_time) * 1000
+    logger.api_call(
+        method=request.method,
+        endpoint=request.url.path,
+        status_code=response.status_code,
+        duration_ms=duration_ms
+    )
+    
+    return response
+
+# Configuration
+together_client = None
+rag_service_url = os.getenv("RAG_SERVICE_URL", "http://localhost:8001")
+
+# Tool definitions for Together.AI function calling
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_account_balance",
+            "description": "Get the current balance for user's account(s). Returns balance, available balance, and account details.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "description": "The user's unique identifier"
+                    },
+                    "account_id": {
+                        "type": "string",
+                        "description": "Optional specific account ID. If not provided, returns all accounts."
+                    }
+                },
+                "required": ["user_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_transactions",
+            "description": "Get recent transaction history for a user. Supports filtering by date range, category, and account.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "description": "The user's unique identifier"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Number of transactions to return (max 100)",
+                        "default": 10
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Filter by category (e.g., 'groceries', 'restaurants', 'shopping')"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date in ISO format (YYYY-MM-DD)"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "description": "End date in ISO format (YYYY-MM-DD)"
+                    }
+                },
+                "required": ["user_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_transaction_details",
+            "description": "Get detailed information about a specific transaction by ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "description": "The user's unique identifier"
+                    },
+                    "transaction_id": {
+                        "type": "string",
+                        "description": "The transaction ID to retrieve"
+                    }
+                },
+                "required": ["user_id", "transaction_id"]
+            }
+        }
+    }
+]
+
+
+def get_together_client():
+    """Get or create Together.AI client"""
+    global together_client
+    if together_client is None:
+        api_key = os.getenv("TOGETHER_API_KEY")
+        if not api_key:
+            raise ValueError("TOGETHER_API_KEY not set")
+        together_client = Together(api_key=api_key)
+    return together_client
+
+
+@log_execution_time(logger, "tool_execution")
+def execute_tool(tool_name: str, tool_args: Dict[str, Any]) -> Dict[str, Any]:
+    """Execute a tool function by name"""
+    logger.info(f"Executing tool: {tool_name}", tool_name=tool_name, args=tool_args)
+    start_time = time.time()
+    
+    try:
+        result = None
+        if tool_name == "get_account_balance":
+            result = get_account_balance(**tool_args)
+        elif tool_name == "get_transactions":
+            result = get_transactions(**tool_args)
+        elif tool_name == "get_transaction_details":
+            result = get_transaction_details(**tool_args)
+        elif tool_name == "get_account_info":
+            result = get_account_info(**tool_args)
+        else:
+            logger.warning(f"Unknown tool requested: {tool_name}", tool_name=tool_name)
+            return {
+                "success": False,
+                "error": {
+                    "code": "UNKNOWN_TOOL",
+                    "message": f"Tool '{tool_name}' not found"
+                }
+            }
+        
+        duration_ms = (time.time() - start_time) * 1000
+        logger.tool_call(tool_name, success=True, duration_ms=duration_ms)
+        return result
+        
+    except Exception as e:
+        duration_ms = (time.time() - start_time) * 1000
+        logger.error(f"Tool execution failed: {tool_name}", error=e, 
+                    tool_name=tool_name, duration_ms=duration_ms)
+        logger.tool_call(tool_name, success=False, duration_ms=duration_ms)
+        return {
+            "success": False,
+            "error": {
+                "code": "TOOL_EXECUTION_ERROR",
+                "message": str(e)
+            }
+        }
+
+
+class ChatRequest(BaseModel):
+    """Request model for chat endpoint"""
+    user_id: str
+    message: str
+    session_id: Optional[str] = None
+    context: Optional[Dict[str, Any]] = None
+
+
+class ChatResponse(BaseModel):
+    """Response model for chat endpoint"""
+    response: str
+    session_id: str
+    tool_calls: Optional[List[str]] = None
+    requires_verification: bool = False
+    should_handoff: bool = False
+
+
+@app.get("/")
+async def index():
+    """Service information"""
+    return {
+        "service": "AI Concierge Service",
+        "version": "0.5.0-alpha",
+        "status": "active",
+        "capabilities": [
+            "Natural language conversation",
+            "Account balance inquiries",
+            "Transaction history",
+            "Knowledge base retrieval",
+            "Function calling (tools)",
+            "Conversation management",
+            "Handoff detection",
+            "Structured logging",
+            "Rate limiting"
+        ],
+        "endpoints": [
+            "GET /health - Health check",
+            "POST /api/v1/concierge/chat - Chat with AI Concierge",
+            "GET /api/v1/concierge/session/{id} - Get session info"
+        ]
+    }
+
+
+@app.get("/health")
+async def health():
+    """Health check with service dependencies"""
+    logger.debug("Health check requested")
+    
+    # Check RAG service
+    rag_status = "unavailable"
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{rag_service_url}/health", timeout=2.0)
+            if response.status_code == 200:
+                rag_status = "connected"
+    except Exception as e:
+        logger.warning("RAG service health check failed", error=str(e))
+    
+    # Check Together.AI
+    together_status = "configured" if os.getenv("TOGETHER_API_KEY") else "not_configured"
+    
+    # Check circuit breaker states
+    return {
+        "status": "healthy",
+        "version": "0.5.0-alpha",
+        "services": {
+            "api": "up",
+            "together_api": together_status,
+            "rag_service": rag_status,
+            "tools": "available",
+            "conversation_manager": "active"
+        },
+        "circuit_breakers": {
+            "rag": rag_circuit_breaker.state.value,
+            "llm": llm_circuit_breaker.state.value
+        },
+        "tools_count": len(TOOLS)
+    }
+
+
+@app.get("/api/v1/concierge/session/{session_id}")
+async def get_session_info(session_id: str):
+    """Get conversation session information and history"""
+    try:
+        # Validate session ID
+        session_id = validate_session_id(session_id)
+        logger.info("Fetching session info", session_id=session_id)
+        
+        conv_mgr = get_conversation_manager()
+        session = conv_mgr.get_session(session_id)
+        
+        if not session:
+            logger.warning("Session not found", session_id=session_id)
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+        
+        summary = conv_mgr.get_summary(session_id)
+        history = conv_mgr.get_history(session_id, limit=50)
+        context = conv_mgr.get_context(session_id)
+        recent_tools = conv_mgr.get_recent_tool_calls(session_id)
+        
+        return {
+            "session": summary,
+            "history": history,
+            "context": context,
+            "recent_tool_calls": recent_tools
+        }
+    except ValidationError as e:
+        logger.error("Session validation failed", error=e, session_id=session_id)
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to fetch session info", error=e, session_id=session_id)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.post("/api/v1/concierge/chat")
+async def chat(request: ChatRequest) -> ChatResponse:
+    """Chat endpoint with full AI Concierge capabilities including RAG and conversation history
+    
+    Flow:
+    1. Validate input and check rate limits
+    2. Load or create conversation session
+    3. Check for handoff triggers
+    4. Call RAG service for knowledge base context (if relevant)
+    5. Construct prompt with system message + history + context
+    6. Call Together.AI with tools enabled (with circuit breaker)
+    7. Execute any tool calls
+    8. Save conversation history
+    9. Return final response with performance metrics
+    """
+    request_start_time = time.time()
+    
+    try:
+        # Input validation
+        user_id = validate_user_id(request.user_id)
+        message = validate_user_input(request.message)
+        session_id = validate_session_id(request.session_id) if request.session_id else f"session_{user_id}_{int(time.time())}"
+        
+        logger.info(
+            "Chat request received",
+            user_id=user_id,
+            session_id=session_id,
+            message_length=len(message)
+        )
+        
+        # Rate limiting
+        if not await rate_limiter.acquire_async(tokens=1, timeout=5.0):
+            logger.warning("Rate limit exceeded", user_id=user_id)
+            raise HTTPException(
+                status_code=429,
+                detail="Rate limit exceeded. Please try again in a moment."
+            )
+```
+        # Step 1: Get or create session
+        conv_mgr = get_conversation_manager()
+        session_id = request.session_id or f"session_{request.user_id}"
+        session = conv_mgr.get_session(session_id)
+        
+        if not session:
+            session = conv_mgr.create_session(request.user_id, session_id)
+        
+        # Add user message to history
+        conv_mgr.add_message(session_id, "user", request.message)
+        
+        # Step 2
+        # Step 1: Get RAG context
+        context = ""
+        async with httpx.AsyncClient() as client:
+            try:
+                rag_response = await client.post(
+                    f"{rag_service_url}/api/v1/rag/context",
+               3: Construct system prompt with conversation history
+        system_message = """You are Finley, the helpful AI assistant for SwipeSavvy mobile wallet.
+
+Your capabilities:
+- Answer questions about SwipeSavvy features using the knowledge base
+- Check account balances and transaction history using tools
+- Provide financial guidance and support
+- Be friendly, concise, and helpful
+- Remember conversation context and previous questions
+
+Available tools:
+- get_account_balance: Check user's account balance(s)
+- get_transactions: Retrieve transaction history with optional filters
+- get_transaction_details: Get details about a specific transaction
+
+Guidelines:
+- Use tools when users ask about their balance, transactions, or account details
+- Use the knowledge base for general questions about features and security
+- Reference previous messages in the conversation when relevant
+- Never make up information about balances or transactions
+- Keep responses under 3 paragraphs unless more detail is requested
+- Be empathetic and professional"""
+
+        messages = [{"role": "system", "content": system_message}]
+        
+        # Add RAG context if available
+        if context:
+            messages.append({
+                "role": "system",
+                "content": f"Relevant information from knowledge base:\n\n{context}"
+            })
+        
+        # Add conversation history (last 10 messages)
+        history = conv_mgr.get_history(session_id, limit=10, include_system=False)
+        for hist_msg in history[:-1]:  # Exclude the current user message we just added
+            messages.append({
+                "role": hist_msg["role"],
+                "content": hist_msg["content"]
+            })
+        
+        # Add currentup information about balances or transactions
+- Keep responses under 3 paragraphs unless more detail is requested
+- Be empathetic and professional"""
+
+        messages = [{"role": "system", "content": system_message}]
+        
+        # Add R4G context if available
+        if context:
+            messages.append({
+                "role": "system",
+                "content": f"Relevant information from knowledge base:\n\n{context}"
+            })
+        
+        # Add user message
+        messages.append({"role": "user", "content": request.message})
+        
+        # Step 3: Call Together.AI with tools
+        client = get_together_client()
+        response = client.chat.completions.create(
+            model=os.getenv("AGENT_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo"),
+            messages=messages,
+            tools=TOOLS,
+            max_tokens=500,
+            temperature=0.7
+        )
+        
+        assistant_message = response.choices[0].message
+        tool_calls_made = []
+        
+        # Step 5: Execute tool calls if any
+        if assistant_message.tool_calls:
+            for tool_call in assistant_message.tool_calls:
+                tool_name = tool_call.function.name
+                tool_args = json.loads(tool_call.function.arguments)
+                
+                # Execute tool
+                tool_result = execute_tool(tool_name, tool_args)
+                tool_calls_made.append(tool_name)
+                
+                # Add tool result to conversation
+                messages.append({
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [{"id": tool_call.id, "type": "function", "function": {"name": tool_name, "arguments": tool_call.function.arguments}}]
+                })
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": json.dumps(tool_result)
+                })
+            
+            # Call LLM again with tool results
+            final_response = client.chat.completions.create(
+                model=os.getenv("AGENT_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo"),
+                messages=messages,
+                max_tokens=500,
+                temperature=0.7
+            )
+            
+            ai_response = final_response.choices[0].message.content
+        else:
+            ai_response = assistant_message.content
+        
+        # Step 6: Save assistant response to history
+        conv_mgr.add_message(session_id, "assistant", ai_response, metadata={"tool_calls": tool_calls_made})
+        
+        # Step 7: Return response
+        return ChatResponse(
+            response=ai_response,
+            session_id=request.session_id or f"session_{request.user_id}",
+            tool_calls=tool_calls_made if tool_calls_made else None,
+            requires_verification=False,
+            should_handoff=False
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat processing failed: {str(e)}"
+        )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)

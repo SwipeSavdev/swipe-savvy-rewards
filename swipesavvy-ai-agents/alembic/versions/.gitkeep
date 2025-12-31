@@ -1,0 +1,29 @@
+# Alembic Migration History
+# This directory contains all database schema migrations
+# Each file represents a change to the database schema tracked by Alembic
+
+## Running Migrations
+
+# Apply all pending migrations to the head
+alembic upgrade head
+
+# Apply specific migration
+alembic upgrade <revision_id>
+
+# Rollback last migration
+alembic downgrade -1
+
+# Rollback to specific migration
+alembic downgrade <revision_id>
+
+# View current revision
+alembic current
+
+# View all revisions
+alembic history
+
+# Create new migration (auto-detect changes)
+alembic revision --autogenerate -m "Description of changes"
+
+# Create empty migration (for manual changes)
+alembic revision -m "Description of changes"
