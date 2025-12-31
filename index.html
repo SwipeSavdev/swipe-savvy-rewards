@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Basic Meta Tags -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Swioe Savvy Admin Portal - Professional Admin Dashboard" />
+    <meta name="theme-color" content="#2563eb" />
+
+    <!-- Performance Optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="http://localhost:8000" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    
+    <!-- Title -->
+    <title>Swioe Savvy Admin Portal</title>
+
+    <!-- Preload critical resources -->
+    <link rel="preload" as="script" href="/src/main.tsx" />
+  </head>
+  <body>
+    <!-- Loading skeleton to prevent CLS -->
+    <div id="root">
+      <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background-color: #f9fafb;">
+        <div style="text-align: center;">
+          <div style="width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;" />
+          <p style="color: #6b7280; font-family: system-ui, sans-serif;">Loading...</p>
+        </div>
+      </div>
+      <style>
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
+
+    <!-- Main application -->
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Global error handler -->
+    <script>
+      window.addEventListener('error', function(event) {
+        console.error('Global error:', event.error);
+        // Send to error tracking service in production
+      });
+
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled promise rejection:', event.reason);
+        // Send to error tracking service in production
+      });
+
+      // Log performance metrics
+      window.addEventListener('load', function() {
+        if (window.performance && window.performance.timing) {
+          var perfData = window.performance.timing;
+          var pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+          console.log('Page load time:', pageLoadTime, 'ms');
+        }
+      });
+    </script>
+  </body>
+</html>

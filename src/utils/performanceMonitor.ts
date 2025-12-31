@@ -1,82 +1,102 @@
 /**
- * Performance monitoring utility for tracking app metrics
+ * Performance Monitoring Utility
+ * Tracks key metrics and reports performance issues
  */
 
-interface PerformanceMetric {
-  name: string;
-  startTime: number;
-  endTime?: number;
-  duration?: number;
+interface PerformanceMetrics {
+  pageLoadTime: number
+  firstContentfulPaint?: number
+  largestContentfulPaint?: number
+  cumulativeLayoutShift?: number
 }
 
 class PerformanceMonitor {
-  private metrics: Map<string, PerformanceMetric> = new Map();
-  private enabled = __DEV__; // Only enable in development
+  private metrics: PerformanceMetrics = { pageLoadTime: 0 }
+  private startTime: number = performance.now()
 
-  start(metricName: string): void {
-    if (!this.enabled) return;
-
-    this.metrics.set(metricName, {
-      name: metricName,
-      startTime: Date.now(),
-    });
+  init() {
+    this.trackPageLoadTime()
+    this.trackWebVitals()
+    this.trackLongTasks()
+    this.trackMemoryUsage()
   }
 
-  end(metricName: string): number | null {
-    if (!this.enabled) return null;
-
-    const metric = this.metrics.get(metricName);
-    if (!metric) {
-      console.warn(`Metric "${metricName}" not found`);
-      return null;
-    }
-
-    const endTime = Date.now();
-    const duration = endTime - metric.startTime;
-
-    metric.endTime = endTime;
-    metric.duration = duration;
-
-    console.log(`⚡ Performance: ${metricName} took ${duration}ms`);
-    
-    return duration;
+  private trackPageLoadTime() {
+    window.addEventListener('load', () => {
+      this.metrics.pageLoadTime = performance.now() - this.startTime
+      this.logMetric('Page Load Time', `${this.metrics.pageLoadTime.toFixed(2)}ms`)
+    })
   }
 
-  measure<T>(metricName: string, fn: () => T): T {
-    if (!this.enabled) return fn();
+  private trackWebVitals() {
+    // Track Core Web Vitals
+    if ('PerformanceObserver' in window) {
+      try {
+        // Largest Contentful Paint
+        const lcpObserver = new PerformanceObserver((list) => {
+          const entries = list.getEntries()
+          const lastEntry = entries[entries.length - 1]
+          this.metrics.largestContentfulPaint = lastEntry.renderTime || lastEntry.loadTime
+          this.logMetric('LCP', `${this.metrics.largestContentfulPaint.toFixed(2)}ms`)
+        })
+        lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] })
 
-    this.start(metricName);
-    try {
-      const result = fn();
-      this.end(metricName);
-      return result;
-    } catch (error) {
-      this.end(metricName);
-      throw error;
-    }
-  }
-
-  async measureAsync<T>(metricName: string, fn: () => Promise<T>): Promise<T> {
-    if (!this.enabled) return fn();
-
-    this.start(metricName);
-    try {
-      const result = await fn();
-      this.end(metricName);
-      return result;
-    } catch (error) {
-      this.end(metricName);
-      throw error;
+        // Cumulative Layout Shift
+        const clsObserver = new PerformanceObserver((list) => {
+          let clsValue = 0
+          for (const entry of list.getEntries()) {
+            if (!(entry as any).hadRecentInput) {
+              clsValue += (entry as any).value
+            }
+          }
+          this.metrics.cumulativeLayoutShift = clsValue
+          this.logMetric('CLS', this.metrics.cumulativeLayoutShift.toFixed(4))
+        })
+        clsObserver.observe({ entryTypes: ['layout-shift'] })
+      } catch (e) {
+        console.debug('Web Vitals monitoring not available')
+      }
     }
   }
 
-  getMetrics(): PerformanceMetric[] {
-    return Array.from(this.metrics.values()).filter(m => m.duration !== undefined);
+  private trackLongTasks() {
+    if ('PerformanceObserver' in window) {
+      try {
+        const observer = new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            console.warn(`Long task detected: ${(entry as any).duration.toFixed(2)}ms`)
+          }
+        })
+        observer.observe({ entryTypes: ['longtask'] })
+      } catch (e) {
+        console.debug('Long task monitoring not available')
+      }
+    }
   }
 
-  clear(): void {
-    this.metrics.clear();
+  private trackMemoryUsage() {
+    if ((performance as any).memory) {
+      setInterval(() => {
+        const memory = (performance as any).memory
+        const used = (memory.usedJSHeapSize / 1048576).toFixed(2)
+        const limit = (memory.jsHeapSizeLimit / 1048576).toFixed(2)
+        
+        if (parseFloat(used) > parseFloat(limit) * 0.85) {
+          console.warn(`High memory usage: ${used}MB / ${limit}MB`)
+        }
+      }, 10000) // Check every 10 seconds
+    }
+  }
+
+  private logMetric(name: string, value: string) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📊 ${name}: ${value}`)
+    }
+  }
+
+  getMetrics(): PerformanceMetrics {
+    return this.metrics
   }
 }
 
-export const performanceMonitor = new PerformanceMonitor();
+export const performanceMonitor = new PerformanceMonitor()
