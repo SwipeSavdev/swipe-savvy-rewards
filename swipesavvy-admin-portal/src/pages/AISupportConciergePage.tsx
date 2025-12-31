@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import TextArea from '@/components/ui/TextArea';
 import Alert from '@/components/ui/Alert';
-import { AlertCircle, Zap, Send, MessageCircle } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import TextArea from '@/components/ui/TextArea';
+import { AlertCircle, MessageCircle, Send, Zap } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface Message {
   id: string;
@@ -48,20 +48,80 @@ export default function AISupportConciergePage() {
       setMessages(prev => [...prev, userMsg]);
       setInputMessage('');
 
-      // Simulate AI response for now
-      setTimeout(() => {
+      // Call the actual AI Concierge API
+      const sessionId = `session_${Date.now()}`;
+      const userId = 'admin_user';
+      
+      const response = await fetch('http://localhost:8000/api/v1/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputMessage,
+          user_id: userId,
+          session_id: sessionId,
+          context: {
+            account_type: 'admin_portal',
+            user_role: 'admin'
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      // Parse streaming SSE response
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.substring(6));
+              if (data.type === 'message' && data.content) {
+                assistantContent += data.content;
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
+
+      if (assistantContent) {
         const assistantMsg: Message = {
           id: `msg-${Date.now() + 1}`,
           role: 'assistant',
-          content: 'I understand. Let me help you with that. (AI Service Integration Coming Soon)',
+          content: assistantContent,
           timestamp: new Date().toISOString(),
         };
         setMessages(prev => [...prev, assistantMsg]);
-        setLoading(false);
-      }, 500);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to send message';
       setError(message);
+      
+      // Show error message in chat
+      const errorMsg: Message = {
+        id: `msg-${Date.now()}`,
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${message}. Please make sure the AI Concierge service is running at http://localhost:8000`,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setLoading(false);
     }
   };
