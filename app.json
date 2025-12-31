@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "SwipeSavvy",
+    "slug": "swipesavvy-mobile-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "swipesavvy",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.swipesavvy.mobileapp",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Allow SwipeSavvy to use Face ID for secure authentication",
+        "NSLocationWhenInUseUsageDescription": "Allow SwipeSavvy to access your location for geo-based promotions",
+        "NSMicrophoneUsageDescription": "Allow SwipeSavvy to use your microphone for voice commands",
+        "NSCameraUsageDescription": "Allow SwipeSavvy to use your camera to scan checks"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.swipesavvy.mobileapp",
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-local-authentication",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      },
+      "MOCK_API": "false",
+      "AI_API_BASE_URL": "http://192.168.1.142:8000",
+      "DEBUG_MODE": "true"
+    }
+  }
+}

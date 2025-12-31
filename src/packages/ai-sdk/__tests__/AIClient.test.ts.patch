@@ -1,0 +1,9 @@
+--- a/src/packages/ai-sdk/__tests__/AIClient.test.ts
++++ b/src/packages/ai-sdk/__tests__/AIClient.test.ts
+@@ -137,7 +137,6 @@
+       const iterator = client.chat({ 
+         message: 'test',
+-        user_id: 'user123'
+       });
+ 
+       // Start iteration to trigger request

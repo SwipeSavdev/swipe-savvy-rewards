@@ -20,6 +20,3 @@
 // assets/logos/shopsavvy-colored.png
 // assets/logos/shopsavvy-white.png
 // assets/logos/shopsavvy-black.png
-
-## Updated
-These logo assets were replaced with SwipeSavvy logo variants (colored/white/black).
