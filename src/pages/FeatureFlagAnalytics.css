@@ -1,0 +1,400 @@
+/* Feature Flag Analytics Styles */
+
+.ffa-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.ffa-header {
+  margin-bottom: 32px;
+}
+
+.ffa-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #235393;
+  margin: 0 0 8px 0;
+}
+
+.ffa-header p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.ffa-error {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #c00;
+  font-size: 14px;
+}
+
+.ffa-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 600px;
+  font-size: 16px;
+  color: #666;
+}
+
+.ffa-controls {
+  margin-bottom: 24px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ffa-time-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ffa-time-range label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.ffa-time-range select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ffa-time-range select:hover {
+  border-color: #235393;
+}
+
+.ffa-time-range select:focus {
+  outline: none;
+  border-color: #235393;
+  box-shadow: 0 0 0 3px rgba(35, 83, 147, 0.1);
+}
+
+.ffa-main-grid {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.ffa-flag-list {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  height: fit-content;
+}
+
+.ffa-flag-list h3 {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #235393;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ffa-flags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ffa-flag-item {
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.ffa-flag-item:hover {
+  background-color: #f0f0f0;
+}
+
+.ffa-flag-item.active {
+  background-color: #e8f1f8;
+  border-color: #235393;
+}
+
+.ffa-flag-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #235393;
+  margin-bottom: 6px;
+}
+
+.ffa-flag-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #666;
+}
+
+.ffa-analytics-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ffa-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.ffa-metric-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.ffa-metric-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.ffa-metric-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #235393;
+  margin-bottom: 8px;
+}
+
+.ffa-metric-change {
+  font-size: 12px;
+  color: #60ba46;
+  font-weight: 500;
+}
+
+.ffa-progress-bar,
+.ffa-engagement-bar {
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.ffa-progress-fill,
+.ffa-engagement-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #235393, #60ba46);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.ffa-chart-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.ffa-chart-container h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #235393;
+}
+
+.ffa-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 300px;
+  margin-bottom: 16px;
+  padding: 0 12px;
+  gap: 4px;
+}
+
+.ffa-chart-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.ffa-chart-bars {
+  display: flex;
+  gap: 2px;
+  height: 100%;
+  align-items: flex-end;
+}
+
+.ffa-chart-bar {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  min-height: 4px;
+}
+
+.ffa-chart-bar.users {
+  background-color: #235393;
+}
+
+.ffa-chart-bar.interactions {
+  background-color: #60ba46;
+}
+
+.ffa-chart-bar:hover {
+  opacity: 0.8;
+}
+
+.ffa-chart-date {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ffa-chart-legend {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.ffa-chart-legend span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ffa-legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.ffa-legend-color.users {
+  background-color: #235393;
+}
+
+.ffa-legend-color.interactions {
+  background-color: #60ba46;
+}
+
+.ffa-variants-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.ffa-variants-container h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #235393;
+}
+
+.ffa-variants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.ffa-variant-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f9f9f9;
+}
+
+.ffa-variant-card h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #235393;
+}
+
+.ffa-variant-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.ffa-variant-stat span {
+  color: #666;
+}
+
+.ffa-variant-stat strong {
+  color: #235393;
+  font-weight: 700;
+}
+
+.ffa-variant-progress {
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.ffa-variant-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #235393, #60ba46);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .ffa-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ffa-flag-list {
+    height: auto;
+  }
+
+  .ffa-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .ffa-container {
+    padding: 16px;
+  }
+
+  .ffa-header h1 {
+    font-size: 24px;
+  }
+
+  .ffa-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ffa-chart {
+    height: 200px;
+  }
+
+  .ffa-variants-grid {
+    grid-template-columns: 1fr;
+  }
+}
