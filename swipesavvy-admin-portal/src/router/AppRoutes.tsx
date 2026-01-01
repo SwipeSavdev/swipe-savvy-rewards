@@ -2,7 +2,6 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import AppLayout from '@/components/layout/AppLayout'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
-import { AIMarketingPage as AIMarketingAnalyticsPage } from '@/features/ai-marketing-analytics'
 import EnhancedDashboard from '@/features/dashboard/EnhancedDashboard'
 import AdminUsersPage from '@/pages/AdminUsersPage'
 import AiMarketingPage from '@/pages/AiMarketingPage'
@@ -38,9 +37,8 @@ export default function AppRoutes() {
           <Route path="/support/concierge" element={<AISupportConciergePage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
-          <Route path="/admin/analytics" element={<AIMarketingAnalyticsPage />} />
-          <Route path="/admin/analytics/:view" element={<AIMarketingAnalyticsPage />} />
-          <Route path="/admin/reporting" element={<EnhancedDashboard />} />
+          <Route path="/admin/analytics" element={<EnhancedDashboard />} />
+          <Route path="/admin/analytics/:view" element={<EnhancedDashboard />} />
           <Route path="/tools/ai-marketing" element={<AiMarketingPage />} />
           <Route path="/tools/feature-flags" element={<FeatureFlagsPage />} />
           <Route path="*" element={<NotFoundPage />} />
