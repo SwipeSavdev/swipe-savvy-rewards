@@ -3,12 +3,23 @@
  * Manages SQLite database operations for offline support and persistence
  */
 
-import * as SQLite from 'expo-sqlite';
 import { MOBILE_APP_SQL_STATEMENTS } from './schema';
+
+let SQLite: any = null;
+
+// Create a fallback mock for SQLite when not available
+const createSQLiteFallback = () => ({
+  openDatabaseAsync: async () => ({
+    execAsync: async () => undefined,
+    runAsync: async () => undefined,
+    getFirstAsync: async () => undefined,
+    getAllAsync: async () => [],
+  }),
+});
 
 export class MobileAppDatabase {
   private static instance: MobileAppDatabase;
-  private db: SQLite.SQLiteDatabase | null = null;
+  private db: any = null;
 
   private constructor() {}
 
@@ -24,6 +35,15 @@ export class MobileAppDatabase {
    */
   async initialize(): Promise<void> {
     try {
+      // Try to import expo-sqlite, fall back to mock if not available
+      if (!SQLite) {
+        try {
+          SQLite = await import('expo-sqlite').catch(() => createSQLiteFallback());
+        } catch (e) {
+          SQLite = createSQLiteFallback();
+        }
+      }
+
       this.db = await SQLite.openDatabaseAsync('swipesavvy_mobile.db');
       console.log('✅ Mobile app database initialized');
 

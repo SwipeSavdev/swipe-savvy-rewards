@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import {
-  View,
-  Image,
-  StyleSheet,
-  SafeAreaView,
-  Text,
-  ActivityIndicator,
+    ActivityIndicator,
+    Image,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
-import { LIGHT_THEME, SPACING, TYPOGRAPHY } from '@design-system/theme';
+import { LIGHT_THEME, SPACING, TYPOGRAPHY } from '../design-system/theme';
 
 interface SplashScreenProps {
   onComplete: () => void;

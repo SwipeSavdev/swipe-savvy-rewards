@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { SwipeSavvyAI, AIClientConfig } from './client/AIClient';
-import { useAuthStore } from '@features/auth/stores/authStore';
 import Constants from 'expo-constants';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuthStore } from '../../../features/auth/stores/authStore';
+import { AIClientConfig, SwipeSavvyAI } from './client/AIClient';
 
 interface AIContextValue {
   client: SwipeSavvyAI | null;

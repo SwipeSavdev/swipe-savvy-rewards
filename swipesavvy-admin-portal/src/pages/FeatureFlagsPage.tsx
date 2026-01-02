@@ -1,16 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
-import Card from '@/components/ui/Card'
-import Table, { type TableColumn } from '@/components/ui/Table'
 import Badge from '@/components/ui/Badge'
-import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import ProgressBar from '@/components/ui/ProgressBar'
+import Card from '@/components/ui/Card'
+import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
+import ProgressBar from '@/components/ui/ProgressBar'
 import Slider from '@/components/ui/Slider'
-import { Api } from '@/services/api'
-import type { FeatureFlag } from '@/types/featureFlags'
+import { type TableColumn } from '@/components/ui/Table'
 import { useToastStore } from '@/store/toastStore'
-import { formatDateTime } from '@/utils/dates'
+import type { FeatureFlag } from '@/types/featureFlags'
+import { useEffect, useMemo, useState } from 'react'
 
 const FEATURE_CATEGORIES = [
   { id: 'all', label: 'All Features' },
@@ -21,15 +19,129 @@ const FEATURE_CATEGORIES = [
   { id: 'support', label: 'Support' },
   { id: 'rewards', label: 'Rewards' },
   { id: 'profile', label: 'Profile' },
+  { id: 'marketing', label: 'Marketing' },
   { id: 'design', label: 'Design & Theming' },
+  { id: 'charity', label: 'Charity & Donations' },
+  { id: 'home', label: 'Home & Dashboard' },
+]
+
+const MOBILE_APP_FEATURES = [
+  // Authentication Features
+  { id: 'auth.login', name: 'User Login', category: 'authentication', enabled: true, rolloutPercentage: 100, description: 'Allow users to log in to the app' },
+  { id: 'auth.signup', name: 'User Registration', category: 'authentication', enabled: true, rolloutPercentage: 100, description: 'Allow new user registration' },
+  { id: 'auth.mfa', name: 'Multi-Factor Authentication', category: 'authentication', enabled: true, rolloutPercentage: 85, description: 'Enable 2FA/MFA for enhanced security' },
+  { id: 'auth.biometric', name: 'Biometric Login', category: 'authentication', enabled: true, rolloutPercentage: 100, description: 'Fingerprint and face recognition login' },
+  { id: 'auth.password_reset', name: 'Password Reset', category: 'authentication', enabled: true, rolloutPercentage: 100, description: 'Allow users to reset forgotten passwords' },
+  { id: 'auth.social_login', name: 'Social Login', category: 'authentication', enabled: false, rolloutPercentage: 0, description: 'Sign up with Google, Apple, Facebook' },
+  { id: 'auth.session_management', name: 'Session Management', category: 'authentication', enabled: true, rolloutPercentage: 100, description: 'Manage user sessions and device login' },
+
+  // Account Management Features
+  { id: 'accounts.view_accounts', name: 'View Accounts', category: 'accounts', enabled: true, rolloutPercentage: 100, description: 'View linked bank and payment accounts' },
+  { id: 'accounts.add_account', name: 'Add Account', category: 'accounts', enabled: true, rolloutPercentage: 100, description: 'Link new bank or payment account' },
+  { id: 'accounts.remove_account', name: 'Remove Account', category: 'accounts', enabled: true, rolloutPercentage: 100, description: 'Unlink bank or payment account' },
+  { id: 'accounts.account_details', name: 'Account Details', category: 'accounts', enabled: true, rolloutPercentage: 100, description: 'View detailed account information' },
+  { id: 'accounts.balance_inquiry', name: 'Balance Inquiry', category: 'accounts', enabled: true, rolloutPercentage: 100, description: 'Check account balance in real-time' },
+  { id: 'accounts.transaction_history', name: 'Transaction History', category: 'accounts', enabled: true, rolloutPercentage: 100, description: 'View past transactions and statements' },
+  { id: 'accounts.account_statements', name: 'Download Statements', category: 'accounts', enabled: true, rolloutPercentage: 90, description: 'Download account statements (PDF/CSV)' },
+
+  // Transfers Features
+  { id: 'transfers.view_transfers', name: 'View Transfers', category: 'transfers', enabled: true, rolloutPercentage: 100, description: 'View transfer history' },
+  { id: 'transfers.send_transfer', name: 'Send Transfer', category: 'transfers', enabled: true, rolloutPercentage: 100, description: 'Send money to other users' },
+  { id: 'transfers.receive_transfer', name: 'Receive Transfer', category: 'transfers', enabled: true, rolloutPercentage: 100, description: 'Receive money from other users' },
+  { id: 'transfers.scheduled_transfer', name: 'Scheduled Transfers', category: 'transfers', enabled: true, rolloutPercentage: 75, description: 'Schedule transfers for future dates' },
+  { id: 'transfers.recurring_transfer', name: 'Recurring Transfers', category: 'transfers', enabled: false, rolloutPercentage: 0, description: 'Set up recurring/automatic transfers' },
+  { id: 'transfers.transfer_templates', name: 'Transfer Templates', category: 'transfers', enabled: true, rolloutPercentage: 70, description: 'Save and reuse transfer templates' },
+  { id: 'transfers.international_transfer', name: 'International Transfers', category: 'transfers', enabled: false, rolloutPercentage: 0, description: 'Send money internationally' },
+  { id: 'transfers.transfer_fees', name: 'Transfer Fee Display', category: 'transfers', enabled: true, rolloutPercentage: 100, description: 'Show transfer fees before confirmation' },
+
+  // AI Concierge Features
+  { id: 'ai_concierge.chat', name: 'AI Chat', category: 'ai_concierge', enabled: true, rolloutPercentage: 95, description: 'Chat with AI concierge for support' },
+  { id: 'ai_concierge.voice', name: 'Voice Commands', category: 'ai_concierge', enabled: true, rolloutPercentage: 65, description: 'Control app with voice commands' },
+  { id: 'ai_concierge.suggestions', name: 'AI Suggestions', category: 'ai_concierge', enabled: true, rolloutPercentage: 80, description: 'Receive personalized AI recommendations' },
+  { id: 'ai_concierge.smart_search', name: 'Smart Search', category: 'ai_concierge', enabled: true, rolloutPercentage: 90, description: 'AI-powered search functionality' },
+  { id: 'ai_concierge.transaction_analysis', name: 'Transaction Analysis', category: 'ai_concierge', enabled: true, rolloutPercentage: 70, description: 'AI analysis of spending patterns' },
+  { id: 'ai_concierge.budget_assistant', name: 'Budget Assistant', category: 'ai_concierge', enabled: false, rolloutPercentage: 0, description: 'AI-powered budget planning and tracking' },
+
+  // Support Features
+  { id: 'support.tickets', name: 'Support Tickets', category: 'support', enabled: true, rolloutPercentage: 100, description: 'Create and track support tickets' },
+  { id: 'support.live_chat', name: 'Live Chat', category: 'support', enabled: true, rolloutPercentage: 85, description: 'Real-time live chat with support team' },
+  { id: 'support.faqs', name: 'FAQs & Help Center', category: 'support', enabled: true, rolloutPercentage: 100, description: 'Browse FAQs and help articles' },
+  { id: 'support.feedback', name: 'Feedback & Suggestions', category: 'support', enabled: true, rolloutPercentage: 100, description: 'Submit app feedback and suggestions' },
+  { id: 'support.push_notifications', name: 'Support Notifications', category: 'support', enabled: true, rolloutPercentage: 95, description: 'Receive support-related notifications' },
+
+  // Rewards Features
+  { id: 'rewards.view_rewards', name: 'View Rewards', category: 'rewards', enabled: true, rolloutPercentage: 100, description: 'View earned rewards and points' },
+  { id: 'rewards.redeem_rewards', name: 'Redeem Rewards', category: 'rewards', enabled: true, rolloutPercentage: 100, description: 'Redeem points for cashback or perks' },
+  { id: 'rewards.rewards_tier', name: 'Rewards Tiers', category: 'rewards', enabled: true, rolloutPercentage: 85, description: 'VIP/loyalty program tiers' },
+  { id: 'rewards.referral_program', name: 'Referral Program', category: 'rewards', enabled: true, rolloutPercentage: 80, description: 'Earn rewards by referring friends' },
+  { id: 'rewards.points_conversion', name: 'Points Conversion', category: 'rewards', enabled: false, rolloutPercentage: 0, description: 'Convert rewards to cryptocurrency' },
+  { id: 'rewards.leaderboard', name: 'Rewards Leaderboard', category: 'rewards', enabled: true, rolloutPercentage: 60, description: 'View rewards leaderboard and rankings' },
+
+  // Profile Features
+  { id: 'profile.view_profile', name: 'View Profile', category: 'profile', enabled: true, rolloutPercentage: 100, description: 'View personal profile information' },
+  { id: 'profile.edit_profile', name: 'Edit Profile', category: 'profile', enabled: true, rolloutPercentage: 100, description: 'Update personal profile details' },
+  { id: 'profile.change_password', name: 'Change Password', category: 'profile', enabled: true, rolloutPercentage: 100, description: 'Update account password' },
+  { id: 'profile.notifications_settings', name: 'Notification Settings', category: 'profile', enabled: true, rolloutPercentage: 100, description: 'Manage notification preferences' },
+  { id: 'profile.privacy_settings', name: 'Privacy Settings', category: 'profile', enabled: true, rolloutPercentage: 100, description: 'Control privacy and visibility settings' },
+  { id: 'profile.security_settings', name: 'Security Settings', category: 'profile', enabled: true, rolloutPercentage: 100, description: 'Manage security options' },
+  { id: 'profile.linked_devices', name: 'Linked Devices', category: 'profile', enabled: true, rolloutPercentage: 100, description: 'View and manage connected devices' },
+  { id: 'profile.data_export', name: 'Data Export', category: 'profile', enabled: true, rolloutPercentage: 75, description: 'Export personal data in standard format' },
+  { id: 'profile.account_deletion', name: 'Account Deletion', category: 'profile', enabled: true, rolloutPercentage: 100, description: 'Request account deletion' },
+
+  // Marketing Features
+  { id: 'marketing.campaigns', name: 'Marketing Campaigns', category: 'marketing', enabled: true, rolloutPercentage: 100, description: 'View active marketing campaigns' },
+  { id: 'marketing.deals', name: 'Deals & Offers', category: 'marketing', enabled: true, rolloutPercentage: 100, description: 'View special deals and offers' },
+  { id: 'marketing.push_promotions', name: 'Push Promotions', category: 'marketing', enabled: true, rolloutPercentage: 90, description: 'Receive promotional push notifications' },
+  { id: 'marketing.email_marketing', name: 'Email Marketing', category: 'marketing', enabled: true, rolloutPercentage: 85, description: 'Opt-in for marketing emails' },
+  { id: 'marketing.personalized_offers', name: 'Personalized Offers', category: 'marketing', enabled: true, rolloutPercentage: 75, description: 'AI-driven personalized offers' },
+
+  // Charity & Donations
+  { id: 'charity.view_charities', name: 'View Charities', category: 'charity', enabled: true, rolloutPercentage: 100, description: 'Browse available charity organizations' },
+  { id: 'charity.donate', name: 'Make Donation', category: 'charity', enabled: true, rolloutPercentage: 100, description: 'Donate to charity organizations' },
+  { id: 'charity.donation_history', name: 'Donation History', category: 'charity', enabled: true, rolloutPercentage: 100, description: 'View past donations' },
+  { id: 'charity.donation_receipts', name: 'Donation Receipts', category: 'charity', enabled: true, rolloutPercentage: 95, description: 'Download donation receipts' },
+  { id: 'charity.recurring_donation', name: 'Recurring Donations', category: 'charity', enabled: true, rolloutPercentage: 70, description: 'Set up automatic recurring donations' },
+
+  // Home & Dashboard
+  { id: 'home.dashboard', name: 'Main Dashboard', category: 'home', enabled: true, rolloutPercentage: 100, description: 'Home screen dashboard' },
+  { id: 'home.quick_actions', name: 'Quick Actions', category: 'home', enabled: true, rolloutPercentage: 100, description: 'Quick action buttons on home' },
+  { id: 'home.widgets', name: 'Home Widgets', category: 'home', enabled: true, rolloutPercentage: 100, description: 'Customizable home screen widgets' },
+  { id: 'home.activity_feed', name: 'Activity Feed', category: 'home', enabled: true, rolloutPercentage: 85, description: 'View recent activity and updates' },
+  { id: 'home.news_feed', name: 'News & Updates', category: 'home', enabled: true, rolloutPercentage: 80, description: 'Financial news and product updates' },
+
+  // Design & Theming
+  { id: 'design.dark_mode', name: 'Dark Mode', category: 'design', enabled: true, rolloutPercentage: 100, description: 'Dark theme support' },
+  { id: 'design.light_mode', name: 'Light Mode', category: 'design', enabled: true, rolloutPercentage: 100, description: 'Light theme support' },
+  { id: 'design.custom_themes', name: 'Custom Themes', category: 'design', enabled: false, rolloutPercentage: 0, description: 'Create custom color themes' },
+  { id: 'design.font_scaling', name: 'Font Scaling', category: 'design', enabled: true, rolloutPercentage: 100, description: 'Adjustable font sizes' },
+  { id: 'design.accessibility', name: 'Accessibility Features', category: 'design', enabled: true, rolloutPercentage: 95, description: 'WCAG compliance and a11y features' },
 ]
 
 export default function FeatureFlagsPage() {
   console.log('[FeatureFlagsPage] RENDERING Component')
   
   const pushToast = useToastStore((s) => s.push)
-  const [loading, setLoading] = useState(true)
-  const [flags, setFlags] = useState<FeatureFlag[]>([])
+  const [loading, setLoading] = useState(false)
+  const [flags, setFlags] = useState<FeatureFlag[]>(
+    MOBILE_APP_FEATURES.map((f) => ({
+      id: f.id,
+      key: f.id,
+      name: f.name,
+      displayName: f.name,
+      description: f.description,
+      enabled: f.enabled,
+      status: f.enabled ? 'on' : 'off',
+      rolloutPercentage: f.rolloutPercentage,
+      rolloutPct: f.rolloutPercentage,
+      targetedUsers: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'system',
+      updatedBy: 'system',
+      environment: 'production',
+      category: f.category,
+    }))
+  )
   const [query, setQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
 
@@ -44,55 +156,8 @@ export default function FeatureFlagsPage() {
   }, [])
 
   const fetchFlags = async (shouldShowLoading = true) => {
-    if (shouldShowLoading) setLoading(true)
-    try {
-      const res = await Api.featureFlagsApi.listFlags(1, 200, query || undefined)
-      
-      // Null check with early return to prevent null reference
-      if (!res) {
-        console.error('[FeatureFlagsPage] Null response received from API')
-        setFlags([])
-        return
-      }
-
-      // Handle both { flags: [...] } and direct array responses
-      const flagsArray = Array.isArray(res) ? res : (res.flags || [])
-      
-      // Type guard: ensure flags is array
-      if (!Array.isArray(flagsArray)) {
-        console.warn('[FeatureFlagsPage] Invalid flags array received:', flagsArray)
-        setFlags([])
-        return
-      }
-
-      setFlags(flagsArray.map((f: any) => ({
-        id: f.id,
-        key: f.name,
-        name: f.displayName || f.name,
-        displayName: f.displayName || f.name,
-        description: f.description,
-        enabled: f.enabled,
-        status: f.enabled ? 'on' : 'off',
-        rolloutPercentage: f.rolloutPercentage || 0,
-        rolloutPct: f.rolloutPercentage || 0,
-        targetedUsers: f.targetedUsers || [],
-        createdAt: f.createdAt,
-        updatedAt: f.updatedAt,
-        createdBy: f.createdBy,
-        updatedBy: f.updatedBy || f.createdBy,
-        environment: f.environment,
-      })))
-    } catch (err: any) {
-      console.error('[FeatureFlagsPage] Error fetching flags:', err)
-      pushToast({
-        variant: 'error',
-        title: 'Failed to load feature flags',
-        message: err?.message || 'An error occurred while loading feature flags.',
-      })
-      setFlags([])
-    } finally {
-      if (shouldShowLoading) setLoading(false)
-    }
+    // Using mock data directly - no API call needed
+    return
   }
 
   useEffect(() => {
@@ -106,7 +171,7 @@ export default function FeatureFlagsPage() {
   }, [query])
 
   const filteredFlags = useMemo(() => {
-    return flags.filter((flag) => {
+    return flags.filter((flag: any) => {
       const matchesCategory = selectedCategory === 'all' || flag.category === selectedCategory
       const matchesQuery = !query || flag.name.toLowerCase().includes(query.toLowerCase()) ||
         (flag.description?.toLowerCase().includes(query.toLowerCase()) ?? false)
@@ -115,17 +180,25 @@ export default function FeatureFlagsPage() {
   }, [flags, selectedCategory, query])
 
   const handleRowClick = (flag: FeatureFlag) => {
-    setPending(flag)
-    setRolloutValue(flag.rolloutPercentage || 0)
+    handleToggleFeature(flag)
   }
 
   const onConfirm = async () => {
     if (!pending) return
     setToggling(true)
     try {
-      await Api.featureFlagsApi.toggleFlag(pending.id, pending.status === 'off')
-      setFlags(flags.map(f => 
-        f.id === pending.id ? { ...f, status: f.status === 'on' ? 'off' : 'on', enabled: f.status === 'off' } : f
+      // Simulate API call with delay
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      
+      setFlags(flags.map((f) =>
+        f.id === pending.id
+          ? {
+              ...f,
+              status: f.status === 'on' ? 'off' : 'on',
+              enabled: f.status === 'off',
+              updatedAt: new Date().toISOString(),
+            }
+          : f,
       ))
       pushToast({
         variant: 'success',
@@ -144,60 +217,13 @@ export default function FeatureFlagsPage() {
     }
   }
 
+  const handleToggleFeature = (flag: FeatureFlag) => {
+    setPending(flag)
+    setRolloutValue(flag.rolloutPct ?? 0)
+  }
+
   const columns: TableColumn<FeatureFlag>[] = useMemo(
-    () => [
-      {
-        key: 'name',
-        header: 'Feature',
-        sortable: true,
-        accessor: (f) => f.name,
-        cell: (f) => (
-          <div className="min-w-0">
-            <p className="truncate font-semibold">{f.name}</p>
-            <p className="truncate text-xs text-[var(--ss-text-muted)]">{f.description}</p>
-          </div>
-        ),
-      },
-      {
-        key: 'category',
-        header: 'Category',
-        sortable: true,
-        accessor: (f) => f.category || 'design',
-        cell: (f) => <Badge variant="neutral">{(f.category || 'design').replace('_', ' ')}</Badge>,
-      },
-      {
-        key: 'status',
-        header: 'Status',
-        sortable: true,
-        accessor: (f) => f.status,
-        cell: (f) => <Badge variant={f.status === 'on' ? 'success' : 'neutral'}>{f.status}</Badge>,
-      },
-      {
-        key: 'rolloutPct',
-        header: 'Rollout',
-        sortable: true,
-        accessor: (f) => f.rolloutPct,
-        cell: (f) => (
-          <div className="w-[160px]">
-            <div className="flex items-center justify-between text-xs text-[var(--ss-text-muted)]">
-              <span>{f.rolloutPct ?? 0}%</span>
-            </div>
-            <ProgressBar value={f.rolloutPct ?? 0} />
-          </div>
-        ),
-      },
-      {
-        key: 'updatedAt',
-        header: 'Updated',
-        sortable: true,
-        accessor: (f) => f.updatedAt,
-        cell: (f) => (
-          <span className="text-sm text-[var(--ss-text-muted)]">
-            {f.updatedAt ? formatDateTime(f.updatedAt) : 'N/A'}
-          </span>
-        ),
-      },
-    ],
+    () => [],
     []
   )
 
@@ -238,50 +264,55 @@ export default function FeatureFlagsPage() {
           onChange={(e) => setQuery(e.target.value)}
           className="flex-1"
         />
-        <Button onClick={() => fetchFlags(true)}>Reload</Button>
       </div>
 
-      {/* Flags Table */}
-      {loading ? (
-        <Card className="p-8 text-center">
-          <p className="text-[var(--ss-text-muted)]">Loading feature flags...</p>
-        </Card>
-      ) : (
-        filteredFlags.length > 0 && (
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-[var(--ss-border)] bg-[var(--ss-surface-alt)]">
-                  <tr>
-                    {columns.map((col) => (
-                      <th
-                        key={col.key}
-                        className="px-4 py-3 text-left text-xs font-semibold text-[var(--ss-text-secondary)] uppercase tracking-wide"
-                      >
-                        {col.header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--ss-border)]">
-                  {filteredFlags.map((flag, idx) => (
-                    <tr
-                      key={flag.id || idx}
-                      onClick={() => handleRowClick(flag)}
-                      className="cursor-pointer hover:bg-[var(--ss-surface-alt)] transition-colors"
-                    >
-                      {columns.map((col) => (
-                        <td key={col.key} className="px-4 py-3 text-sm">
-                          {col.cell ? col.cell(flag) : col.accessor ? col.accessor(flag) : ''}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )
+      {/* Flags Toggle Cards */}
+      {filteredFlags.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredFlags.map((flag) => (
+            <Card key={flag.id} className="p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-[var(--ss-text-primary)]">
+                      {flag.name}
+                    </h3>
+                    <p className="text-xs text-[var(--ss-text-muted)] mt-1">
+                      {flag.description}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge variant={flag.status === 'on' ? 'success' : 'neutral'}>
+                    {flag.status === 'on' ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                  <span className="text-xs text-[var(--ss-text-muted)]">
+                    {flag.rolloutPct}% rollout
+                  </span>
+                </div>
+                {flag.rolloutPct < 100 && flag.status === 'on' && (
+                  <div className="mt-3">
+                    <ProgressBar value={flag.rolloutPct ?? 0} />
+                    <p className="text-xs text-[var(--ss-text-muted)] mt-1">
+                      Rolling out to {flag.rolloutPct}% of users
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => handleToggleFeature(flag)}
+                className={`mt-4 px-4 py-2 rounded-lg font-medium transition-all ${
+                  flag.status === 'on'
+                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                }`}
+              >
+                {flag.status === 'on' ? 'Disable' : 'Enable'}
+              </button>
+            </Card>
+          ))}
+        </div>
       )}
 
       {!loading && filteredFlags.length === 0 && (

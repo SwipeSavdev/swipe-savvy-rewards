@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  FlatList,
-  ListRenderItem,
-  ActivityIndicator,
-} from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LIGHT_THEME, SPACING, RADIUS, TYPOGRAPHY, BRAND_COLORS } from '../../../design-system/theme';
-import { useTheme } from '../../../contexts/ThemeContext';
-import { Card, Button, Badge, IconBox } from '../../../design-system/components/CoreComponents';
-import { useAuthStore } from '../../auth/stores/authStore';
-import { dataService, Transaction as DataServiceTransaction, Account } from '../../../services/DataService';
+import { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    ListRenderItem,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { BrandHeader } from '../../../components/BrandHeader';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { Button, Card, IconBox } from '../../../design-system/components/CoreComponents';
+import { BRAND_COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../../design-system/theme';
+import { Account, dataService, Transaction as DataServiceTransaction } from '../../../services/DataService';
+import { useAuthStore } from '../../auth/stores/authStore';
 
 interface Transaction {
   id: string;
@@ -385,7 +385,7 @@ export function HomeScreen() {
             <Text style={styles.quickActionsTitle}>Quick actions</Text>
             <Text style={styles.pointsLabel}>One tap, always aligned</Text>
           </View>
-          <Button onPress={() => (navigation as any).navigate('AIConcierge')} variant="ghost">
+          <Button onPress={() => (navigation as any).navigate('RewardsDonate')} variant="ghost">
             Donate
           </Button>
         </View>
@@ -432,7 +432,7 @@ export function HomeScreen() {
 
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => (navigation as any).navigate('AIConcierge')}
+              onPress={() => (navigation as any).navigate('Rewards')}
             >
               <IconBox
                 icon={<MaterialCommunityIcons name="star" size={20} color={BRAND_COLORS.green} />}

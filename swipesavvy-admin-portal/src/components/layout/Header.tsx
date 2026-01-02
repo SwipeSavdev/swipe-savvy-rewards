@@ -1,11 +1,12 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { buildBreadcrumbs } from '@/router/breadcrumbs'
-import Icon from '@/components/ui/Icon'
+import { BrandingKitIcon } from '@/components/ui/BrandingKitIcon'
 import DropdownMenu from '@/components/ui/DropdownMenu'
+import Icon from '@/components/ui/Icon'
 import Input from '@/components/ui/Input'
-import { useUiStore } from '@/store/uiStore'
+import { buildBreadcrumbs } from '@/router/breadcrumbs'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
+import { useUiStore } from '@/store/uiStore'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 export default function Header() {
   const location = useLocation()
@@ -21,29 +22,29 @@ export default function Header() {
   const pushToast = useToastStore((s) => s.push)
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--ss-border)] bg-[var(--ss-surface)]">
+    <header className="sticky top-0 z-40 border-b border-[var(--ss-border)] bg-gradient-to-r from-[#235393] via-[#2E5FB8] to-[#1A3F7A] shadow-lg">
       <div className="flex items-center gap-3 px-4 py-3">
         <button
           type="button"
-          className="rounded-md p-2 text-[var(--ss-text-muted)] hover:bg-[var(--ss-surface-alt)] lg:hidden"
+          className="rounded-md p-2 text-white hover:bg-white/20 transition-colors lg:hidden"
           onClick={() => setSidebarMobileOpen(true)}
           aria-label="Open menu"
         >
-          <Icon name="dashboard" className="h-5 w-5" />
+          <BrandingKitIcon name="menu" size="md" />
         </button>
 
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <nav className="hidden min-w-0 items-center gap-2 text-sm text-[var(--ss-text-muted)] sm:flex">
+          <nav className="hidden min-w-0 items-center gap-2 text-sm text-white/70 sm:flex">
             {breadcrumbs.map((c, i) => (
               <div key={i} className="flex min-w-0 items-center gap-2">
                 {c.to ? (
-                  <Link to={c.to} className="truncate hover:text-[var(--ss-text)]">
+                  <Link to={c.to} className="truncate hover:text-white transition-colors">
                     {c.label}
                   </Link>
                 ) : (
-                  <span className="truncate">{c.label}</span>
+                  <span className="truncate text-white/90">{c.label}</span>
                 )}
-                {i < breadcrumbs.length - 1 ? <span className="text-[var(--ss-text-muted)]">/</span> : null}
+                {i < breadcrumbs.length - 1 ? <span className="text-white/50">/</span> : null}
               </div>
             ))}
           </nav>
@@ -51,7 +52,7 @@ export default function Header() {
           <div className="hidden w-[420px] max-w-full lg:block">
             <Input
               placeholder="Search users, tickets, merchants..."
-              leftSlot={<Icon name="search" className="h-4 w-4 text-[var(--ss-text-muted)]" />}
+              leftSlot={<BrandingKitIcon name="search" size="sm" />}
             />
           </div>
         </div>
@@ -59,9 +60,9 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <DropdownMenu
             trigger={
-              <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-[var(--ss-surface-alt)]">
-                <Icon name="support" className="h-5 w-5 text-[var(--ss-text-muted)]" />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--ss-danger)]" />
+              <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-white/20 transition-colors">
+                <BrandingKitIcon name="bell" size="md" />
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-yellow-400 shadow-lg" />
               </span>
             }
             items={[

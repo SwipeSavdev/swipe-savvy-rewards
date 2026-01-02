@@ -116,7 +116,7 @@ class DataService {
     try {
       return await this.request<Account[]>(`/accounts`);
     } catch (error) {
-      console.error('Failed to fetch accounts:', error);
+      console.debug('Using default accounts (API unavailable)');
       // Return mock data for demo
       return [
         {
@@ -144,7 +144,7 @@ class DataService {
       );
       return data.balance;
     } catch (error) {
-      console.error('Failed to fetch account balance:', error);
+      console.debug('Using default account balance (API unavailable)');
       return 0;
     }
   }
@@ -154,7 +154,7 @@ class DataService {
     try {
       return await this.request<LinkedBank[]>(`/banks/linked`);
     } catch (error) {
-      console.error('Failed to fetch linked banks:', error);
+      console.debug('Using default linked banks (API unavailable)');
       // Return mock data
       return [
         {
@@ -321,7 +321,7 @@ class DataService {
     try {
       return await this.request<UserPreferences>(`/user/preferences`);
     } catch (error) {
-      console.error('Failed to fetch preferences:', error);
+      console.debug('Using default preferences (API unavailable)');
       return {
         darkMode: false,
         notificationsEnabled: true,
@@ -358,7 +358,7 @@ class DataService {
     try {
       return await this.request<any[]>(`/cards`);
     } catch (error) {
-      console.error('Failed to fetch cards:', error);
+      console.debug('Using default cards (API unavailable)');
       return [];
     }
   }

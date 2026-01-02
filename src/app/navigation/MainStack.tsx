@@ -1,23 +1,23 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { LIGHT_THEME, DARK_THEME, ICON_OPACITY, SPACING } from '@design-system/theme';
-import { useTheme } from '@contexts/ThemeContext';
-import { HomeScreen } from '@features/home/screens/HomeScreen';
-import { AnalyticsScreen } from '@features/home/screens/AnalyticsScreen';
-import { SavingsGoalsScreen } from '@features/home/screens/SavingsGoalsScreen';
-import { SpendingAnalysisScreen } from '@features/home/screens/SpendingAnalysisScreen';
-import { AccountsScreen } from '@features/accounts/screens/AccountsScreen';
-import { CardsScreen } from '@features/accounts/screens/CardsScreen';
-import { AccountBalanceDetailScreen } from '@features/accounts/screens/AccountBalanceDetailScreen';
-import { BudgetScreen } from '@features/accounts/screens/BudgetScreen';
-import { BudgetDetailScreen } from '@features/accounts/screens/BudgetDetailScreen';
-import { TransfersScreen } from '@features/transfers/screens/TransfersScreen';
-import { RewardsScreen } from '@features/ai-concierge/screens/RewardsScreen';
-import { RewardsDonateScreen } from '@features/ai-concierge/screens/RewardsDonateScreen';
-import { LeaderboardScreen } from '@features/ai-concierge/screens/LeaderboardScreen';
-import { ProfileScreen } from '@features/profile/screens/ProfileScreen';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
+import { NavigationIcon } from '../../components/NavigationIcon';
+import { useTheme } from '../../contexts/ThemeContext';
+import { SPACING } from '../../design-system/theme';
+import { AccountBalanceDetailScreen } from '../../features/accounts/screens/AccountBalanceDetailScreen';
+import { AccountsScreen } from '../../features/accounts/screens/AccountsScreen';
+import { BudgetDetailScreen } from '../../features/accounts/screens/BudgetDetailScreen';
+import { BudgetScreen } from '../../features/accounts/screens/BudgetScreen';
+import { CardsScreen } from '../../features/accounts/screens/CardsScreen';
+import { LeaderboardScreen } from '../../features/ai-concierge/screens/LeaderboardScreen';
+import { RewardsDonateScreen } from '../../features/ai-concierge/screens/RewardsDonateScreen';
+import { RewardsScreen } from '../../features/ai-concierge/screens/RewardsScreen';
+import { AnalyticsScreen } from '../../features/home/screens/AnalyticsScreen';
+import { HomeScreen } from '../../features/home/screens/HomeScreen';
+import { SavingsGoalsScreen } from '../../features/home/screens/SavingsGoalsScreen';
+import { SpendingAnalysisScreen } from '../../features/home/screens/SpendingAnalysisScreen';
+import { ProfileScreen } from '../../features/profile/screens/ProfileScreen';
+import { TransfersScreen } from '../../features/transfers/screens/TransfersScreen';
 
 export type MainTabParamList = {
   Home: undefined;
@@ -51,32 +51,29 @@ const MemoizedTransfersScreen = React.memo(TransfersScreen);
 const TabNavigatorComponent = React.memo(function TabNavigator() {
   const { colors } = useTheme();
 
-  const screenOptions = useMemo(() => ({
-    tabBarIcon: ({ focused, color, size }: any) => {
-      let iconName: keyof typeof Ionicons.glyphMap;
-
-      if (focused) {
-        iconName = 'home';
-      } else {
-        iconName = 'home-outline';
-      }
-
-      return <Ionicons name={iconName} size={size} color={color} />;
-    },
-    tabBarActiveTintColor: colors.brand,
-    tabBarInactiveTintColor: colors.muted,
-    tabBarStyle: {
-      backgroundColor: colors.navGlass,
-      borderTopColor: colors.stroke,
-      borderTopWidth: 1,
-      paddingBottom: SPACING[2],
-    },
-    headerShown: false,
-    tabBarShowLabel: true,
-  }), [colors]);
-
   return (
-    <Tab.Navigator screenOptions={screenOptions}>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => (
+          <NavigationIcon
+            name={route.name.toLowerCase() as 'home' | 'accounts' | 'transfers'}
+            focused={focused}
+            color={color}
+            size={size}
+          />
+        ),
+        tabBarActiveTintColor: colors.brand,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarStyle: {
+          backgroundColor: colors.navGlass,
+          borderTopColor: colors.stroke,
+          borderTopWidth: 1,
+          paddingBottom: SPACING[2],
+        },
+        headerShown: false,
+        tabBarShowLabel: true,
+      })}
+    >
       <Tab.Screen 
         name="Home" 
         component={MemoizedHomeScreen}
@@ -126,11 +123,6 @@ export const MainStack = React.memo(function MainStackComponent() {
             options={{ headerShown: false }}
           />
           <Stack.Screen 
-            name="RewardsDonate" 
-            component={RewardsDonateScreen}
-            options={{ title: 'Donate Points', headerShown: true }}
-          />
-          <Stack.Screen 
             name="Leaderboard" 
             component={LeaderboardScreen}
             options={{ title: 'Leaderboard', headerShown: true }}
@@ -168,6 +160,11 @@ export const MainStack = React.memo(function MainStackComponent() {
             name="Rewards" 
             component={RewardsScreen}
             options={{ title: 'Rewards' }}
+          />
+          <Stack.Screen 
+            name="RewardsDonate" 
+            component={RewardsDonateScreen}
+            options={{ title: 'Donate Points', headerShown: true }}
           />
           <Stack.Screen 
             name="Profile" 

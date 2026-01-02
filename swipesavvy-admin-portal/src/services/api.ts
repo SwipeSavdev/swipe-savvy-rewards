@@ -119,6 +119,32 @@ const Api = USE_MOCK_API ? {
     async getAiCampaigns(params?: any) {
       return mockApi.getAiCampaigns(params)
     },
+    async publishCampaign(campaignId: string) {
+      return { success: true, id: campaignId, status: 'published' }
+    },
+    async updateCampaign(campaignId: string, data: any) {
+      return { success: true, id: campaignId, ...data }
+    },
+    async generateCopy(data: any) {
+      return {
+        headline: 'AI Generated Headline',
+        description: 'AI Generated Description',
+        cta: 'Click Here',
+        selling_points: ['Point 1', 'Point 2'],
+      }
+    },
+    async getAudienceInsights(data: any) {
+      return {
+        characteristics: 'Your audience characteristics',
+        opportunities: ['Opportunity 1', 'Opportunity 2'],
+        offer_recommendation: 'Best offer type',
+        channels: ['email', 'push'],
+        challenges: ['Challenge 1'],
+      }
+    },
+    async createCampaign(data: any) {
+      return { success: true, id: `camp-${Date.now()}`, ...data }
+    },
   },
 } : (realApi as any)
 

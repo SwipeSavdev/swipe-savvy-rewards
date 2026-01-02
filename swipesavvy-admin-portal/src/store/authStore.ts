@@ -1,7 +1,7 @@
+import { Api } from '@/services/api'
+import type { AuthUser } from '@/types/auth'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AuthUser } from '@/types/auth'
-import { Api } from '@/services/api'
 
 interface AuthState {
   user: AuthUser | null
@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
         // Add a small delay to prevent rapid repeated login attempts that trigger rate limiting
         await new Promise(resolve => setTimeout(resolve, 500))
         try {
-          await get().login('admin@swipesavvy.com', 'TempPassword123!')
+          await get().login('admin@swipesavvy.com', 'Admin123!')
         } catch (err) {
           // Don't throw - let the user login manually from the login page
         }

@@ -1,6 +1,5 @@
-import React from 'react';
-import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 // Mock the useAIChat hook BEFORE importing ChatScreen
 jest.mock('@ai-sdk/hooks/useAIChat');
@@ -52,7 +51,7 @@ describe('ChatScreen', () => {
     it('should render welcome message', () => {
       render(<ChatScreen />);
       
-      expect(screen.getByText(/AI Assistant/i)).toBeTruthy();
+      expect(screen.getByText(/Savvy AI Concierge/i)).toBeTruthy();
     });
 
     it('should show quick action buttons', () => {

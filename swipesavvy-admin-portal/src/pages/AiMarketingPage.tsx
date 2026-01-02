@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
-import Card from '@/components/ui/Card'
-import Table, { type TableColumn } from '@/components/ui/Table'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-import Modal from '@/components/ui/Modal'
+import Card from '@/components/ui/Card'
 import Form from '@/components/ui/Form'
 import Input from '@/components/ui/Input'
+import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
+import Table, { type TableColumn } from '@/components/ui/Table'
 import { Api } from '@/services/api'
+import { useToastStore } from '@/store/toastStore'
 import type { AiCampaign } from '@/types/aiMarketing'
 import { formatDateTime } from '@/utils/dates'
-import { useToastStore } from '@/store/toastStore'
-import { Sparkles, Lightbulb, TrendingUp, AlertCircle, CheckCircle, Loader, Edit } from 'lucide-react'
+import { CheckCircle, Edit, Lightbulb, Loader, Sparkles, TrendingUp } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 interface CampaignCopy {
   headline?: string
@@ -55,8 +55,8 @@ export default function AiMarketingPage() {
   const fetchCampaigns = async (shouldShowLoading = true) => {
     if (shouldShowLoading) setLoading(true)
     try {
-      const res = await Api.aiCampaignsApi.listCampaigns(1, 100)
-      setCampaigns((res.campaigns || []).map((c: any) => ({
+      const res = await Api.aiCampaignsApi.getAiCampaigns({ page: 1, limit: 100 })
+      setCampaigns((res.campaigns || res || []).map((c: any) => ({
         id: c.id || c.campaign_id,
         name: c.name || c.campaign_name,
         description: c.description || '',
@@ -79,6 +79,10 @@ export default function AiMarketingPage() {
         lastUpdated: c.updated_at,
         createdAt: c.created_at,
       })))
+    } catch (err: any) {
+      console.error('Failed to fetch campaigns:', err)
+      // Set empty array on error
+      setCampaigns([])
     } finally {
       if (shouldShowLoading) setLoading(false)
     }

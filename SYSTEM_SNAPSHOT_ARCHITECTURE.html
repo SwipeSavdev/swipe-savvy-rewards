@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwipeSavvy System Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f6f6f6 0%, #f0f0f0 100%);
+            color: #132136;
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #235393 0%, #1a3f63 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .nav-link {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin: 5px;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            color: #235393;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #235393;
+            padding-bottom: 15px;
+        }
+
+        h3 {
+            color: #235393;
+            font-size: 1.3em;
+            margin: 25px 0 15px 0;
+        }
+
+        .arch-diagram {
+            background: #f9f9f9;
+            border: 2px solid #235393;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+
+        .component {
+            background: linear-gradient(135deg, #235393 0%, #1a3f63 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .component h4 {
+            margin-top: 0;
+            font-size: 1.1em;
+        }
+
+        .component ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .component li {
+            margin: 5px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background: #fafafa;
+        }
+
+        .card h4 {
+            color: #235393;
+            margin-bottom: 10px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stack {
+            background: #f0f8ff;
+            border-left: 4px solid #235393;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th {
+            background: #235393;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        footer {
+            background: #132136;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .arch-diagram {
+                font-size: 0.75em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏗️ System Architecture</h1>
+        <p>Complete technical overview of SwipeSavvy platform</p>
+        <nav style="margin-top: 20px;">
+            <a href="SYSTEM_SNAPSHOT_INDEX.html" class="nav-link">← Back to Index</a>
+            <a href="SYSTEM_SNAPSHOT_FEATURES.html" class="nav-link">Features →</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- High-Level Architecture -->
+        <section>
+            <h2>📊 High-Level System Architecture</h2>
+            
+            <div class="arch-diagram">
+┌──────────────────────────────────────────────────────────────────┐
+│                    CLIENT LAYER (User-Facing)                    │
+├──────────────────────────────────────────────────────────────────┤
+│  📱 Mobile App        🌐 Admin Portal      💼 Customer Website   │
+│  (Expo/React Native)  (React/Next.js)      (Next.js)             │
+└────────────┬──────────────────┬──────────────────┬───────────────┘
+             │                  │                  │
+             └──────────────────┼──────────────────┘
+                                │
+                        ┌───────▼────────┐
+                        │  API Gateway   │
+                        │  (Load Balancer)│
+                        └───────┬────────┘
+                                │
+        ┌───────────────────────┼───────────────────────┐
+        │                       │                       │
+┌───────▼──────┐      ┌────────▼────────┐    ┌────────▼─────┐
+│ Auth Service │      │  Core Services  │    │ AI Services  │
+│ (JWT/OAuth)  │      │  API Gateway    │    │ (LLM/RAG)    │
+└──────────────┘      └────────┬────────┘    └──────────────┘
+                               │
+        ┌──────────┬───────────┼───────────┬──────────┐
+        │          │           │           │          │
+┌───────▼──┐ ┌────▼────┐ ┌───▼───┐ ┌────▼────┐ ┌──▼────┐
+│ Campaign │ │Analytics│ │Rewards│ │ User    │ │Merchant
+│ Service  │ │ Service │ │Service│ │ Service │ │Service
+└──────────┘ └─────────┘ └───────┘ └─────────┘ └───────┘
+        │          │           │           │          │
+        └──────────┴───────────┼───────────┴──────────┘
+                               │
+        ┌──────────────────────┼──────────────────────┐
+        │                      │                      │
+┌───────▼──────┐    ┌─────────▼──────┐    ┌─────────▼──────┐
+│  PostgreSQL  │    │     Redis      │    │  File Storage  │
+│  (Main DB)   │    │   (Caching)    │    │   (S3/Local)   │
+└──────────────┘    └────────────────┘    └────────────────┘
+            </div>
+
+            <h3>🔧 Technology Stack</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>Frontend</h4>
+                    <ul>
+                        <li><strong>Mobile:</strong> Expo, React Native, TypeScript</li>
+                        <li><strong>Web:</strong> React, Next.js, TypeScript, Tailwind CSS</li>
+                        <li><strong>State:</strong> Redux, Context API, Zustand</li>
+                        <li><strong>Build:</strong> Vite, Metro</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Backend</h4>
+                    <ul>
+                        <li><strong>Runtime:</strong> Python 3.11+</li>
+                        <li><strong>Framework:</strong> FastAPI</li>
+                        <li><strong>ORM:</strong> SQLAlchemy</li>
+                        <li><strong>Migrations:</strong> Alembic</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Infrastructure</h4>
+                    <ul>
+                        <li><strong>Container:</strong> Docker, Docker Compose</li>
+                        <li><strong>DB:</strong> PostgreSQL 14+</li>
+                        <li><strong>Cache:</strong> Redis</li>
+                        <li><strong>Queue:</strong> Celery</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Core Services -->
+        <section>
+            <h2>⚙️ Core Services Architecture</h2>
+
+            <h3>1. Campaign Management Service</h3>
+            <div class="component">
+                <h4>📢 Purpose</h4>
+                <p>Handles creation, management, and lifecycle of marketing campaigns with multi-channel delivery (Email, SMS, Push, In-App)</p>
+                <h4>Endpoints</h4>
+                <ul>
+                    <li><code>GET /api/campaigns</code> - List campaigns with pagination</li>
+                    <li><code>POST /api/campaigns</code> - Create new campaign</li>
+                    <li><code>GET /api/campaigns/{id}</code> - Campaign details</li>
+                    <li><code>PUT /api/campaigns/{id}</code> - Update campaign</li>
+                    <li><code>DELETE /api/campaigns/{id}</code> - Delete campaign</li>
+                    <li><code>POST /api/campaigns/{id}/launch</code> - Launch campaign</li>
+                </ul>
+            </div>
+
+            <h3>2. Analytics Service</h3>
+            <div class="component">
+                <h4>📊 Purpose</h4>
+                <p>Real-time analytics for campaigns, user behavior, conversion tracking, and business intelligence</p>
+                <h4>Endpoints</h4>
+                <ul>
+                    <li><code>GET /api/analytics/campaigns</code> - Campaign performance metrics</li>
+                    <li><code>GET /api/analytics/segments</code> - Segment analytics</li>
+                    <li><code>GET /api/analytics/ab-tests</code> - A/B test results</li>
+                    <li><code>GET /api/analytics/funnel</code> - Conversion funnel data</li>
+                </ul>
+            </div>
+
+            <h3>3. Rewards Service</h3>
+            <div class="component">
+                <h4>🎁 Purpose</h4>
+                <p>Manages user rewards, loyalty tiers, points accumulation, redemption, and margin risk monitoring</p>
+                <h4>Key Features</h4>
+                <ul>
+                    <li>Tier-based rewards (Bronze, Silver, Gold, Platinum)</li>
+                    <li>Points ledger tracking</li>
+                    <li>Margin risk alerts (45%+ threshold)</li>
+                    <li>Real-time tier distribution analytics</li>
+                </ul>
+            </div>
+
+            <h3>4. AI Concierge Service</h3>
+            <div class="component">
+                <h4>🤖 Purpose</h4>
+                <p>LLM-powered conversational AI using Together AI's Llama 3.1 model with RAG (Retrieval-Augmented Generation)</p>
+                <h4>Endpoints</h4>
+                <ul>
+                    <li><code>POST /concierge/api/v1/chat</code> - Send message to AI concierge</li>
+                    <li><code>GET /concierge/api/v1/history</code> - Chat history retrieval</li>
+                    <li><code>POST /concierge/api/v1/context</code> - Set user context</li>
+                </ul>
+            </div>
+
+            <h3>5. User Service</h3>
+            <div class="component">
+                <h4>👤 Purpose</h4>
+                <p>User profile management, authentication, account linking, and user data access</p>
+                <h4>Endpoints</h4>
+                <ul>
+                    <li><code>GET /api/users/{user_id}</code> - User profile</li>
+                    <li><code>GET /api/users/{user_id}/accounts</code> - Linked accounts</li>
+                    <li><code>GET /api/users/{user_id}/transactions</code> - Transaction history</li>
+                    <li><code>GET /api/users/{user_id}/rewards</code> - Rewards summary</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Database Schema -->
+        <section>
+            <h2>🗄️ Database Architecture</h2>
+
+            <h3>Core Tables</h3>
+            <table>
+                <tr>
+                    <th>Table</th>
+                    <th>Purpose</th>
+                    <th>Key Fields</th>
+                </tr>
+                <tr>
+                    <td><code>users</code></td>
+                    <td>User accounts and profiles</td>
+                    <td>id, email, name, tier, status</td>
+                </tr>
+                <tr>
+                    <td><code>campaigns</code></td>
+                    <td>Marketing campaigns</td>
+                    <td>id, name, type, status, target_pattern</td>
+                </tr>
+                <tr>
+                    <td><code>campaign_notifications</code></td>
+                    <td>Campaign delivery tracking</td>
+                    <td>id, campaign_id, user_id, status, channel</td>
+                </tr>
+                <tr>
+                    <td><code>rewards_ledger</code></td>
+                    <td>Points and rewards tracking</td>
+                    <td>id, user_id, points, type, reason</td>
+                </tr>
+                <tr>
+                    <td><code>campaign_analytics_daily</code></td>
+                    <td>Daily campaign metrics</td>
+                    <td>id, campaign_id, date, views, clicks, conversions</td>
+                </tr>
+                <tr>
+                    <td><code>ab_tests</code></td>
+                    <td>A/B testing campaigns</td>
+                    <td>id, campaign_id, variant_a, variant_b, status</td>
+                </tr>
+            </table>
+
+            <div class="stack">
+                <strong>Database:</strong> PostgreSQL 14 with 8+ schemas<br>
+                <strong>Connection Pooling:</strong> PgBouncer (50-100 connections)<br>
+                <strong>Backups:</strong> Daily automated backups to S3<br>
+                <strong>Replication:</strong> Streaming replication for HA
+            </div>
+        </section>
+
+        <!-- Integration Points -->
+        <section>
+            <h2>🔗 External Integrations</h2>
+
+            <div class="grid">
+                <div class="card">
+                    <h4>🤖 Together AI (LLM)</h4>
+                    <p><strong>Service:</strong> Llama 3.1 70B Model</p>
+                    <p><strong>Use:</strong> AI Concierge conversations, content generation</p>
+                    <p><strong>Format:</strong> REST API with streaming SSE</p>
+                </div>
+
+                <div class="card">
+                    <h4>📧 Email Service</h4>
+                    <p><strong>Service:</strong> SendGrid / AWS SES</p>
+                    <p><strong>Use:</strong> Transactional & marketing emails</p>
+                    <p><strong>Sending Rate:</strong> 10,000+ per day</p>
+                </div>
+
+                <div class="card">
+                    <h4>📱 SMS Service</h4>
+                    <p><strong>Service:</strong> Twilio / AWS SNS</p>
+                    <p><strong>Use:</strong> SMS notifications, 2FA</p>
+                    <p><strong>Sending Rate:</strong> 5,000+ per day</p>
+                </div>
+
+                <div class="card">
+                    <h4>🔔 Push Notifications</h4>
+                    <p><strong>Service:</strong> Firebase Cloud Messaging</p>
+                    <p><strong>Use:</strong> Mobile push alerts</p>
+                    <p><strong>Delivery:</strong> < 2 second latency</p>
+                </div>
+
+                <div class="card">
+                    <h4>💳 Payment Processor</h4>
+                    <p><strong>Service:</strong> Stripe / Payment Gateway</p>
+                    <p><strong>Use:</strong> Transaction processing</p>
+                    <p><strong>Security:</strong> PCI-DSS Level 1</p>
+                </div>
+
+                <div class="card">
+                    <h4>🗂️ File Storage</h4>
+                    <p><strong>Service:</strong> AWS S3 / Local Storage</p>
+                    <p><strong>Use:</strong> Images, documents, backups</p>
+                    <p><strong>Capacity:</strong> Unlimited scalable</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Security Architecture -->
+        <section>
+            <h2>🔒 Security Architecture</h2>
+
+            <h3>Authentication & Authorization</h3>
+            <div class="stack">
+                <strong>Authentication:</strong> JWT tokens with 24-hour expiry + refresh tokens<br>
+                <strong>OAuth 2.0:</strong> Social login support (Google, Apple)<br>
+                <strong>2FA:</strong> TOTP-based two-factor authentication<br>
+                <strong>Admin Access:</strong> Role-based access control (RBAC) with admin decorator
+            </div>
+
+            <h3>Data Security</h3>
+            <div class="stack">
+                <strong>Encryption:</strong> TLS 1.3 for all in-transit data<br>
+                <strong>At Rest:</strong> AES-256 encryption for sensitive fields<br>
+                <strong>PII Handling:</strong> Automatic redaction in logs<br>
+                <strong>Compliance:</strong> GDPR, PCI-DSS, SOC2
+            </div>
+
+            <h3>Infrastructure Security</h3>
+            <div class="stack">
+                <strong>Network:</strong> VPC with security groups and NACLs<br>
+                <strong>DDoS Protection:</strong> CloudFlare + WAF rules<br>
+                <strong>Secrets Management:</strong> AWS Secrets Manager / Vault<br>
+                <strong>Monitoring:</strong> 24/7 security event monitoring
+            </div>
+        </section>
+
+        <!-- Deployment Architecture -->
+        <section>
+            <h2>🚀 Deployment Architecture</h2>
+
+            <h3>Environments</h3>
+            <table>
+                <tr>
+                    <th>Environment</th>
+                    <th>Purpose</th>
+                    <th>Scaling</th>
+                    <th>Updates</th>
+                </tr>
+                <tr>
+                    <td><strong>Development</strong></td>
+                    <td>Local development</td>
+                    <td>Single container</td>
+                    <td>Real-time hot reload</td>
+                </tr>
+                <tr>
+                    <td><strong>Staging</strong></td>
+                    <td>Pre-production testing</td>
+                    <td>2-4 replicas</td>
+                    <td>Manual deployment</td>
+                </tr>
+                <tr>
+                    <td><strong>Production</strong></td>
+                    <td>Live user traffic</td>
+                    <td>10+ replicas (auto-scaling)</td>
+                    <td>Blue-green deployment</td>
+                </tr>
+            </table>
+
+            <h3>Container Orchestration</h3>
+            <div class="stack">
+                <strong>Platform:</strong> Docker + Docker Compose (dev), Kubernetes (prod)<br>
+                <strong>Registry:</strong> Amazon ECR<br>
+                <strong>Orchestration:</strong> ECS Fargate or EKS<br>
+                <strong>Auto-scaling:</strong> CPU & memory based, 30 second cooldown
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+            <p><strong>SwipeSavvy System Architecture</strong> | Technical Foundation</p>
+            <p>Version 1.2.0 | Generated: January 2026 | Status: FINALIZED ✅</p>
+            <p style="margin-top: 15px; opacity: 0.85; font-size: 0.95em;">Comprehensive technical architecture covering system design, core services, database schema, external integrations, security, and deployment architecture. Serves as reference for engineering team.</p>
+            <p style="margin-top: 15px; opacity: 0.7; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; font-size: 0.9em;">© 2026 SwipeSavvy. All Rights Reserved. | <a href="SYSTEM_SNAPSHOT_INDEX.html" style="color: white;">Back to Index</a></p>
+        </div>
+    </footer>
+</body>
+</html>

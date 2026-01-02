@@ -50,6 +50,66 @@ body {
   box-shadow: var(--ss-focus-ring);
 }
 
+/* Gradient Utility Classes */
+.gradient-primary {
+  background: var(--ss-gradient-primary);
+}
+
+.gradient-vibrant {
+  background: var(--ss-gradient-vibrant);
+}
+
+.gradient-accent {
+  background: var(--ss-gradient-accent);
+}
+
+.gradient-success {
+  background: var(--ss-gradient-success);
+}
+
+.gradient-warm {
+  background: var(--ss-gradient-warm);
+}
+
+.gradient-cool {
+  background: var(--ss-gradient-cool);
+}
+
+.gradient-mint {
+  background: var(--ss-gradient-mint);
+}
+
+/* Text gradients */
+.text-gradient-primary {
+  background: var(--ss-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-vibrant {
+  background: var(--ss-gradient-vibrant);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Border gradients */
+.border-gradient-primary {
+  border-image: linear-gradient(135deg, #235393 0%, #1A3F7A 100%) 1;
+}
+
+/* Hover gradient transitions */
+.hover-gradient-primary:hover {
+  background: var(--ss-gradient-primary);
+  transition: background 0.3s ease;
+}
+
+.hover-gradient-success:hover {
+  background: var(--ss-gradient-success);
+  transition: background 0.3s ease;
+}
+
 /* Scrollbar (subtle, enterprise) */
 /* WebKit */
 ::-webkit-scrollbar {

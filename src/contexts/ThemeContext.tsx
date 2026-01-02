@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
-import { LIGHT_THEME, DARK_THEME } from '@design-system/theme';
+import { DARK_THEME, LIGHT_THEME } from '../design-system/theme';
 
 export type ThemeMode = 'light' | 'dark';
 

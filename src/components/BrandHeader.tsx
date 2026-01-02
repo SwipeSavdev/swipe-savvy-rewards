@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Image, StyleSheet, ViewStyle } from 'react-native';
-import { SPACING } from '@design-system/theme';
+import { Image, StyleSheet, View, ViewStyle } from 'react-native';
 
 interface BrandHeaderProps {
   variant?: 'full' | 'icon-only' | 'text-only';

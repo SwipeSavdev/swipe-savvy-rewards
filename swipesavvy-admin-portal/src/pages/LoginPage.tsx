@@ -1,6 +1,6 @@
+import { useAuthStore } from '@/store/authStore'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -13,7 +13,7 @@ export default function LoginPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   const [email, setEmail] = useState('admin@swipesavvy.com')
-  const [password, setPassword] = useState('TempPassword123!')
+  const [password, setPassword] = useState('Admin123!')
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({})
 
   useEffect(() => {

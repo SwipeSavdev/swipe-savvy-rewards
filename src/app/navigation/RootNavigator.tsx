@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StatusBar } from 'react-native';
-import { useTheme } from '@contexts/ThemeContext';
-import { useAuthStore } from '@features/auth/stores/authStore';
+import React from 'react';
+import { StatusBar, View } from 'react-native';
+import { FloatingAIButton } from '../../components/FloatingAIButton';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useAuthStore } from '../../features/auth/stores/authStore';
 import { AuthStack } from './AuthStack';
 import { MainStack } from './MainStack';
-import { FloatingAIButton } from '@components/FloatingAIButton';
 
 const Stack = createNativeStackNavigator();
 

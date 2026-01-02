@@ -415,41 +415,66 @@ const recs = await savvyAIService.generateRecommendations(context);
 ### Visual Components
 
 **Floating Button:**
-- Position: Fixed bottom-right corner
-- Animated pulse effect when closed
-- Scale animation on open/close
-- Gradient background (Indigo to Purple)
+- **Position:** Fixed bottom-right corner (absolute positioning)
+- **Size:** 64x64 pixels with rounded square corners (20px radius)
+- **Background:** White rounded square with blue-purple gradient border (#4A90E2 to #9B59B6)
+- **Text:** "AI" in Swipe Savvy bright green (#00B050), font size 20px, bold weight
+- **Decoration:** Four-point star sparkle (top-right) with gold-to-orange gradient (#FFD700 to #FFA500)
+- **Animations:** 
+  - Bounce animation on modal open (scale 1 to 1.05)
+  - Scale and fade animation for modal appearance
+  - Smooth interaction feedback on press
 
 **Chat Modal:**
-- Smooth slide-up animation from bottom
-- Rounded corners with shadow
-- Gradient header
-- Message bubbles with timestamps
+- **Position:** Bottom-sheet style with 40px padding on sides
+- **Size:** Full width, height minus 100px
+- **Background:** White with 24px rounded corners
+- **Header:** Purple background (#6B5BFF), height 70px
+  - Contains close button (top-right)
+  - Four-point star icon (white) centered-top
+  - "Savvy AI Concierge" title text (bottom-centered)
+- **Shadow:** Professional drop shadow with elevation 15
 
 **User Messages:**
-- Right-aligned indigo background
-- White text
-- Rounded edges (rounded-br-none for asymmetry)
+- Right-aligned with light gray background
+- Dark text
+- Proper spacing and padding
 
 **AI Messages:**
-- Left-aligned white background with border
-- Dark text
-- Rounded edges (rounded-bl-none for asymmetry)
+- Left-aligned with white background
+- Dark text with proper contrast
+- Message bubbles with consistent styling
 - Typing indicator with animated dots
+
+### Design System Integration
+- Colors: Swipe Savvy bright green (#00B050), gradient blue-purple (#4A90E2, #9B59B6)
+- Typography: Bold weights for text hierarchy
+- Spacing: Consistent use of SPACING tokens from design system
+- Shadows: Professional elevation with native platform shadows
 
 ### Custom Animations
 
-```css
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+```tsx
+// Modal scale and opacity animation
+const animatedStyle = {
+  transform: [{
+    scale: scaleAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    }),
+  }],
+  opacity: scaleAnim,
+};
+
+// Button bounce on open
+const buttonAnimatedStyle = {
+  transform: [{
+    scale: bounceAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 1.05],
+    }),
+  }],
+};
 ```
 
 ## Performance Considerations
