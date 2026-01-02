@@ -1,6 +1,6 @@
+import { cn } from '@/utils/cn'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import Spinner from './Spinner'
-import { cn } from '@/utils/cn'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'outline'
 export type ButtonSize = 'sm' | 'md' | 'lg'
@@ -18,13 +18,13 @@ const base =
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    'bg-[var(--ss-primary)] text-white shadow-sm hover:shadow-md hover:brightness-[0.98] focus-visible:shadow-md',
+    'bg-gradient-to-r from-[#235393] via-[#2E5FB8] to-[#1A3F7A] text-white shadow-md hover:shadow-xl hover:brightness-[0.95] focus-visible:shadow-xl transition-all duration-200',
   secondary:
-    'bg-[var(--ss-surface)] text-[var(--ss-primary)] border border-[var(--ss-border)] hover:border-[rgba(35,83,147,0.30)] hover:bg-[var(--ss-surface-alt)]',
+    'bg-gradient-to-r from-[#60BA46] to-[#4A9A35] text-white shadow-md hover:shadow-xl hover:brightness-[0.95] transition-all duration-200',
   danger:
-    'bg-[var(--ss-danger)] text-white shadow-sm hover:shadow-md hover:brightness-[0.98]',
+    'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md hover:shadow-xl hover:brightness-[0.95] transition-all duration-200',
   outline:
-    'bg-transparent text-[var(--ss-text)] border border-[var(--ss-border)] hover:bg-[var(--ss-surface-alt)]',
+    'bg-transparent text-[#235393] border-2 border-[#235393] hover:bg-gradient-to-r hover:from-[#235393]/10 hover:to-[#60BA46]/10 transition-all duration-200 dark:text-[#7ACD56] dark:border-[#7ACD56]',
 }
 
 const sizes: Record<ButtonSize, string> = {

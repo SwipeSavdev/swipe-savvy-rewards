@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '@contexts/ThemeContext';
-import { SupportTicket, TicketStatus, SupportCategory } from '../types/support';
+import { useCallback, useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { supportTicketService } from '../services/SupportTicketService';
+import { SupportCategory, SupportTicket, TicketStatus } from '../types/support';
 
 interface SupportTicketsScreenProps {
   customerId: string;

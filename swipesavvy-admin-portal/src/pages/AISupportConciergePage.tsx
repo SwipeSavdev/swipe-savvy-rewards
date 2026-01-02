@@ -17,7 +17,7 @@ export default function AISupportConciergePage() {
     {
       id: '1',
       role: 'assistant',
-      content: 'Welcome to SwipeSavvy AI Support! How can I help you today?',
+      content: 'Welcome to Savvy AI! How can I help you today?',
       timestamp: new Date().toISOString()
     }
   ]);
@@ -133,10 +133,10 @@ export default function AISupportConciergePage() {
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Zap className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-slate-900">AI Support Concierge</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Savvy AI</h1>
           </div>
           <p className="text-slate-600">
-            Chat with our AI concierge for intelligent support and issue resolution
+            Chat with Savvy AI for intelligent support and issue resolution
           </p>
         </div>
 
@@ -156,7 +156,7 @@ export default function AISupportConciergePage() {
               <div className="flex flex-col items-center justify-center h-full text-slate-500">
                 <MessageCircle className="w-12 h-12 mb-3 opacity-30" />
                 <p className="text-center">
-                  Start a conversation with the AI Support Concierge.<br />
+                  Start a conversation with Savvy AI.<br />
                   Ask questions about support tickets, issues, or anything else!
                 </p>
               </div>

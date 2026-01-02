@@ -1,13 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AIProvider } from '@ai-sdk/AIProvider';
-import { ThemeProvider } from '../../contexts/ThemeContext';
 import { LoadingModal } from '../../components/LoadingModal';
 import { SplashScreen } from '../../components/SplashScreen';
 import { LoadingProvider, useLoading } from '../../contexts/LoadingContext';
+import { ThemeProvider } from '../../contexts/ThemeContext';
 import { DatabaseInitializer } from '../../database/DatabaseInitializer';
+import { AIProvider } from '../../packages/ai-sdk/src/AIProvider';
 
 // Create query client with aggressive caching and performance optimizations
 const createOptimizedQueryClient = () => {

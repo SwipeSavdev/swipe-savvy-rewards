@@ -1,14 +1,13 @@
 import React from 'react';
 import {
-  Modal,
-  View,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-  Text,
-  Dimensions,
+    ActivityIndicator,
+    Image,
+    Modal,
+    StyleSheet,
+    Text,
+    View
 } from 'react-native';
-import { LIGHT_THEME, SPACING, TYPOGRAPHY } from '@design-system/theme';
+import { LIGHT_THEME, SPACING, TYPOGRAPHY } from '../design-system/theme';
 
 interface LoadingModalProps {
   visible: boolean;

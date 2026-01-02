@@ -8,12 +8,14 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "swipesavvy",
+    "jsEngine": "jsc",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.swipesavvy.mobileapp",
+      "hermes": false,
       "infoPlist": {
         "NSFaceIDUsageDescription": "Allow SwipeSavvy to use Face ID for secure authentication",
         "NSLocationWhenInUseUsageDescription": "Allow SwipeSavvy to access your location for geo-based promotions",
@@ -27,6 +29,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.swipesavvy.mobileapp",
+      "hermes": false,
       "permissions": [
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
@@ -53,8 +56,8 @@
       "eas": {
         "projectId": "your-project-id"
       },
-      "MOCK_API": "false",
-      "AI_API_BASE_URL": "http://192.168.1.142:8000",
+      "MOCK_API": "true",
+      "AI_API_BASE_URL": "http://192.168.1.142:8888",
       "DEBUG_MODE": "true"
     }
   }

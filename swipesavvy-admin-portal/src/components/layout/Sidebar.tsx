@@ -1,9 +1,9 @@
-import { NavLink } from 'react-router-dom'
-import { NAV_GROUPS } from '@/router/nav'
-import { cn } from '@/utils/cn'
-import { useUiStore } from '@/store/uiStore'
-import Icon from '@/components/ui/Icon'
 import Badge from '@/components/ui/Badge'
+import { BrandingKitIcon } from '@/components/ui/BrandingKitIcon'
+import { NAV_GROUPS } from '@/router/nav'
+import { useUiStore } from '@/store/uiStore'
+import { cn } from '@/utils/cn'
+import { NavLink } from 'react-router-dom'
 
 export default function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
@@ -13,18 +13,18 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        'flex h-full flex-col border-r border-[var(--ss-border)] bg-[var(--ss-surface)]',
+        'flex h-full flex-col border-r border-[var(--ss-border)] bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-800',
         collapsed ? 'w-[76px]' : 'w-[280px]',
       )}
     >
-      <div className={cn('flex items-center gap-2 border-b border-[var(--ss-border)] p-4', collapsed && 'justify-center')}>
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--ss-primary)] text-white font-semibold">
+      <div className={cn('flex items-center gap-2 border-b border-[var(--ss-border)] bg-gradient-to-r from-[#235393] to-[#1A3F7A] p-4', collapsed && 'justify-center')}>
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#FAB915] to-[#FF8C00] text-white font-semibold shadow-md">
           SS
         </div>
         {!collapsed ? (
           <div>
-            <p className="font-headline text-sm font-semibold text-[var(--ss-text)]">SwipeSavvy</p>
-            <p className="text-xs text-[var(--ss-text-muted)]">Admin Portal</p>
+            <p className="font-headline text-sm font-semibold text-white">SwipeSavvy</p>
+            <p className="text-xs text-white/70">Admin Portal</p>
           </div>
         ) : null}
       </div>
@@ -38,14 +38,14 @@ export default function Sidebar() {
                 type="button"
                 onClick={() => toggleGroup(group.key)}
                 className={cn(
-                  'flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--ss-text-muted)] hover:bg-[var(--ss-surface-alt)]',
+                  'flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[#235393] hover:bg-gradient-to-r hover:from-[#60BA46]/20 hover:to-[#60BA46]/10 transition-colors dark:text-[#7ACD56]',
                   collapsed && 'justify-center',
                 )}
                 aria-expanded={isOpen}
               >
-                {!collapsed ? <span>{group.label}</span> : <Icon name="chevron_right" className="h-4 w-4" />}
+                {!collapsed ? <span>{group.label}</span> : <BrandingKitIcon name="chevron_right" size="sm" />}
                 {!collapsed ? (
-                  <Icon name={isOpen ? 'chevron_down' : 'chevron_right'} className="h-4 w-4" />
+                  <BrandingKitIcon name={isOpen ? 'chevron_down' : 'chevron_right'} size="sm" />
                 ) : null}
               </button>
 
@@ -57,21 +57,19 @@ export default function Sidebar() {
                       to={item.to}
                       className={({ isActive }) =>
                         cn(
-                          'group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                          'group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all',
                           isActive
-                            ? 'bg-[var(--ss-primary-soft)] text-[var(--ss-primary)]'
-                            : 'text-[var(--ss-text)] hover:bg-[var(--ss-surface-alt)]',
-                          collapsed && 'justify-center px-2',
+                            ? 'bg-gradient-to-r from-[#60BA46]/25 to-[#60BA46]/10 text-[#235393] font-semibold border-l-4 border-[#60BA46] dark:text-[#7ACD56]'
+                            : 'text-[#4B4D4D] hover:bg-gradient-to-r hover:from-[#235393]/10 hover:to-[#60BA46]/10 dark:text-[#A0A0A0] dark:hover:from-[#2E5FB8]/20 dark:hover:to-[#7ACD56]/10',
+                          collapsed && 'justify-center px-2 border-l-0',
                         )
                       }
                       title={collapsed ? item.label : undefined}
                     >
                       {item.icon && typeof item.icon === 'string' ? (
-                        <Icon
+                        <BrandingKitIcon
                           name={item.icon as any}
-                          className={cn(
-                            'h-5 w-5 text-[var(--ss-text-muted)] group-[.active]:text-[var(--ss-primary)]',
-                          )}
+                          size="md"
                         />
                       ) : null}
                       {!collapsed ? <span className="flex-1 truncate">{item.label}</span> : null}

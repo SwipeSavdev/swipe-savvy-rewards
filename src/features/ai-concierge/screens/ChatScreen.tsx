@@ -1,33 +1,34 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  View,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  ActivityIndicator,
-  Text,
-  TouchableOpacity,
-  Modal,
-} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useAIChat } from '@ai-sdk/hooks/useAIChat';
-import { useTheme } from '@contexts/ThemeContext';
-import { useAuthStore } from '@features/auth/stores/authStore';
-import { ChatMessage } from '../components/ChatMessage';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { useAIChat } from '../../../packages/ai-sdk/src/hooks/useAIChat';
+import { useAuthStore } from '../../auth/stores/authStore';
 import { ChatInput } from '../components/ChatInput';
+import { ChatMessage } from '../components/ChatMessage';
+import { CustomerVerificationModal } from '../components/CustomerVerificationModal';
 import { QuickActions } from '../components/QuickActions';
 import { TypingIndicator } from '../components/TypingIndicator';
-import { CustomerVerificationModal } from '../components/CustomerVerificationModal';
 import {
-  handleAIToHumanHandoff,
-  shouldOfferEscalation,
-  getEscalationMessage,
+    getEscalationMessage,
+    handleAIToHumanHandoff,
+    shouldOfferEscalation,
 } from '../services/AITransferHandler';
 import { CustomerVerification } from '../types/support';
 
 interface ChatScreenProps {
   isModal?: boolean;
+  sessionId?: string;
 }
 
 interface AIMessage {
@@ -37,10 +38,11 @@ interface AIMessage {
   timestamp: Date;
 }
 
-export function ChatScreen({ isModal = false }: ChatScreenProps) {
+export function ChatScreen({ isModal = false, sessionId = 'default' }: ChatScreenProps) {
   const { colors } = useTheme();
   const user = useAuthStore((state) => state.user);
   const { messages, isLoading, currentResponse, sendMessage, contextLoaded } = useAIChat({
+    sessionId,
     onError: (error) => {
       console.error('Chat error:', error);
     },
