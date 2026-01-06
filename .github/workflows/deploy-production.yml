@@ -118,7 +118,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build and push admin-portal image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./swipesavvy-admin-portal
           push: true
@@ -129,7 +129,7 @@ jobs:
           cache-to: type=gha,mode=max
       
       - name: Build and push wallet-web image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./swipesavvy-wallet-web
           push: true
@@ -140,7 +140,7 @@ jobs:
           cache-to: type=gha,mode=max
       
       - name: Build and push ai-agents image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./swipesavvy-ai-agents
           push: true
