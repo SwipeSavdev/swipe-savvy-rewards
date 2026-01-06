@@ -1,334 +1,279 @@
-# Quick Start Guide - SwipeSavvy Admin Portal
+# SwipeSavvy - Quick Start Guide
 
-## ✅ Everything is Running
+**Status**: ✅ Zero TypeScript Errors - Ready to Run!
 
-**Status**: ✅ All services operational
+## 🚀 Quick Start (3 Steps)
 
-**Required Order to Start:**
-1. PostgreSQL: `brew services start postgresql@14`
-2. Backend API: `http://127.0.0.1:8000`
-3. Admin Portal: `http://127.0.0.1:5173`
+### Option 1: Use the Startup Script (Recommended)
 
-**Do NOT start Admin Portal before Backend API is running!**
-
----
-
-## 🗄️ PostgreSQL Setup
-
-### Databases Created
-Three PostgreSQL 14.20 databases are configured and ready:
-```
-swipesavvy_ai     - AI campaigns and marketing data
-swipesavvy_dev    - Admin portal data (users, merchants, tickets, audit logs, settings)
-swipesavvy_wallet - Wallet/payment related data
-```
-
-### Start PostgreSQL
 ```bash
-# PostgreSQL is configured to auto-start
-# If needed to restart manually:
-bash /Users/macbookpro/Documents/swipesavvy-mobile-app-v2/start_postgres.sh
+./start-platform.sh
 ```
 
-### PostgreSQL Connection Strings
-```
-postgresql://localhost:5432/swipesavvy_ai
-postgresql://localhost:5432/swipesavvy_dev
-postgresql://localhost:5432/swipesavvy_wallet
-```
+The script will:
+1. ✅ Check your Node.js and npm versions
+2. ✅ Verify TypeScript (0 errors)
+3. ✅ Check environment configuration
+4. 🎯 Let you choose what to run
 
-### Verify PostgreSQL is Running
+### Option 2: Manual Start
+
+#### Start Mobile App
+
 ```bash
-psql -l | grep swipesavvy
-# Should show all 3 databases
+npm start
 ```
 
----
+Then:
+- Press `w` for web browser
+- Press `i` for iOS simulator (macOS only)
+- Press `a` for Android emulator
+- Or scan QR code with Expo Go app on your phone
 
-## 🚀 Startup Order (IMPORTANT)
+#### Start Admin Portal
 
-### Step 1: Start PostgreSQL Database
 ```bash
-# Start PostgreSQL service
-brew services start postgresql@14
-
-# Verify databases are accessible
-psql -l | grep swipesavvy
-# Should show all 3 databases: swipesavvy_ai, swipesavvy_dev, swipesavvy_wallet
-```
-
-### Step 2: Start Backend API (Port 8000)
-```bash
-cd /Users/macbookpro/Documents/swipesavvy-mobile-app-v2/swipesavvy-ai-agents
-source ../.venv/bin/activate
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-
-# Or in background:
-cd /Users/macbookpro/Documents/swipesavvy-mobile-app-v2/swipesavvy-ai-agents
-source ../.venv/bin/activate
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
-```
-
-**Verify Backend is Running:**
-```bash
-curl http://127.0.0.1:8000/health
-# Should return: {"status":"healthy","service":"swipesavvy-backend","version":"1.0.0"}
-```
-
-### Step 3: Start Admin Portal (Port 5173)
-```bash
-cd /Users/macbookpro/Documents/swipesavvy-mobile-app-v2/swipesavvy-admin-portal
-npm run dev
-```
-
-**Access Admin Portal:**
-- http://127.0.0.1:5173
-- http://localhost:5173
-
----
-
-## 🔑 Demo Credentials
-
-```
-Email: admin@swipesavvy.com
-Password: Admin123!
-```
-
-Alternative accounts:
-- support@swipesavvy.com / Support123! (support role)
-- ops@swipesavvy.com / Ops123! (admin role)
-
----
-
-## 📚 API Endpoints (13 Implemented)
-
-### Authentication (4)
-```
-POST   /api/v1/admin/auth/login
-POST   /api/v1/admin/auth/refresh
-POST   /api/v1/admin/auth/logout
-GET    /api/v1/admin/auth/me
-```
-
-### Dashboard (7)
-```
-GET    /api/v1/admin/dashboard/overview
-GET    /api/v1/admin/analytics/overview
-GET    /api/v1/admin/analytics/transactions
-GET    /api/v1/admin/analytics/revenue
-GET    /api/v1/admin/analytics/funnel/onboarding
-GET    /api/v1/admin/analytics/cohort/retention
-GET    /api/v1/admin/support/stats
-```
-
-### Users (6)
-```
-GET    /api/v1/admin/users
-POST   /api/v1/admin/users
-GET    /api/v1/admin/users/{userId}
-PUT    /api/v1/admin/users/{userId}/status
-DELETE /api/v1/admin/users/{userId}
-GET    /api/v1/admin/users/stats/overview
-```
-
----
-
-## 🧪 Test API Endpoints
-
-### Login
-```bash
-curl -X POST http://localhost:8000/api/v1/admin/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@swipesavvy.com","password":"Admin123!"}'
-```
-
-### List Users
-```bash
-curl http://localhost:8000/api/v1/admin/users
-```
-
-### Create User
-```bash
-curl -X POST http://localhost:8000/api/v1/admin/users \
-  -H "Content-Type: application/json" \
-  -d '{"email":"newuser@test.com","name":"New User","invite":true}'
-```
-
-### Get Dashboard Overview
-```bash
-curl http://localhost:8000/api/v1/admin/dashboard/overview \
-  -H "Authorization: Bearer {token}"
-```
-
----
-
-## 📊 Demo Data Available
-
-### Users (5)
-- Alice Johnson (active)
-- Bob Smith (active)
-- Carol White (active)
-- David Brown (suspended)
-- Emma Davis (active)
-
-### Stats
-- Dashboard: Real-time metrics with trends
-- Analytics: 30-day transaction/revenue data
-- Support: Ticket counts and response times
-
----
-
-## 📄 Key Files
-
-### Backend
-- `/swipesavvy-ai-agents/app/main.py` - Entry point
-- `/swipesavvy-ai-agents/app/routes/admin_auth.py` - Authentication
-- `/swipesavvy-ai-agents/app/routes/admin_dashboard.py` - Dashboard/Analytics
-- `/swipesavvy-ai-agents/app/routes/admin_users.py` - User Management
-
-### PostgreSQL
-- `/start_postgres.sh` - Start PostgreSQL service and verify databases
-- `/setup_postgres.py` - Setup script (already run)
-
-### Frontend
-- `/swipesavvy-admin-portal/src/services/apiClient.ts` - Real API client
-- `/swipesavvy-admin-portal/src/pages/DashboardPage.tsx` - Dashboard
-- `/swipesavvy-admin-portal/src/pages/UsersPage.tsx` - Users
-- `/swipesavvy-admin-portal/src/pages/LoginPage.tsx` - Login
-
----
-
-## 🎯 What's Implemented
-
-✅ User Authentication with JWT  
-✅ Dashboard Overview & Analytics  
-✅ User Management (CRUD)  
-✅ Token Refresh Logic  
-✅ Real API Integration  
-✅ Error Handling  
-✅ Demo Data Generation  
-✅ PostgreSQL 14.20 with 3 databases (swipesavvy_ai, swipesavvy_dev, swipesavvy_wallet)
-
----
-
-## ❓ Common Issues
-
-### PostgreSQL Not Starting
-```bash
-# Check if already running
-psql -l | grep swipesavvy
-
-# If not running, start it
-bash /Users/macbookpro/Documents/swipesavvy-mobile-app-v2/start_postgres.sh
-
-# Or start manually
-/opt/homebrew/opt/postgresql@14/bin/postgres -D /opt/homebrew/var/postgresql@14 -k /tmp &
-```
-
-### Backend Port 8000 Already in Use
-```bash
-# Kill existing process
-lsof -i :8000 | grep -v COMMAND | awk '{print $2}' | xargs kill -9
-
-# Then restart
-python -c "from app.main import app; import uvicorn; uvicorn.run(app, host='0.0.0.0', port=8000)"
-```
-
-### PostgreSQL Role "postgres" Not Found
-PostgreSQL is configured to use the current user (macbookpro). Connection commands should work with:
-```bash
-psql  # Automatically uses current user
-createdb  # Also uses current user
-```
-
----
-
-## 📊 Verification Checklist
-
-**Before accessing Admin Portal, verify in order:**
-
-1. **PostgreSQL Running**
-   ```bash
-   psql -l | grep swipesavvy
-   # Should show all 3 databases
-   ```
-
-2. **Backend API Running**
-   ```bash
-   curl http://127.0.0.1:8000/health
-   # Should return: {"status":"healthy",...}
-   ```
-
-3. **Admin Portal Running**
-   ```bash
-   curl http://127.0.0.1:5173
-   # Should return HTML
-   ```
-
-4. **Login Works**
-   ```bash
-   curl -X POST http://127.0.0.1:8000/api/v1/admin/auth/login \
-     -H "Content-Type: application/json" \
-     -d '{"email":"admin@swipesavvy.com","password":"Admin123!"}'
-   # Should return a token
-   ```
-
-### Admin Portal Not Loading
-```bash
-# MUST HAVE BACKEND RUNNING FIRST!
-# Verify backend is running:
-curl http://127.0.0.1:8000/health
-
-# If backend not responding, start it:
-cd /Users/macbookpro/Documents/swipesavvy-mobile-app-v2/swipesavvy-ai-agents
-source ../.venv/bin/activate
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
-
-# Then start admin portal:
 cd swipesavvy-admin-portal
 npm run dev
-
-# Clear browser cache:
-# Safari: Cmd+Shift+Delete
-# Chrome: Cmd+Shift+Delete
-# Then hard refresh: Cmd+Shift+R
 ```
 
-### Authentication Not Working
+Open browser to: http://localhost:5173
+
+---
+
+## 📋 Prerequisites Checklist
+
+Before starting, ensure:
+
+- [ ] **Node.js**: v20.13.0 installed
+  ```bash
+  node --version  # Should output: v20.13.0
+  ```
+
+- [ ] **npm**: 10.8.2 installed
+  ```bash
+  npm --version   # Should output: 10.8.2
+  ```
+
+- [ ] **Dependencies**: Installed
+  ```bash
+  npm install
+  ```
+
+- [ ] **Environment**: `.env` file configured
+  ```bash
+  # Copy example if needed
+  cp .env.example .env
+  # Edit .env and add your API keys
+  ```
+
+---
+
+## 🔍 Verify Everything is Working
+
+### TypeScript Check (Should be 0 errors)
+
 ```bash
-# Verify demo credentials
-curl http://localhost:8000/api/v1/admin/auth/demo-credentials
+npx tsc --noEmit
+```
 
-# Check backend logs for errors
-# Make sure email-validator is installed: pip install email-validator
+Expected: Command exits silently (no output = no errors)
+
+### Run Tests
+
+```bash
+npm test
 ```
 
 ---
 
-## 📞 Support
+## 🎯 What Runs Where
 
-For issues or questions:
-1. Check backend logs: Look for ❌ errors in console
-2. Check frontend console: Browser DevTools → Console tab
-3. Test endpoints directly with curl
-4. Verify services are running on correct ports
+| Service | Port | URL | Command |
+|---------|------|-----|---------|
+| **Mobile App (Expo)** | 8081 | http://localhost:8081 | `npm start` |
+| **Admin Portal** | 5173 | http://localhost:5173 | `cd swipesavvy-admin-portal && npm run dev` |
+| **Metro Bundler** | 8081 | exp://localhost:8081 | Automatic with `npm start` |
 
 ---
 
-**Last Updated**: December 30, 2025  
-**Status**: Production Ready for Testing  
+## 📱 Running on Devices
 
-## ⚠️ IMPORTANT STARTUP ORDER
+### iOS Simulator (macOS only)
 
-```
-1. PostgreSQL Database (required for backend)
-   ↓
-2. Backend API on Port 8000 (required for admin portal)
-   ↓
-3. Admin Portal on Port 5173 (frontend)
+```bash
+npm start
+# Then press 'i' in the Metro bundler terminal
 ```
 
-**If Admin Portal shows blank page or "Load failed" error:**
-- Check if Backend API is running: `curl http://127.0.0.1:8000/health`
-- If backend not running, start it first before admin portal
-- Hard refresh browser: Cmd+Shift+R
+Or:
+
+```bash
+npx expo run:ios
+```
+
+### Android Emulator
+
+```bash
+npm start
+# Then press 'a' in the Metro bundler terminal
+```
+
+Or:
+
+```bash
+npx expo run:android
+```
+
+### Physical Device
+
+1. Install **Expo Go** app:
+   - [iOS App Store](https://apps.apple.com/app/expo-go/id982107779)
+   - [Android Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
+
+2. Start the app:
+   ```bash
+   npm start
+   ```
+
+3. Scan the QR code with:
+   - **iOS**: Camera app
+   - **Android**: Expo Go app
+
+---
+
+## 🛠 Common Commands
+
+```bash
+# Start mobile app
+npm start
+
+# Start with cache cleared
+npm start -- --clear
+
+# Start admin portal
+cd swipesavvy-admin-portal && npm run dev
+
+# Run TypeScript check
+npx tsc --noEmit
+
+# Run tests
+npm test
+
+# Run linter
+npm run lint
+
+# Format code
+npm run format
+
+# Build for production
+npm run build
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### "Metro Bundler won't start"
+
+```bash
+# Clear cache
+npx expo start --clear
+
+# Or manually
+rm -rf .expo
+rm -rf node_modules/.cache
+```
+
+### "Port already in use"
+
+```bash
+# Kill process on port 8081
+lsof -ti:8081 | xargs kill -9
+
+# Or use different port
+npx expo start --port 8082
+```
+
+### "TypeScript errors"
+
+```bash
+# Should output nothing (0 errors)
+npx tsc --noEmit
+
+# If errors appear, check:
+node --version  # Must be v20.13.0
+npm --version   # Must be 10.8.2
+```
+
+### "Wrong Node/npm version"
+
+```bash
+# Load nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Install and use correct version
+nvm install 20.13.0
+nvm use 20.13.0
+nvm alias default 20.13.0
+
+# Install correct npm
+npm install -g npm@10.8.2
+
+# Verify
+node --version  # v20.13.0
+npm --version   # 10.8.2
+```
+
+---
+
+## 📚 Full Documentation
+
+For comprehensive setup and troubleshooting:
+
+- **[LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md)** - Complete setup guide
+- **[START_HERE.md](START_HERE.md)** - Project overview
+- **[ENVIRONMENT_FIX_MANUAL.md](ENVIRONMENT_FIX_MANUAL.md)** - Node/npm setup
+
+---
+
+## ✅ Success Indicators
+
+You're successfully running when you see:
+
+**Mobile App:**
+```
+› Metro waiting on exp://192.168.1.XXX:8081
+› Scan the QR code above with Expo Go
+› Press a │ open Android
+› Press i │ open iOS simulator
+› Press w │ open web
+```
+
+**Admin Portal:**
+```
+VITE v5.x.x  ready in XXX ms
+➜  Local:   http://localhost:5173/
+➜  Network: http://192.168.1.XXX:5173/
+```
+
+---
+
+## 🎉 You're All Set!
+
+The platform is now running with:
+- ✅ Zero TypeScript errors
+- ✅ All dependencies installed
+- ✅ Complete theme system
+- ✅ All navigators configured
+- ✅ Tests ready to run
+
+**Happy coding!** 🚀
+
+---
+
+**Need Help?**
+- Check [LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md) for detailed instructions
+- Run `./start-platform.sh` for guided setup
+- Review [TROUBLESHOOTING](#-troubleshooting) section above
