@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+// @ts-ignore - Missing module
 import { Message } from '@ai-sdk/hooks/useAIChat';
 
 interface ChatMessageProps {

@@ -19,7 +19,7 @@ import {
   AreaChart, Area
 } from 'recharts';
 import {
-  TrendingUp, TrendingDown, Eye, Click, DollarSign,
+  TrendingUp, TrendingDown, Eye, MousePointerClick, DollarSign,
   Target, BarChart3, RefreshCw, Download, Filter
 } from 'lucide-react';
 
@@ -242,7 +242,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   title="Conversions"
                   value={campaignMetrics.conversions.toLocaleString()}
                   change={8}
-                  icon={Click}
+                  icon={MousePointerClick}
                 />
                 <StatCard
                   title="Revenue"

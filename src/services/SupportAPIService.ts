@@ -85,15 +85,15 @@ export class SupportAPIService {
       // Store in local database for offline access
       if (this.db) {
         await this.db.insertSupportTicket({
-          ticket_id: response.data.ticket_id,
-          customer_id: payload.customer_id,
+          id: response.data.ticket_id,
+          ticket_number: response.data.ticket_id,
+          user_id: payload.customer_id,
           category: payload.category,
           subject: payload.subject,
           description: payload.description,
           priority: payload.priority || 'medium',
           status: 'open',
-          created_at: new Date().toISOString()
-        })
+        } as any)
 
         // Cache the ticket
         await this.db.cacheData('support_tickets', response.data.ticket, MOBILE_DB_CONFIG.CACHE.TICKET_TTL)
@@ -105,7 +105,7 @@ export class SupportAPIService {
       
       // Store in offline queue for later sync
       if (this.db && error instanceof Error) {
-        await this.db.addToOfflineQueue({
+        await (this.db as any).addToOfflineQueue({
           endpoint: '/api/support/tickets',
           method: 'POST',
           payload,
@@ -136,7 +136,7 @@ export class SupportAPIService {
       
       // Try to get from local cache
       if (this.db) {
-        const cachedTicket = await this.db.getCachedData('support_tickets', ticketId)
+        const cachedTicket = await (this.db as any).getCachedData('support_tickets', ticketId)
         if (cachedTicket) {
           console.log('Using cached ticket data')
           return { ticket: cachedTicket }
@@ -170,7 +170,7 @@ export class SupportAPIService {
       
       // Get from local database
       if (this.db) {
-        const localTickets = await this.db.getCustomerTickets(customerId)
+        const localTickets = await (this.db as any).getCustomerTickets(customerId)
         return {
           tickets: localTickets,
           total: localTickets.length,
@@ -191,7 +191,7 @@ export class SupportAPIService {
       
       // Update local database
       if (this.db) {
-        await this.db.updateSupportTicket(ticketId, updates)
+        await (this.db as any).updateSupportTicket(ticketId, updates)
         await this.db.cacheData('support_tickets', response.data.ticket, MOBILE_DB_CONFIG.CACHE.TICKET_TTL)
       }
 
@@ -201,7 +201,7 @@ export class SupportAPIService {
       
       // Queue for offline sync
       if (this.db) {
-        await this.db.addToOfflineQueue({
+        await (this.db as any).addToOfflineQueue({
           endpoint: `/api/support/tickets/${ticketId}`,
           method: 'PUT',
           payload: updates,
@@ -225,7 +225,7 @@ export class SupportAPIService {
       })
       
       if (this.db) {
-        await this.db.updateSupportTicket(ticketId, { status: 'escalated' })
+        await (this.db as any).updateSupportTicket(ticketId, { status: 'escalated' })
       }
 
       return response.data
@@ -244,7 +244,7 @@ export class SupportAPIService {
       
       // Store in local database
       if (this.db) {
-        await this.db.insertTicketMessage({
+        await (this.db as any).insertChatMessage({
           ticket_id: ticketId,
           message_id: response.data.message.message_id,
           sender_id: 'customer',
@@ -260,7 +260,7 @@ export class SupportAPIService {
       
       // Queue for offline sync
       if (this.db) {
-        await this.db.addToOfflineQueue({
+        await (this.db as any).addToOfflineQueue({
           endpoint: `/api/support/tickets/${ticketId}/messages`,
           method: 'POST',
           payload: message,
@@ -359,7 +359,7 @@ export class SupportAPIService {
           // Update retry count
           const retries = (item.retries || 0) + 1
           if (retries < MOBILE_DB_CONFIG.OFFLINE_QUEUE.MAX_RETRIES) {
-            await this.db.updateOfflineQueueRetries(item.id, retries)
+            await (this.db as any).updateOfflineQueueRetries(item.id, retries)
           } else {
             // Max retries exceeded, remove from queue
             await this.db.removeFromOfflineQueue(item.id)
@@ -385,7 +385,7 @@ export class SupportAPIService {
     try {
       if (!this.db) return
 
-      await this.db.addToOfflineQueue({
+      await (this.db as any).addToOfflineQueue({
         endpoint: config.url,
         method: config.method || 'GET',
         payload: config.data,

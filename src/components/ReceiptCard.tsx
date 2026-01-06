@@ -7,7 +7,7 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BRAND_COLORS, TYPOGRAPHY, SPACING } from '../theme';
+import { BRAND_COLORS, TYPOGRAPHY, SPACING } from '../design-system/theme';
 
 interface Receipt {
   id: string;

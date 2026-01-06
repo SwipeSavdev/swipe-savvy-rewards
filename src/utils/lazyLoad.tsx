@@ -20,7 +20,7 @@ export function lazyLoad<T extends ComponentType<any>>(
     <Suspense fallback={<LoadingFallback />}>
       <LazyComponent {...props} />
     </Suspense>
-  ));
+  )) as any;
 }
 
 const styles = StyleSheet.create({

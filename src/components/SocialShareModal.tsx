@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BRAND_COLORS, TYPOGRAPHY, SPACING } from '../theme';
+import { BRAND_COLORS, TYPOGRAPHY, SPACING } from '../design-system/theme';
 
 interface SocialShareModalProps {
   isVisible: boolean;

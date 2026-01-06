@@ -26,7 +26,7 @@ function RootNavigatorComponent() {
         backgroundColor={colors.statusbar}
       />
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator id="root-navigator" screenOptions={{ headerShown: false }}>
           {isAuthenticated ? (
             <Stack.Screen name="Main" component={MemoizedMainStack} />
           ) : (

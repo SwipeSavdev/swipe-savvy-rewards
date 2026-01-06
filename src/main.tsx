@@ -1,8 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
+import App from './App'
 import './index.css'
-import { performanceMonitor } from './utils/performanceMonitor.ts'
+import { performanceMonitor } from './utils/performanceMonitor'
 
 // Initialize performance monitoring
 performanceMonitor.init()

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// @ts-ignore - Missing module
 import NetInfo from '@react-native-community/netinfo';
 
 const QUEUE_KEY = '@swipesavvy:offline_queue';

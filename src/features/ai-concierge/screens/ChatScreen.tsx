@@ -139,7 +139,7 @@ export function ChatScreen({ isModal = false, sessionId = 'default' }: ChatScree
     })();
 
     // Show escalation message
-    const escalationMsg = getEscalationMessage(analysis.category, analysis.priority);
+    const escalationMsg = getEscalationMessage(analysis.category as any, analysis.priority as any);
     sendMessage(escalationMsg);
 
     // Show verification modal

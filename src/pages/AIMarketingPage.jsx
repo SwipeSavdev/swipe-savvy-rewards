@@ -305,8 +305,8 @@ export function AIMarketingPage() {
                         onChange={(e) => setFormData({ ...formData, targetPattern: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                       >
-                        <option value="high_spender">High Spenders (>$5,000)</option>
-                        <option value="frequent_shopper">Frequent Shoppers (>20 transactions)</option>
+                        <option value="high_spender">High Spenders (&gt;$5,000)</option>
+                        <option value="frequent_shopper">Frequent Shoppers (&gt;20 transactions)</option>
                         <option value="location_clustered">Location-Clustered</option>
                         <option value="inactive">Inactive (30+ days)</option>
                         <option value="new_shopper">New Shoppers (&lt;5 transactions)</option>

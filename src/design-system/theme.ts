@@ -9,6 +9,18 @@ export const BRAND_COLORS = {
   deep: '#132136',
   green: '#60BA46',
   yellow: '#FAB915',
+  // Additional colors used throughout the app
+  blue: '#235393', // Alias for navy
+  white: '#FFFFFF',
+  gray: '#666666',
+  lightGray: '#E5E5E5',
+  lightGrey: '#E5E5E5', // UK spelling variant
+  mediumGrey: '#999999',
+  orange: '#FF9500',
+  danger: '#D64545',
+  purple: '#8B5CF6',
+  red: '#EF4444',
+  pink: '#EC4899',
 };
 
 // Light theme (default)
@@ -94,6 +106,12 @@ export const SPACING = {
   8: 40,
   9: 48,
   10: 56,
+  // Named spacing variants
+  xs: 4,   // Extra small - same as 1
+  sm: 8,   // Small - same as 2
+  md: 16,  // Medium - same as 4
+  lg: 24,  // Large - same as 6
+  xl: 32,  // Extra large - same as 7
 };
 
 // Border radius
@@ -141,6 +159,52 @@ export const TYPOGRAPHY = {
     tight: 1.1,
     normal: 1.45,
     relaxed: 1.55,
+  },
+  // Typography style presets
+  headline: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    lineHeight: 31,
+  },
+  heading3: {
+    fontSize: 20,
+    fontWeight: '600' as const,
+    lineHeight: 26,
+  },
+  heading4: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    lineHeight: 22,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '500' as const,
+    lineHeight: 22,
+  },
+  body: {
+    fontSize: 14,
+    fontWeight: '400' as const,
+    lineHeight: 20,
+  },
+  body2: {
+    fontSize: 13,
+    fontWeight: '400' as const,
+    lineHeight: 19,
+  },
+  body3: {
+    fontSize: 12,
+    fontWeight: '400' as const,
+    lineHeight: 17,
+  },
+  caption: {
+    fontSize: 12,
+    fontWeight: '400' as const,
+    lineHeight: 16,
+  },
+  button: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    lineHeight: 17,
   },
 };
 

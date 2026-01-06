@@ -36,7 +36,7 @@ class PerformanceMonitor {
         const lcpObserver = new PerformanceObserver((list) => {
           const entries = list.getEntries()
           const lastEntry = entries[entries.length - 1]
-          this.metrics.largestContentfulPaint = lastEntry.renderTime || lastEntry.loadTime
+          this.metrics.largestContentfulPaint = (lastEntry as any).renderTime || (lastEntry as any).loadTime
           this.logMetric('LCP', `${this.metrics.largestContentfulPaint.toFixed(2)}ms`)
         })
         lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] })

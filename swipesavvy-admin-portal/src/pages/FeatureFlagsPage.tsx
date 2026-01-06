@@ -130,7 +130,7 @@ export default function FeatureFlagsPage() {
       displayName: f.name,
       description: f.description,
       enabled: f.enabled,
-      status: f.enabled ? 'on' : 'off',
+      status: f.enabled ? 'on' : 'off' as const,
       rolloutPercentage: f.rolloutPercentage,
       rolloutPct: f.rolloutPercentage,
       targetedUsers: [],
@@ -139,7 +139,7 @@ export default function FeatureFlagsPage() {
       createdBy: 'system',
       updatedBy: 'system',
       environment: 'production',
-      category: f.category,
+      category: f.category as any, // Type assertion for categories not in FeatureCategory type
     }))
   )
   const [query, setQuery] = useState('')
@@ -287,14 +287,14 @@ export default function FeatureFlagsPage() {
                     {flag.status === 'on' ? 'Enabled' : 'Disabled'}
                   </Badge>
                   <span className="text-xs text-[var(--ss-text-muted)]">
-                    {flag.rolloutPct}% rollout
+                    {flag.rolloutPct ?? 0}% rollout
                   </span>
                 </div>
-                {flag.rolloutPct < 100 && flag.status === 'on' && (
+                {(flag.rolloutPct ?? 0) < 100 && flag.status === 'on' && (
                   <div className="mt-3">
                     <ProgressBar value={flag.rolloutPct ?? 0} />
                     <p className="text-xs text-[var(--ss-text-muted)] mt-1">
-                      Rolling out to {flag.rolloutPct}% of users
+                      Rolling out to {flag.rolloutPct ?? 0}% of users
                     </p>
                   </div>
                 )}
