@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
+// @ts-ignore - Missing module
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 

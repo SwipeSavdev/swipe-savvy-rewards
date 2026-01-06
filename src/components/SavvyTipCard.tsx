@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BRAND_COLORS, TYPOGRAPHY, SPACING } from '../theme';
+import { BRAND_COLORS, TYPOGRAPHY, SPACING } from '../design-system/theme';
 
 export interface SavvyTipCardProps {
   title: string;

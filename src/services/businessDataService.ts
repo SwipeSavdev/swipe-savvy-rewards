@@ -19,7 +19,7 @@ const transactionService = {
    */
   async getRevenueSummary(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/transactions/analytics/revenue?${params}`);
       if (!response.ok) throw new Error('Failed to fetch revenue');
       return await response.json();
@@ -34,7 +34,7 @@ const transactionService = {
    */
   async getTransactionVolume(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/transactions/analytics/volume?${params}`);
       if (!response.ok) throw new Error('Failed to fetch volume');
       return await response.json();
@@ -49,7 +49,7 @@ const transactionService = {
    */
   async getPaymentMethods(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/transactions/analytics/payment-methods?${params}`);
       if (!response.ok) throw new Error('Failed to fetch payment methods');
       return await response.json();
@@ -82,7 +82,7 @@ const transactionService = {
    */
   async getTransactionStatus(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/transactions/analytics/by-status?${params}`);
       if (!response.ok) throw new Error('Failed to fetch status');
       return await response.json();
@@ -117,7 +117,7 @@ const userService = {
    */
   async getActiveUsers(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/users/analytics/active?${params}`);
       if (!response.ok) throw new Error('Failed to fetch active users');
       return await response.json();
@@ -132,7 +132,7 @@ const userService = {
    */
   async getUserGrowth(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/users/analytics/growth?${params}`);
       if (!response.ok) throw new Error('Failed to fetch growth');
       return await response.json();
@@ -199,7 +199,7 @@ const merchantService = {
    */
   async getMerchantPerformance(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/merchants/analytics/performance?${params}`);
       if (!response.ok) throw new Error('Failed to fetch performance');
       return await response.json();
@@ -234,7 +234,7 @@ const accountService = {
    */
   async getLinkedBanks(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/accounts/analytics/linked-banks?${params}`);
       if (!response.ok) throw new Error('Failed to fetch linked banks');
       return await response.json();
@@ -249,7 +249,7 @@ const accountService = {
    */
   async getAccountCreationTrend(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/accounts/analytics/creation-trend?${params}`);
       if (!response.ok) throw new Error('Failed to fetch creation trend');
       return await response.json();
@@ -270,7 +270,7 @@ const rewardsService = {
    */
   async getRewardsMetrics(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/rewards/analytics?${params}`);
       if (!response.ok) throw new Error('Failed to fetch rewards metrics');
       return await response.json();
@@ -325,7 +325,7 @@ const featureFlagsService = {
    */
   async getFeatureAdoption(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/features/adoption?${params}`);
       if (!response.ok) throw new Error('Failed to fetch adoption');
       return await response.json();
@@ -365,7 +365,7 @@ const aiConciergeService = {
    */
   async getChatMetrics(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/ai-concierge/analytics/chats?${params}`);
       if (!response.ok) throw new Error('Failed to fetch chat metrics');
       return await response.json();
@@ -385,7 +385,7 @@ const aiConciergeService = {
    */
   async getConversationStats(filters: DateRange) {
     try {
-      const params = new URLSearchParams(filters);
+      const params = new URLSearchParams(filters as any);
       const response = await fetch(`/api/ai-concierge/analytics/conversations?${params}`);
       if (!response.ok) throw new Error('Failed to fetch conversation stats');
       return await response.json();

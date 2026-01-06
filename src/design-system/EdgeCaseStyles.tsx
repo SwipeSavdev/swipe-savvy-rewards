@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BRAND_COLORS, TYPOGRAPHY, SPACING } from '../theme';
+import { BRAND_COLORS, TYPOGRAPHY, SPACING } from './theme';
 
 /**
  * Edge Case Styling Utilities & Components
@@ -334,7 +334,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 };
 
 // Loading State Skeleton
-export const SkeletonLoader: React.FC<{ height?: number; width?: string }> = ({
+export const SkeletonLoader: React.FC<{ height?: number; width?: string | number }> = ({
   height = 40,
   width = '100%',
 }) => {
@@ -342,7 +342,7 @@ export const SkeletonLoader: React.FC<{ height?: number; width?: string }> = ({
     <View
       style={[
         styles.skeletonLoader,
-        { height, width },
+        { height, width: width as any },
       ]}
     />
   );

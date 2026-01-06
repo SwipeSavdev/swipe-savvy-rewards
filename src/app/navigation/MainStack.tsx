@@ -53,6 +53,7 @@ const TabNavigatorComponent = React.memo(function TabNavigator() {
 
   return (
     <Tab.Navigator
+      id="main-tabs"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => (
           <NavigationIcon
@@ -96,6 +97,7 @@ const TabNavigatorComponent = React.memo(function TabNavigator() {
 export const MainStack = React.memo(function MainStackComponent() {
   return (
     <Stack.Navigator
+      id="main-stack"
       screenOptions={{
         headerShown: true,
       }}

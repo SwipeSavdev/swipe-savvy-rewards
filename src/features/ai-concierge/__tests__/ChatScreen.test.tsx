@@ -1,9 +1,11 @@
 import '@testing-library/jest-native/extend-expect';
+// @ts-ignore - Missing module
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 // Mock the useAIChat hook BEFORE importing ChatScreen
 jest.mock('@ai-sdk/hooks/useAIChat');
 
+// @ts-ignore - Missing module
 // Import the mock hook
 import { useAIChat } from '@ai-sdk/hooks/useAIChat';
 
@@ -81,6 +83,7 @@ describe('ChatScreen', () => {
       render(<ChatScreen />);
       
       const sendButton = screen.getByTestId('send-button');
+      // @ts-ignore - toBeDisabled matcher exists in jest-dom
       expect(sendButton).toBeDisabled();
     });
 

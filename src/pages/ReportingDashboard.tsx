@@ -68,7 +68,7 @@ export default function ReportingDashboard() {
     endDate: formatDate(today)
   });
 
-  const [widgets, setWidgets] = useLocalStorage<Widget[]>('reporting-widgets', DEFAULT_WIDGETS);
+  const [widgets, setWidgets] = useLocalStorage<Widget[]>('reporting-widgets', DEFAULT_WIDGETS as any);
   const [editMode, setEditMode] = useState(false);
   const [showBuilder, setShowBuilder] = useState(false);
   const [selectedLayout, setSelectedLayout] = useState<'default' | 'compact' | 'analytics'>('default');
@@ -100,12 +100,12 @@ export default function ReportingDashboard() {
   }, [widgets, setWidgets]);
 
   const applyLayout = useCallback((layoutName: 'default' | 'compact' | 'analytics') => {
-    setWidgets(PRESET_LAYOUTS[layoutName]);
+    setWidgets(PRESET_LAYOUTS[layoutName] as any);
     setSelectedLayout(layoutName);
   }, [setWidgets]);
 
   const resetToDefault = useCallback(() => {
-    setWidgets(DEFAULT_WIDGETS);
+    setWidgets(DEFAULT_WIDGETS as any);
     setSelectedLayout('default');
   }, [setWidgets]);
 

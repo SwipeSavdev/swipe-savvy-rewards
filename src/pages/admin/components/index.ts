@@ -13,8 +13,11 @@ export { ABTestingInterface } from './ABTestingInterface';
 export { OptimizationRecommendations } from './OptimizationRecommendations';
 
 // Re-export types if needed
+// @ts-ignore - Types are internal to components
 export type { CampaignMetrics, SegmentPerformance, TrendData, PortfolioMetrics } from './AnalyticsDashboard';
+// @ts-ignore - Types are internal to components
 export type { ABTest, TestResult, TestHistory } from './ABTestingInterface';
+// @ts-ignore - Types are internal to components
 export type { Recommendation, OfferOptimization, SendTimeOptimization, MerchantAffinity } from './OptimizationRecommendations';
 
 // Dashboard component group

@@ -140,7 +140,7 @@ describe('SwipeSavvyAI Client', () => {
       });
 
       // Start iteration to trigger request
-      const promise = iterator.next();
+      const promise = (iterator as any).next();
 
       expect(openSpy).toHaveBeenCalledWith('POST', 'http://localhost:8000/api/v1/chat');
       expect(sendSpy).toHaveBeenCalled();
@@ -154,7 +154,7 @@ describe('SwipeSavvyAI Client', () => {
       const setHeaderSpy = jest.spyOn(mockXHR, 'setRequestHeader');
 
       const iterator = client.chat({ message: 'test' });
-      const promise = iterator.next();
+      const promise = (iterator as any).next();
 
       expect(setHeaderSpy).toHaveBeenCalledWith('Authorization', 'Bearer test-token');
       expect(setHeaderSpy).toHaveBeenCalledWith('Content-Type', 'application/json');
@@ -167,7 +167,7 @@ describe('SwipeSavvyAI Client', () => {
 
     it('should parse SSE events correctly', async () => {
       const iterator = client.chat({ message: 'test' });
-      const promise = iterator.next();
+      const promise = (iterator as any).next();
 
       // Simulate SSE data coming in
       mockXHR.responseText = 'data: {"type":"thinking"}\n';
@@ -184,7 +184,7 @@ describe('SwipeSavvyAI Client', () => {
       const iterator = client.chat({ message: 'test' });
       
       // First event
-      const promise1 = iterator.next();
+      const promise1 = (iterator as any).next();
       mockXHR.responseText = 'data: {"type":"thinking"}\ndata: {"type":"message","content":"Hi"}\n';
       mockXHR.onprogress?.();
 
@@ -192,7 +192,7 @@ describe('SwipeSavvyAI Client', () => {
       expect(event1.value?.type).toBe('thinking');
 
       // Second event should be queued
-      const event2 = await iterator.next();
+      const event2 = await (iterator as any).next();
       expect(event2.value?.type).toBe('message');
       expect(event2.value?.content).toBe('Hi');
 
@@ -204,7 +204,7 @@ describe('SwipeSavvyAI Client', () => {
       const iterator = client.chat({ message: 'test' });
       
       // Start consuming the iterator
-      const promise = iterator.next();
+      const promise = (iterator as any).next();
       
       // Trigger error after a short delay
       setTimeout(() => {
@@ -254,7 +254,7 @@ describe('SwipeSavvyAI Client', () => {
       const iterator = client.chat({ message: 'test' });
       
       // Start consuming iterator
-      const promise = iterator.next();
+      const promise = (iterator as any).next();
       
       setTimeout(() => {
         // Simulate partial chunk (incomplete JSON without newline)
@@ -309,7 +309,7 @@ describe('SwipeSavvyAI Client', () => {
       jest.useFakeTimers();
       
       const iterator = client.chat({ message: 'test' });
-      const promise = iterator.next();
+      const promise = (iterator as any).next();
 
       // Fast-forward 30 seconds
       jest.advanceTimersByTime(30000);

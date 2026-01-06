@@ -6,21 +6,22 @@ stages:
   - deploy
 
 variables:
-  NODE_VERSION: "18"
-  PYTHON_VERSION: "3.9"
-  DOCKER_IMAGE: "node:18-alpine"
+  NODE_VERSION: "20.13.0"
+  NPM_VERSION: "10.8.2"
+  PYTHON_VERSION: "3.11"
+  DOCKER_IMAGE: "node:20.13.0-alpine"
 
 # ========== LINT STAGE ==========
 lint:mobile-app:
   stage: lint
-  image: node:18-alpine
+  image: node:20.13.0-alpine
   script:
-    - cd swipesavvy-mobile-app
+    # Root directory IS the mobile app
     - npm install
     - npm run lint
   cache:
     paths:
-      - swipesavvy-mobile-app/node_modules/
+      - node_modules/
   allow_failure: false
 
 lint:mobile-wallet:
