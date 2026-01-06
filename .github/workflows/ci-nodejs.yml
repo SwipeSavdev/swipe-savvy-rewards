@@ -126,7 +126,7 @@ jobs:
       
       - name: Upload build artifacts
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: admin-portal-build
           path: swipesavvy-admin-portal/dist/
@@ -164,7 +164,7 @@ jobs:
       
       - name: Upload build artifacts
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: wallet-web-build
           path: swipesavvy-wallet-web/dist/
@@ -203,7 +203,7 @@ jobs:
       
       - name: Upload coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: mobile-app-coverage
           path: swipesavvy-mobile-app/coverage/
