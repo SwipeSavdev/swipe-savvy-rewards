@@ -5,7 +5,7 @@
 
 # LLM & AI Frameworks
 together==1.3.0
-openai==1.6.0
+openai==1.109.1
 sentence-transformers==2.2.2
 tiktoken==0.5.2
 
