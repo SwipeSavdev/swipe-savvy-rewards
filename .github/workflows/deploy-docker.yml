@@ -21,7 +21,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       
       - name: Build Admin Portal image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./swipesavvy-admin-portal
           push: false
@@ -30,7 +30,7 @@ jobs:
           cache-to: type=gha,mode=max
       
       - name: Build Wallet Web image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./swipesavvy-wallet-web
           push: false
@@ -39,7 +39,7 @@ jobs:
           cache-to: type=gha,mode=max
       
       - name: Build AI Agents image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./swipesavvy-ai-agents
           push: false
