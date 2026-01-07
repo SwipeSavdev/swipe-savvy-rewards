@@ -33,11 +33,13 @@ Each component communicates with a unified backend API and provides comprehensiv
 - ✅ **Responsive Design** - Tailwind CSS for modern, mobile-friendly UI
 
 ### 🤖 AI Concierge System
-- ✅ **AI Chat Integration** - GPT-powered customer support
-- ✅ **Marketing Automation** - AI-driven marketing campaign management
-- ✅ **Real-time Analytics** - Dynamic performance tracking
-- ✅ **User Insights** - Behavioral analysis and personalization
-- ✅ **Content Management** - AI-powered content generation
+- ✅ **AI Chat Integration** - Llama 3.3-70B powered customer support via Together.AI
+- ✅ **Streaming Responses** - Real-time SSE streaming for natural conversations
+- ✅ **Marketing Automation** - AI-driven campaign management and optimization
+- ✅ **Real-time Analytics** - Dynamic performance tracking with behavioral learning
+- ✅ **User Insights** - Personalization through context-aware conversations
+- ✅ **Content Management** - AI-powered content generation with safety guardrails
+- ✅ **RAG Integration** - Knowledge base retrieval for accurate, contextual responses
 
 ### 💳 Wallet Web
 - ✅ Web-based wallet access
@@ -67,9 +69,17 @@ Each component communicates with a unified backend API and provides comprehensiv
 - **Caching**: Redis
 
 ### AI & Analytics
-- **LLM Integration**: OpenAI GPT API
-- **Analytics Engine**: Custom ML pipeline
+- **LLM Provider**: Together.AI API
+- **AI Model**: Meta Llama 3.3-70B-Instruct-Turbo
+- **Features**: Chat completions, streaming responses, context awareness
+- **AI Services**:
+  - AI Concierge (customer support with intelligent responses)
+  - AI Marketing (campaign optimization and content generation)
+  - RAG Service (knowledge base retrieval and semantic search)
+  - Guardrails Service (safety, compliance, and content filtering)
+- **Analytics Engine**: Custom ML pipeline with behavioral learning
 - **Data Processing**: Python (Pandas, NumPy)
+- **Capabilities**: Real-time streaming (SSE), context retention, multi-turn conversations
 
 ## 🚀 Quick Start
 
