@@ -55,7 +55,7 @@ export default function AiMarketingPage() {
   const fetchCampaigns = async (shouldShowLoading = true) => {
     if (shouldShowLoading) setLoading(true)
     try {
-      const res = await Api.aiCampaignsApi.getAiCampaigns({ page: 1, limit: 100 })
+      const res = await Api.aiCampaignsApi.listCampaigns(1, 100)
       setCampaigns((res.campaigns || res || []).map((c: any) => ({
         id: c.id || c.campaign_id,
         name: c.name || c.campaign_name,

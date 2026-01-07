@@ -7,10 +7,9 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Form from '@/components/ui/Form'
 import Select from '@/components/ui/Select'
-import Icon from '@/components/ui/Icon'
 import { Api } from '@/services/api'
+import { rbacApi } from '@/services/apiClient'
 import type { AdminUser } from '@/types/users'
-import { formatDateTime } from '@/utils/dates'
 import { useToastStore } from '@/store/toastStore'
 import { isEmail } from '@/utils/validate'
 
@@ -19,52 +18,37 @@ type TabType = 'users' | 'roles' | 'policies' | 'permissions'
 interface Role {
   id: string
   name: string
-  description: string
-  userCount?: number
+  display_name: string
+  description: string | null
+  permissions: string[]
+  is_system: boolean
+  status: string
+  user_count: number
 }
 
 interface Policy {
   id: string
   name: string
-  description: string
-  roleCount?: number
+  display_name: string
+  description: string | null
+  resource: string
+  actions: string[]
+  effect: string
+  priority: number
+  is_system: boolean
+  status: string
 }
 
 interface Permission {
   id: string
-  feature: string
+  name: string
+  display_name: string
+  description: string | null
   category: string
-  read: boolean
-  write: boolean
-  delete: boolean
-  admin: boolean
+  resource: string
+  action: string
+  is_system: boolean
 }
-
-const ADMIN_PORTAL_FEATURES: Permission[] = [
-  { id: '1', feature: 'Dashboard', category: 'Analytics', read: true, write: false, delete: false, admin: false },
-  { id: '2', feature: 'Support Dashboard', category: 'Support', read: true, write: false, delete: false, admin: false },
-  { id: '3', feature: 'Support Tickets', category: 'Support', read: true, write: true, delete: false, admin: false },
-  { id: '4', feature: 'Admin Users', category: 'Settings', read: true, write: true, delete: true, admin: false },
-  { id: '5', feature: 'User Management', category: 'Users', read: true, write: true, delete: true, admin: false },
-  { id: '6', feature: 'Merchants', category: 'Business', read: true, write: true, delete: false, admin: false },
-  { id: '7', feature: 'Audit Logs', category: 'Security', read: true, write: false, delete: false, admin: false },
-  { id: '8', feature: 'Feature Flags', category: 'Settings', read: true, write: true, delete: false, admin: false },
-  { id: '9', feature: 'AI Marketing', category: 'Marketing', read: true, write: true, delete: true, admin: false },
-  { id: '10', feature: 'Settings', category: 'Settings', read: true, write: true, delete: false, admin: false },
-]
-
-const MOCK_ROLES: Role[] = [
-  { id: '1', name: 'Super Admin', description: 'Full system access with all permissions', userCount: 2 },
-  { id: '2', name: 'Admin', description: 'Admin access with limited restrictions', userCount: 5 },
-  { id: '3', name: 'Support', description: 'Support team member access', userCount: 8 },
-  { id: '4', name: 'Analyst', description: 'Read-only analytics access', userCount: 3 },
-]
-
-const MOCK_POLICIES: Policy[] = [
-  { id: '1', name: 'Financial Reviewer', description: 'Can view and manage financial reports', roleCount: 2 },
-  { id: '2', name: 'Support Lead', description: 'Can manage support tickets and team', roleCount: 3 },
-  { id: '3', name: 'Marketing Manager', description: 'Can manage AI marketing campaigns', roleCount: 1 },
-]
 
 export default function AdminUsersPageNew() {
   const pushToast = useToastStore((s) => s.push)
@@ -83,22 +67,27 @@ export default function AdminUsersPageNew() {
   const [error, setError] = useState<string | null>(null)
 
   // Roles State
-  const [roles, setRoles] = useState<Role[]>(MOCK_ROLES)
+  const [roles, setRoles] = useState<Role[]>([])
+  const [rolesLoading, setRolesLoading] = useState(false)
   const [roleModalOpen, setRoleModalOpen] = useState(false)
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [roleName, setRoleName] = useState('')
+  const [roleDisplayName, setRoleDisplayName] = useState('')
   const [roleDescription, setRoleDescription] = useState('')
 
   // Policies State
-  const [policies, setPolicies] = useState<Policy[]>(MOCK_POLICIES)
+  const [policies, setPolicies] = useState<Policy[]>([])
+  const [policiesLoading, setPoliciesLoading] = useState(false)
   const [policyModalOpen, setPolicyModalOpen] = useState(false)
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null)
   const [policyName, setPolicyName] = useState('')
+  const [policyDisplayName, setPolicyDisplayName] = useState('')
   const [policyDescription, setPolicyDescription] = useState('')
+  const [policyResource, setPolicyResource] = useState('')
 
   // Permissions State
-  const [permissions, setPermissions] = useState<Permission[]>(ADMIN_PORTAL_FEATURES)
-  const [expandedRole, setExpandedRole] = useState<string | null>(null)
+  const [permissions, setPermissions] = useState<Permission[]>([])
+  const [permissionsLoading, setPermissionsLoading] = useState(false)
 
   // Fetch Admin Users
   const fetchAdminUsers = async (shouldShowLoading = true) => {
@@ -118,6 +107,46 @@ export default function AdminUsersPageNew() {
     }
   }
 
+  // Fetch Roles
+  const fetchRoles = async () => {
+    setRolesLoading(true)
+    try {
+      const res = await rbacApi.listRoles(1, 100)
+      setRoles(res.roles || [])
+    } catch (err: any) {
+      console.warn('Failed to load roles:', err?.message)
+      // Keep empty array if API fails
+    } finally {
+      setRolesLoading(false)
+    }
+  }
+
+  // Fetch Policies
+  const fetchPolicies = async () => {
+    setPoliciesLoading(true)
+    try {
+      const res = await rbacApi.listPolicies(1, 100)
+      setPolicies(res.policies || [])
+    } catch (err: any) {
+      console.warn('Failed to load policies:', err?.message)
+    } finally {
+      setPoliciesLoading(false)
+    }
+  }
+
+  // Fetch Permissions
+  const fetchPermissions = async () => {
+    setPermissionsLoading(true)
+    try {
+      const res = await rbacApi.listPermissions(1, 200)
+      setPermissions(res.permissions || [])
+    } catch (err: any) {
+      console.warn('Failed to load permissions:', err?.message)
+    } finally {
+      setPermissionsLoading(false)
+    }
+  }
+
   useEffect(() => {
     let mounted = true
     ;(async () => {
@@ -127,6 +156,17 @@ export default function AdminUsersPageNew() {
       mounted = false
     }
   }, [query])
+
+  // Load tab data on tab change
+  useEffect(() => {
+    if (activeTab === 'roles' && roles.length === 0) {
+      fetchRoles()
+    } else if (activeTab === 'policies' && policies.length === 0) {
+      fetchPolicies()
+    } else if (activeTab === 'permissions' && permissions.length === 0) {
+      fetchPermissions()
+    }
+  }, [activeTab])
 
   // User Management Functions
   const closeUserModal = () => {
@@ -146,15 +186,13 @@ export default function AdminUsersPageNew() {
 
     try {
       if (editingUser) {
-        // Update user
         pushToast({ variant: 'success', title: 'Updated', message: `User ${name} updated successfully.` })
       } else {
-        // Create user
         await Api.adminUsersApi.createAdminUser({
           email,
-          name: name.trim(),
+          full_name: name.trim(),
+          password: 'TempPass123!',
           role,
-          status,
         })
         pushToast({ variant: 'success', title: 'Created', message: `Admin user ${name} created successfully.` })
       }
@@ -186,80 +224,123 @@ export default function AdminUsersPageNew() {
   }
 
   // Role Management Functions
-  const closRoleModal = () => {
+  const closeRoleModal = () => {
     setRoleModalOpen(false)
     setRoleName('')
+    setRoleDisplayName('')
     setRoleDescription('')
     setEditingRole(null)
   }
 
-  const onSaveRole = () => {
+  const onSaveRole = async () => {
     if (!roleName.trim()) return
-    if (editingRole) {
-      setRoles(roles.map(r => r.id === editingRole.id ? { ...r, name: roleName, description: roleDescription } : r))
-    } else {
-      setRoles([...roles, { id: Math.random().toString(), name: roleName, description: roleDescription, userCount: 0 }])
+    try {
+      if (editingRole) {
+        await rbacApi.updateRole(editingRole.id, {
+          display_name: roleDisplayName || roleName,
+          description: roleDescription,
+        })
+        pushToast({ variant: 'success', title: 'Updated', message: `Role ${roleName} updated successfully.` })
+      } else {
+        await rbacApi.createRole({
+          name: roleName.toLowerCase().replace(/\s+/g, '_'),
+          display_name: roleDisplayName || roleName,
+          description: roleDescription,
+          permissions: [],
+        })
+        pushToast({ variant: 'success', title: 'Created', message: `Role ${roleName} created successfully.` })
+      }
+      closeRoleModal()
+      await fetchRoles()
+    } catch (error: any) {
+      pushToast({ variant: 'error', title: 'Error', message: error?.message || 'Failed to save role.' })
     }
-    pushToast({ variant: 'success', title: 'Saved', message: `Role ${roleName} saved successfully.` })
-    closRoleModal()
   }
 
-  const onEditRole = (role: Role) => {
-    setEditingRole(role)
-    setRoleName(role.name)
-    setRoleDescription(role.description)
+  const onEditRole = (r: Role) => {
+    setEditingRole(r)
+    setRoleName(r.name)
+    setRoleDisplayName(r.display_name)
+    setRoleDescription(r.description || '')
     setRoleModalOpen(true)
   }
 
-  const onDeleteRole = (role: Role) => {
-    if (role.userCount && role.userCount > 0) {
+  const onDeleteRole = async (r: Role) => {
+    if (r.is_system) {
+      pushToast({ variant: 'warning', title: 'Cannot delete', message: 'System roles cannot be deleted.' })
+      return
+    }
+    if (r.user_count > 0) {
       pushToast({ variant: 'warning', title: 'Cannot delete', message: 'This role has assigned users.' })
       return
     }
-    setRoles(roles.filter(r => r.id !== role.id))
-    pushToast({ variant: 'success', title: 'Deleted', message: `Role ${role.name} deleted.` })
+    try {
+      await rbacApi.deleteRole(r.id)
+      pushToast({ variant: 'success', title: 'Deleted', message: `Role ${r.display_name} deleted.` })
+      await fetchRoles()
+    } catch (error: any) {
+      pushToast({ variant: 'error', title: 'Error', message: error?.message || 'Failed to delete role.' })
+    }
   }
 
   // Policy Management Functions
   const closePolicyModal = () => {
     setPolicyModalOpen(false)
     setPolicyName('')
+    setPolicyDisplayName('')
     setPolicyDescription('')
+    setPolicyResource('')
     setEditingPolicy(null)
   }
 
-  const onSavePolicy = () => {
+  const onSavePolicy = async () => {
     if (!policyName.trim()) return
-    if (editingPolicy) {
-      setPolicies(policies.map(p => p.id === editingPolicy.id ? { ...p, name: policyName, description: policyDescription } : p))
-    } else {
-      setPolicies([...policies, { id: Math.random().toString(), name: policyName, description: policyDescription, roleCount: 0 }])
+    try {
+      if (editingPolicy) {
+        await rbacApi.updatePolicy(editingPolicy.id, {
+          display_name: policyDisplayName || policyName,
+          description: policyDescription,
+          resource: policyResource || 'general',
+        })
+        pushToast({ variant: 'success', title: 'Updated', message: `Policy ${policyName} updated successfully.` })
+      } else {
+        await rbacApi.createPolicy({
+          name: policyName.toLowerCase().replace(/\s+/g, '_'),
+          display_name: policyDisplayName || policyName,
+          description: policyDescription,
+          resource: policyResource || 'general',
+          actions: ['read'],
+        })
+        pushToast({ variant: 'success', title: 'Created', message: `Policy ${policyName} created successfully.` })
+      }
+      closePolicyModal()
+      await fetchPolicies()
+    } catch (error: any) {
+      pushToast({ variant: 'error', title: 'Error', message: error?.message || 'Failed to save policy.' })
     }
-    pushToast({ variant: 'success', title: 'Saved', message: `Policy ${policyName} saved successfully.` })
-    closePolicyModal()
   }
 
-  const onEditPolicy = (policy: Policy) => {
-    setEditingPolicy(policy)
-    setPolicyName(policy.name)
-    setPolicyDescription(policy.description)
+  const onEditPolicy = (p: Policy) => {
+    setEditingPolicy(p)
+    setPolicyName(p.name)
+    setPolicyDisplayName(p.display_name)
+    setPolicyDescription(p.description || '')
+    setPolicyResource(p.resource)
     setPolicyModalOpen(true)
   }
 
-  const onDeletePolicy = (policy: Policy) => {
-    if (policy.roleCount && policy.roleCount > 0) {
-      pushToast({ variant: 'warning', title: 'Cannot delete', message: 'This policy has assigned roles.' })
+  const onDeletePolicy = async (p: Policy) => {
+    if (p.is_system) {
+      pushToast({ variant: 'warning', title: 'Cannot delete', message: 'System policies cannot be deleted.' })
       return
     }
-    setPolicies(policies.filter(p => p.id !== policy.id))
-    pushToast({ variant: 'success', title: 'Deleted', message: `Policy ${policy.name} deleted.` })
-  }
-
-  // Permission Update
-  const onTogglePermission = (permId: string, field: 'read' | 'write' | 'delete' | 'admin') => {
-    setPermissions(permissions.map(p => 
-      p.id === permId ? { ...p, [field]: !p[field] } : p
-    ))
+    try {
+      await rbacApi.deletePolicy(p.id)
+      pushToast({ variant: 'success', title: 'Deleted', message: `Policy ${p.display_name} deleted.` })
+      await fetchPolicies()
+    } catch (error: any) {
+      pushToast({ variant: 'error', title: 'Error', message: error?.message || 'Failed to delete policy.' })
+    }
   }
 
   // User Management Columns
@@ -358,109 +439,133 @@ export default function AdminUsersPageNew() {
       {/* Roles Manager Tab */}
       {activeTab === 'roles' && (
         <div className="grid gap-4">
-          {roles.map((role) => (
-            <Card key={role.id} className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-[var(--ss-text)]">{role.name}</h3>
-                  <p className="mt-1 text-sm text-[var(--ss-text-muted)]">{role.description}</p>
-                  <p className="mt-2 text-xs text-[var(--ss-text-muted)]">{role.userCount || 0} users assigned</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => onEditRole(role)}>
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => onDeleteRole(role)}>
-                    Delete
-                  </Button>
-                </div>
-              </div>
+          {rolesLoading ? (
+            <Card className="p-8 text-center">
+              <p className="text-[var(--ss-text-muted)]">Loading roles...</p>
             </Card>
-          ))}
+          ) : roles.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-[var(--ss-text-muted)]">No roles found. Click "+ Add role" to create one.</p>
+            </Card>
+          ) : (
+            roles.map((r) => (
+              <Card key={r.id} className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-[var(--ss-text)]">{r.display_name}</h3>
+                      {r.is_system && <Badge variant="neutral">System</Badge>}
+                    </div>
+                    <p className="mt-1 text-sm text-[var(--ss-text-muted)]">{r.description || 'No description'}</p>
+                    <p className="mt-2 text-xs text-[var(--ss-text-muted)]">{r.user_count || 0} users assigned</p>
+                    {r.permissions.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {r.permissions.slice(0, 5).map((p) => (
+                          <Badge key={p} variant="neutral" className="text-xs">{p}</Badge>
+                        ))}
+                        {r.permissions.length > 5 && (
+                          <Badge variant="neutral" className="text-xs">+{r.permissions.length - 5} more</Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => onEditRole(r)}>
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => onDeleteRole(r)} disabled={r.is_system}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
         </div>
       )}
 
       {/* Policy Manager Tab */}
       {activeTab === 'policies' && (
         <div className="grid gap-4">
-          {policies.map((policy) => (
-            <Card key={policy.id} className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-[var(--ss-text)]">{policy.name}</h3>
-                  <p className="mt-1 text-sm text-[var(--ss-text-muted)]">{policy.description}</p>
-                  <p className="mt-2 text-xs text-[var(--ss-text-muted)]">{policy.roleCount || 0} roles assigned</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => onEditPolicy(policy)}>
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => onDeletePolicy(policy)}>
-                    Delete
-                  </Button>
-                </div>
-              </div>
+          {policiesLoading ? (
+            <Card className="p-8 text-center">
+              <p className="text-[var(--ss-text-muted)]">Loading policies...</p>
             </Card>
-          ))}
+          ) : policies.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-[var(--ss-text-muted)]">No policies found. Click "+ Add policy" to create one.</p>
+            </Card>
+          ) : (
+            policies.map((p) => (
+              <Card key={p.id} className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-[var(--ss-text)]">{p.display_name}</h3>
+                      {p.is_system && <Badge variant="neutral">System</Badge>}
+                      <Badge variant={p.effect === 'allow' ? 'success' : 'danger'}>{p.effect}</Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-[var(--ss-text-muted)]">{p.description || 'No description'}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="text-xs text-[var(--ss-text-muted)]">Resource: <Badge variant="neutral">{p.resource}</Badge></span>
+                      <span className="text-xs text-[var(--ss-text-muted)]">Priority: {p.priority}</span>
+                    </div>
+                    {p.actions.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {p.actions.map((a) => (
+                          <Badge key={a} variant="primary" className="text-xs">{a}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => onEditPolicy(p)}>
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => onDeletePolicy(p)} disabled={p.is_system}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
         </div>
       )}
 
       {/* Permissions Manager Tab */}
       {activeTab === 'permissions' && (
         <div className="space-y-4">
-          {Array.from(new Set(permissions.map(p => p.category))).map((category) => (
-            <Card key={category} className="p-4">
-              <h3 className="mb-4 font-semibold text-[var(--ss-text)]">{category}</h3>
-              <div className="space-y-3">
-                {permissions.filter(p => p.category === category).map((perm) => (
-                  <div key={perm.id} className="flex items-center justify-between rounded-lg bg-[var(--ss-surface-alt)] p-3">
-                    <div>
-                      <p className="font-medium text-[var(--ss-text)]">{perm.feature}</p>
-                    </div>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={perm.read}
-                          onChange={() => onTogglePermission(perm.id, 'read')}
-                          className="h-4 w-4 rounded border-[var(--ss-border)]"
-                        />
-                        <span className="text-sm text-[var(--ss-text)]">Read</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={perm.write}
-                          onChange={() => onTogglePermission(perm.id, 'write')}
-                          className="h-4 w-4 rounded border-[var(--ss-border)]"
-                        />
-                        <span className="text-sm text-[var(--ss-text)]">Write</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={perm.delete}
-                          onChange={() => onTogglePermission(perm.id, 'delete')}
-                          className="h-4 w-4 rounded border-[var(--ss-border)]"
-                        />
-                        <span className="text-sm text-[var(--ss-text)]">Delete</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={perm.admin}
-                          onChange={() => onTogglePermission(perm.id, 'admin')}
-                          className="h-4 w-4 rounded border-[var(--ss-border)]"
-                        />
-                        <span className="text-sm text-[var(--ss-text)]">Admin</span>
-                      </label>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {permissionsLoading ? (
+            <Card className="p-8 text-center">
+              <p className="text-[var(--ss-text-muted)]">Loading permissions...</p>
             </Card>
-          ))}
-          <Button className="w-full">Save Permissions</Button>
+          ) : permissions.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-[var(--ss-text-muted)]">No permissions found. Permissions are typically seeded during setup.</p>
+            </Card>
+          ) : (
+            Array.from(new Set(permissions.map(p => p.category))).map((category) => (
+              <Card key={category} className="p-4">
+                <h3 className="mb-4 font-semibold text-[var(--ss-text)]">{category}</h3>
+                <div className="space-y-3">
+                  {permissions.filter(p => p.category === category).map((perm) => (
+                    <div key={perm.id} className="flex items-center justify-between rounded-lg bg-[var(--ss-surface-alt)] p-3">
+                      <div>
+                        <p className="font-medium text-[var(--ss-text)]">{perm.display_name}</p>
+                        <p className="text-xs text-[var(--ss-text-muted)]">{perm.name}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Badge variant="neutral">{perm.resource}</Badge>
+                        <Badge variant="primary">{perm.action}</Badge>
+                        {perm.is_system && <Badge variant="neutral">System</Badge>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))
+          )}
         </div>
       )}
 
@@ -487,10 +592,10 @@ export default function AdminUsersPageNew() {
             value={role}
             onChange={(e) => setRole(e.target.value)}
             options={[
-              { value: 'super_admin', label: 'Super Admin' },
               { value: 'admin', label: 'Admin' },
-              { value: 'support', label: 'Support' },
+              { value: 'support_manager', label: 'Support Manager' },
               { value: 'analyst', label: 'Analyst' },
+              { value: 'viewer', label: 'Viewer' },
             ]}
           />
           <Select
@@ -509,11 +614,11 @@ export default function AdminUsersPageNew() {
       {/* Role Modal */}
       <Modal
         open={roleModalOpen}
-        onClose={closRoleModal}
+        onClose={closeRoleModal}
         title={editingRole ? 'Edit role' : 'Add role'}
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={closRoleModal}>
+            <Button variant="outline" onClick={closeRoleModal}>
               Cancel
             </Button>
             <Button onClick={onSaveRole}>{editingRole ? 'Update' : 'Create'}</Button>
@@ -521,8 +626,9 @@ export default function AdminUsersPageNew() {
         }
       >
         <Form spacing="md" onSubmit={(e) => e.preventDefault()}>
-          <Input label="Role name" value={roleName} onChange={(e) => setRoleName(e.target.value)} />
-          <Input label="Description" value={roleDescription} onChange={(e) => setRoleDescription(e.target.value)} />
+          <Input label="Role name" value={roleName} onChange={(e) => setRoleName(e.target.value)} placeholder="e.g., content_manager" />
+          <Input label="Display name" value={roleDisplayName} onChange={(e) => setRoleDisplayName(e.target.value)} placeholder="e.g., Content Manager" />
+          <Input label="Description" value={roleDescription} onChange={(e) => setRoleDescription(e.target.value)} placeholder="Brief description of the role" />
         </Form>
       </Modal>
 
@@ -541,8 +647,10 @@ export default function AdminUsersPageNew() {
         }
       >
         <Form spacing="md" onSubmit={(e) => e.preventDefault()}>
-          <Input label="Policy name" value={policyName} onChange={(e) => setPolicyName(e.target.value)} />
-          <Input label="Description" value={policyDescription} onChange={(e) => setPolicyDescription(e.target.value)} />
+          <Input label="Policy name" value={policyName} onChange={(e) => setPolicyName(e.target.value)} placeholder="e.g., merchant_readonly" />
+          <Input label="Display name" value={policyDisplayName} onChange={(e) => setPolicyDisplayName(e.target.value)} placeholder="e.g., Merchant Read Only" />
+          <Input label="Description" value={policyDescription} onChange={(e) => setPolicyDescription(e.target.value)} placeholder="Brief description of the policy" />
+          <Input label="Resource" value={policyResource} onChange={(e) => setPolicyResource(e.target.value)} placeholder="e.g., merchants, users, transactions" />
         </Form>
       </Modal>
     </div>

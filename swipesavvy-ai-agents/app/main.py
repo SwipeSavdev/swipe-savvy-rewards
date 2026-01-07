@@ -70,15 +70,18 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 # Security Middleware Stack
 # ============================================================================
 
-# Trusted Host Middleware - only in production
-if settings.ENVIRONMENT == "production":
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=[
-            "api.swipesavvy.com",
-            "api-staging.swipesavvy.com",
-        ]
-    )
+# Trusted Host Middleware - only in production with custom domain
+# Disabled for now while using IP address instead of domain
+# if settings.ENVIRONMENT == "production":
+#     app.add_middleware(
+#         TrustedHostMiddleware,
+#         allowed_hosts=[
+#             "api.swipesavvy.com",
+#             "api-staging.swipesavvy.com",
+#             "54.224.8.14",
+#             "localhost",
+#         ]
+#     )
 
 # CORS Middleware with environment-specific settings
 app.add_middleware(
@@ -312,6 +315,14 @@ try:
     logger.info("✅ Admin settings routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include admin settings routes: {e}")
+
+# Include admin RBAC (Role-Based Access Control) routes
+try:
+    from app.routes.admin_rbac import router as admin_rbac_router
+    app.include_router(admin_rbac_router)
+    logger.info("✅ Admin RBAC routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include admin RBAC routes: {e}")
 
 # Include payment routes (Phase 10)
 try:

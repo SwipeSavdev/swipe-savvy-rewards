@@ -52,7 +52,8 @@ export default function AISupportConciergePage() {
       const sessionId = `session_${Date.now()}`;
       const userId = 'admin_user';
       
-      const response = await fetch('http://localhost:8000/api/v1/chat', {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://54.224.8.14:8000';
+      const response = await fetch(`${apiBaseUrl}/api/v1/ai-concierge`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +118,7 @@ export default function AISupportConciergePage() {
       const errorMsg: Message = {
         id: `msg-${Date.now()}`,
         role: 'assistant',
-        content: `Sorry, I encountered an error: ${message}. Please make sure the AI Concierge service is running at http://localhost:8000`,
+        content: `Sorry, I encountered an error: ${message}. Please make sure the AI Concierge service is running.`,
         timestamp: new Date().toISOString(),
       };
       setMessages(prev => [...prev, errorMsg]);

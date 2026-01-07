@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from together import Together
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/chat", tags=["ai-concierge"])
+router = APIRouter(prefix="/api/v1/ai-concierge", tags=["ai-concierge"])
 
 
 class AIConciergeRequest(BaseModel):
