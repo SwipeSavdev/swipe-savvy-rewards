@@ -2,8 +2,24 @@ import Badge from '@/components/ui/Badge'
 import { BrandingKitIcon, BrandingKitIconButton } from '@/components/ui/BrandingKitIcon'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import { IconName } from '@/lib/icons'
 import { cn } from '@/utils/cn'
 import { useState } from 'react'
+
+type TabKey = 'users' | 'roles' | 'permissions' | 'policies'
+
+interface TabItem {
+  key: TabKey
+  label: string
+  icon: IconName
+}
+
+const TABS: TabItem[] = [
+  { key: 'users', label: 'Users', icon: 'users' },
+  { key: 'roles', label: 'Roles', icon: 'shield' },
+  { key: 'permissions', label: 'Permissions', icon: 'lock' },
+  { key: 'policies', label: 'Policy Manager', icon: 'list' },
+]
 
 interface AdminUser {
   id: string
@@ -72,6 +88,7 @@ const getRoleColor = (role: string) => {
 export default function UserManagementPage() {
   const [users, setUsers] = useState<AdminUser[]>(MOCK_USERS)
   const [searchTerm, setSearchTerm] = useState('')
+  const [activeTab, setActiveTab] = useState<TabKey>('users')
 
   const filteredUsers = users.filter(
     (user) =>
@@ -144,88 +161,141 @@ export default function UserManagementPage() {
         </Card>
       </div>
 
-      <div className="flex gap-4 items-center">
-        <div className="flex-1 relative">
-          <BrandingKitIcon name="search" size="sm" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B4D4D] dark:text-[#A0A0A0]" />
-          <input
-            type="text"
-            placeholder="Search users by name or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-[#235393]/20 rounded-lg bg-gradient-to-r from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#235393]/50"
-          />
-        </div>
-        <Button className="gap-2">
-          <BrandingKitIcon name="plus" size="sm" />
-          Add User
-        </Button>
+      {/* Tab Navigation */}
+      <div className="border-b border-[#235393]/20">
+        <nav className="flex gap-1">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px',
+                activeTab === tab.key
+                  ? 'border-[#60BA46] text-[#235393] dark:text-[#7ACD56] bg-gradient-to-t from-[#60BA46]/10 to-transparent'
+                  : 'border-transparent text-[#4B4D4D] dark:text-[#A0A0A0] hover:text-[#235393] hover:border-[#235393]/30'
+              )}
+            >
+              <BrandingKitIcon name={tab.icon} size="sm" />
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      <Card className="overflow-hidden border-l-4 border-[#60BA46]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gradient-to-r from-[#235393]/10 to-[#60BA46]/10 dark:from-slate-800 dark:to-slate-700 border-b border-[#235393]/20">
-              <tr>
-                <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Name</th>
-                <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Email</th>
-                <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Role</th>
-                <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Department</th>
-                <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Status</th>
-                <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#235393]/10">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gradient-to-r hover:from-[#235393]/5 hover:to-[#60BA46]/5 dark:hover:from-slate-800/50 dark:hover:to-slate-700/50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-[#235393] dark:text-white">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#235393] to-[#1A3F7A] flex items-center justify-center text-white text-xs font-bold">
-                        {user.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      {user.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-[#4B4D4D] dark:text-[#A0A0A0]">{user.email}</td>
-                  <td className="px-6 py-4">
-                    <span className={cn('px-3 py-1.5 rounded-full text-xs font-semibold', getRoleColor(user.role))}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-[#4B4D4D] dark:text-[#A0A0A0]">{user.department}</td>
-                  <td className="px-6 py-4">
-                    <Badge variant={user.status === 'active' ? 'success' : user.status === 'suspended' ? 'danger' : 'neutral'}>
-                      {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 flex gap-2">
-                    <BrandingKitIconButton
-                      name="edit"
-                      title="Edit user"
-                      onClick={() => console.log('Edit user:', user.id)}
-                    />
-                    <BrandingKitIconButton
-                      name={user.status === 'suspended' ? 'check' : 'alert_circle'}
-                      onClick={() => handleSuspend(user.id)}
-                      title={user.status === 'suspended' ? 'Unsuspend user' : 'Suspend user'}
-                    />
-                    <BrandingKitIconButton
-                      name="trash"
-                      onClick={() => handleDelete(user.id)}
-                      title="Delete user"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      {/* Users Tab Content */}
+      {activeTab === 'users' && (
+        <>
+          <div className="flex gap-4 items-center">
+            <div className="flex-1 relative">
+              <BrandingKitIcon name="search" size="sm" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B4D4D] dark:text-[#A0A0A0]" />
+              <input
+                type="text"
+                placeholder="Search users by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-[#235393]/20 rounded-lg bg-gradient-to-r from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#235393]/50"
+              />
+            </div>
+            <Button className="gap-2">
+              <BrandingKitIcon name="plus" size="sm" />
+              Add User
+            </Button>
+          </div>
 
-      {filteredUsers.length === 0 && (
-        <Card className="p-8 text-center">
-          <BrandingKitIcon name="search" size="2xl" className="mx-auto mb-4 text-[#235393]/40 dark:text-[#7ACD56]/40" />
-          <h3 className="text-lg font-semibold text-[#235393] dark:text-white mb-2">No users found</h3>
-          <p className="text-[#4B4D4D] dark:text-[#A0A0A0]">Try adjusting your search criteria</p>
+          <Card className="overflow-hidden border-l-4 border-[#60BA46]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gradient-to-r from-[#235393]/10 to-[#60BA46]/10 dark:from-slate-800 dark:to-slate-700 border-b border-[#235393]/20">
+                  <tr>
+                    <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Name</th>
+                    <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Email</th>
+                    <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Role</th>
+                    <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Department</th>
+                    <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Status</th>
+                    <th className="px-6 py-4 text-left font-semibold text-[#235393] dark:text-[#7ACD56]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#235393]/10">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-gradient-to-r hover:from-[#235393]/5 hover:to-[#60BA46]/5 dark:hover:from-slate-800/50 dark:hover:to-slate-700/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-[#235393] dark:text-white">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#235393] to-[#1A3F7A] flex items-center justify-center text-white text-xs font-bold">
+                            {user.name.split(' ').map(n => n[0]).join('')}
+                          </div>
+                          {user.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-[#4B4D4D] dark:text-[#A0A0A0]">{user.email}</td>
+                      <td className="px-6 py-4">
+                        <span className={cn('px-3 py-1.5 rounded-full text-xs font-semibold', getRoleColor(user.role))}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-[#4B4D4D] dark:text-[#A0A0A0]">{user.department}</td>
+                      <td className="px-6 py-4">
+                        <Badge variant={user.status === 'active' ? 'success' : user.status === 'suspended' ? 'danger' : 'neutral'}>
+                          {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 flex gap-2">
+                        <BrandingKitIconButton
+                          name="edit"
+                          title="Edit user"
+                          onClick={() => console.log('Edit user:', user.id)}
+                        />
+                        <BrandingKitIconButton
+                          name={user.status === 'suspended' ? 'check' : 'alert_circle'}
+                          onClick={() => handleSuspend(user.id)}
+                          title={user.status === 'suspended' ? 'Unsuspend user' : 'Suspend user'}
+                        />
+                        <BrandingKitIconButton
+                          name="trash"
+                          onClick={() => handleDelete(user.id)}
+                          title="Delete user"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {filteredUsers.length === 0 && (
+            <Card className="p-8 text-center">
+              <BrandingKitIcon name="search" size="2xl" className="mx-auto mb-4 text-[#235393]/40 dark:text-[#7ACD56]/40" />
+              <h3 className="text-lg font-semibold text-[#235393] dark:text-white mb-2">No users found</h3>
+              <p className="text-[#4B4D4D] dark:text-[#A0A0A0]">Try adjusting your search criteria</p>
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* Roles Tab Content */}
+      {activeTab === 'roles' && (
+        <Card className="p-8 text-center border-l-4 border-[#235393]">
+          <BrandingKitIcon name="shield" size="2xl" className="mx-auto mb-4 text-[#235393]" />
+          <h3 className="text-lg font-semibold text-[#235393] dark:text-white mb-2">Roles Manager</h3>
+          <p className="text-[#4B4D4D] dark:text-[#A0A0A0]">Manage user roles and their associated permissions</p>
+        </Card>
+      )}
+
+      {/* Permissions Tab Content */}
+      {activeTab === 'permissions' && (
+        <Card className="p-8 text-center border-l-4 border-[#60BA46]">
+          <BrandingKitIcon name="lock" size="2xl" className="mx-auto mb-4 text-[#60BA46]" />
+          <h3 className="text-lg font-semibold text-[#235393] dark:text-white mb-2">Permissions Manager</h3>
+          <p className="text-[#4B4D4D] dark:text-[#A0A0A0]">Configure granular permissions for different user roles</p>
+        </Card>
+      )}
+
+      {/* Policies Tab Content */}
+      {activeTab === 'policies' && (
+        <Card className="p-8 text-center border-l-4 border-[#FAB915]">
+          <BrandingKitIcon name="list" size="2xl" className="mx-auto mb-4 text-[#FAB915]" />
+          <h3 className="text-lg font-semibold text-[#235393] dark:text-white mb-2">Policy Manager</h3>
+          <p className="text-[#4B4D4D] dark:text-[#A0A0A0]">Define and manage access control policies</p>
         </Card>
       )}
     </div>

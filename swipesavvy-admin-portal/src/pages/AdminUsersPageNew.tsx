@@ -7,13 +7,27 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Form from '@/components/ui/Form'
 import Select from '@/components/ui/Select'
+import StatCard from '@/components/ui/StatCard'
+import Tabs from '@/components/ui/Tabs'
 import { Api } from '@/services/api'
 import { rbacApi } from '@/services/apiClient'
 import type { AdminUser } from '@/types/users'
 import { useToastStore } from '@/store/toastStore'
 import { isEmail } from '@/utils/validate'
-
-type TabType = 'users' | 'roles' | 'policies' | 'permissions'
+import {
+  Users,
+  Shield,
+  Lock,
+  FileText,
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  UserCheck,
+  UserX,
+  RefreshCw,
+  Settings,
+} from 'lucide-react'
 
 interface Role {
   id: string
@@ -52,7 +66,6 @@ interface Permission {
 
 export default function AdminUsersPageNew() {
   const pushToast = useToastStore((s) => s.push)
-  const [activeTab, setActiveTab] = useState<TabType>('users')
 
   // User Management State
   const [loading, setLoading] = useState(true)
@@ -94,14 +107,16 @@ export default function AdminUsersPageNew() {
     if (shouldShowLoading) setLoading(true)
     try {
       const res = await Api.adminUsersApi.listAdminUsers(1, 100, undefined, query || undefined)
-      setAdmins((res.users || []).map((u: any) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        status: u.status,
-        createdAt: u.created_at,
-      })))
+      setAdmins(
+        (res.users || []).map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          status: u.status,
+          createdAt: u.created_at,
+        }))
+      )
     } finally {
       if (shouldShowLoading) setLoading(false)
     }
@@ -115,7 +130,6 @@ export default function AdminUsersPageNew() {
       setRoles(res.roles || [])
     } catch (err: any) {
       console.warn('Failed to load roles:', err?.message)
-      // Keep empty array if API fails
     } finally {
       setRolesLoading(false)
     }
@@ -156,17 +170,6 @@ export default function AdminUsersPageNew() {
       mounted = false
     }
   }, [query])
-
-  // Load tab data on tab change
-  useEffect(() => {
-    if (activeTab === 'roles' && roles.length === 0) {
-      fetchRoles()
-    } else if (activeTab === 'policies' && policies.length === 0) {
-      fetchPolicies()
-    } else if (activeTab === 'permissions' && permissions.length === 0) {
-      fetchPermissions()
-    }
-  }, [activeTab])
 
   // User Management Functions
   const closeUserModal = () => {
@@ -351,9 +354,17 @@ export default function AdminUsersPageNew() {
         header: 'Admin',
         accessor: (u) => u.name,
         cell: (u) => (
-          <div className="min-w-0">
-            <p className="truncate font-semibold">{u.name}</p>
-            <p className="truncate text-xs text-[var(--ss-text-muted)]">{u.email}</p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-ss-lg bg-gradient-to-br from-ss-navy-500 to-ss-navy-700 text-white font-semibold text-sm">
+              {u.name
+                .split(' ')
+                .map((n) => n[0])
+                .join('')}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-[var(--ss-text-primary)]">{u.name}</p>
+              <p className="truncate text-xs text-[var(--ss-text-tertiary)]">{u.email}</p>
+            </div>
           </div>
         ),
       },
@@ -361,15 +372,24 @@ export default function AdminUsersPageNew() {
         key: 'role',
         header: 'Role',
         accessor: (u) => u.role,
-        cell: (u) => <Badge variant="primary">{u.role}</Badge>,
+        cell: (u) => (
+          <Badge colorScheme="navy" variant="soft" size="sm">
+            {u.role}
+          </Badge>
+        ),
       },
       {
         key: 'status',
         header: 'Status',
         accessor: (u) => u.status,
         cell: (u) => {
-          const variant = u.status === 'active' ? 'success' : u.status === 'invited' ? 'warning' : 'danger'
-          return <Badge variant={variant}>{u.status}</Badge>
+          const colorScheme =
+            u.status === 'active' ? 'green' : u.status === 'invited' ? 'yellow' : 'red'
+          return (
+            <Badge colorScheme={colorScheme} variant="soft" size="sm">
+              {u.status}
+            </Badge>
+          )
         },
       },
       {
@@ -377,203 +397,404 @@ export default function AdminUsersPageNew() {
         header: 'Actions',
         cell: (u) => (
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => onEditUser(u)}>
+            <Button size="xs" variant="ghost" onClick={() => onEditUser(u)} leftIcon={<Edit2 className="h-3 w-3" />}>
               Edit
             </Button>
-            <Button size="sm" variant="outline" onClick={() => onDeleteUser(u)}>
+            <Button size="xs" variant="ghost" onClick={() => onDeleteUser(u)} leftIcon={<Trash2 className="h-3 w-3" />}>
               Delete
             </Button>
           </div>
         ),
       },
     ],
-    [],
+    []
   )
+
+  // Stats
+  const activeUsers = admins.filter((u) => u.status === 'active').length
+  const suspendedUsers = admins.filter((u) => u.status === 'suspended').length
+  const invitedUsers = admins.filter((u) => u.status === 'invited').length
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-40 -mx-6 -mt-6 bg-[var(--ss-bg)] px-6 py-4 mb-6 border-b border-[var(--ss-border)]">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="font-headline text-xl font-semibold text-[var(--ss-text)]">Admin Management</h1>
-            <p className="mt-1 text-sm text-[var(--ss-text-muted)]">Manage users, roles, policies, and permissions.</p>
-          </div>
-          {activeTab === 'users' && <Button onClick={() => setModalOpen(true)}>+ Add admin</Button>}
-          {activeTab === 'roles' && <Button onClick={() => setRoleModalOpen(true)}>+ Add role</Button>}
-          {activeTab === 'policies' && <Button onClick={() => setPolicyModalOpen(true)}>+ Add policy</Button>}
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-[var(--ss-text-primary)]">
+            Admin Management
+          </h1>
+          <p className="mt-1 text-sm text-[var(--ss-text-secondary)]">
+            Manage users, roles, policies, and access permissions for the admin portal.
+          </p>
         </div>
+        <Button variant="outline" size="sm" leftIcon={<Settings className="h-4 w-4" />}>
+          Settings
+        </Button>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total Admins"
+          value={admins.length}
+          format="number"
+          icon={<Users className="h-5 w-5" />}
+          variant="gradient"
+        />
+        <StatCard
+          title="Active Users"
+          value={activeUsers}
+          format="number"
+          icon={<UserCheck className="h-5 w-5" />}
+          variant="default"
+          change={{ value: 12, trend: 'up', label: 'vs last month' }}
+        />
+        <StatCard
+          title="Pending Invites"
+          value={invitedUsers}
+          format="number"
+          icon={<RefreshCw className="h-5 w-5" />}
+          variant="default"
+        />
+        <StatCard
+          title="Suspended"
+          value={suspendedUsers}
+          format="number"
+          icon={<UserX className="h-5 w-5" />}
+          variant="default"
+        />
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-[var(--ss-border)]">
-        {(['users', 'roles', 'policies', 'permissions'] as TabType[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab
-                ? 'border-[var(--ss-primary)] text-[var(--ss-primary)]'
-                : 'border-transparent text-[var(--ss-text-muted)] hover:text-[var(--ss-text)]'
-            }`}
-          >
-            {tab === 'users' && 'User Management'}
-            {tab === 'roles' && 'Roles Manager'}
-            {tab === 'policies' && 'Policy Manager'}
-            {tab === 'permissions' && 'Permissions Manager'}
-          </button>
-        ))}
-      </div>
-
-      {/* User Management Tab */}
-      {activeTab === 'users' && (
-        <Card className="p-4">
-          <div className="w-full md:w-[420px]">
-            <Input placeholder="Search admins..." value={query} onChange={(e) => setQuery(e.target.value)} />
-          </div>
-          <div className="mt-4">
-            <Table data={admins} columns={userColumns} loading={loading} pageSize={10} emptyMessage="No admin users found." />
-          </div>
-        </Card>
-      )}
-
-      {/* Roles Manager Tab */}
-      {activeTab === 'roles' && (
-        <div className="grid gap-4">
-          {rolesLoading ? (
-            <Card className="p-8 text-center">
-              <p className="text-[var(--ss-text-muted)]">Loading roles...</p>
-            </Card>
-          ) : roles.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-[var(--ss-text-muted)]">No roles found. Click "+ Add role" to create one.</p>
-            </Card>
-          ) : (
-            roles.map((r) => (
-              <Card key={r.id} className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-[var(--ss-text)]">{r.display_name}</h3>
-                      {r.is_system && <Badge variant="neutral">System</Badge>}
-                    </div>
-                    <p className="mt-1 text-sm text-[var(--ss-text-muted)]">{r.description || 'No description'}</p>
-                    <p className="mt-2 text-xs text-[var(--ss-text-muted)]">{r.user_count || 0} users assigned</p>
-                    {r.permissions.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {r.permissions.slice(0, 5).map((p) => (
-                          <Badge key={p} variant="neutral" className="text-xs">{p}</Badge>
-                        ))}
-                        {r.permissions.length > 5 && (
-                          <Badge variant="neutral" className="text-xs">+{r.permissions.length - 5} more</Badge>
-                        )}
-                      </div>
-                    )}
+      <Tabs
+        variant="underline"
+        onChange={(key: string) => {
+          if (key === 'roles' && roles.length === 0) fetchRoles()
+          if (key === 'policies' && policies.length === 0) fetchPolicies()
+          if (key === 'permissions' && permissions.length === 0) fetchPermissions()
+        }}
+        items={[
+          {
+            key: 'users',
+            label: 'User Management',
+            content: (
+              <div className="space-y-4">
+                {/* Search and Add */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ss-text-tertiary)]" />
+                    <Input
+                      placeholder="Search admins..."
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => onEditRole(r)}>
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => onDeleteRole(r)} disabled={r.is_system}>
-                      Delete
-                    </Button>
-                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setModalOpen(true)}
+                    leftIcon={<Plus className="h-4 w-4" />}
+                  >
+                    Add Admin
+                  </Button>
                 </div>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
 
-      {/* Policy Manager Tab */}
-      {activeTab === 'policies' && (
-        <div className="grid gap-4">
-          {policiesLoading ? (
-            <Card className="p-8 text-center">
-              <p className="text-[var(--ss-text-muted)]">Loading policies...</p>
-            </Card>
-          ) : policies.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-[var(--ss-text-muted)]">No policies found. Click "+ Add policy" to create one.</p>
-            </Card>
-          ) : (
-            policies.map((p) => (
-              <Card key={p.id} className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-[var(--ss-text)]">{p.display_name}</h3>
-                      {p.is_system && <Badge variant="neutral">System</Badge>}
-                      <Badge variant={p.effect === 'allow' ? 'success' : 'danger'}>{p.effect}</Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-[var(--ss-text-muted)]">{p.description || 'No description'}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="text-xs text-[var(--ss-text-muted)]">Resource: <Badge variant="neutral">{p.resource}</Badge></span>
-                      <span className="text-xs text-[var(--ss-text-muted)]">Priority: {p.priority}</span>
-                    </div>
-                    {p.actions.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {p.actions.map((a) => (
-                          <Badge key={a} variant="primary" className="text-xs">{a}</Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => onEditPolicy(p)}>
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => onDeletePolicy(p)} disabled={p.is_system}>
-                      Delete
-                    </Button>
-                  </div>
+                {/* Table */}
+                <Card className="p-0 overflow-hidden">
+                  <Table
+                    data={admins}
+                    columns={userColumns}
+                    loading={loading}
+                    pageSize={10}
+                    emptyMessage="No admin users found."
+                  />
+                </Card>
+              </div>
+            ),
+          },
+          {
+            key: 'roles',
+            label: 'Roles Manager',
+            content: (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-[var(--ss-text-secondary)]">
+                    Define roles and their associated permissions.
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setRoleModalOpen(true)}
+                    leftIcon={<Plus className="h-4 w-4" />}
+                  >
+                    Add Role
+                  </Button>
                 </div>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
 
-      {/* Permissions Manager Tab */}
-      {activeTab === 'permissions' && (
-        <div className="space-y-4">
-          {permissionsLoading ? (
-            <Card className="p-8 text-center">
-              <p className="text-[var(--ss-text-muted)]">Loading permissions...</p>
-            </Card>
-          ) : permissions.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-[var(--ss-text-muted)]">No permissions found. Permissions are typically seeded during setup.</p>
-            </Card>
-          ) : (
-            Array.from(new Set(permissions.map(p => p.category))).map((category) => (
-              <Card key={category} className="p-4">
-                <h3 className="mb-4 font-semibold text-[var(--ss-text)]">{category}</h3>
-                <div className="space-y-3">
-                  {permissions.filter(p => p.category === category).map((perm) => (
-                    <div key={perm.id} className="flex items-center justify-between rounded-lg bg-[var(--ss-surface-alt)] p-3">
-                      <div>
-                        <p className="font-medium text-[var(--ss-text)]">{perm.display_name}</p>
-                        <p className="text-xs text-[var(--ss-text-muted)]">{perm.name}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge variant="neutral">{perm.resource}</Badge>
-                        <Badge variant="primary">{perm.action}</Badge>
-                        {perm.is_system && <Badge variant="neutral">System</Badge>}
-                      </div>
-                    </div>
-                  ))}
+                {rolesLoading ? (
+                  <Card className="p-8 text-center">
+                    <RefreshCw className="h-6 w-6 mx-auto mb-2 animate-spin text-ss-navy-500" />
+                    <p className="text-[var(--ss-text-secondary)]">Loading roles...</p>
+                  </Card>
+                ) : roles.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <Shield className="h-12 w-12 mx-auto mb-3 text-ss-navy-200" />
+                    <p className="text-[var(--ss-text-secondary)]">
+                      No roles found. Click "Add Role" to create one.
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4">
+                    {roles.map((r) => (
+                      <Card key={r.id} className="p-4 border-l-4 border-l-ss-navy-500">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-ss-lg bg-ss-navy-100 dark:bg-ss-navy-900">
+                              <Shield className="h-5 w-5 text-ss-navy-600 dark:text-ss-navy-300" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold text-[var(--ss-text-primary)]">{r.display_name}</h3>
+                                {r.is_system && (
+                                  <Badge colorScheme="gray" variant="soft" size="sm">
+                                    System
+                                  </Badge>
+                                )}
+                                <Badge colorScheme="navy" variant="soft" size="sm">
+                                  {r.user_count || 0} users
+                                </Badge>
+                              </div>
+                              <p className="mt-1 text-sm text-[var(--ss-text-secondary)]">
+                                {r.description || 'No description'}
+                              </p>
+                              {r.permissions.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {r.permissions.slice(0, 5).map((p) => (
+                                    <Badge key={p} colorScheme="green" variant="soft" size="sm">
+                                      {p}
+                                    </Badge>
+                                  ))}
+                                  {r.permissions.length > 5 && (
+                                    <Badge colorScheme="gray" variant="soft" size="sm">
+                                      +{r.permissions.length - 5} more
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="xs" variant="ghost" onClick={() => onEditRole(r)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="ghost"
+                              onClick={() => onDeleteRole(r)}
+                              disabled={r.is_system}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: 'policies',
+            label: 'Policy Manager',
+            content: (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-[var(--ss-text-secondary)]">
+                    Configure access policies for resources and actions.
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setPolicyModalOpen(true)}
+                    leftIcon={<Plus className="h-4 w-4" />}
+                  >
+                    Add Policy
+                  </Button>
                 </div>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
+
+                {policiesLoading ? (
+                  <Card className="p-8 text-center">
+                    <RefreshCw className="h-6 w-6 mx-auto mb-2 animate-spin text-ss-navy-500" />
+                    <p className="text-[var(--ss-text-secondary)]">Loading policies...</p>
+                  </Card>
+                ) : policies.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <FileText className="h-12 w-12 mx-auto mb-3 text-ss-navy-200" />
+                    <p className="text-[var(--ss-text-secondary)]">
+                      No policies found. Click "Add Policy" to create one.
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4">
+                    {policies.map((p) => (
+                      <Card
+                        key={p.id}
+                        className={`p-4 border-l-4 ${
+                          p.effect === 'allow' ? 'border-l-ss-green-500' : 'border-l-ss-red-500'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`p-2 rounded-ss-lg ${
+                                p.effect === 'allow'
+                                  ? 'bg-ss-green-100 dark:bg-ss-green-900/30'
+                                  : 'bg-ss-red-100 dark:bg-ss-red-900/30'
+                              }`}
+                            >
+                              <FileText
+                                className={`h-5 w-5 ${
+                                  p.effect === 'allow'
+                                    ? 'text-ss-green-600 dark:text-ss-green-400'
+                                    : 'text-ss-red-600 dark:text-ss-red-400'
+                                }`}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold text-[var(--ss-text-primary)]">{p.display_name}</h3>
+                                {p.is_system && (
+                                  <Badge colorScheme="gray" variant="soft" size="sm">
+                                    System
+                                  </Badge>
+                                )}
+                                <Badge
+                                  colorScheme={p.effect === 'allow' ? 'green' : 'red'}
+                                  variant="soft"
+                                  size="sm"
+                                >
+                                  {p.effect}
+                                </Badge>
+                              </div>
+                              <p className="mt-1 text-sm text-[var(--ss-text-secondary)]">
+                                {p.description || 'No description'}
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-2 items-center">
+                                <span className="text-xs text-[var(--ss-text-tertiary)]">Resource:</span>
+                                <Badge colorScheme="navy" variant="soft" size="sm">
+                                  {p.resource}
+                                </Badge>
+                                <span className="text-xs text-[var(--ss-text-tertiary)]">Priority: {p.priority}</span>
+                              </div>
+                              {p.actions.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {p.actions.map((a) => (
+                                    <Badge key={a} colorScheme="yellow" variant="soft" size="sm">
+                                      {a}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="xs" variant="ghost" onClick={() => onEditPolicy(p)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="ghost"
+                              onClick={() => onDeletePolicy(p)}
+                              disabled={p.is_system}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: 'permissions',
+            label: 'Permissions Manager',
+            content: (
+              <div className="space-y-4">
+                <p className="text-sm text-[var(--ss-text-secondary)]">
+                  View all available permissions organized by category.
+                </p>
+
+                {permissionsLoading ? (
+                  <Card className="p-8 text-center">
+                    <RefreshCw className="h-6 w-6 mx-auto mb-2 animate-spin text-ss-navy-500" />
+                    <p className="text-[var(--ss-text-secondary)]">Loading permissions...</p>
+                  </Card>
+                ) : permissions.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <Lock className="h-12 w-12 mx-auto mb-3 text-ss-navy-200" />
+                    <p className="text-[var(--ss-text-secondary)]">
+                      No permissions found. Permissions are typically seeded during setup.
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {Array.from(new Set(permissions.map((p) => p.category))).map((category) => (
+                      <Card key={category} className="p-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Lock className="h-5 w-5 text-ss-navy-500" />
+                          <h3 className="font-semibold text-[var(--ss-text-primary)]">{category}</h3>
+                          <Badge colorScheme="gray" variant="soft" size="sm">
+                            {permissions.filter((p) => p.category === category).length} permissions
+                          </Badge>
+                        </div>
+                        <div className="space-y-2">
+                          {permissions
+                            .filter((p) => p.category === category)
+                            .map((perm) => (
+                              <div
+                                key={perm.id}
+                                className="flex items-center justify-between rounded-ss-lg bg-ss-gray-50 dark:bg-ss-gray-800 p-3"
+                              >
+                                <div>
+                                  <p className="font-medium text-[var(--ss-text-primary)]">{perm.display_name}</p>
+                                  <p className="text-xs text-[var(--ss-text-tertiary)]">{perm.name}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Badge colorScheme="navy" variant="soft" size="sm">
+                                    {perm.resource}
+                                  </Badge>
+                                  <Badge colorScheme="green" variant="soft" size="sm">
+                                    {perm.action}
+                                  </Badge>
+                                  {perm.is_system && (
+                                    <Badge colorScheme="gray" variant="soft" size="sm">
+                                      System
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ),
+          },
+        ]}
+      />
 
       {/* User Modal */}
       <Modal
         open={modalOpen}
         onClose={closeUserModal}
-        title={editingUser ? 'Edit admin' : 'Add admin'}
+        title={editingUser ? 'Edit Admin' : 'Add Admin'}
         description={editingUser ? 'Update admin user details.' : 'Create a new admin user.'}
         footer={
           <div className="flex justify-end gap-2">
@@ -586,7 +807,12 @@ export default function AdminUsersPageNew() {
       >
         <Form spacing="md" onSubmit={(e) => e.preventDefault()}>
           <Input label="Full name" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input label="Email" value={email} onChange={(e) => setEmail(e.target.value)} error={error ?? undefined} />
+          <Input
+            label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={error ?? undefined}
+          />
           <Select
             label="Role"
             value={role}
@@ -615,7 +841,7 @@ export default function AdminUsersPageNew() {
       <Modal
         open={roleModalOpen}
         onClose={closeRoleModal}
-        title={editingRole ? 'Edit role' : 'Add role'}
+        title={editingRole ? 'Edit Role' : 'Add Role'}
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={closeRoleModal}>
@@ -626,9 +852,24 @@ export default function AdminUsersPageNew() {
         }
       >
         <Form spacing="md" onSubmit={(e) => e.preventDefault()}>
-          <Input label="Role name" value={roleName} onChange={(e) => setRoleName(e.target.value)} placeholder="e.g., content_manager" />
-          <Input label="Display name" value={roleDisplayName} onChange={(e) => setRoleDisplayName(e.target.value)} placeholder="e.g., Content Manager" />
-          <Input label="Description" value={roleDescription} onChange={(e) => setRoleDescription(e.target.value)} placeholder="Brief description of the role" />
+          <Input
+            label="Role name"
+            value={roleName}
+            onChange={(e) => setRoleName(e.target.value)}
+            placeholder="e.g., content_manager"
+          />
+          <Input
+            label="Display name"
+            value={roleDisplayName}
+            onChange={(e) => setRoleDisplayName(e.target.value)}
+            placeholder="e.g., Content Manager"
+          />
+          <Input
+            label="Description"
+            value={roleDescription}
+            onChange={(e) => setRoleDescription(e.target.value)}
+            placeholder="Brief description of the role"
+          />
         </Form>
       </Modal>
 
@@ -636,7 +877,7 @@ export default function AdminUsersPageNew() {
       <Modal
         open={policyModalOpen}
         onClose={closePolicyModal}
-        title={editingPolicy ? 'Edit policy' : 'Add policy'}
+        title={editingPolicy ? 'Edit Policy' : 'Add Policy'}
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={closePolicyModal}>
@@ -647,10 +888,30 @@ export default function AdminUsersPageNew() {
         }
       >
         <Form spacing="md" onSubmit={(e) => e.preventDefault()}>
-          <Input label="Policy name" value={policyName} onChange={(e) => setPolicyName(e.target.value)} placeholder="e.g., merchant_readonly" />
-          <Input label="Display name" value={policyDisplayName} onChange={(e) => setPolicyDisplayName(e.target.value)} placeholder="e.g., Merchant Read Only" />
-          <Input label="Description" value={policyDescription} onChange={(e) => setPolicyDescription(e.target.value)} placeholder="Brief description of the policy" />
-          <Input label="Resource" value={policyResource} onChange={(e) => setPolicyResource(e.target.value)} placeholder="e.g., merchants, users, transactions" />
+          <Input
+            label="Policy name"
+            value={policyName}
+            onChange={(e) => setPolicyName(e.target.value)}
+            placeholder="e.g., merchant_readonly"
+          />
+          <Input
+            label="Display name"
+            value={policyDisplayName}
+            onChange={(e) => setPolicyDisplayName(e.target.value)}
+            placeholder="e.g., Merchant Read Only"
+          />
+          <Input
+            label="Description"
+            value={policyDescription}
+            onChange={(e) => setPolicyDescription(e.target.value)}
+            placeholder="Brief description of the policy"
+          />
+          <Input
+            label="Resource"
+            value={policyResource}
+            onChange={(e) => setPolicyResource(e.target.value)}
+            placeholder="e.g., merchants, users, transactions"
+          />
         </Form>
       </Modal>
     </div>
