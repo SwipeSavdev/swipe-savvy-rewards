@@ -16,3 +16,10 @@ node_modules/
 *.pem
 secrets/
 .secrets
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
