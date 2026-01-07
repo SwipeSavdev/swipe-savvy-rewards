@@ -1,2 +1,1 @@
-export { default } from './AdminUsersPageNew'
-
+export { default } from './UserManagementPage'
