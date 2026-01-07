@@ -1,1 +1,3 @@
-export { default } from './UserManagementPage'
+import UserManagementPage from './UserManagementPage'
+
+export default UserManagementPage
