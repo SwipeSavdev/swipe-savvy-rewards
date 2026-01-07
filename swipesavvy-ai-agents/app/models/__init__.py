@@ -130,21 +130,23 @@ class SupportTicket(Base):
 class FeatureFlag(Base):
     """Feature rollout flags for A/B testing"""
     __tablename__ = "feature_flags"
-    
-    id = Column(UUID, primary_key=True, default=uuid4)
-    name = Column(String(255), unique=True, nullable=False, index=True)
-    display_name = Column(String(255), nullable=False)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
+    category = Column(String(50), nullable=False, index=True)
     enabled = Column(Boolean, default=False, index=True)
     rollout_percentage = Column(Integer, default=0)
-    environment = Column(String(50), default='development', index=True)
-    targeted_users = Column(ARRAY(String), default=list)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    owner_email = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
-    
+    created_by = Column(String(255), nullable=True)
+    updated_by = Column(String(255), nullable=True)
+
     __table_args__ = (
-        CheckConstraint("environment IN ('development', 'staging', 'production')"),
+        CheckConstraint("category IN ('UI', 'Advanced', 'Experimental', 'Rollout')"),
+        CheckConstraint("rollout_percentage >= 0 AND rollout_percentage <= 100"),
     )
 
 
@@ -421,6 +423,72 @@ class AnalyticsEvent(Base):
     )
 
 
+# ============================================
+# Role-Based Access Control (RBAC) Models
+# ============================================
+
+class Role(Base):
+    """Admin roles with permissions"""
+    __tablename__ = "roles"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    permissions = Column(ARRAY(String), default=list, nullable=False)
+    is_system = Column(Boolean, default=False)  # System roles cannot be deleted
+    status = Column(String(50), default='active', nullable=False)
+    user_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'inactive')"),
+    )
+
+
+class Policy(Base):
+    """Access control policies"""
+    __tablename__ = "policies"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    resource = Column(String(100), nullable=False)  # e.g., 'merchants', 'users', 'transactions'
+    actions = Column(ARRAY(String), default=list, nullable=False)  # e.g., ['read', 'write', 'delete']
+    conditions = Column(JSONB, default=dict, nullable=True)  # Optional conditions for the policy
+    effect = Column(String(10), default='allow', nullable=False)  # 'allow' or 'deny'
+    priority = Column(Integer, default=0)  # Higher priority policies evaluated first
+    is_system = Column(Boolean, default=False)
+    status = Column(String(50), default='active', nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'inactive')"),
+        CheckConstraint("effect IN ('allow', 'deny')"),
+    )
+
+
+class Permission(Base):
+    """Available permissions in the system"""
+    __tablename__ = "permissions"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), nullable=False)  # e.g., 'merchants', 'users', 'analytics'
+    resource = Column(String(100), nullable=False)
+    action = Column(String(50), nullable=False)  # e.g., 'read', 'write', 'delete', 'manage'
+    is_system = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 # Export all models
 __all__ = [
     "User",
@@ -440,4 +508,7 @@ __all__ = [
     "Payment",
     "Subscription",
     "AnalyticsEvent",
+    "Role",
+    "Policy",
+    "Permission",
 ]

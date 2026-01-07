@@ -1,7 +1,7 @@
 """Admin User Management Routes
 
-This module provides endpoints for managing regular users in the SwipeSavvy platform.
-Includes user listing, creation, details, status updates, and deletion.
+This module provides endpoints for managing admin portal users.
+Includes admin user listing, creation, details, status updates, and deletion.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body, Header, Depends
@@ -12,10 +12,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 import jwt
 import os
-from passlib.context import CryptContext
+import bcrypt
 
 from app.database import get_db
-from app.models import User, AdminUser
+from app.models import AdminUser
 
 router = APIRouter(prefix="/api/v1/admin/users", tags=["admin-users"])
 
@@ -23,8 +23,10 @@ router = APIRouter(prefix="/api/v1/admin/users", tags=["admin-users"])
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
 ALGORITHM = "HS256"
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt."""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def verify_token(token: str) -> dict:
     """Verify JWT token."""
@@ -38,118 +40,104 @@ def verify_token(token: str) -> dict:
 # Request/Response Models
 # ============================================================================
 
-class UserCreateRequest(BaseModel):
-    """Request body for creating a new user"""
+class AdminUserCreateRequest(BaseModel):
+    """Request body for creating a new admin user"""
     email: EmailStr
-    name: str
-    phone: Optional[str] = None
-    invite: bool = True  # If true, send invite email instead of setting password
+    full_name: str
+    password: str
+    role: str = "admin"
+    department: Optional[str] = None
 
 
-class UserUpdateStatusRequest(BaseModel):
-    """Request body for updating user status"""
-    status: str  # "active", "suspended", "deactivated"
-    reason: Optional[str] = None
+class AdminUserUpdateRequest(BaseModel):
+    """Request body for updating an admin user"""
+    full_name: Optional[str] = None
+    role: Optional[str] = None
+    department: Optional[str] = None
+    status: Optional[str] = None
 
 
-class UserResponse(BaseModel):
-    """Response model for user details"""
+class AdminUserResponse(BaseModel):
+    """Response model for admin user details"""
     id: str
     email: str
-    name: str
-    phone: Optional[str]
-    status: str
+    name: str  # Mapped from full_name for frontend compatibility
     role: str
-    created_at: str
+    department: Optional[str]
+    status: str
+    created_at: Optional[str]
     last_login: Optional[str]
-    verification_status: str  # "verified", "pending", "unverified"
-    device_count: int
-    transaction_count: int
 
 
-class UserListResponse(BaseModel):
-    """Response model for user list"""
-    users: List[UserResponse]
+class AdminUserListResponse(BaseModel):
+    """Response model for admin user list"""
+    users: List[AdminUserResponse]
     total: int
     page: int
     per_page: int
     total_pages: int
 
 
-class UserInviteResponse(BaseModel):
-    """Response for user invitation"""
-    id: str
-    email: str
-    name: str
-    invite_token: str
-    invite_expires_at: str
-    message: str
-
-
-
 # ============================================================================
 # Endpoints
 # ============================================================================
 
-@router.get("", response_model=UserListResponse)
-async def list_users(
+@router.get("", response_model=AdminUserListResponse)
+async def list_admin_users(
     page: int = Query(1, ge=1),
     per_page: int = Query(25, ge=1, le=100),
-    status: Optional[str] = Query(None),
+    role: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
     """
-    List all users with pagination and filtering
-    
+    List all admin users with pagination and filtering
+
     Query Parameters:
     - page: Page number (default: 1)
     - per_page: Items per page (default: 25, max: 100)
-    - status: Filter by status (active, suspended, deactivated)
+    - role: Filter by role (super_admin, admin, support, analyst)
     - search: Search by email or name
     """
     # Token is optional for demo
     if authorization:
         token = authorization.replace("Bearer ", "")
         verify_token(token)
-    
+
     # Build query
-    query = db.query(User)
-    
-    # Filter by status
-    if status:
-        query = query.filter(User.status == status)
-    
+    query = db.query(AdminUser)
+
+    # Filter by role
+    if role:
+        query = query.filter(AdminUser.role == role)
+
     # Search by email or name
     if search:
         search_pattern = f"%{search}%"
         query = query.filter(
-            (User.email.ilike(search_pattern)) | 
-            (User.name.ilike(search_pattern))
+            (AdminUser.email.ilike(search_pattern)) |
+            (AdminUser.full_name.ilike(search_pattern))
         )
-    
+
     # Get total count
     total = query.count()
     total_pages = (total + per_page - 1) // per_page
-    
+
     # Apply pagination
     users = query.offset((page - 1) * per_page).limit(per_page).all()
-    
-    return UserListResponse(
+
+    return AdminUserListResponse(
         users=[
-            UserResponse(
+            AdminUserResponse(
                 id=str(u.id),
                 email=u.email,
-                name=u.name,
-                phone=u.phone,
-                status=u.status,
+                name=u.full_name,  # Map full_name to name for frontend
                 role=u.role,
+                department=u.department,
+                status=u.status,
                 created_at=u.created_at.isoformat() if u.created_at else None,
                 last_login=u.last_login.isoformat() if u.last_login else None,
-                verification_status="verified",  # Can be extended with a field
-                device_count=0,  # Can be extended with relationship
-                transaction_count=0,  # Can be extended with relationship
             )
             for u in users
         ],
@@ -160,129 +148,130 @@ async def list_users(
     )
 
 
-@router.post("", response_model=UserInviteResponse, status_code=201)
-async def create_user(req: UserCreateRequest, db: Session = Depends(get_db)):
+@router.post("", response_model=AdminUserResponse, status_code=201)
+async def create_admin_user(req: AdminUserCreateRequest, db: Session = Depends(get_db)):
     """
-    Create a new user and optionally send invite email
-    
+    Create a new admin user
+
     Request Body:
-    - email: User email address (must be unique)
-    - name: User full name
-    - phone: Optional phone number
-    - invite: Send email invite (default: true)
+    - email: Admin email address (must be unique)
+    - full_name: Admin full name
+    - password: Password
+    - role: Role (super_admin, admin, support, analyst)
+    - department: Optional department
     """
     # Check if email already exists
-    existing_user = db.query(User).filter(User.email == req.email.lower()).first()
+    existing_user = db.query(AdminUser).filter(AdminUser.email == req.email.lower()).first()
     if existing_user:
-        raise HTTPException(status_code=409, detail="User with this email already exists")
-    
-    # Create new user
-    new_user = User(
+        raise HTTPException(status_code=409, detail="Admin user with this email already exists")
+
+    # Create new admin user
+    new_user = AdminUser(
         email=req.email.lower(),
-        name=req.name,
-        phone=req.phone,
-        password_hash=pwd_context.hash("temporary"),  # Temporary password
+        full_name=req.full_name,
+        password_hash=hash_password(req.password),
+        role=req.role,
+        department=req.department,
         status="active",
-        role="user",
     )
-    
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
-    # Generate invite token (in production, save to database)
-    import secrets
-    invite_token = secrets.token_urlsafe(32)
-    
-    message = f"Invitation sent to {req.email}" if req.invite else f"User {req.name} created successfully"
-    
-    return UserInviteResponse(
+
+    return AdminUserResponse(
         id=str(new_user.id),
-        email=req.email,
-        name=req.name,
-        invite_token=invite_token,
-        invite_expires_at=datetime.now(timezone.utc).isoformat(),
-        message=message,
+        email=new_user.email,
+        name=new_user.full_name,
+        role=new_user.role,
+        department=new_user.department,
+        status=new_user.status,
+        created_at=new_user.created_at.isoformat() if new_user.created_at else None,
+        last_login=None,
     )
 
 
-@router.get("/{user_id}", response_model=UserResponse)
-async def get_user(user_id: str, db: Session = Depends(get_db)):
+@router.get("/{user_id}", response_model=AdminUserResponse)
+async def get_admin_user(user_id: str, db: Session = Depends(get_db)):
     """
-    Get detailed information about a specific user
-    
+    Get detailed information about a specific admin user
+
     Path Parameters:
-    - user_id: The user's unique identifier
+    - user_id: The admin user's unique identifier
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(AdminUser).filter(AdminUser.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
-    
-    return UserResponse(
+        raise HTTPException(status_code=404, detail=f"Admin user {user_id} not found")
+
+    return AdminUserResponse(
         id=str(user.id),
         email=user.email,
-        name=user.name,
-        phone=user.phone,
-        status=user.status,
+        name=user.full_name,
         role=user.role,
+        department=user.department,
+        status=user.status,
         created_at=user.created_at.isoformat() if user.created_at else None,
         last_login=user.last_login.isoformat() if user.last_login else None,
-        verification_status="verified",
-        device_count=0,
-        transaction_count=0,
     )
 
 
-@router.put("/{user_id}/status", response_model=UserResponse)
-async def update_user_status(user_id: str, req: UserUpdateStatusRequest, db: Session = Depends(get_db)):
+@router.put("/{user_id}", response_model=AdminUserResponse)
+async def update_admin_user(user_id: str, req: AdminUserUpdateRequest, db: Session = Depends(get_db)):
     """
-    Update a user's status (active, suspended, deactivated)
-    
+    Update an admin user
+
     Path Parameters:
-    - user_id: The user's unique identifier
-    
+    - user_id: The admin user's unique identifier
+
     Request Body:
-    - status: New status (active, suspended, deactivated)
-    - reason: Optional reason for status change
+    - full_name: Optional new name
+    - role: Optional new role
+    - department: Optional new department
+    - status: Optional new status
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(AdminUser).filter(AdminUser.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
-    
-    if req.status not in ["active", "suspended", "deactivated"]:
-        raise HTTPException(status_code=400, detail="Invalid status. Must be active, suspended, or deactivated")
-    
-    user.status = req.status
+        raise HTTPException(status_code=404, detail=f"Admin user {user_id} not found")
+
+    if req.full_name is not None:
+        user.full_name = req.full_name
+    if req.role is not None:
+        user.role = req.role
+    if req.department is not None:
+        user.department = req.department
+    if req.status is not None:
+        if req.status not in ["active", "inactive", "suspended"]:
+            raise HTTPException(status_code=400, detail="Invalid status. Must be active, inactive, or suspended")
+        user.status = req.status
+
+    user.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(user)
-    
-    return UserResponse(
+
+    return AdminUserResponse(
         id=str(user.id),
         email=user.email,
-        name=user.name,
-        phone=user.phone,
-        status=user.status,
+        name=user.full_name,
         role=user.role,
+        department=user.department,
+        status=user.status,
         created_at=user.created_at.isoformat() if user.created_at else None,
         last_login=user.last_login.isoformat() if user.last_login else None,
-        verification_status="verified",
-        device_count=0,
-        transaction_count=0,
     )
 
 
 @router.delete("/{user_id}", status_code=204)
-async def delete_user(user_id: str, db: Session = Depends(get_db)):
+async def delete_admin_user(user_id: str, db: Session = Depends(get_db)):
     """
-    Delete a user (hard delete)
-    
+    Delete an admin user (hard delete)
+
     Path Parameters:
-    - user_id: The user's unique identifier
+    - user_id: The admin user's unique identifier
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(AdminUser).filter(AdminUser.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
-    
+        raise HTTPException(status_code=404, detail=f"Admin user {user_id} not found")
+
     db.delete(user)
     db.commit()
     return None
@@ -293,17 +282,27 @@ async def delete_user(user_id: str, db: Session = Depends(get_db)):
 # ============================================================================
 
 @router.get("/stats/overview", response_model=dict)
-async def get_users_stats(db: Session = Depends(get_db)):
-    """Get user statistics overview"""
-    total_users = db.query(User).count()
-    active_users = db.query(User).filter(User.status == "active").count()
-    suspended_users = db.query(User).filter(User.status == "suspended").count()
-    
+async def get_admin_users_stats(db: Session = Depends(get_db)):
+    """Get admin user statistics overview"""
+    total_users = db.query(AdminUser).count()
+    active_users = db.query(AdminUser).filter(AdminUser.status == "active").count()
+    inactive_users = db.query(AdminUser).filter(AdminUser.status == "inactive").count()
+
+    # Count by role
+    super_admin_count = db.query(AdminUser).filter(AdminUser.role == "super_admin").count()
+    admin_count = db.query(AdminUser).filter(AdminUser.role == "admin").count()
+    support_count = db.query(AdminUser).filter(AdminUser.role == "support").count()
+    analyst_count = db.query(AdminUser).filter(AdminUser.role == "analyst").count()
+
     return {
         "total_users": total_users,
         "active_users": active_users,
-        "suspended_users": suspended_users,
-        "deactivated_users": total_users - active_users - suspended_users,
-        "verified_users": total_users,  # Can be extended
-        "verification_rate": 100.0 if total_users > 0 else 0,
+        "inactive_users": inactive_users,
+        "suspended_users": total_users - active_users - inactive_users,
+        "by_role": {
+            "super_admin": super_admin_count,
+            "admin": admin_count,
+            "support": support_count,
+            "analyst": analyst_count,
+        }
     }

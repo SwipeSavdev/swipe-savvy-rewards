@@ -504,6 +504,54 @@ export const merchantsApi = {
       throw handleError(error)
     }
   },
+
+  async createMerchant(data: {
+    name: string
+    email: string
+    phone?: string
+    website?: string
+    country?: string
+    location?: string
+    business_type?: string
+  }) {
+    try {
+      return await fetchApi('/api/v1/admin/merchants', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async updateMerchant(merchantId: string, data: {
+    name?: string
+    email?: string
+    phone?: string
+    website?: string
+    country?: string
+    location?: string
+    business_type?: string
+  }) {
+    try {
+      return await fetchApi(`/api/v1/admin/merchants/${merchantId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async deleteMerchant(merchantId: string) {
+    try {
+      return await fetchApi(`/api/v1/admin/merchants/${merchantId}`, {
+        method: 'DELETE',
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
 }
 
 export const adminUsersApi = {
@@ -545,6 +593,27 @@ export const adminUsersApi = {
       return await fetchApi(`/api/v1/admin/users/${userId}/role`, {
         method: 'PUT',
         body: JSON.stringify({ role }),
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async createAdminUser(data: { email: string; full_name: string; password: string; role: string }) {
+    try {
+      return await fetchApi('/api/v1/admin/users', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async deleteAdminUser(userId: string) {
+    try {
+      return await fetchApi(`/api/v1/admin/users/${userId}`, {
+        method: 'DELETE',
       })
     } catch (error) {
       throw handleError(error)
@@ -631,12 +700,13 @@ export const supportTicketsApi = {
 }
 
 export const featureFlagsApi = {
-  async listFlags(page = 1, perPage = 200, search?: string) {
+  async listFlags(page = 1, perPage = 200, search?: string, environment?: string) {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         per_page: perPage.toString(),
         ...(search && { search }),
+        ...(environment && { environment }),
       })
       const result = await fetchApi(`/api/v1/admin/feature-flags?${params}`)
       return result
@@ -658,6 +728,56 @@ export const featureFlagsApi = {
     }
   },
 
+  async createFlag(data: {
+    key: string
+    name: string
+    description?: string
+    category?: string
+    enabled?: boolean
+    rolloutPercentage?: number
+    ownerEmail?: string
+  }) {
+    try {
+      return await fetchApi('/api/v1/admin/feature-flags', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    } catch (error: unknown) {
+      console.error('[featureFlagsApi] Failed to create flag:', error instanceof Error ? error.message : error)
+      throw handleError(error)
+    }
+  },
+
+  async updateFlag(flagId: string, data: {
+    name?: string
+    description?: string
+    category?: string
+    enabled?: boolean
+    rolloutPercentage?: number
+    ownerEmail?: string
+  }) {
+    try {
+      return await fetchApi(`/api/v1/admin/feature-flags/${flagId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      })
+    } catch (error: unknown) {
+      console.error('[featureFlagsApi] Failed to update flag:', error instanceof Error ? error.message : error)
+      throw handleError(error)
+    }
+  },
+
+  async deleteFlag(flagId: string) {
+    try {
+      return await fetchApi(`/api/v1/admin/feature-flags/${flagId}`, {
+        method: 'DELETE',
+      })
+    } catch (error: any) {
+      console.error('[featureFlagsApi] Failed to delete flag:', error?.message)
+      throw handleError(error)
+    }
+  },
+
   async toggleFlag(flagId: string, enabled: boolean) {
     try {
       return await fetchApi(`/api/v1/admin/feature-flags/${flagId}/toggle`, {
@@ -666,8 +786,7 @@ export const featureFlagsApi = {
       })
     } catch (error: any) {
       console.warn('[featureFlagsApi] Real API failed for toggleFlag:', error?.message)
-      // Simulate success for mock
-      return { success: true, enabled }
+      throw handleError(error)
     }
   },
 
@@ -679,8 +798,16 @@ export const featureFlagsApi = {
       })
     } catch (error: any) {
       console.warn('[featureFlagsApi] Real API failed for updateRollout:', error?.message)
-      // Simulate success for mock
-      return { success: true, rollout }
+      throw handleError(error)
+    }
+  },
+
+  async getStats() {
+    try {
+      return await fetchApi('/api/v1/admin/feature-flags/stats/overview')
+    } catch (error: any) {
+      console.warn('[featureFlagsApi] Real API failed for getStats:', error?.message)
+      return { total_flags: 0, enabled_flags: 0, disabled_flags: 0, avg_rollout: 0 }
     }
   },
 }
@@ -891,6 +1018,232 @@ export const settingsApi = {
 }
 
 // ============================================================================
+// RBAC (Role-Based Access Control) API
+// ============================================================================
+
+export const rbacApi = {
+  // Roles
+  async listRoles(page = 1, perPage = 25, status?: string, search?: string) {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: perPage.toString(),
+        ...(status && { status }),
+        ...(search && { search }),
+      })
+      return await fetchApi(`/api/v1/admin/roles?${params}`)
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async getRole(roleId: string) {
+    try {
+      return await fetchApi(`/api/v1/admin/roles/${roleId}`)
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async createRole(data: {
+    name: string
+    display_name: string
+    description?: string
+    permissions: string[]
+  }) {
+    try {
+      return await fetchApi('/api/v1/admin/roles', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async updateRole(roleId: string, data: {
+    display_name?: string
+    description?: string
+    permissions?: string[]
+    status?: string
+  }) {
+    try {
+      return await fetchApi(`/api/v1/admin/roles/${roleId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async deleteRole(roleId: string) {
+    try {
+      return await fetchApi(`/api/v1/admin/roles/${roleId}`, {
+        method: 'DELETE',
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  // Policies
+  async listPolicies(page = 1, perPage = 25, status?: string, resource?: string, search?: string) {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: perPage.toString(),
+        ...(status && { status }),
+        ...(resource && { resource }),
+        ...(search && { search }),
+      })
+      return await fetchApi(`/api/v1/admin/policies?${params}`)
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async getPolicy(policyId: string) {
+    try {
+      return await fetchApi(`/api/v1/admin/policies/${policyId}`)
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async createPolicy(data: {
+    name: string
+    display_name: string
+    description?: string
+    resource: string
+    actions: string[]
+    conditions?: Record<string, any>
+    effect?: string
+    priority?: number
+  }) {
+    try {
+      return await fetchApi('/api/v1/admin/policies', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async updatePolicy(policyId: string, data: {
+    display_name?: string
+    description?: string
+    resource?: string
+    actions?: string[]
+    conditions?: Record<string, any>
+    effect?: string
+    priority?: number
+    status?: string
+  }) {
+    try {
+      return await fetchApi(`/api/v1/admin/policies/${policyId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async deletePolicy(policyId: string) {
+    try {
+      return await fetchApi(`/api/v1/admin/policies/${policyId}`, {
+        method: 'DELETE',
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  // Permissions
+  async listPermissions(page = 1, perPage = 100, category?: string, resource?: string, search?: string) {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: perPage.toString(),
+        ...(category && { category }),
+        ...(resource && { resource }),
+        ...(search && { search }),
+      })
+      return await fetchApi(`/api/v1/admin/permissions?${params}`)
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async getPermission(permissionId: string) {
+    try {
+      return await fetchApi(`/api/v1/admin/permissions/${permissionId}`)
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async createPermission(data: {
+    name: string
+    display_name: string
+    description?: string
+    category: string
+    resource: string
+    action: string
+  }) {
+    try {
+      return await fetchApi('/api/v1/admin/permissions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async deletePermission(permissionId: string) {
+    try {
+      return await fetchApi(`/api/v1/admin/permissions/${permissionId}`, {
+        method: 'DELETE',
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  // Stats & Utilities
+  async getRbacStats() {
+    try {
+      return await fetchApi('/api/v1/admin/rbac/stats')
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async migrateRbacTables() {
+    try {
+      return await fetchApi('/api/v1/admin/rbac/migrate', {
+        method: 'POST',
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+
+  async seedRbacData() {
+    try {
+      return await fetchApi('/api/v1/admin/rbac/seed', {
+        method: 'POST',
+      })
+    } catch (error) {
+      throw handleError(error)
+    }
+  },
+}
+
+// ============================================================================
 // Backward Compatibility - apiClient object
 // ============================================================================
 
@@ -942,6 +1295,7 @@ export const apiClient = {
   aiCampaignsApi,
   auditLogsApi,
   settingsApi,
+  rbacApi,
 }
 
 // ============================================================================

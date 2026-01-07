@@ -156,8 +156,37 @@ export default function FeatureFlagsPage() {
   }, [])
 
   const fetchFlags = async (shouldShowLoading = true) => {
-    // Using mock data directly - no API call needed
-    return
+    // Try to fetch from real API, fallback to local mock data
+    if (shouldShowLoading) setLoading(true)
+    try {
+      const { Api } = await import('@/services/api')
+      const res = await Api.featureFlagsApi.listFlags(1, 200)
+      if (res.flags && res.flags.length > 0) {
+        setFlags(res.flags.map((f: any) => ({
+          id: f.id,
+          key: f.name,
+          name: f.displayName || f.name,
+          displayName: f.displayName || f.name,
+          description: f.description,
+          enabled: f.enabled,
+          status: f.enabled ? 'on' : 'off' as const,
+          rolloutPercentage: f.rolloutPercentage,
+          rolloutPct: f.rolloutPercentage,
+          targetedUsers: f.targetedUsers || [],
+          createdAt: f.createdAt,
+          updatedAt: f.updatedAt,
+          createdBy: f.createdBy || 'system',
+          updatedBy: 'system',
+          environment: f.environment || 'production',
+          category: 'authentication' as any,
+        })))
+      }
+    } catch (err) {
+      console.warn('API unavailable, using local feature flags data')
+      // Keep using MOBILE_APP_FEATURES mock data
+    } finally {
+      if (shouldShowLoading) setLoading(false)
+    }
   }
 
   useEffect(() => {
