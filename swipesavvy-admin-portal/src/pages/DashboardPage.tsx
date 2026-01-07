@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import StatCard from '@/components/ui/StatCard'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
@@ -13,19 +13,69 @@ import { useDashboardWidgetStore } from '@/store/dashboardWidgetStore'
 import { LineChartWidget, BarChartWidget, PieChartWidget, AreaChartWidget } from '@/components/charts/DashboardCharts'
 import WidgetCustomizer from '@/components/dashboard/WidgetCustomizer'
 import { transactionsVolumeData, revenueData, topMerchantsData, transactionDistributionData } from '@/data/chartData'
+import { Users, CreditCard, DollarSign, TrendingUp } from 'lucide-react'
 
-function statusToVariant(status?: RecentActivityItem['status']): Parameters<typeof Badge>[0]['variant'] {
+function statusToColorScheme(status?: RecentActivityItem['status']): 'green' | 'yellow' | 'red' | 'gray' {
   switch (status) {
     case 'success':
-      return 'success'
+      return 'green'
     case 'warning':
-      return 'warning'
+      return 'yellow'
     case 'error':
-      return 'danger'
+      return 'red'
     default:
-      return 'neutral'
+      return 'gray'
   }
 }
+
+// Demo data for immediate visual feedback
+const demoStats = [
+  {
+    id: 'revenue',
+    title: 'Total Revenue',
+    value: 2847392,
+    format: 'currency' as const,
+    change: { value: 12.5, trend: 'up' as const, label: 'vs last month' },
+    icon: <DollarSign className="h-5 w-5" />,
+    variant: 'gradient' as const,
+  },
+  {
+    id: 'users',
+    title: 'Active Users',
+    value: 18429,
+    format: 'compact' as const,
+    change: { value: 8.2, trend: 'up' as const, label: 'vs last month' },
+    icon: <Users className="h-5 w-5" />,
+    variant: 'default' as const,
+  },
+  {
+    id: 'transactions',
+    title: 'Transactions',
+    value: 142857,
+    format: 'compact' as const,
+    change: { value: -2.1, trend: 'down' as const, label: 'vs last month' },
+    icon: <CreditCard className="h-5 w-5" />,
+    variant: 'default' as const,
+  },
+  {
+    id: 'growth',
+    title: 'Growth Rate',
+    value: 23.8,
+    format: 'none' as const,
+    suffix: '%',
+    change: { value: 4.3, trend: 'up' as const, label: 'vs last quarter' },
+    icon: <TrendingUp className="h-5 w-5" />,
+    variant: 'default' as const,
+  },
+]
+
+const demoActivity = [
+  { id: '1', title: 'New merchant onboarded', description: 'TechStore Inc. completed verification', createdAt: new Date().toISOString(), status: 'success' as const },
+  { id: '2', title: 'High-value transaction flagged', description: 'Transaction #TXN-892341 requires review', createdAt: new Date(Date.now() - 3600000).toISOString(), status: 'warning' as const },
+  { id: '3', title: 'System health check passed', description: 'All services operational', createdAt: new Date(Date.now() - 7200000).toISOString(), status: 'success' as const },
+  { id: '4', title: 'Failed login attempts detected', description: 'Multiple failed logins from IP 192.168.1.x', createdAt: new Date(Date.now() - 10800000).toISOString(), status: 'error' as const },
+  { id: '5', title: 'Daily report generated', description: 'January 6, 2026 summary available', createdAt: new Date(Date.now() - 14400000).toISOString(), status: 'success' as const },
+]
 
 export default function DashboardPage() {
   const pushToast = useToastStore((s) => s.push)
@@ -49,92 +99,21 @@ export default function DashboardPage() {
     }
   }
 
-  useEffect(() => {
-    // Don't fetch data on mount - user can click refresh
-  }, [])
-
-  const getStatCardData = (type: string) => {
-    if (!data) return { value: 0, trendPct: 0, trendDirection: 'flat' as const }
-    switch (type) {
-      case 'users':
-        return data.stats.users
-      case 'transactions':
-        return data.stats.transactions
-      case 'revenue':
-        return data.stats.revenue
-      case 'growth':
-        return data.stats.growth
-      default:
-        return { value: 0, trendPct: 0, trendDirection: 'flat' as const }
-    }
-  }
-
-  const renderWidget = (widget: any) => {
-    switch (widget.type) {
-      case 'stat-card':
-        const statData = getStatCardData(widget.dataKey)
-        return (
-          <StatCard
-            key={widget.id}
-            label={widget.title}
-            value={statData.value}
-            trendPct={statData.trendPct}
-            trendDirection={statData.trendDirection}
-            format={widget.dataKey === 'revenue' ? 'currency' : widget.dataKey === 'growth' ? 'number' : 'number'}
-          />
-        )
-      case 'line-chart':
-        return (
-          <LineChartWidget
-            key={widget.id}
-            data={widget.dataKey === 'revenue' ? revenueData : transactionsVolumeData}
-            title={widget.title}
-            dataKey="value"
-          />
-        )
-      case 'bar-chart':
-        return (
-          <BarChartWidget
-            key={widget.id}
-            data={topMerchantsData}
-            title={widget.title}
-            dataKey="sales"
-          />
-        )
-      case 'pie-chart':
-        return (
-          <PieChartWidget
-            key={widget.id}
-            data={transactionDistributionData}
-            title={widget.title}
-            dataKey="value"
-          />
-        )
-      case 'area-chart':
-        return (
-          <AreaChartWidget
-            key={widget.id}
-            data={revenueData}
-            title={widget.title}
-            dataKey="value"
-          />
-        )
-      default:
-        return null
-    }
-  }
-
   const visibleWidgets = mainDashboardWidgets.filter((w) => w.visible).sort((a, b) => a.order - b.order)
-
-  const statWidgets = visibleWidgets.filter((w) => w.type === 'stat-card')
   const chartWidgets = visibleWidgets.filter((w) => w.type !== 'stat-card')
+
+  // Use demo activity if no real data
+  const activityItems = data?.recentActivity?.length ? data.recentActivity : demoActivity
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-40 -mx-6 -mt-6 bg-[var(--ss-bg)] px-6 py-4 mb-6 border-b border-[var(--ss-border)] flex items-end justify-between">
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-headline text-xl font-semibold text-[var(--ss-text)]">Dashboard</h1>
-          <p className="mt-1 text-sm text-[var(--ss-text-muted)]">Overview of platform health and recent operational activity.</p>
+          <h1 className="font-display text-2xl font-semibold text-[var(--ss-text-primary)]">Dashboard</h1>
+          <p className="mt-1 text-sm text-[var(--ss-text-secondary)]">
+            Overview of platform health and recent operational activity.
+          </p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -146,29 +125,89 @@ export default function DashboardPage() {
             Customize
           </Button>
           <Button
-            variant="outline"
+            variant="primary"
             size="sm"
             onClick={handleRefresh}
-            disabled={refreshing}
+            loading={refreshing}
             leftIcon={<Icon name="refresh" className="h-4 w-4" />}
           >
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            Refresh
           </Button>
         </div>
       </div>
 
-      {/* Stat Cards Grid */}
+      {/* Stat Cards Grid - Using Demo Data */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[98px] w-full" />)
-          : statWidgets.map((widget) => renderWidget(widget))}
+        {loading ? (
+          <>
+            <Skeleton key="skeleton-stat-1" className="h-[140px] w-full rounded-ss-xl" />
+            <Skeleton key="skeleton-stat-2" className="h-[140px] w-full rounded-ss-xl" />
+            <Skeleton key="skeleton-stat-3" className="h-[140px] w-full rounded-ss-xl" />
+            <Skeleton key="skeleton-stat-4" className="h-[140px] w-full rounded-ss-xl" />
+          </>
+        ) : (
+          demoStats.map((stat) => (
+            <StatCard
+              key={stat.id}
+              title={stat.title}
+              value={stat.value}
+              format={stat.format}
+              suffix={stat.suffix}
+              change={stat.change}
+              icon={stat.icon}
+              variant={stat.variant}
+            />
+          ))
+        )}
       </div>
 
       {/* Charts Grid */}
       {chartWidgets.length > 0 && (
         <div className="grid gap-4 lg:grid-cols-2">
           {chartWidgets.map((widget) => {
-            const chartComponent = renderWidget(widget)
+            let chartComponent = null
+            switch (widget.type) {
+              case 'line-chart':
+                chartComponent = (
+                  <LineChartWidget
+                    key={widget.id}
+                    data={widget.dataKey === 'revenue' ? revenueData : transactionsVolumeData}
+                    title={widget.title}
+                    dataKey="value"
+                  />
+                )
+                break
+              case 'bar-chart':
+                chartComponent = (
+                  <BarChartWidget
+                    key={widget.id}
+                    data={topMerchantsData}
+                    title={widget.title}
+                    dataKey="sales"
+                  />
+                )
+                break
+              case 'pie-chart':
+                chartComponent = (
+                  <PieChartWidget
+                    key={widget.id}
+                    data={transactionDistributionData}
+                    title={widget.title}
+                    dataKey="value"
+                  />
+                )
+                break
+              case 'area-chart':
+                chartComponent = (
+                  <AreaChartWidget
+                    key={widget.id}
+                    data={revenueData}
+                    title={widget.title}
+                    dataKey="value"
+                  />
+                )
+                break
+            }
             return (
               <div key={widget.id} className={widget.size === 'large' ? 'lg:col-span-2' : ''}>
                 {chartComponent}
@@ -178,41 +217,47 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Recent Activity */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
+      {/* Recent Activity - Always show demo data */}
+      <Card>
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="font-headline text-sm font-semibold text-[var(--ss-text)]">Recent activity</p>
-            <p className="mt-1 text-xs text-[var(--ss-text-muted)]">Most recent user, merchant, and support events.</p>
+            <h2 className="font-display text-base font-semibold text-[var(--ss-text-primary)]">
+              Recent Activity
+            </h2>
+            <p className="mt-0.5 text-sm text-[var(--ss-text-secondary)]">
+              Most recent user, merchant, and support events.
+            </p>
           </div>
         </div>
 
-        <div className="mt-4 divide-y divide-[var(--ss-border)]">
+        <div className="divide-y divide-[var(--ss-border)]">
           {loading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between gap-3 py-3">
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="mt-2 h-4 w-2/3" />
+            <>
+              {['skeleton-activity-1', 'skeleton-activity-2', 'skeleton-activity-3', 'skeleton-activity-4', 'skeleton-activity-5'].map((id) => (
+                <div key={id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="mt-2 h-4 w-2/3" />
+                  </div>
+                  <Skeleton className="h-6 w-16" />
                 </div>
-                <Skeleton className="h-8 w-20" />
-              </div>
-            ))
-          ) : data?.recentActivity?.length ? (
-            data.recentActivity.map((item) => (
+              ))}
+            </>
+          ) : (
+            activityItems.map((item) => (
               <div key={item.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[var(--ss-text)]">{item.title}</p>
-                  <p className="mt-0.5 truncate text-xs text-[var(--ss-text-muted)]">{item.description}</p>
+                  <p className="truncate text-sm font-medium text-[var(--ss-text-primary)]">{item.title}</p>
+                  <p className="mt-0.5 truncate text-xs text-[var(--ss-text-tertiary)]">{item.description}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-[var(--ss-text-muted)]">{formatDateTime(item.createdAt)}</span>
-                  <Badge variant={statusToVariant(item.status)}>{item.status ?? 'info'}</Badge>
+                  <span className="text-xs text-[var(--ss-text-tertiary)]">{formatDateTime(item.createdAt)}</span>
+                  <Badge colorScheme={statusToColorScheme(item.status)} variant="soft" size="sm">
+                    {item.status ?? 'info'}
+                  </Badge>
                 </div>
               </div>
             ))
-          ) : (
-            <div className="py-10 text-center text-sm text-[var(--ss-text-muted)]">No recent activity.</div>
           )}
         </div>
       </Card>
