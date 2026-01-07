@@ -28,6 +28,7 @@ export const useUiStore = create<UiState>()(
         administration: true,
         business: true,
         tools: true,
+        donations: true,
       },
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set({ theme: get().theme === 'dark' ? 'light' : 'dark' }),

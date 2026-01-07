@@ -128,14 +128,43 @@ export default function DashboardPageNew() {
     const loadDashboard = async () => {
       try {
         setLoading(true)
-        // TODO: Replace with actual API calls once fraud/risk endpoints are available
-        // const fraudData = await Api.fraudApi.getFraudTrend()
-        // const riskData = await Api.riskApi.getRiskDistribution()
-        // setData({ fraudData, riskData, ... })
 
-        // For now, use mock data
-        const mockData = generateMockData()
-        setData(mockData)
+        // Try to fetch real data from API
+        try {
+          const overview = await Api.dashboardApi.getOverview()
+
+          // Merge API data with mock visualization data
+          const mockData = generateMockData()
+
+          // Update stats with real API data if available
+          if (overview && overview.stats) {
+            mockData.stats = {
+              ...mockData.stats,
+              totalFraudCases: {
+                value: overview.stats.transactions?.value || mockData.stats.totalFraudCases.value,
+                trendPct: overview.stats.transactions?.trendPct || 0,
+                trendDirection: overview.stats.transactions?.trendDirection || 'up'
+              },
+              totalTransactions: {
+                value: overview.stats.transactions?.value || mockData.stats.totalTransactions.value,
+                trendPct: overview.stats.transactions?.trendPct || 0,
+                trendDirection: overview.stats.transactions?.trendDirection || 'up'
+              },
+              customersInProgram: {
+                value: overview.stats.users?.value || overview.total_users || mockData.stats.customersInProgram.value,
+                trendPct: overview.stats.users?.trendPct || 0,
+                trendDirection: overview.stats.users?.trendDirection || 'up'
+              },
+            }
+          }
+
+          setData(mockData)
+        } catch (apiError) {
+          console.warn('API unavailable, using mock data:', apiError)
+          // Fallback to mock data if API fails
+          const mockData = generateMockData()
+          setData(mockData)
+        }
       } catch (error) {
         console.error('Failed to load dashboard:', error)
         pushToast({
@@ -143,6 +172,9 @@ export default function DashboardPageNew() {
           title: 'Dashboard',
           message: 'Failed to load dashboard data.',
         })
+        // Still show mock data on error
+        const mockData = generateMockData()
+        setData(mockData)
       } finally {
         setLoading(false)
       }

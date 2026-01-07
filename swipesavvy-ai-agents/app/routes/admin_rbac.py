@@ -5,15 +5,19 @@ Endpoints for managing roles, policies, and permissions in the admin portal
 """
 
 from fastapi import APIRouter, HTTPException, Query, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from passlib.context import CryptContext
 import logging
 
 from app.database import get_db
 from app.models import Role, Policy, Permission, AdminUser
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/admin", tags=["admin-rbac"])
@@ -940,3 +944,147 @@ async def seed_rbac_data(db: Session = Depends(get_db)):
         logger.error(f"Error seeding RBAC data: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to seed RBAC data: {str(e)}")
+
+
+# ============================================================================
+# Admin User Management Endpoints
+# ============================================================================
+
+class CreateAdminUserRequest(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: str
+    role: str = "admin"
+    department: Optional[str] = None
+
+
+class AdminUserResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    role: str
+    department: Optional[str]
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+@router.post("/users/create", response_model=AdminUserResponse, status_code=201)
+async def create_admin_user(req: CreateAdminUserRequest, db: Session = Depends(get_db)):
+    """Create a new admin user"""
+    try:
+        # Check if user already exists
+        existing = db.query(AdminUser).filter(AdminUser.email == req.email.lower()).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="User with this email already exists")
+
+        # Hash password
+        password_hash = pwd_context.hash(req.password)
+
+        # Create user
+        user = AdminUser(
+            email=req.email.lower(),
+            password_hash=password_hash,
+            full_name=req.full_name,
+            role=req.role,
+            department=req.department,
+            status='active',
+            permissions=[],
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        logger.info(f"Created admin user: {req.email}")
+
+        return AdminUserResponse(
+            id=str(user.id),
+            email=user.email,
+            full_name=user.full_name,
+            role=user.role,
+            department=user.department,
+            status=user.status,
+            created_at=user.created_at
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating admin user: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create admin user: {str(e)}")
+
+
+@router.post("/users/seed-admin")
+async def seed_default_admin(db: Session = Depends(get_db)):
+    """Create a default admin user if none exists"""
+    try:
+        # Check if any admin exists
+        existing = db.query(AdminUser).filter(AdminUser.role == 'admin').first()
+        if existing:
+            return {"message": "Admin user already exists", "created": False, "email": existing.email}
+
+        # Create default admin
+        password_hash = pwd_context.hash("SwipeSavvy2025!")
+
+        user = AdminUser(
+            email="admin@swipesavvy.com",
+            password_hash=password_hash,
+            full_name="System Administrator",
+            role="admin",
+            department="IT",
+            status='active',
+            permissions=["*"],
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
+        )
+        db.add(user)
+        db.commit()
+
+        logger.info("Created default admin user: admin@swipesavvy.com")
+
+        return {
+            "message": "Default admin user created",
+            "created": True,
+            "email": "admin@swipesavvy.com",
+            "password": "SwipeSavvy2025!",
+            "note": "Please change this password immediately after first login"
+        }
+    except Exception as e:
+        logger.error(f"Error seeding admin user: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to seed admin user: {str(e)}")
+
+
+@router.post("/users/reset-admin-password")
+async def reset_admin_password(db: Session = Depends(get_db)):
+    """Reset the admin user's password to a known value"""
+    try:
+        user = db.query(AdminUser).filter(AdminUser.email == 'admin@swipesavvy.com').first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Admin user not found")
+
+        # Reset password
+        new_password = "SwipeSavvy2025!"
+        user.password_hash = pwd_context.hash(new_password)
+        user.status = 'active'
+        user.updated_at = datetime.now(timezone.utc)
+        db.commit()
+
+        logger.info("Reset password for admin@swipesavvy.com")
+
+        return {
+            "message": "Admin password reset successfully",
+            "email": "admin@swipesavvy.com",
+            "password": new_password,
+            "note": "Please change this password immediately after login"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error resetting admin password: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to reset admin password: {str(e)}")

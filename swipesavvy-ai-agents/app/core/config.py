@@ -43,6 +43,10 @@ class Settings:
             "https://admin.swipesavvy.com",
             "https://wallet.swipesavvy.com",
             "https://swipesavvy.com",
+            "http://54.224.8.14",
+            "http://54.224.8.14:3001",
+            "http://54.224.8.14:3002",
+            "*",  # Allow all for now until DNS is configured
         ]
     
     # Database
