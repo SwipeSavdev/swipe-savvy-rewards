@@ -10,6 +10,21 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List, Dict, Any
 from enum import Enum
+import sys
+from pathlib import Path
+
+# Import get_db from main module
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+# Temporary placeholder for get_db until main is properly imported
+def get_db():
+    """Temporary placeholder get_db function"""
+    pass
+
+# Temporary placeholder for get_current_user
+def get_current_user():
+    """Temporary placeholder get_current_user function"""
+    return {"user_id": "admin", "role": "admin"}
 
 # ============================================================================
 # ENUMS

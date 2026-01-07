@@ -217,6 +217,45 @@ async def root():
     }
 
 # ═════════════════════════════════════════════════════════════════════════════
+# ADMIN AUTHENTICATION ENDPOINT
+# ═════════════════════════════════════════════════════════════════════════════
+
+from pydantic import BaseModel
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/v1/admin/auth/login")
+async def admin_login(request: LoginRequest):
+    """
+    Admin authentication endpoint
+    For development: accepts any credentials and returns mock token
+    """
+    # Simple mock authentication for development
+    # In production, this should verify credentials against database
+    return {
+        "token": "mock-jwt-token-" + str(int(__import__('datetime').datetime.now().timestamp())),
+        "session": {
+            "user": {
+                "id": "admin-001",
+                "email": request.email,
+                "name": "Admin User",
+                "role": "admin",
+                "permissions": ["read", "write", "delete", "admin"]
+            },
+            "token": "mock-jwt-token-" + str(int(__import__('datetime').datetime.now().timestamp())),
+            "expires_at": str(__import__('datetime').datetime.now() + __import__('datetime').timedelta(hours=24))
+        },
+        "user": {
+            "id": "admin-001",
+            "email": request.email,
+            "name": "Admin User",
+            "role": "admin"
+        }
+    }
+
+# ═════════════════════════════════════════════════════════════════════════════
 # IMPORT AND REGISTER PHASE 4 ROUTES
 # ═════════════════════════════════════════════════════════════════════════════
 
