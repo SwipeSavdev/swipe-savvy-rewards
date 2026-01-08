@@ -1,7 +1,12 @@
-import { useState } from 'react'
+import { BrandingKitIcon } from '@/components/ui/BrandingKitIcon'
+import Card from '@/components/ui/Card'
+import axios from 'axios'
+import { ArrowUpRight, CheckCircle, ChevronRight, Clock, Headphones, RefreshCw, Star, Ticket, TrendingDown, TrendingUp } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts'
-import { Headphones, Ticket, Clock, CheckCircle, TrendingUp, TrendingDown, Star, ArrowUpRight, ChevronRight, RefreshCw } from 'lucide-react'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 // Chart colors
 const COLORS = {
@@ -98,19 +103,44 @@ const getStatusColor = (status: string) => {
 export default function SupportDashboardPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [timeRange, setTimeRange] = useState('7d')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [dashboardData, setDashboardData] = useState({
+    stats: [
+      { title: 'Open Tickets', value: 120, change: '+12', trend: 'up', icon: Ticket, color: 'blue' },
+      { title: 'In Progress', value: 45, change: '-5', trend: 'down', icon: Clock, color: 'purple' },
+      { title: 'Resolved Today', value: 38, change: '+8', trend: 'up', icon: CheckCircle, color: 'green' },
+      { title: 'Avg Response Time', value: '18m', change: '-3m', trend: 'up', icon: TrendingUp, color: 'orange' },
+    ],
+  })
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [timeRange])
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await axios.get(`${API_BASE_URL}/api/support/dashboard?timeRange=${timeRange}`)
+      if (response.data && response.data.stats) {
+        setDashboardData(response.data)
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch support dashboard:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    await new Promise((r) => setTimeout(r, 1000))
+    await fetchDashboardData()
     setRefreshing(false)
   }
 
-  const stats = [
-    { title: 'Open Tickets', value: 120, change: '+12', trend: 'up', icon: Ticket, color: 'blue' },
-    { title: 'In Progress', value: 45, change: '-5', trend: 'down', icon: Clock, color: 'purple' },
-    { title: 'Resolved Today', value: 38, change: '+8', trend: 'up', icon: CheckCircle, color: 'green' },
-    { title: 'Avg Response Time', value: '18m', change: '-3m', trend: 'up', icon: TrendingUp, color: 'orange' },
-  ]
+  const stats = dashboardData.stats
 
   const getColorClasses = (color: string) => {
     const colors: Record<string, { bg: string; icon: string }> = {
@@ -124,6 +154,33 @@ export default function SupportDashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Error UI */}
+      {error && (
+        <Card className="bg-red-50 border border-red-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="text-red-600">
+              <BrandingKitIcon name="alert_circle" size="md" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+          </div>
+        </Card>
+      )}
+
+      {/* Loading UI */}
+      {loading && (
+        <Card className="bg-blue-50 border border-blue-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="animate-spin">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+            </div>
+            <p className="text-sm text-blue-800">Loading support dashboard data...</p>
+          </div>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

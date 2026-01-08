@@ -18,31 +18,31 @@
  * - Tooltips when collapsed
  */
 
-import Badge from '@/components/ui/Badge'
 import { BrandLogo } from '@/components/BrandAssets'
+import Badge from '@/components/ui/Badge'
 import { NAV_GROUPS } from '@/router/nav'
 import { useUiStore } from '@/store/uiStore'
 import { cn } from '@/utils/cn'
 import {
-  ChevronDown,
-  ChevronRight,
-  PanelLeftClose,
-  PanelLeft,
-  LayoutDashboard,
-  Home,
-  MessageSquare,
-  Sparkles,
-  TrendingUp,
-  Shield,
-  Users,
-  Lock,
-  BarChart3,
-  AlertCircle,
-  Wallet,
-  Settings,
-  Flag,
-  Filter,
-  type LucideIcon,
+    AlertCircle,
+    BarChart3,
+    ChevronDown,
+    ChevronRight,
+    Filter,
+    Flag,
+    Home,
+    LayoutDashboard,
+    Lock,
+    MessageSquare,
+    PanelLeft,
+    PanelLeftClose,
+    Settings,
+    Shield,
+    Sparkles,
+    TrendingUp,
+    Users,
+    Wallet,
+    type LucideIcon,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
@@ -110,14 +110,14 @@ export default function Sidebar() {
           // Expanded: Show full logo
           <>
             <BrandLogo
-              variant="color"
-              product="swipe-savvy"
+              variant="colored"
+              product="swipesavvy"
               width={140}
               className="dark:hidden"
             />
             <BrandLogo
               variant="white"
-              product="swipe-savvy"
+              product="swipesavvy"
               width={140}
               className="hidden dark:block"
             />
@@ -190,8 +190,8 @@ export default function Sidebar() {
                               'transition-colors duration-[var(--duration-fast)]',
                               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]',
                               isActive
-                                ? 'bg-[var(--color-status-info-bg)] text-[var(--color-status-info-text)]'
-                                : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]',
+                                ? 'bg-[var(--color-action-primary-bg)] bg-opacity-10 text-[var(--color-action-primary-bg)]'
+                                : 'text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-secondary)]',
                               collapsed && 'justify-center px-[var(--spacing-2)]'
                             )
                           }

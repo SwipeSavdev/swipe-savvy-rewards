@@ -43,6 +43,12 @@
      Raw color values - never use directly in components
      ────────────────────────────────────────────────────────────────────────── */
 
+  /* SwipeSavvy Brand Colors */
+  --brand-navy: #235393;         /* Primary brand - professional blue */
+  --brand-deep: #132136;         /* Deep - dark backgrounds */
+  --brand-green: #60BA46;        /* Success/positive - vibrant green */
+  --brand-yellow: #FAB915;       /* Accent/highlight - golden yellow */
+
   /* Neutrals - Slate palette for professional look */
   --primitive-slate-50: #f8fafc;
   --primitive-slate-100: #f1f5f9;
@@ -56,7 +62,19 @@
   --primitive-slate-900: #0f172a;
   --primitive-slate-950: #020617;
 
-  /* Blue - Primary interactive color */
+  /* Navy - Primary brand color (replaces generic blue for primary actions) */
+  --primitive-navy-50: #e8f0f8;
+  --primitive-navy-100: #c5d9ed;
+  --primitive-navy-200: #9fc0e0;
+  --primitive-navy-300: #79a6d3;
+  --primitive-navy-400: #5a8dc4;
+  --primitive-navy-500: #3a74b5;
+  --primitive-navy-600: #235393;   /* Brand Navy - Primary */
+  --primitive-navy-700: #1c4275;
+  --primitive-navy-800: #153257;
+  --primitive-navy-900: #0e213a;
+
+  /* Blue - Secondary interactive color */
   --primitive-blue-50: #eff6ff;
   --primitive-blue-100: #dbeafe;
   --primitive-blue-200: #bfdbfe;
@@ -68,25 +86,25 @@
   --primitive-blue-800: #1e40af;
   --primitive-blue-900: #1e3a8a;
 
-  /* Green - Success status ONLY */
+  /* Green - Success status ONLY (Brand Green #60BA46) */
   --primitive-green-50: #f0fdf4;
   --primitive-green-100: #dcfce7;
   --primitive-green-200: #bbf7d0;
   --primitive-green-300: #86efac;
-  --primitive-green-400: #4ade80;
-  --primitive-green-500: #22c55e;
-  --primitive-green-600: #16a34a;
-  --primitive-green-700: #15803d;
-  --primitive-green-800: #166534;
-  --primitive-green-900: #14532d;
+  --primitive-green-400: #6bc952;       /* Lighter brand green */
+  --primitive-green-500: #60BA46;       /* Brand Green - Primary */
+  --primitive-green-600: #4da038;
+  --primitive-green-700: #3d8a2d;
+  --primitive-green-800: #2d6a21;
+  --primitive-green-900: #1e4a16;
 
-  /* Amber - Warning status ONLY */
+  /* Amber/Yellow - Warning & Accent (Brand Yellow #FAB915) */
   --primitive-amber-50: #fffbeb;
   --primitive-amber-100: #fef3c7;
   --primitive-amber-200: #fde68a;
   --primitive-amber-300: #fcd34d;
-  --primitive-amber-400: #fbbf24;
-  --primitive-amber-500: #f59e0b;
+  --primitive-amber-400: #FAB915;       /* Brand Yellow - Primary */
+  --primitive-amber-500: #f0a500;
   --primitive-amber-600: #d97706;
   --primitive-amber-700: #b45309;
   --primitive-amber-800: #92400e;
@@ -159,20 +177,20 @@
   --color-status-danger-text: var(--primitive-red-700);
   --color-status-danger-icon: var(--primitive-red-500);
 
-  /* Info */
-  --color-status-info-bg: var(--primitive-blue-50);
-  --color-status-info-border: var(--primitive-blue-200);
-  --color-status-info-text: var(--primitive-blue-700);
-  --color-status-info-icon: var(--primitive-blue-500);
+  /* Info - Uses lighter navy shades for brand consistency */
+  --color-status-info-bg: var(--primitive-navy-50);
+  --color-status-info-border: var(--primitive-navy-200);
+  --color-status-info-text: var(--primitive-navy-700);
+  --color-status-info-icon: var(--primitive-navy-500);
 
   /* ──────────────────────────────────────────────────────────────────────────
      SEMANTIC TOKENS - Interactive
      ────────────────────────────────────────────────────────────────────────── */
 
-  /* Primary Action */
-  --color-action-primary-bg: var(--primitive-blue-600);
-  --color-action-primary-bg-hover: var(--primitive-blue-700);
-  --color-action-primary-bg-active: var(--primitive-blue-800);
+  /* Primary Action - Brand Navy */
+  --color-action-primary-bg: var(--primitive-navy-600);
+  --color-action-primary-bg-hover: var(--primitive-navy-700);
+  --color-action-primary-bg-active: var(--primitive-navy-800);
   --color-action-primary-text: #ffffff;
 
   /* Secondary Action */
@@ -424,20 +442,20 @@
   --color-status-danger-text: var(--primitive-red-400);
   --color-status-danger-icon: var(--primitive-red-500);
 
-  /* Info */
-  --color-status-info-bg: rgba(59, 130, 246, 0.15);
-  --color-status-info-border: rgba(59, 130, 246, 0.3);
-  --color-status-info-text: var(--primitive-blue-400);
-  --color-status-info-icon: var(--primitive-blue-500);
+  /* Info - Uses lighter navy shades for brand consistency */
+  --color-status-info-bg: rgba(35, 83, 147, 0.15);
+  --color-status-info-border: rgba(35, 83, 147, 0.3);
+  --color-status-info-text: var(--primitive-navy-300);
+  --color-status-info-icon: var(--primitive-navy-400);
 
   /* ──────────────────────────────────────────────────────────────────────────
      SEMANTIC TOKENS - Interactive (Dark)
      ────────────────────────────────────────────────────────────────────────── */
 
-  /* Primary Action */
-  --color-action-primary-bg: var(--primitive-blue-500);
-  --color-action-primary-bg-hover: var(--primitive-blue-400);
-  --color-action-primary-bg-active: var(--primitive-blue-600);
+  /* Primary Action - Brand Navy */
+  --color-action-primary-bg: var(--primitive-navy-500);
+  --color-action-primary-bg-hover: var(--primitive-navy-400);
+  --color-action-primary-bg-active: var(--primitive-navy-600);
   --color-action-primary-text: #ffffff;
 
   /* Secondary Action */

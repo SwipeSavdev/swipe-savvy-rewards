@@ -1,20 +1,20 @@
-import { useLocation, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard,
-  Flag,
-  Users,
-  Store,
-  BarChart3,
-  Sparkles,
-  MessageCircle,
-  Settings,
-  Ticket,
-  LogOut,
-  ChevronDown,
-  AlertTriangle,
-  Bot
+    AlertTriangle,
+    BarChart3,
+    Bot,
+    ChevronDown,
+    Flag,
+    LayoutDashboard,
+    LogOut,
+    MessageCircle,
+    Settings,
+    Sparkles,
+    Store,
+    Ticket,
+    Users
 } from 'lucide-react'
 import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 interface NavItem {
   label: string
@@ -77,7 +77,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen overflow-y-auto">
+    <aside className="w-64 bg-brand-navy border-brand-navy min-h-screen overflow-y-auto border-l-4">
       <nav className="p-4 space-y-2">
         {navItems.map(item => {
           const Icon = item.icon
@@ -92,8 +92,8 @@ export function Sidebar() {
                   onClick={() => setExpandedMenu(isExpanded ? null : item.label)}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
                     isActive || isExpanded
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-brand-green text-white'
+                      : 'text-gray-100 hover:bg-opacity-20 hover:bg-brand-green'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -110,8 +110,8 @@ export function Sidebar() {
                   onClick={() => navigate(item.path!)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-brand-green text-white font-semibold'
+                      : 'text-gray-100 hover:bg-opacity-20 hover:bg-brand-green'
                   }`}
                 >
                   <Icon size={20} />
@@ -121,7 +121,7 @@ export function Sidebar() {
 
               {/* Submenu */}
               {hasSubmenu && isExpanded && (
-                <div className="ml-4 mt-2 space-y-2 border-l-2 border-gray-200 pl-4">
+                <div className="ml-4 mt-2 space-y-2 border-l-2 border-brand-green border-opacity-30 pl-4">
                   {item.submenu!.map(subitem => {
                     const SubIcon = subitem.icon
                     const isSubActive = location.pathname === subitem.path
@@ -131,8 +131,8 @@ export function Sidebar() {
                         onClick={() => navigate(subitem.path!)}
                         className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                           isSubActive
-                            ? 'bg-blue-100 text-blue-600 font-medium'
-                            : 'text-gray-600 hover:bg-gray-100'
+                            ? 'bg-brand-green text-white font-medium'
+                            : 'text-gray-200 hover:bg-opacity-20 hover:bg-brand-green'
                         }`}
                       >
                         <SubIcon size={16} />

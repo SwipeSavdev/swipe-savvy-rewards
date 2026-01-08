@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ComposedChart, Line, Area } from 'recharts'
 import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, Shield, Users, Activity, ChevronRight, RefreshCw, Download, Filter, ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 // Chart colors
 const CHART_COLORS = {
@@ -198,7 +201,32 @@ export default function RiskReportsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedYear, setSelectedYear] = useState<1 | 2 | 3>(1)
   const [refreshing, setRefreshing] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations'>('overview')
+
+  // Fetch risk data on mount
+  useEffect(() => {
+    fetchRiskData()
+  }, [])
+
+  const fetchRiskData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await axios.get(`${API_BASE_URL}/api/analytics/risk-reports`)
+      // Store response data if needed, otherwise use default data
+      if (response.data) {
+        console.log('Risk data loaded:', response.data)
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch risk data:', err)
+      setError(err.message || 'Failed to fetch risk data')
+      // Continue with default data
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredRisks = selectedCategory
     ? FINANCIAL_RISKS.filter((r) => r.category === selectedCategory)

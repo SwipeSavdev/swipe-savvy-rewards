@@ -1,8 +1,12 @@
-import { useState } from 'react'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
-import { Users, DollarSign, CreditCard, Activity, ArrowUpRight, ArrowDownRight, Calendar } from 'lucide-react'
+import axios from 'axios'
+import { Activity, AlertCircle, ArrowDownRight, ArrowUpRight, Calendar, CreditCard, DollarSign, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-const revenueData = [
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
+// Default/fallback data
+const DEFAULT_REVENUE_DATA = [
   { month: 'Jan', revenue: 45000, transactions: 1200, users: 850 },
   { month: 'Feb', revenue: 52000, transactions: 1450, users: 920 },
   { month: 'Mar', revenue: 48000, transactions: 1300, users: 880 },
@@ -43,48 +47,113 @@ const dailyActivity = [
 
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState('30d')
+  const [revenueData, setRevenueData] = useState(DEFAULT_REVENUE_DATA)
+  const [transactionTypeData, setTransactionTypeData] = useState([
+    { name: 'Card Payments', value: 45, fill: '#3b82f6' },
+    { name: 'Mobile Wallet', value: 30, fill: '#8b5cf6' },
+    { name: 'Bank Transfer', value: 15, fill: '#10b981' },
+    { name: 'Cash Back', value: 10, fill: '#f59e0b' },
+  ])
+  const [merchantPerformance, setMerchantPerformance] = useState([
+    { name: 'Retail', transactions: 4500, revenue: 125000 },
+    { name: 'Food & Beverage', transactions: 3200, revenue: 89000 },
+    { name: 'Healthcare', transactions: 1800, revenue: 156000 },
+    { name: 'Entertainment', transactions: 2100, revenue: 67000 },
+    { name: 'Services', transactions: 2800, revenue: 94000 },
+  ])
+  const [stats, setStats] = useState([
+    { title: 'Total Revenue', value: '$812,000', change: '+12.5%', trend: 'up' as const, icon: DollarSign, color: 'blue' },
+    { title: 'Transactions', value: '24,150', change: '+8.2%', trend: 'up' as const, icon: CreditCard, color: 'purple' },
+    { title: 'Active Users', value: '15,420', change: '+15.3%', trend: 'up' as const, icon: Users, color: 'green' },
+    { title: 'Avg Transaction', value: '$33.62', change: '-2.1%', trend: 'down' as const, icon: Activity, color: 'orange' },
+  ])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const stats = [
-    {
-      title: 'Total Revenue',
-      value: '$812,000',
-      change: '+12.5%',
-      trend: 'up',
-      icon: DollarSign,
-      color: 'blue',
-    },
-    {
-      title: 'Transactions',
-      value: '24,150',
-      change: '+8.2%',
-      trend: 'up',
-      icon: CreditCard,
-      color: 'purple',
-    },
-    {
-      title: 'Active Users',
-      value: '15,420',
-      change: '+15.3%',
-      trend: 'up',
-      icon: Users,
-      color: 'green',
-    },
-    {
-      title: 'Avg Transaction',
-      value: '$33.62',
-      change: '-2.1%',
-      trend: 'down',
-      icon: Activity,
-      color: 'orange',
-    },
-  ]
+  // Fetch analytics data
+  useEffect(() => {
+    fetchAnalytics()
+  }, [dateRange])
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Get days param from dateRange
+      const daysMap: Record<string, number> = {
+        '7d': 7,
+        '30d': 30,
+        '90d': 90,
+        '1y': 365,
+      }
+      const days = daysMap[dateRange] || 30
+
+      // Fetch overview stats and chart data in parallel
+      const [overviewRes, transactionRes, revenueRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/analytics/overview`),
+        axios.get(`${API_BASE_URL}/api/analytics/transactions`, { params: { days } }),
+        axios.get(`${API_BASE_URL}/api/analytics/revenue`, { params: { days } }),
+      ])
+
+      // Update stats from API
+      if (overviewRes.data) {
+        const overview = overviewRes.data
+        setStats([
+          {
+            title: 'Total Revenue',
+            value: `$${(overview.totalRevenue || 812000).toLocaleString()}`,
+            change: `+${overview.revenueChange || 12.5}%`,
+            trend: (overview.revenueChange || 12.5) >= 0 ? 'up' : 'down',
+            icon: DollarSign,
+            color: 'blue',
+          },
+          {
+            title: 'Transactions',
+            value: (overview.totalTransactions || 24150).toLocaleString(),
+            change: `+${overview.transactionChange || 8.2}%`,
+            trend: (overview.transactionChange || 8.2) >= 0 ? 'up' : 'down',
+            icon: CreditCard,
+            color: 'purple',
+          },
+          {
+            title: 'Active Users',
+            value: (overview.activeUsers || 15420).toLocaleString(),
+            change: `+${overview.userChange || 15.3}%`,
+            trend: (overview.userChange || 15.3) >= 0 ? 'up' : 'down',
+            icon: Users,
+            color: 'green',
+          },
+          {
+            title: 'Avg Transaction',
+            value: `$${(overview.avgTransaction || 33.62).toFixed(2)}`,
+            change: `${overview.avgTransactionChange || -2.1}%`,
+            trend: (overview.avgTransactionChange || -2.1) >= 0 ? 'up' : 'down',
+            icon: Activity,
+            color: 'orange',
+          },
+        ])
+      }
+
+      // Update chart data
+      if (transactionRes.data?.transactions) {
+        setRevenueData(transactionRes.data.transactions)
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch analytics:', err)
+      setError(err.message || 'Failed to fetch analytics data')
+      // Keep using default data as fallback
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getColorClasses = (color: string) => {
     const colors: Record<string, { bg: string; icon: string }> = {
-      blue: { bg: 'bg-blue-100', icon: 'text-blue-600' },
-      purple: { bg: 'bg-purple-100', icon: 'text-purple-600' },
-      green: { bg: 'bg-green-100', icon: 'text-green-600' },
-      orange: { bg: 'bg-orange-100', icon: 'text-orange-600' },
+      blue: { bg: 'bg-[var(--color-status-info-bg)]', icon: 'text-[var(--color-status-info-text)]' },
+      purple: { bg: 'bg-[var(--color-status-info-bg)]', icon: 'text-[var(--color-status-info-text)]' },
+      green: { bg: 'bg-[var(--color-status-success-bg)]', icon: 'text-[var(--color-status-success-text)]' },
+      orange: { bg: 'bg-[var(--color-status-warning-bg)]', icon: 'text-[var(--color-status-warning-text)]' },
     }
     return colors[color] || colors.blue
   }
@@ -112,6 +181,32 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-800">{error}</p>
+            <p className="text-xs text-red-600 mt-1">Using fallback data. Please try refreshing the page.</p>
+          </div>
+          <button onClick={() => setError(null)} className="text-red-600 hover:text-red-700">
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <div className="animate-spin">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+            </div>
+            <p className="text-sm text-blue-800">Loading analytics data...</p>
+          </div>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => {
@@ -125,14 +220,14 @@ export default function AnalyticsPage() {
                   <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
                   <div className="flex items-center gap-1 mt-2">
                     {stat.trend === 'up' ? (
-                      <ArrowUpRight className="w-4 h-4 text-green-600" />
+                      <ArrowUpRight className="w-4 h-4 text-[var(--color-status-success-text)]" />
                     ) : (
-                      <ArrowDownRight className="w-4 h-4 text-red-600" />
+                      <ArrowDownRight className="w-4 h-4 text-[var(--color-status-danger-text)]" />
                     )}
-                    <span className={stat.trend === 'up' ? 'text-green-600 text-sm' : 'text-red-600 text-sm'}>
+                    <span className={stat.trend === 'up' ? 'text-[var(--color-status-success-text)] text-sm' : 'text-[var(--color-status-danger-text)] text-sm'}>
                       {stat.change}
                     </span>
-                    <span className="text-gray-500 text-sm">vs last period</span>
+                    <span className="text-[var(--color-text-tertiary)] text-sm">vs last period</span>
                   </div>
                 </div>
                 <div className={`p-3 rounded-lg ${colorClasses.bg}`}>

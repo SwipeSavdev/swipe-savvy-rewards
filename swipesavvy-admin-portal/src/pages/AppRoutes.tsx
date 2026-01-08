@@ -1,9 +1,9 @@
-import { Routes, Route } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
+import { Route, Routes } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
 import DashboardPageNew from './DashboardPageNew'
-import SupportDashboardPageNew from './SupportDashboardPageNew'
 import NotFoundPage from './NotFoundPage'
+import SupportDashboardPage from './SupportDashboardPage'
 
 const AiMarketingPage = lazy(() => import('./AiMarketingPage'))
 const AnalyticsPage = lazy(() => import('./AnalyticsPage'))
@@ -55,7 +55,7 @@ export default function AppRoutes() {
         } />
         <Route path="/support" element={
           <Suspense fallback={<LoadingFallback />}>
-            <SupportDashboardPageNew />
+            <SupportDashboardPage />
           </Suspense>
         } />
         <Route path="/support/tickets" element={

@@ -110,6 +110,21 @@ export default {
             text: 'var(--color-action-danger-text)',
           },
         },
+
+        // Brand colors - Primary brand identity
+        brand: {
+          navy: '#235393',
+          'navy-dark': '#1a3f7a',
+          'navy-light': '#3a6db8',
+          deep: '#132136',
+          'deep-light': '#1a2a3f',
+          green: '#60ba46',
+          'green-dark': '#4a9a35',
+          'green-light': '#7acc5e',
+          yellow: '#fab915',
+          'yellow-dark': '#e8a60a',
+          'yellow-light': '#fcc548',
+        },
       },
 
       // ========================================================================

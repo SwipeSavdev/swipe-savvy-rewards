@@ -1,5 +1,10 @@
-import { useState } from 'react'
-import { Ticket, Search, Plus, Filter, AlertCircle, XCircle, ChevronDown, Trash2, Eye, User, Calendar, Tag } from 'lucide-react'
+import { BrandingKitIcon } from '@/components/ui/BrandingKitIcon'
+import Card from '@/components/ui/Card'
+import axios from 'axios'
+import { AlertCircle, Calendar, ChevronDown, Eye, Filter, Plus, Search, Tag, Ticket, Trash2, User, XCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 // Severity levels for triage system
 type Severity = 'critical' | 'high' | 'medium' | 'low'
@@ -41,18 +46,18 @@ const TICKET_TYPES: { value: TicketType; label: string; description: string; ico
 
 // Severity definitions with SLA requirements
 const SEVERITY_CONFIG: { value: Severity; label: string; description: string; responseTime: string; resolutionTime: string; color: string; bgColor: string }[] = [
-  { value: 'critical', label: 'Critical', description: 'System down, data loss, security breach', responseTime: '15 min', resolutionTime: '4 hours', color: 'text-red-800', bgColor: 'bg-red-100' },
-  { value: 'high', label: 'High', description: 'Major feature broken, significant impact', responseTime: '1 hour', resolutionTime: '8 hours', color: 'text-orange-800', bgColor: 'bg-orange-100' },
-  { value: 'medium', label: 'Medium', description: 'Feature impaired, workaround available', responseTime: '4 hours', resolutionTime: '24 hours', color: 'text-blue-800', bgColor: 'bg-blue-100' },
-  { value: 'low', label: 'Low', description: 'Minor issue, cosmetic, questions', responseTime: '24 hours', resolutionTime: '72 hours', color: 'text-green-800', bgColor: 'bg-green-100' },
+  { value: 'critical', label: 'Critical', description: 'System down, data loss, security breach', responseTime: '15 min', resolutionTime: '4 hours', color: 'text-[var(--color-status-danger-text)]', bgColor: 'bg-[var(--color-status-danger-bg)]' },
+  { value: 'high', label: 'High', description: 'Major feature broken, significant impact', responseTime: '1 hour', resolutionTime: '8 hours', color: 'text-[var(--color-status-warning-text)]', bgColor: 'bg-[var(--color-status-warning-bg)]' },
+  { value: 'medium', label: 'Medium', description: 'Feature impaired, workaround available', responseTime: '4 hours', resolutionTime: '24 hours', color: 'text-[var(--color-status-info-text)]', bgColor: 'bg-[var(--color-status-info-bg)]' },
+  { value: 'low', label: 'Low', description: 'Minor issue, cosmetic, questions', responseTime: '24 hours', resolutionTime: '72 hours', color: 'text-[var(--color-status-success-text)]', bgColor: 'bg-[var(--color-status-success-bg)]' },
 ]
 
 const STATUS_CONFIG: { value: Status; label: string; color: string; bgColor: string }[] = [
-  { value: 'open', label: 'Open', color: 'text-yellow-800', bgColor: 'bg-yellow-100' },
-  { value: 'in_progress', label: 'In Progress', color: 'text-blue-800', bgColor: 'bg-blue-100' },
-  { value: 'pending', label: 'Pending', color: 'text-purple-800', bgColor: 'bg-purple-100' },
-  { value: 'resolved', label: 'Resolved', color: 'text-green-800', bgColor: 'bg-green-100' },
-  { value: 'closed', label: 'Closed', color: 'text-gray-800', bgColor: 'bg-gray-100' },
+  { value: 'open', label: 'Open', color: 'text-[var(--color-status-warning-text)]', bgColor: 'bg-[var(--color-status-warning-bg)]' },
+  { value: 'in_progress', label: 'In Progress', color: 'text-[var(--color-status-info-text)]', bgColor: 'bg-[var(--color-status-info-bg)]' },
+  { value: 'pending', label: 'Pending', color: 'text-[var(--color-status-warning-text)]', bgColor: 'bg-[var(--color-status-warning-bg)]' },
+  { value: 'resolved', label: 'Resolved', color: 'text-[var(--color-status-success-text)]', bgColor: 'bg-[var(--color-status-success-bg)]' },
+  { value: 'closed', label: 'Closed', color: 'text-[var(--color-text-secondary)]', bgColor: 'bg-[var(--color-bg-secondary)]' },
 ]
 
 const MOCK_AGENTS = ['Sarah Johnson', 'Michael Chen', 'Emma Rodriguez', 'David Lee', 'Unassigned']
@@ -167,6 +172,8 @@ const getTicketType = (type: TicketType) => TICKET_TYPES.find((t) => t.value ===
 
 export default function SupportTicketsPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>(MOCK_TICKETS)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSeverity, setFilterSeverity] = useState<Severity | 'all'>('all')
   const [filterStatus, setFilterStatus] = useState<Status | 'all'>('all')
@@ -174,6 +181,31 @@ export default function SupportTicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+
+  useEffect(() => {
+    fetchTickets()
+  }, [filterStatus, filterSeverity, filterType])
+
+  const fetchTickets = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const params = new URLSearchParams()
+      if (filterStatus !== 'all') params.append('status', filterStatus)
+      if (filterSeverity !== 'all') params.append('severity', filterSeverity)
+      if (filterType !== 'all') params.append('type', filterType)
+
+      const response = await axios.get(`${API_BASE_URL}/api/support/tickets?${params.toString()}`)
+      if (response.data) {
+        setTickets(response.data || MOCK_TICKETS)
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch support tickets:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // New ticket form state
   const [newTicket, setNewTicket] = useState({
@@ -294,6 +326,33 @@ export default function SupportTicketsPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Error UI */}
+      {error && (
+        <Card className="bg-red-50 border border-red-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="text-red-600">
+              <BrandingKitIcon name="alert_circle" size="md" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+          </div>
+        </Card>
+      )}
+
+      {/* Loading UI */}
+      {loading && (
+        <Card className="bg-blue-50 border border-blue-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="animate-spin">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+            </div>
+            <p className="text-sm text-blue-800">Loading support tickets...</p>
+          </div>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -307,7 +366,7 @@ export default function SupportTicketsPage() {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-action-primary-bg)] text-white rounded-lg hover:opacity-90 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Ticket
@@ -356,7 +415,7 @@ export default function SupportTicketsPage() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
-              showFilters ? 'bg-blue-50 border-blue-500 text-blue-600' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+              showFilters ? 'bg-[var(--color-status-info-bg)] border-[var(--color-status-info-border)] text-[var(--color-status-info-text)]' : 'border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]'
             }`}
           >
             <Filter className="w-4 h-4" />
@@ -413,7 +472,7 @@ export default function SupportTicketsPage() {
       {/* Tickets Table */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-[var(--color-bg-secondary)] border-b border-[var(--color-border-subtle)]">
             <tr>
               <th className="px-6 py-4 text-left font-semibold text-gray-900">Ticket</th>
               <th className="px-6 py-4 text-left font-semibold text-gray-900">Customer</th>
@@ -431,7 +490,7 @@ export default function SupportTicketsPage() {
               const statusConfig = getStatusConfig(ticket.status)
               const ticketType = getTicketType(ticket.type)
               return (
-                <tr key={ticket.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={ticket.id} className="hover:bg-[var(--color-bg-secondary)] transition-colors">
                   <td className="px-6 py-4">
                     <div>
                       <span className="text-xs font-mono text-gray-500">{ticket.id}</span>
@@ -468,7 +527,7 @@ export default function SupportTicketsPage() {
                     <div className="flex gap-1">
                       <button
                         onClick={() => setSelectedTicket(ticket)}
-                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-status-info-text)] hover:bg-[var(--color-status-info-bg)] rounded transition-colors"
                         title="View ticket"
                       >
                         <Eye className="w-4 h-4" />

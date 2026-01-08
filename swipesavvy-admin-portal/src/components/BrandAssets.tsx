@@ -1,9 +1,20 @@
 /**
- * Brand Kit Asset Components
- * Easy-to-use React components for brand assets
+ * ============================================================================
+ * SWIPESAVVY ADMIN PORTAL - BRAND ASSETS COMPONENT
+ * ============================================================================
+ *
+ * Official brand asset components for SwipeSavvy Admin Portal
+ * Uses assets from /public/assets/ directory
+ *
+ * Brand Colors:
+ * - Navy: #235393 (Primary)
+ * - Deep: #132136 (Dark backgrounds)
+ * - Green: #60BA46 (Success)
+ * - Yellow: #FAB915 (Accent)
  */
 
 import React from 'react'
+import { cn } from '@/utils/cn'
 
 // ============================================================================
 // Icon Components
@@ -144,7 +155,7 @@ export const AIIcon: React.FC<IconProps> = ({
   name,
   size = 32,
   alt,
-  className = '',
+  className,
   loading = 'lazy',
 }) => {
   const fileName = aiIconNameMap[name] || name
@@ -155,7 +166,7 @@ export const AIIcon: React.FC<IconProps> = ({
       alt={alt || name}
       width={size}
       height={size}
-      className={className}
+      className={cn('flex-shrink-0', className)}
       loading={loading}
     />
   )
@@ -170,7 +181,7 @@ export const FinTechIcon: React.FC<Omit<IconProps, 'size'> & { size?: number }> 
   name,
   size = 32,
   alt,
-  className = '',
+  className,
   loading = 'lazy',
 }) => {
   const fileName = fintechIconNameMap[name] || name
@@ -181,7 +192,7 @@ export const FinTechIcon: React.FC<Omit<IconProps, 'size'> & { size?: number }> 
       alt={alt || name}
       width={size}
       height={size}
-      className={className}
+      className={cn('flex-shrink-0', className)}
       loading={loading}
     />
   )
@@ -202,7 +213,7 @@ export const MLIcon: React.FC<MLIconProps> = ({
   style = 'glyph',
   size = 32,
   alt,
-  className = '',
+  className,
   loading = 'lazy',
 }) => {
   const mapping = mlIconNameMap[name]
@@ -214,7 +225,7 @@ export const MLIcon: React.FC<MLIconProps> = ({
       alt={alt || name}
       width={size}
       height={size}
-      className={className}
+      className={cn('flex-shrink-0', className)}
       loading={loading}
     />
   )
@@ -225,8 +236,8 @@ export const MLIcon: React.FC<MLIconProps> = ({
 // ============================================================================
 
 export interface LogoProps {
-  variant?: 'color' | 'black' | 'white'
-  product?: 'swipe-savvy' | 'shop-savvy'
+  variant?: 'colored' | 'black' | 'white'
+  product?: 'swipesavvy' | 'shopsavvy'
   width?: number
   height?: 'auto' | number
   className?: string
@@ -235,31 +246,29 @@ export interface LogoProps {
 
 /**
  * Render a brand logo with variant selection
+ * Uses hyphenated filenames: shopsavvy-colored.png, swipesavvy-black.png, etc.
  * @example
- * <BrandLogo variant="color" product="swipe-savvy" width={200} />
+ * <BrandLogo variant="colored" product="shopsavvy" width={200} />
  */
 export const BrandLogo: React.FC<LogoProps> = ({
-  variant = 'color',
-  product = 'swipe-savvy',
+  variant = 'colored',
+  product = 'shopsavvy',
   width = 200,
   height = 'auto',
-  className = '',
+  className,
   alt,
 }) => {
-  const logoName =
-    product === 'swipe-savvy'
-      ? `swipe_savvy_${variant}`
-      : `shop_savvy_${variant}`
-
-  const src = `/assets/logos/${logoName}.png`
+  // Use hyphenated naming: shopsavvy-colored.png, swipesavvy-black.png
+  const src = `/assets/logos/${product}-${variant}.png`
 
   return (
     <img
       src={src}
       alt={alt || `${product} logo`}
       width={width}
-      height={height}
-      className={className}
+      height={height === 'auto' ? undefined : height}
+      className={cn('flex-shrink-0 object-contain', className)}
+      style={height === 'auto' ? { height: 'auto' } : undefined}
     />
   )
 }
@@ -412,7 +421,27 @@ export type FinTechIconName =
   | 'wealth-management'
   | 'insurance'
   | 'robo-advisory'
-  | string
+  | 'big-data-analytics'
+  | 'fraud-detection'
+  | 'payment-processing'
+  | 'open-banking'
+  | 'api-integration'
+  | 'contactless-payments'
+  | 'cashless-transactions'
+  | 'crowdfunding'
+  | 'digital-identity'
+  | 'e-commerce'
+  | 'financial-apps'
+  | 'financial-inclusion'
+  | 'money-transfer'
+  | 'peer-to-peer-lending'
+  | 'personal-finance-management'
+  | 'regulatory-technology'
+  | 'risk-assessment'
+  | 'stock-trading'
+  | 'virtual-currencies'
+  | 'biometric-authentication'
+  | 'cloud-invoice'
 
 export type MLIconName =
   | 'ai-brain'
@@ -423,4 +452,11 @@ export type MLIconName =
   | 'cloud-computing'
   | 'chatbot'
   | 'predictive-analytics'
-  | string
+  | 'algorithm-diagram'
+  | 'virtual-reality-ai'
+  | 'ai-chip'
+  | 'self-driving-car'
+  | 'automated-workflow'
+  | 'smart-assistant'
+  | 'data-science-chart'
+  | 'quantum-computing'

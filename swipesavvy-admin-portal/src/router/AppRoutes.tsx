@@ -9,7 +9,7 @@ import AISupportConciergePage from '@/pages/AISupportConciergePage'
 import AnalyticsPage from '@/pages/AnalyticsPage'
 import AuditLogsPage from '@/pages/AuditLogsPage'
 import CharityOnboardingPage from '@/pages/CharityOnboardingPage'
-import DashboardPage from '@/pages/DashboardPage'
+import DashboardPageNew from '@/pages/DashboardPageNew'
 import EnhancedFeatureFlagsPage from '@/pages/EnhancedFeatureFlagsPage'
 import IconSystemDemo from '@/pages/IconSystemDemo'
 import LoginPage from '@/pages/LoginPage'
@@ -33,7 +33,7 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<DashboardPageNew />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/analytics/risk-reports" element={<RiskReportsPage />} />

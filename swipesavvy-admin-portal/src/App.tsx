@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary'
 import LoginPage from './pages/LoginPage'
+import './styles/brand-design-system.css'
 
 const AppRoutes = lazy(() => 
   import('./router/AppRoutes').catch(err => {

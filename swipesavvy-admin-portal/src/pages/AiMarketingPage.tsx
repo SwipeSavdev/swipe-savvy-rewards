@@ -573,7 +573,7 @@ export default function AiMarketingPage() {
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="flex items-center gap-2 font-semibold text-[var(--ss-text)]">
-                <Sparkles className="w-5 h-5 text-blue-500" />
+                <Sparkles className="w-5 h-5 text-[var(--color-status-info-text)]" />
                 AI-Generated Copy
               </h3>
               <Button
@@ -587,7 +587,7 @@ export default function AiMarketingPage() {
               </Button>
             </div>
             {campaignCopy && (
-              <Card className="space-y-3 bg-blue-50 p-4">
+              <Card className="space-y-3 bg-[var(--color-status-info-bg)] p-4">
                 <div>
                   <p className="text-sm font-medium text-[var(--ss-text-muted)]">Headline</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--ss-text)]">{campaignCopy.headline}</p>
@@ -606,7 +606,7 @@ export default function AiMarketingPage() {
                     <ul className="mt-2 space-y-1">
                       {campaignCopy.selling_points.map((point, idx) => (
                         <li key={idx} className="flex items-center gap-2 text-sm text-[var(--ss-text)]">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <CheckCircle className="w-4 h-4 text-[var(--color-status-success-text)]" />
                           {point}
                         </li>
                       ))}
@@ -635,7 +635,7 @@ export default function AiMarketingPage() {
               </Button>
             </div>
             {audienceInsights && (
-              <Card className="space-y-3 bg-yellow-50 p-4">
+              <Card className="space-y-3 bg-[var(--color-status-warning-bg)] p-4">
                 <div>
                   <p className="text-sm font-medium text-[var(--ss-text-muted)]">Characteristics</p>
                   <p className="mt-1 text-sm text-[var(--ss-text)]">{audienceInsights.characteristics}</p>
