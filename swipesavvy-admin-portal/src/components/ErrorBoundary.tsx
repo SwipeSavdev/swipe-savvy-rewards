@@ -2,7 +2,7 @@ import React, { Component, ReactNode } from 'react'
 
 interface Props {
   children: ReactNode
-  fallback?: (error: Error) => ReactNode
+  fallback?: (_error: Error) => ReactNode
 }
 
 interface State {
@@ -16,8 +16,8 @@ export default class ErrorBoundary extends Component<Props, State> {
     this.state = { hasError: false, error: null }
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+  static getDerivedStateFromError(_error: Error): State {
+    return { hasError: true, error: _error }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {

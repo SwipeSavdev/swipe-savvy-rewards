@@ -24,7 +24,6 @@ export interface StatCardProps {
   }
   readonly sparklineData?: number[]
   readonly className?: string
-  // Backward compatibility aliases
   /** @deprecated Use `title` instead */
   readonly label?: string
   /** @deprecated Use `change.value` instead */
@@ -40,18 +39,17 @@ interface MiniSparklineProps {
 
 const variantStyles: Record<StatCardVariant, string> = {
   default: `
-    bg-white dark:bg-ss-gray-800
-    border border-[var(--ss-border)]
-    hover:shadow-ss-md hover:border-[var(--ss-border-strong)]
+    bg-white dark:bg-neutral-800
+    border border-neutral-200 dark:border-neutral-700
   `,
   gradient: `
-    bg-gradient-to-br from-ss-navy-500 to-ss-navy-700
+    bg-gradient-primary
     text-white
-    shadow-ss-lg
+    shadow-md
   `,
   outlined: `
     bg-transparent
-    border-2 border-ss-navy-200 dark:border-ss-navy-700
+    border border-neutral-300 dark:border-neutral-600
   `,
 }
 
@@ -113,16 +111,15 @@ function getTrendIcon(trend: 'up' | 'down' | 'neutral' | undefined) {
 
 function getTrendColorClass(
   trend: 'up' | 'down' | 'neutral' | undefined,
-  isGradient: boolean,
-  textSecondaryClass: string
+  isGradient: boolean
 ): string {
   if (trend === 'up') {
-    return isGradient ? 'text-ss-green-300' : 'text-ss-green-500'
+    return isGradient ? 'text-success-300' : 'text-success-600'
   }
   if (trend === 'down') {
-    return isGradient ? 'text-ss-red-300' : 'text-ss-red-500'
+    return isGradient ? 'text-danger-300' : 'text-danger-600'
   }
-  return textSecondaryClass
+  return isGradient ? 'text-white/60' : 'text-neutral-500'
 }
 
 function mapLegacyTrendDirection(direction: 'up' | 'down' | 'flat' | undefined): 'up' | 'down' | 'neutral' {
@@ -156,72 +153,68 @@ export default function StatCard({
   action,
   sparklineData,
   className,
-  // Backward compatibility
   label,
   trendPct,
   trendDirection,
 }: StatCardProps) {
-  // Resolve backward-compatible props
   const resolvedTitle = title ?? label ?? ''
-
-  // Build change object from legacy props if not provided
   const resolvedChange = buildResolvedChange(change, trendPct, trendDirection)
 
   const formattedValue = formatValue(value, format)
   const displayValue = `${prefix || ''}${formattedValue}${suffix || ''}`
 
   const isGradient = variant === 'gradient'
-  const textPrimaryClass = isGradient ? 'text-white' : 'text-[var(--ss-text-primary)]'
-  const textSecondaryClass = isGradient ? 'text-white/70' : 'text-[var(--ss-text-secondary)]'
-  const iconBgClass = isGradient ? 'bg-white/20' : 'bg-ss-navy-100 dark:bg-ss-navy-900'
-  const iconColorClass = isGradient ? 'text-white' : 'text-ss-navy-500'
+  const textPrimaryClass = isGradient ? 'text-white' : 'text-neutral-900 dark:text-neutral-50'
+  const textSecondaryClass = isGradient ? 'text-white/70' : 'text-neutral-500 dark:text-neutral-400'
+  const iconBgClass = isGradient ? 'bg-white/20' : 'bg-primary-50 dark:bg-primary-900/30'
+  const iconColorClass = isGradient ? 'text-white' : 'text-primary-600 dark:text-primary-400'
 
   const TrendIcon = getTrendIcon(resolvedChange?.trend)
-  const trendColorClass = getTrendColorClass(resolvedChange?.trend, isGradient, textSecondaryClass)
+  const trendColorClass = getTrendColorClass(resolvedChange?.trend, isGradient)
 
   return (
     <div
       className={cn(
-        'rounded-ss-xl p-6 transition-all duration-base',
+        'rounded-lg p-5 transition-colors duration-normal',
         variantStyles[variant],
         className
       )}
     >
       <div className="flex items-start justify-between">
-        {icon && (
-          <div className={cn('p-2.5 rounded-ss-lg', iconBgClass, iconColorClass)}>
-            {icon}
-          </div>
-        )}
+        <div>
+          <p className={cn('text-sm font-medium', textSecondaryClass)}>
+            {resolvedTitle}
+          </p>
+          <p className={cn('mt-2 text-2xl font-semibold tracking-tight', textPrimaryClass)}>
+            {displayValue}
+          </p>
+        </div>
 
-        {resolvedChange && (
-          <div className={cn('flex items-center gap-1', trendColorClass)}>
-            <TrendIcon className="w-4 h-4" />
-            <span className="text-sm font-semibold">
-              {resolvedChange.value > 0 ? '+' : ''}{resolvedChange.value.toFixed(1)}%
-            </span>
+        {icon && (
+          <div className={cn('p-2.5 rounded-lg', iconBgClass, iconColorClass)}>
+            {icon}
           </div>
         )}
       </div>
 
-      <p className={cn('mt-4 text-sm font-medium', textSecondaryClass)}>
-        {resolvedTitle}
-      </p>
-
-      <p className={cn('mt-1 text-3xl font-bold tracking-tight font-display', textPrimaryClass)}>
-        {displayValue}
-      </p>
-
-      {sparklineData && sparklineData.length > 0 && (
-        <div className={cn('mt-3', isGradient ? 'text-white/60' : 'text-ss-navy-400')}>
-          <MiniSparkline data={sparklineData} />
+      {resolvedChange && (
+        <div className={cn('mt-3 flex items-center gap-1.5', trendColorClass)}>
+          <TrendIcon className="w-4 h-4" />
+          <span className="text-sm font-medium">
+            {resolvedChange.value > 0 ? '+' : ''}{resolvedChange.value.toFixed(1)}%
+          </span>
+          {resolvedChange.label && (
+            <span className={cn('text-sm', textSecondaryClass)}>
+              {resolvedChange.label}
+            </span>
+          )}
         </div>
       )}
 
-      {resolvedChange?.label && (
-        <p className={cn('mt-2 text-xs', textSecondaryClass)}>
-          {resolvedChange.label}
-        </p>
+      {sparklineData && sparklineData.length > 0 && (
+        <div className={cn('mt-3', isGradient ? 'text-white/60' : 'text-primary-400')}>
+          <MiniSparkline data={sparklineData} />
+        </div>
       )}
 
       {action && (
@@ -231,7 +224,7 @@ export default function StatCard({
             'mt-4 text-sm font-medium transition-colors',
             isGradient
               ? 'text-white/80 hover:text-white'
-              : 'text-ss-navy-500 hover:text-ss-navy-700'
+              : 'text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300'
           )}
         >
           {action.label} →

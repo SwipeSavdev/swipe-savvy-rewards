@@ -40,7 +40,7 @@ export default function DropdownMenu({ trigger, items, align = 'right', classNam
         <div
           role="menu"
           className={cn(
-            'absolute z-50 mt-2 min-w-[200px] rounded-lg border border-[var(--ss-border)] bg-[var(--ss-surface)] shadow-md',
+            'absolute z-50 mt-2 min-w-[200px] rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg',
             align === 'right' ? 'right-0' : 'left-0',
             menuClassName,
           )}
@@ -60,8 +60,8 @@ export default function DropdownMenu({ trigger, items, align = 'right', classNam
                 item.disabled
                   ? 'cursor-not-allowed opacity-60'
                   : isDanger
-                    ? 'text-[var(--ss-danger)] hover:bg-[var(--ss-danger-soft)]'
-                    : 'text-[var(--ss-text)] hover:bg-[var(--ss-surface-alt)]',
+                    ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
+                    : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700',
               )
 
               if (item.href) {

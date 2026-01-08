@@ -1,4 +1,4 @@
-import { User, Bell, Shield, CreditCard, Mail } from 'lucide-react'
+import { User, Bell, Shield } from 'lucide-react'
 
 export function SettingsPage() {
   return (

@@ -1,10 +1,75 @@
+/**
+ * ============================================================================
+ * SWIPESAVVY ADMIN PORTAL - SIDEBAR COMPONENT V5
+ * COMPLETE RESET - Built from scratch
+ * ============================================================================
+ *
+ * Design Philosophy: PRECISION OVER DELIGHT
+ * - Collapsible navigation (240px → 56px)
+ * - Navigation groups with clear hierarchy
+ * - Active state with left accent indicator
+ * - Icons + labels (icons only when collapsed)
+ * - NO decorative elements
+ *
+ * Accessibility:
+ * - Proper ARIA labels and roles
+ * - Keyboard navigable
+ * - Focus indicators
+ * - Tooltips when collapsed
+ */
+
 import Badge from '@/components/ui/Badge'
-import { BrandingKitIcon } from '@/components/ui/BrandingKitIcon'
+import { BrandLogo } from '@/components/BrandAssets'
 import { NAV_GROUPS } from '@/router/nav'
 import { useUiStore } from '@/store/uiStore'
 import { cn } from '@/utils/cn'
-import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeft } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeft,
+  LayoutDashboard,
+  Home,
+  MessageSquare,
+  Sparkles,
+  TrendingUp,
+  Shield,
+  Users,
+  Lock,
+  BarChart3,
+  AlertCircle,
+  Wallet,
+  Settings,
+  Flag,
+  Filter,
+  type LucideIcon,
+} from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+
+// =============================================================================
+// ICON MAPPING
+// =============================================================================
+
+const iconMap: Record<string, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  home: Home,
+  chat: MessageSquare,
+  star: Sparkles,
+  chart_line: TrendingUp,
+  chart_bar: BarChart3,
+  lock: Lock,
+  shield: Shield,
+  users: Users,
+  alert_circle: AlertCircle,
+  wallet: Wallet,
+  settings: Settings,
+  flag: Flag,
+  filter: Filter,
+}
+
+// =============================================================================
+// SIDEBAR COMPONENT
+// =============================================================================
 
 export default function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
@@ -15,153 +80,200 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        'flex h-full flex-col bg-white dark:bg-ss-gray-900',
-        'border-r border-[var(--ss-border)]',
-        'transition-all duration-300 ease-in-out',
-        collapsed ? 'w-[68px]' : 'w-[260px]',
+        'flex h-full flex-col',
+        'bg-[var(--color-bg-primary)]',
+        'border-r border-[var(--color-border-primary)]',
+        'transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-in-out)]',
+        collapsed ? 'w-[var(--layout-sidebar-width-collapsed)]' : 'w-[var(--layout-sidebar-width)]'
       )}
+      aria-label="Main navigation"
     >
-      {/* Header with Logo */}
+      {/* ─────────────────────────────────────────────────────────────────────
+          HEADER - Logo
+          ───────────────────────────────────────────────────────────────────── */}
       <div
         className={cn(
-          'flex items-center gap-3 p-4 border-b border-[var(--ss-border)]',
-          'bg-gradient-to-r from-ss-navy-600 to-ss-navy-700',
-          collapsed && 'justify-center px-2'
+          'flex items-center h-[var(--layout-header-height)]',
+          'px-[var(--spacing-4)]',
+          'border-b border-[var(--color-border-primary)]',
+          collapsed && 'justify-center px-[var(--spacing-2)]'
         )}
       >
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-ss-lg bg-gradient-to-br from-ss-yellow-400 to-ss-yellow-500 shadow-ss-md">
-          <span className="font-display text-lg font-bold text-ss-navy-800">SS</span>
-        </div>
-        {!collapsed && (
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-base font-semibold text-white truncate">SwipeSavvy</p>
-            <p className="text-xs text-white/70">Admin Portal</p>
+        {collapsed ? (
+          // Collapsed: Show icon only
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-action-primary-bg)]">
+            <span className="text-[var(--font-size-sm)] font-bold text-[var(--color-action-primary-text)]">
+              SS
+            </span>
           </div>
+        ) : (
+          // Expanded: Show full logo
+          <>
+            <BrandLogo
+              variant="color"
+              product="swipe-savvy"
+              width={140}
+              className="dark:hidden"
+            />
+            <BrandLogo
+              variant="white"
+              product="swipe-savvy"
+              width={140}
+              className="hidden dark:block"
+            />
+          </>
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden p-3">
+      {/* ─────────────────────────────────────────────────────────────────────
+          NAVIGATION
+          ───────────────────────────────────────────────────────────────────── */}
+      <nav
+        className="flex-1 overflow-y-auto overflow-x-hidden py-[var(--spacing-4)] px-[var(--spacing-3)]"
+        aria-label="Main navigation"
+      >
         {NAV_GROUPS.map((group) => {
           const isOpen = openGroups[group.key] !== false
           return (
-            <div key={group.key} className="mb-4">
+            <div key={group.key} className="mb-[var(--spacing-5)]">
               {/* Group Header */}
               <button
                 type="button"
                 onClick={() => toggleGroup(group.key)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-ss-md px-2 py-1.5',
-                  'text-xs font-semibold uppercase tracking-wider',
-                  'text-ss-gray-500 dark:text-ss-gray-400',
-                  'hover:text-ss-navy-600 dark:hover:text-ss-navy-400',
-                  'transition-colors duration-base',
+                  'flex w-full items-center gap-[var(--spacing-2)]',
+                  'px-[var(--spacing-3)] py-[var(--spacing-1-5)]',
+                  'text-[var(--font-size-xs)] font-medium uppercase',
+                  'tracking-[var(--letter-spacing-wider)]',
+                  'text-[var(--color-text-tertiary)]',
+                  'hover:text-[var(--color-text-secondary)]',
+                  'transition-colors duration-[var(--duration-fast)]',
+                  'rounded-[var(--radius-sm)]',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]',
                   collapsed && 'justify-center'
                 )}
                 aria-expanded={isOpen}
+                aria-controls={`nav-group-${group.key}`}
               >
                 {!collapsed && <span className="flex-1 text-left">{group.label}</span>}
                 {!collapsed && (
-                  isOpen
-                    ? <ChevronDown className="w-4 h-4" />
-                    : <ChevronRight className="w-4 h-4" />
+                  isOpen ? (
+                    <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  )
                 )}
-                {collapsed && <ChevronRight className="w-4 h-4" />}
+                {collapsed && <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />}
               </button>
 
               {/* Nav Items */}
               {((!collapsed && isOpen) || collapsed) && (
-                <div className={cn('mt-1 space-y-0.5', collapsed && 'flex flex-col items-center')}>
-                  {group.items.map((item) => (
-                    <NavLink
-                      key={item.key}
-                      to={item.to}
-                      className={({ isActive }) =>
-                        cn(
-                          'group relative flex items-center gap-3 rounded-ss-md px-3 py-2.5',
-                          'text-sm font-medium',
-                          'transition-all duration-base',
-                          isActive
-                            ? 'bg-ss-navy-50 text-ss-navy-700 dark:bg-ss-navy-900/50 dark:text-ss-navy-300'
-                            : 'text-ss-gray-600 hover:bg-ss-gray-50 hover:text-ss-gray-900 dark:text-ss-gray-400 dark:hover:bg-ss-gray-800 dark:hover:text-ss-gray-200',
-                          collapsed && 'justify-center px-2',
-                        )
-                      }
-                      title={collapsed ? item.label : undefined}
-                    >
-                      {({ isActive }) => (
-                        <>
-                          {/* Active Indicator */}
-                          {isActive && (
-                            <span
-                              className={cn(
-                                'absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full',
-                                'bg-ss-green-500',
-                                collapsed && 'left-0 w-0.5 h-4'
+                <ul
+                  id={`nav-group-${group.key}`}
+                  className={cn(
+                    'mt-[var(--spacing-1)] space-y-[var(--spacing-0-5)]',
+                    collapsed && 'flex flex-col items-center'
+                  )}
+                >
+                  {group.items.map((item) => {
+                    const IconComponent = item.icon ? iconMap[item.icon] : null
+                    return (
+                      <li key={item.key}>
+                        <NavLink
+                          to={item.to}
+                          className={({ isActive }) =>
+                            cn(
+                              'group relative flex items-center gap-[var(--spacing-3)]',
+                              'rounded-[var(--radius-sm)]',
+                              'px-[var(--spacing-3)] py-[var(--spacing-2)]',
+                              'text-[var(--font-size-sm)] font-medium',
+                              'transition-colors duration-[var(--duration-fast)]',
+                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]',
+                              isActive
+                                ? 'bg-[var(--color-status-info-bg)] text-[var(--color-status-info-text)]'
+                                : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]',
+                              collapsed && 'justify-center px-[var(--spacing-2)]'
+                            )
+                          }
+                          title={collapsed ? item.label : undefined}
+                        >
+                          {({ isActive }) => (
+                            <>
+                              {/* Active Indicator - Left accent bar */}
+                              {isActive && (
+                                <span
+                                  className={cn(
+                                    'absolute left-0 top-1/2 -translate-y-1/2',
+                                    'w-[2px] h-5 rounded-r-full',
+                                    'bg-[var(--color-action-primary-bg)]',
+                                    collapsed && 'h-4'
+                                  )}
+                                  aria-hidden="true"
+                                />
                               )}
-                            />
-                          )}
 
-                          {/* Icon */}
-                          {item.icon && typeof item.icon === 'string' && (
-                            <BrandingKitIcon
-                              name={item.icon as any}
-                              size="md"
-                              className={cn(
-                                'flex-shrink-0',
-                                isActive ? 'text-ss-navy-600 dark:text-ss-navy-400' : ''
+                              {/* Icon */}
+                              {IconComponent && (
+                                <IconComponent
+                                  className={cn(
+                                    'flex-shrink-0 w-5 h-5',
+                                    isActive && 'text-[var(--color-action-primary-bg)]'
+                                  )}
+                                  aria-hidden="true"
+                                />
                               )}
-                            />
-                          )}
 
-                          {/* Label */}
-                          {!collapsed && (
-                            <span className="flex-1 truncate">{item.label}</span>
-                          )}
+                              {/* Label */}
+                              {!collapsed && (
+                                <span className="flex-1 truncate">{item.label}</span>
+                              )}
 
-                          {/* Badge */}
-                          {!collapsed && typeof item.badge === 'number' && (
-                            <Badge
-                              colorScheme="navy"
-                              variant="soft"
-                              size="sm"
-                              className="ml-auto"
-                            >
-                              {item.badge}
-                            </Badge>
+                              {/* Badge */}
+                              {!collapsed && typeof item.badge === 'number' && (
+                                <Badge status="info" size="sm" className="ml-auto">
+                                  {item.badge}
+                                </Badge>
+                              )}
+                            </>
                           )}
-                        </>
-                      )}
-                    </NavLink>
-                  ))}
-                </div>
+                        </NavLink>
+                      </li>
+                    )
+                  })}
+                </ul>
               )}
             </div>
           )
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="border-t border-[var(--ss-border)] p-3">
+      {/* ─────────────────────────────────────────────────────────────────────
+          FOOTER
+          ───────────────────────────────────────────────────────────────────── */}
+      <div className="border-t border-[var(--color-border-primary)] p-[var(--spacing-3)]">
         {/* Collapse Toggle */}
         <button
           type="button"
           onClick={toggleSidebarCollapsed}
           className={cn(
-            'flex w-full items-center gap-2 rounded-ss-md px-3 py-2',
-            'text-sm text-ss-gray-500 dark:text-ss-gray-400',
-            'hover:bg-ss-gray-50 hover:text-ss-gray-700',
-            'dark:hover:bg-ss-gray-800 dark:hover:text-ss-gray-200',
-            'transition-colors duration-base',
-            collapsed && 'justify-center px-2'
+            'flex w-full items-center gap-[var(--spacing-2)]',
+            'rounded-[var(--radius-sm)]',
+            'px-[var(--spacing-3)] py-[var(--spacing-2)]',
+            'text-[var(--font-size-sm)] text-[var(--color-text-tertiary)]',
+            'hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-secondary)]',
+            'transition-colors duration-[var(--duration-fast)]',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]',
+            collapsed && 'justify-center px-[var(--spacing-2)]'
           )}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!collapsed}
         >
           {collapsed ? (
-            <PanelLeft className="w-5 h-5" />
+            <PanelLeft className="w-5 h-5" aria-hidden="true" />
           ) : (
             <>
-              <PanelLeftClose className="w-5 h-5" />
+              <PanelLeftClose className="w-5 h-5" aria-hidden="true" />
               <span>Collapse</span>
             </>
           )}
@@ -169,7 +281,7 @@ export default function Sidebar() {
 
         {/* Copyright */}
         {!collapsed && (
-          <p className="mt-3 text-center text-xs text-ss-gray-400 dark:text-ss-gray-500">
+          <p className="mt-[var(--spacing-3)] text-center text-[var(--font-size-xs)] text-[var(--color-text-tertiary)]">
             © {new Date().getFullYear()} SwipeSavvy
           </p>
         )}

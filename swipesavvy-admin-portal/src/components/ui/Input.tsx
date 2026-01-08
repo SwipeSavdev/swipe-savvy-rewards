@@ -1,115 +1,112 @@
-import { cn } from '@/utils/cn'
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react'
+/**
+ * ============================================================================
+ * SWIPESAVVY ADMIN PORTAL - INPUT COMPONENT V5
+ * COMPLETE RESET - Built from scratch
+ * ============================================================================
+ *
+ * Design Philosophy: PRECISION OVER DELIGHT
+ * - Clear label positioning above input
+ * - Helper text for guidance
+ * - Error state with danger status color
+ * - Disabled state with proper visual feedback
+ * - WCAG 2.2 AA compliant focus indicators
+ *
+ * Accessibility:
+ * - aria-invalid for error states
+ * - aria-describedby for helper/error text
+ * - Required field indication
+ * - Proper label association
+ */
 
-export type InputVariant = 'default' | 'filled' | 'flushed'
+import { cn } from '@/utils/cn'
+import { forwardRef, type InputHTMLAttributes, type ReactNode, useId } from 'react'
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
 export type InputSize = 'sm' | 'md' | 'lg'
 export type InputState = 'default' | 'error' | 'success'
 
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
-  readonly variant?: InputVariant
+  /** Size preset */
   readonly size?: InputSize
+  /** Visual state */
   readonly state?: InputState
+  /** Label text displayed above input */
   readonly label?: string
+  /** Helper text displayed below input */
   readonly helperText?: string
+  /** Error message (sets state to error automatically) */
   readonly errorText?: string
-  readonly successText?: string
-  readonly leftIcon?: ReactNode
-  readonly rightIcon?: ReactNode
-  readonly isRequired?: boolean
-  // Backward compatibility aliases
-  /** @deprecated Use `leftIcon` instead */
-  readonly leftSlot?: ReactNode
-  /** @deprecated Use `rightIcon` instead */
-  readonly rightSlot?: ReactNode
-  /** @deprecated Use `errorText` instead */
+  /** Error message alias (backwards compatibility) */
   readonly error?: string
-  /** @deprecated Use `helperText` instead */
-  readonly hint?: string
+  /** Icon displayed on the left side */
+  readonly leftIcon?: ReactNode
+  /** Icon displayed on the right side */
+  readonly rightIcon?: ReactNode
+  /** Right slot alias (backwards compatibility) */
+  readonly rightSlot?: ReactNode
+  /** Marks field as required */
+  readonly isRequired?: boolean
+  /** Full-width container */
+  readonly fullWidth?: boolean
 }
 
-const baseStyles = `
-  w-full bg-transparent
-  text-[var(--ss-text-primary)]
-  placeholder:text-[var(--ss-text-tertiary)]
-  focus:outline-none
-  disabled:cursor-not-allowed disabled:opacity-50
-  transition-colors duration-base
-`
+// =============================================================================
+// SIZE STYLES
+// =============================================================================
 
-const variantStyles: Record<InputVariant, string> = {
-  default: `
-    border border-[var(--ss-border)]
-    rounded-ss-lg
-    bg-white dark:bg-ss-gray-800
-    focus:border-ss-navy-500 focus:ring-2 focus:ring-ss-navy-500/20
-  `,
-  filled: `
-    border border-transparent
-    rounded-ss-lg
-    bg-ss-gray-100 dark:bg-ss-gray-800
-    focus:bg-white dark:focus:bg-ss-gray-700
-    focus:border-ss-navy-500 focus:ring-2 focus:ring-ss-navy-500/20
-  `,
-  flushed: `
-    border-0 border-b-2 border-[var(--ss-border)]
-    rounded-none
-    bg-transparent
-    focus:border-ss-navy-500
-    px-0
-  `,
-}
-
-const sizeStyles: Record<InputSize, { wrapper: string; input: string; icon: string }> = {
+const sizeConfig: Record<InputSize, { wrapper: string; input: string; icon: string; label: string }> = {
   sm: {
-    wrapper: 'h-8',
-    input: 'px-2.5 py-1.5 text-sm',
+    wrapper: 'h-[var(--component-height-sm)]',
+    input: 'px-[var(--spacing-3)] text-[var(--font-size-sm)]',
     icon: 'w-4 h-4',
+    label: 'text-[var(--font-size-xs)]',
   },
   md: {
-    wrapper: 'h-10',
-    input: 'px-3 py-2 text-sm',
-    icon: 'w-5 h-5',
+    wrapper: 'h-[var(--component-height-md)]',
+    input: 'px-[var(--spacing-3)] text-[var(--font-size-base)]',
+    icon: 'w-4 h-4',
+    label: 'text-[var(--font-size-sm)]',
   },
   lg: {
-    wrapper: 'h-12',
-    input: 'px-4 py-3 text-base',
+    wrapper: 'h-[var(--component-height-lg)]',
+    input: 'px-[var(--spacing-4)] text-[var(--font-size-base)]',
     icon: 'w-5 h-5',
+    label: 'text-[var(--font-size-sm)]',
   },
 }
 
-const stateStyles: Record<InputState, { wrapper: string; text: string }> = {
-  default: {
-    wrapper: '',
-    text: '',
-  },
-  error: {
-    wrapper: 'border-ss-red-500 focus:border-ss-red-500 focus:ring-ss-red-500/20',
-    text: 'text-ss-red-500',
-  },
-  success: {
-    wrapper: 'border-ss-green-500 focus:border-ss-green-500 focus:ring-ss-green-500/20',
-    text: 'text-ss-green-500',
-  },
+// =============================================================================
+// STATE STYLES
+// =============================================================================
+
+const stateStyles: Record<InputState, string> = {
+  default: [
+    'border-[var(--color-border-primary)]',
+    'hover:border-[var(--color-border-secondary)]',
+    'focus:border-[var(--color-border-focus)]',
+    'focus:ring-[var(--color-border-focus)]',
+  ].join(' '),
+  error: [
+    'border-[var(--color-status-danger-border)]',
+    'focus:border-[var(--color-status-danger-border)]',
+    'focus:ring-[var(--color-status-danger-icon)]',
+  ].join(' '),
+  success: [
+    'border-[var(--color-status-success-border)]',
+    'focus:border-[var(--color-status-success-border)]',
+    'focus:ring-[var(--color-status-success-icon)]',
+  ].join(' '),
 }
 
-const labelSizeStyles: Record<InputSize, string> = {
-  sm: 'text-xs',
-  md: 'text-sm',
-  lg: 'text-sm',
-}
-
-function getActualState(
-  errorText: string | undefined,
-  successText: string | undefined,
-  state: InputState
-): InputState {
-  if (errorText) return 'error'
-  if (successText) return 'success'
-  return state
-}
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
 
 function getAriaDescribedBy(
-  inputId: string | undefined,
+  inputId: string,
   showError: boolean,
   showHelper: boolean
 ): string | undefined {
@@ -118,36 +115,29 @@ function getAriaDescribedBy(
   return undefined
 }
 
-function getIconPadding(
-  hasIcon: boolean,
-  variant: InputVariant,
-  side: 'left' | 'right'
-): string {
+function getIconPadding(hasIcon: boolean, side: 'left' | 'right'): string {
   if (!hasIcon) return ''
-  if (variant === 'flushed') {
-    return side === 'left' ? 'pl-6' : 'pr-6'
-  }
   return side === 'left' ? 'pl-10' : 'pr-10'
 }
+
+// =============================================================================
+// INPUT COMPONENT
+// =============================================================================
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
-      variant = 'default',
       size = 'md',
       state = 'default',
       label,
       helperText,
       errorText,
-      successText,
+      error, // backwards compatibility alias
       leftIcon,
       rightIcon,
+      rightSlot, // backwards compatibility alias
       isRequired,
-      // Backward compatibility
-      leftSlot,
-      rightSlot,
-      error,
-      hint,
+      fullWidth = true,
       className,
       disabled,
       id,
@@ -155,109 +145,123 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
-    // Merge backward-compatible props with new props
-    const resolvedLeftIcon = leftIcon ?? leftSlot
-    const resolvedRightIcon = rightIcon ?? rightSlot
+    const generatedId = useId()
+    const inputId = id ?? generatedId
+
+    // Support both errorText and error props
     const resolvedErrorText = errorText ?? error
-    const resolvedHelperText = helperText ?? hint
+    // Support both rightIcon and rightSlot props
+    const resolvedRightIcon = rightIcon ?? rightSlot
 
-    const inputId = id ?? props.name
-    const actualState = getActualState(resolvedErrorText, successText, state)
+    // Error text automatically sets state to error
+    const actualState = resolvedErrorText ? 'error' : state
     const showError = actualState === 'error' && Boolean(resolvedErrorText)
-    const showSuccess = actualState === 'success' && Boolean(successText)
-    const showHelper = !showError && !showSuccess && Boolean(resolvedHelperText)
-
-    const wrapperClasses = cn(
-      'relative flex items-center',
-      sizeStyles[size].wrapper,
-      variantStyles[variant],
-      stateStyles[actualState].wrapper,
-      disabled && 'opacity-50 cursor-not-allowed'
-    )
-
-    const inputClasses = cn(
-      baseStyles,
-      sizeStyles[size].input,
-      getIconPadding(Boolean(resolvedLeftIcon), variant, 'left'),
-      getIconPadding(Boolean(resolvedRightIcon), variant, 'right'),
-      className
-    )
+    const showHelper = !showError && Boolean(helperText)
 
     return (
-      <div className="w-full">
+      <div className={cn(fullWidth && 'w-full')}>
+        {/* Label */}
         {label && (
           <label
             htmlFor={inputId}
             className={cn(
-              'mb-1.5 block font-medium text-[var(--ss-text-primary)]',
-              labelSizeStyles[size]
+              'mb-[var(--spacing-1-5)] block font-medium text-[var(--color-text-secondary)]',
+              sizeConfig[size].label
             )}
           >
             {label}
-            {isRequired && <span className="ml-1 text-ss-red-500">*</span>}
+            {isRequired && (
+              <span className="ml-0.5 text-[var(--color-status-danger-text)]" aria-hidden="true">
+                *
+              </span>
+            )}
           </label>
         )}
 
-        <div className={wrapperClasses}>
-          {resolvedLeftIcon && (
+        {/* Input wrapper */}
+        <div className={cn('relative flex items-center', sizeConfig[size].wrapper)}>
+          {/* Left icon */}
+          {leftIcon && (
             <span
               className={cn(
-                'absolute left-3 flex items-center text-[var(--ss-text-tertiary)]',
-                variant === 'flushed' && 'left-0',
-                sizeStyles[size].icon
+                'absolute left-[var(--spacing-3)] flex items-center',
+                'text-[var(--color-text-tertiary)] pointer-events-none',
+                sizeConfig[size].icon
               )}
+              aria-hidden="true"
             >
-              {resolvedLeftIcon}
+              {leftIcon}
             </span>
           )}
 
+          {/* Input element */}
           <input
             ref={ref}
             id={inputId}
             disabled={disabled}
             aria-invalid={actualState === 'error'}
+            aria-required={isRequired}
             aria-describedby={getAriaDescribedBy(inputId, showError, showHelper)}
-            className={inputClasses}
+            className={cn(
+              // Base styles
+              'w-full h-full',
+              'bg-[var(--color-bg-primary)]',
+              'text-[var(--color-text-primary)]',
+              'placeholder:text-[var(--color-text-tertiary)]',
+              'border rounded-[var(--radius-sm)]',
+              'transition-colors duration-[var(--duration-fast)]',
+              // Focus styles
+              'focus:outline-none focus:ring-2 focus:ring-opacity-20',
+              // Disabled styles
+              'disabled:bg-[var(--color-bg-secondary)]',
+              'disabled:text-[var(--color-text-tertiary)]',
+              'disabled:cursor-not-allowed',
+              'disabled:opacity-60',
+              // Size-specific styles
+              sizeConfig[size].input,
+              // State styles
+              stateStyles[actualState],
+              // Icon padding
+              getIconPadding(Boolean(leftIcon), 'left'),
+              getIconPadding(Boolean(resolvedRightIcon), 'right'),
+              className
+            )}
             {...props}
           />
 
+          {/* Right icon */}
           {resolvedRightIcon && (
             <span
               className={cn(
-                'absolute right-3 flex items-center text-[var(--ss-text-tertiary)]',
-                variant === 'flushed' && 'right-0',
-                sizeStyles[size].icon
+                'absolute right-[var(--spacing-3)] flex items-center',
+                'text-[var(--color-text-tertiary)] pointer-events-none',
+                sizeConfig[size].icon
               )}
+              aria-hidden="true"
             >
               {resolvedRightIcon}
             </span>
           )}
         </div>
 
+        {/* Error text */}
         {showError && (
           <p
             id={`${inputId}-error`}
-            className={cn('mt-1.5 text-xs', stateStyles.error.text)}
+            className="mt-[var(--spacing-1-5)] text-[var(--font-size-xs)] text-[var(--color-status-danger-text)]"
+            role="alert"
           >
             {resolvedErrorText}
           </p>
         )}
 
-        {showSuccess && (
-          <p
-            id={`${inputId}-success`}
-            className={cn('mt-1.5 text-xs', stateStyles.success.text)}
-          >
-            {successText}
-          </p>
-        )}
-
+        {/* Helper text */}
         {showHelper && (
           <p
             id={`${inputId}-helper`}
-            className="mt-1.5 text-xs text-[var(--ss-text-tertiary)]"
+            className="mt-[var(--spacing-1-5)] text-[var(--font-size-xs)] text-[var(--color-text-tertiary)]"
           >
-            {resolvedHelperText}
+            {helperText}
           </p>
         )}
       </div>
@@ -268,5 +272,4 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = 'Input'
 
 export default Input
-
 export { Input }

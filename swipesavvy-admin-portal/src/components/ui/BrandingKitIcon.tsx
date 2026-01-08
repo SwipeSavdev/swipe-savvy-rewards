@@ -59,7 +59,7 @@ interface BrandingKitIconProps {
   /**
    * Click handler
    */
-  onClick?: (e: React.MouseEvent<HTMLImageElement>) => void;
+  onClick?: (_e: React.MouseEvent<HTMLImageElement>) => void;
 
   /**
    * Make icon focusable (for interactive icons)
@@ -177,7 +177,7 @@ interface BrandingKitIconButtonProps extends Omit<BrandingKitIconProps, 'focusab
   /**
    * Button click handler
    */
-  onClick: (e: React.MouseEvent<HTMLImageElement>) => void;
+  onClick: (_e: React.MouseEvent<HTMLImageElement>) => void;
 
   /**
    * Tooltip text

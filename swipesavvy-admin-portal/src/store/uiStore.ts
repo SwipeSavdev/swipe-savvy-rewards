@@ -8,12 +8,12 @@ interface UiState {
   sidebarCollapsed: boolean
   sidebarMobileOpen: boolean
   openNavGroups: Record<string, boolean>
-  setTheme: (theme: ThemeMode) => void
+  setTheme: (_theme: ThemeMode) => void
   toggleTheme: () => void
-  setSidebarCollapsed: (collapsed: boolean) => void
+  setSidebarCollapsed: (_collapsed: boolean) => void
   toggleSidebarCollapsed: () => void
-  setSidebarMobileOpen: (open: boolean) => void
-  toggleNavGroup: (groupKey: string) => void
+  setSidebarMobileOpen: (_open: boolean) => void
+  toggleNavGroup: (_groupKey: string) => void
 }
 
 export const useUiStore = create<UiState>()(

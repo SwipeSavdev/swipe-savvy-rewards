@@ -23,7 +23,7 @@ const WaitingSessionsQueueRealtime: React.FC = () => {
 
   // Real-time hooks
   const { isConnected } = useRealtimeDashboard();
-  const { queueDepth } = useQueueUpdates();
+  const { queueDepth: _queueDepth } = useQueueUpdates();
 
   // Fetch initial waiting sessions
   useEffect(() => {

@@ -7,44 +7,44 @@ export default {
   darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
-      // Colors
+      // Colors - Refined Palette (matching admin portal)
       colors: {
-        // Primary Brand - Navy Blue
+        // Primary - Navy Blue
         primary: {
-          50: '#E8EFF8',
-          100: '#C5D7ED',
-          200: '#9EBDE1',
-          300: '#77A3D5',
-          400: '#508AC8',
+          50: '#f0f4fa',
+          100: '#dce5f4',
+          200: '#b8cbe8',
+          300: '#8aa8d8',
+          400: '#5c85c8',
           500: '#235393',
-          600: '#1C4275',
+          600: '#1c4275',
           700: '#153157',
-          800: '#0E213A',
-          900: '#07101D',
+          800: '#0e213a',
+          900: '#07101d',
         },
         // Success - Green
         success: {
-          50: '#ECFAE8',
-          100: '#C9F2BD',
-          200: '#A6E992',
-          300: '#83E067',
-          400: '#72CD56',
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
           500: '#60BA46',
-          600: '#4D9538',
-          700: '#3A702A',
+          600: '#4d9538',
+          700: '#3a702a',
           800: '#274B1C',
           900: '#14260E',
           DEFAULT: '#60BA46',
         },
-        // Warning - Yellow/Gold
+        // Warning - Gold
         warning: {
-          50: '#FFF8E6',
-          100: '#FEEAB3',
-          200: '#FDDC80',
-          300: '#FCCE4D',
-          400: '#FBC31A',
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
           500: '#FAB915',
-          600: '#C89411',
+          600: '#c89411',
           700: '#966F0D',
           800: '#644A09',
           900: '#322504',
@@ -52,48 +52,54 @@ export default {
         },
         // Danger - Red
         danger: {
-          50: '#FDECEC',
-          100: '#F9CCCF',
-          200: '#F5ABAF',
-          300: '#F08A90',
-          400: '#EB6970',
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
           500: '#E5484D',
-          600: '#B73A3E',
+          600: '#b73a3e',
           700: '#892B2F',
           800: '#5C1D1F',
           900: '#2E0E10',
           DEFAULT: '#E5484D',
         },
-        // Neutral - Gray
+        // Neutral - Gray (extended)
         neutral: {
-          50: '#FAFAFA',
-          100: '#F4F4F5',
-          200: '#E4E4E7',
-          300: '#D4D4D8',
-          400: '#A1A1AA',
-          500: '#71717A',
-          600: '#52525B',
-          700: '#3F3F46',
-          800: '#27272A',
-          900: '#18181B',
+          25: '#fcfcfd',
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
+          950: '#030712',
         },
       },
 
       // Font Families
       fontFamily: {
-        display: ['"SF Pro Display"', 'system-ui', '-apple-system', 'sans-serif'],
-        body: ['Barlow', '"SF Pro Text"', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['"SF Mono"', '"Fira Code"', 'Consolas', 'monospace'],
+        sans: ['Barlow', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['SF Pro Display', 'Barlow', 'sans-serif'],
+        mono: ['SF Mono', 'Fira Code', 'Consolas', 'monospace'],
       },
 
       // Font Sizes
       fontSize: {
         'display-1': ['3rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
-        'display-2': ['2.25rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-2': ['2.25rem', { lineHeight: '1.15', letterSpacing: '-0.02em', fontWeight: '700' }],
         'heading-1': ['1.875rem', { lineHeight: '1.25', fontWeight: '600' }],
         'heading-2': ['1.5rem', { lineHeight: '1.35', fontWeight: '600' }],
         'heading-3': ['1.25rem', { lineHeight: '1.4', fontWeight: '600' }],
         'heading-4': ['1.125rem', { lineHeight: '1.4', fontWeight: '600' }],
+        'body-lg': ['1.125rem', { lineHeight: '1.5' }],
+        'body': ['1rem', { lineHeight: '1.5' }],
+        'body-sm': ['0.875rem', { lineHeight: '1.5' }],
+        'caption': ['0.75rem', { lineHeight: '1.4' }],
       },
 
       // Spacing
@@ -109,41 +115,52 @@ export default {
         '22': '5.5rem',
       },
 
-      // Box Shadow
+      // Box Shadow - Refined & Subtle
       boxShadow: {
-        'xs': '0 1px 2px rgba(0, 0, 0, 0.05)',
-        'sm': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
-        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
-        'card': '0 4px 20px rgba(0, 0, 0, 0.08)',
-        'card-hover': '0 8px 30px rgba(0, 0, 0, 0.12)',
+        'xs': '0 1px 2px 0 rgb(0 0 0 / 0.03)',
+        'sm': '0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05)',
+        'md': '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
+        'lg': '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
+        'xl': '0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)',
+        '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.15)',
+        'inner': 'inset 0 2px 4px 0 rgb(0 0 0 / 0.03)',
+        'card': '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
+        'card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04)',
+        'primary': '0 4px 14px 0 rgb(35 83 147 / 0.12)',
+        'success': '0 4px 14px 0 rgb(96 186 70 / 0.12)',
+        'danger': '0 4px 14px 0 rgb(229 72 77 / 0.12)',
       },
 
-      // Border Radius
+      // Border Radius - Refined (Less Bulky)
       borderRadius: {
         'sm': '4px',
-        'md': '8px',
-        'lg': '12px',
-        'xl': '16px',
-        '2xl': '24px',
-        '3xl': '32px',
-        'card': '16px',
+        'md': '6px',
+        'lg': '8px',
+        'xl': '12px',
+        '2xl': '16px',
+        '3xl': '24px',
+        'card': '8px',
+        'button': '6px',
+        'input': '6px',
+        'badge': '4px',
+        'pill': '9999px',
       },
 
       // Transitions
       transitionDuration: {
-        'fast': '150ms',
-        'base': '200ms',
-        'slow': '300ms',
-        'slower': '500ms',
+        'instant': '50ms',
+        'fast': '100ms',
+        'normal': '150ms',
+        'slow': '200ms',
+        'slower': '300ms',
       },
 
       transitionTimingFunction: {
-        'ease-in-out-custom': 'cubic-bezier(0.4, 0, 0.2, 1)',
-        'bounce': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        'ease-default': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'ease-in': 'cubic-bezier(0.4, 0, 1, 1)',
+        'ease-out': 'cubic-bezier(0, 0, 0.2, 1)',
+        'ease-in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'ease-bounce': 'cubic-bezier(0.68, -0.55, 0.27, 1.55)',
       },
 
       // Z-Index
@@ -169,15 +186,23 @@ export default {
           '100%': { opacity: '0' },
         },
         'slide-up': {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         'slide-down': {
-          '0%': { opacity: '0', transform: 'translateY(-10px)' },
+          '0%': { opacity: '0', transform: 'translateY(-8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        'slide-in-right': {
+          '0%': { opacity: '0', transform: 'translateX(16px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'slide-in-left': {
+          '0%': { opacity: '0', transform: 'translateX(-16px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
         'scale-in': {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '0%': { opacity: '0', transform: 'scale(0.96)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         'skeleton-pulse': {
@@ -188,34 +213,44 @@ export default {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
+        'spin': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+        'pulse-dot': {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.6', transform: 'scale(0.9)' },
+        },
         'float': {
           '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-5px)' },
+          '50%': { transform: 'translateY(-4px)' },
         },
       },
 
       animation: {
-        'fade-in': 'fade-in 200ms ease-out',
-        'fade-out': 'fade-out 200ms ease-in',
-        'slide-up': 'slide-up 200ms ease-out',
-        'slide-down': 'slide-down 200ms ease-out',
-        'scale-in': 'scale-in 200ms ease-out',
+        'fade-in': 'fade-in 150ms ease-out',
+        'fade-out': 'fade-out 150ms ease-in',
+        'slide-up': 'slide-up 150ms ease-out',
+        'slide-down': 'slide-down 150ms ease-out',
+        'slide-in-right': 'slide-in-right 200ms ease-out',
+        'slide-in-left': 'slide-in-left 200ms ease-out',
+        'scale-in': 'scale-in 150ms ease-out',
         'skeleton': 'skeleton-pulse 1.5s ease-in-out infinite',
         'shimmer': 'shimmer 2s ease-in-out infinite',
+        'spin': 'spin 1s linear infinite',
+        'pulse-dot': 'pulse-dot 1.5s ease-in-out infinite',
         'float': 'float 3s ease-in-out infinite',
       },
 
-      // Background Image (for gradients)
+      // Background Image - Refined gradients
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #235393 0%, #1A3F7A 100%)',
-        'gradient-primary-vibrant': 'linear-gradient(135deg, #235393 0%, #4A90E2 100%)',
-        'gradient-success': 'linear-gradient(135deg, #60BA46 0%, #4A9A35 100%)',
-        'gradient-warning': 'linear-gradient(135deg, #FAB915 0%, #FF8C00 100%)',
-        'gradient-danger': 'linear-gradient(135deg, #E5484D 0%, #B73A3E 100%)',
-        'gradient-gold': 'linear-gradient(135deg, #F4D03F 0%, #FAB915 50%, #E67E22 100%)',
-        'gradient-card': 'linear-gradient(135deg, #235393 0%, #1C4275 50%, #153157 100%)',
-        'gradient-card-shine': 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%)',
-        'gradient-hero': 'linear-gradient(180deg, #235393 0%, #1A3F7A 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #235393 0%, #1c4275 100%)',
+        'gradient-primary-subtle': 'linear-gradient(135deg, #f0f4fa 0%, #dce5f4 100%)',
+        'gradient-success': 'linear-gradient(135deg, #60BA46 0%, #4d9538 100%)',
+        'gradient-warning': 'linear-gradient(135deg, #FAB915 0%, #c89411 100%)',
+        'gradient-danger': 'linear-gradient(135deg, #E5484D 0%, #b73a3e 100%)',
+        'gradient-card': 'linear-gradient(135deg, #235393 0%, #1c4275 100%)',
+        'gradient-card-shine': 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%)',
       },
 
       // Backdrop Blur
@@ -227,12 +262,13 @@ export default {
         'xl': '16px',
       },
 
-      // Max Width for containers
+      // Max Width
       maxWidth: {
         'page': '1400px',
         'content': '1200px',
         'narrow': '600px',
         'card': '400px',
+        'prose': '65ch',
       },
 
       // Min Height

@@ -1,0 +1,665 @@
+{
+  "generated": "2026-01-07T20:35:04.641274",
+  "version": "1.0.0",
+  "totalAssets": 84,
+  "categories": {
+    "icons/machine-learning": [
+      {
+        "name": "robotics-automation",
+        "style": "glyph",
+        "path": "icons/machine-learning/robotics-automation-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "data-network",
+        "style": "glyph",
+        "path": "icons/machine-learning/data-network-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "machine-learning-gear,-settings,-machine-learning,-ai,-mechanics",
+        "style": "glyph",
+        "path": "icons/machine-learning/machine-learning-gear,-settings,-machine-learning,-ai,-mechanics-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "neural-network,-neural-network,-ai,-algorithm,-technology",
+        "style": "glyph",
+        "path": "icons/machine-learning/neural-network,-neural-network,-ai,-algorithm,-technology-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "predictive-analytics,-data,-forecasting,-ai,-machine-learning",
+        "style": "glyph",
+        "path": "icons/machine-learning/predictive-analytics,-data,-forecasting,-ai,-machine-learning-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "algorithm-diagram,-diagram,-machine-learning,-data,-flowchart",
+        "style": "glyph",
+        "path": "icons/machine-learning/algorithm-diagram,-diagram,-machine-learning,-data,-flowchart-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "virtual-reality-ai,-vr,-ai,-immersive,-technology",
+        "style": "glyph",
+        "path": "icons/machine-learning/virtual-reality-ai,-vr,-ai,-immersive,-technology-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "ai-chip,-microchip,-technology,-processor,-artificial-intelligence",
+        "style": "glyph",
+        "path": "icons/machine-learning/ai-chip,-microchip,-technology,-processor,-artificial-intelligence-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "self-driving-car,-car,-autonomous,-vehicle,-ai",
+        "style": "glyph",
+        "path": "icons/machine-learning/self-driving-car,-car,-autonomous,-vehicle,-ai-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "cloud-computing,-ai,-data,-internet,-technology",
+        "style": "glyph",
+        "path": "icons/machine-learning/cloud-computing,-ai,-data,-internet,-technology-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "automated-workflow,-automation,-process,-technology,-ai",
+        "style": "glyph",
+        "path": "icons/machine-learning/automated-workflow,-automation,-process,-technology,-ai-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "smart-assistant,-ai,-voice,-technology,-automated",
+        "style": "glyph",
+        "path": "icons/machine-learning/smart-assistant,-ai,-voice,-technology,-automated-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "chatbot,-ai,-customer-service,-messaging,-automated",
+        "style": "glyph",
+        "path": "icons/machine-learning/chatbot,-ai,-customer-service,-messaging,-automated-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "ai-brain,-artificial-intelligence,-brain,-ai,-smart",
+        "style": "glyph",
+        "path": "icons/machine-learning/ai-brain,-artificial-intelligence,-brain,-ai,-smart-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "data-science-chart,-chart,-analytics,-big-data,-machine-learning",
+        "style": "glyph",
+        "path": "icons/machine-learning/data-science-chart,-chart,-analytics,-big-data,-machine-learning-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "quantum-computing,-quantum,-technology,-future,-ai",
+        "style": "glyph",
+        "path": "icons/machine-learning/quantum-computing,-quantum,-technology,-future,-ai-glyph.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "robotics-automation",
+        "style": "outline",
+        "path": "icons/machine-learning/robotics-automation-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "data-network",
+        "style": "outline",
+        "path": "icons/machine-learning/data-network-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "machine-learning-gear,-settings,-machine-learning,-ai,-mechanics",
+        "style": "outline",
+        "path": "icons/machine-learning/machine-learning-gear,-settings,-machine-learning,-ai,-mechanics-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "neural-network,-neural-network,-ai,-algorithm,-technology",
+        "style": "outline",
+        "path": "icons/machine-learning/neural-network,-neural-network,-ai,-algorithm,-technology-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "predictive-analytics,-data,-forecasting,-ai,-machine-learning",
+        "style": "outline",
+        "path": "icons/machine-learning/predictive-analytics,-data,-forecasting,-ai,-machine-learning-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "algorithm-diagram,-diagram,-machine-learning,-data,-flowchart",
+        "style": "outline",
+        "path": "icons/machine-learning/algorithm-diagram,-diagram,-machine-learning,-data,-flowchart-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "virtual-reality-ai,-vr,-ai,-immersive,-technology",
+        "style": "outline",
+        "path": "icons/machine-learning/virtual-reality-ai,-vr,-ai,-immersive,-technology-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "ai-chip,-microchip,-technology,-processor,-artificial-intelligence",
+        "style": "outline",
+        "path": "icons/machine-learning/ai-chip,-microchip,-technology,-processor,-artificial-intelligence-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "self-driving-car,-car,-autonomous,-vehicle,-ai",
+        "style": "outline",
+        "path": "icons/machine-learning/self-driving-car,-car,-autonomous,-vehicle,-ai-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "cloud-computing,-ai,-data,-internet,-technology",
+        "style": "outline",
+        "path": "icons/machine-learning/cloud-computing,-ai,-data,-internet,-technology-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "automated-workflow,-automation,-process,-technology,-ai",
+        "style": "outline",
+        "path": "icons/machine-learning/automated-workflow,-automation,-process,-technology,-ai-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "smart-assistant,-ai,-voice,-technology,-automated",
+        "style": "outline",
+        "path": "icons/machine-learning/smart-assistant,-ai,-voice,-technology,-automated-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "chatbot,-ai,-customer-service,-messaging,-automated",
+        "style": "outline",
+        "path": "icons/machine-learning/chatbot,-ai,-customer-service,-messaging,-automated-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "ai-brain,-artificial-intelligence,-brain,-ai,-smart",
+        "style": "outline",
+        "path": "icons/machine-learning/ai-brain,-artificial-intelligence,-brain,-ai,-smart-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "data-science-chart,-chart,-analytics,-big-data,-machine-learning",
+        "style": "outline",
+        "path": "icons/machine-learning/data-science-chart,-chart,-analytics,-big-data,-machine-learning-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      },
+      {
+        "name": "quantum-computing,-quantum,-technology,-future,-ai",
+        "style": "outline",
+        "path": "icons/machine-learning/quantum-computing,-quantum,-technology,-future,-ai-outline.svg",
+        "source": "Machine Learning Icon Pack",
+        "category": "icons/machine-learning"
+      }
+    ],
+    "icons/fintech": [
+      {
+        "name": "financial-security",
+        "path": "icons/fintech/Financial Security.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "regulatory-technology",
+        "path": "icons/fintech/Regulatory Technology.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "robo-advisory",
+        "path": "icons/fintech/Robo-Advisory.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "cryptocurrency",
+        "path": "icons/fintech/Cryptocurrency.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "e-commerce",
+        "path": "icons/fintech/E-Commerce.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "fraud-detection",
+        "path": "icons/fintech/Fraud Detection.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "big-data-analytics",
+        "path": "icons/fintech/Big Data Analytics.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "contactless-payments",
+        "path": "icons/fintech/Contactless Payments.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "investment-platforms",
+        "path": "icons/fintech/Investment Platforms.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "cloud-invoice",
+        "path": "icons/fintech/Cloud Invoice.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "open-banking",
+        "path": "icons/fintech/Open Banking.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "financial-inclusion",
+        "path": "icons/fintech/Financial Inclusion.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "crowdfunding",
+        "path": "icons/fintech/Crowdfunding.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "risk-assessment",
+        "path": "icons/fintech/Risk Assessment.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "biometric-authentication",
+        "path": "icons/fintech/Biometric Authentication.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "online-payments",
+        "path": "icons/fintech/Online Payments.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "wealth-management",
+        "path": "icons/fintech/Wealth management.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "personal-finance-management",
+        "path": "icons/fintech/Personal Finance Management.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "peer-to-peer-landing",
+        "path": "icons/fintech/Peer-to-peer Landing.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "stock-trading",
+        "path": "icons/fintech/Stock Trading.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "api-integration",
+        "path": "icons/fintech/API Integration.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "cashless-transactions",
+        "path": "icons/fintech/Cashless Transactions.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "financial-apps",
+        "path": "icons/fintech/Financial Apps.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "blockchain",
+        "path": "icons/fintech/Blockchain.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "digital-identity",
+        "path": "icons/fintech/Digital Identity.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "digital-wallet",
+        "path": "icons/fintech/Digital Wallet.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "insurance",
+        "path": "icons/fintech/Insurance.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "money-transfer",
+        "path": "icons/fintech/Money Transfer.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "mobile-banking",
+        "path": "icons/fintech/Mobile Banking.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      },
+      {
+        "name": "virtual-currencies",
+        "path": "icons/fintech/Virtual Currencies.svg",
+        "source": "Fintech Icon Pack",
+        "category": "icons/fintech"
+      }
+    ],
+    "icons/ai": [
+      {
+        "name": "chat-bot",
+        "path": "icons/ai/Chat Bot",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai-chat",
+        "path": "icons/ai/AI Chat",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai-setting",
+        "path": "icons/ai/AI Setting",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai--eye",
+        "path": "icons/ai/AI  Eye",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai-rocket",
+        "path": "icons/ai/AI Rocket",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai-laptop",
+        "path": "icons/ai/AI Laptop",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai-brain-chip",
+        "path": "icons/ai/AI Brain Chip",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "voice-recognition",
+        "path": "icons/ai/Voice Recognition",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai-virus",
+        "path": "icons/ai/AI Virus",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai-file",
+        "path": "icons/ai/AI File",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai-smartphone",
+        "path": "icons/ai/AI Smartphone",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      },
+      {
+        "name": "ai-coding",
+        "path": "icons/ai/AI Coding",
+        "sizes": [
+          "16w",
+          "24w",
+          "32w",
+          "48w",
+          "64w",
+          "128w"
+        ],
+        "source": "AI Icon Collection",
+        "category": "icons/ai"
+      }
+    ],
+    "logos": [
+      {
+        "name": "shop_savvy_black",
+        "product": "shop-savvy",
+        "variant": "black",
+        "path": "logos/shop_savvy_black.png",
+        "source": "Brand Kit Logos",
+        "category": "logos"
+      },
+      {
+        "name": "swipe_savvy_black",
+        "product": "swipe-savvy",
+        "variant": "black",
+        "path": "logos/swipe_savvy_black.png",
+        "source": "Brand Kit Logos",
+        "category": "logos"
+      },
+      {
+        "name": "shop_savvy_white",
+        "product": "shop-savvy",
+        "variant": "white",
+        "path": "logos/shop_savvy_white.png",
+        "source": "Brand Kit Logos",
+        "category": "logos"
+      },
+      {
+        "name": "swipe_savvy_color",
+        "product": "swipe-savvy",
+        "variant": "color",
+        "path": "logos/swipe_savvy_color.png",
+        "source": "Brand Kit Logos",
+        "category": "logos"
+      },
+      {
+        "name": "shop_savvy_color",
+        "product": "shop-savvy",
+        "variant": "color",
+        "path": "logos/shop_savvy_color.png",
+        "source": "Brand Kit Logos",
+        "category": "logos"
+      },
+      {
+        "name": "swipe_savvy_white",
+        "product": "swipe-savvy",
+        "variant": "white",
+        "path": "logos/swipe_savvy_white.png",
+        "source": "Brand Kit Logos",
+        "category": "logos"
+      }
+    ],
+    "cards": [
+      {
+        "name": "shop_savvy_hero_card_w2048",
+        "path": "cards/shop_savvy_hero_card_w2048.png",
+        "width": "2048",
+        "source": "Hero Cards",
+        "category": "cards"
+      },
+      {
+        "name": "shop_savvy_hero_card_w1024",
+        "path": "cards/shop_savvy_hero_card_w1024.png",
+        "width": "1024",
+        "source": "Hero Cards",
+        "category": "cards"
+      }
+    ],
+    "illustrations": [
+      {
+        "name": "image-gen-2",
+        "path": "illustrations/image-gen-2.png",
+        "source": "Generated Illustrations",
+        "category": "illustrations"
+      },
+      {
+        "name": "image-gen-3",
+        "path": "illustrations/image-gen-3.png",
+        "source": "Generated Illustrations",
+        "category": "illustrations"
+      }
+    ]
+  }
+}

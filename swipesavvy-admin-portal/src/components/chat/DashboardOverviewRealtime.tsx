@@ -19,7 +19,7 @@ interface Props {
   loading?: boolean;
 }
 
-const DashboardOverviewRealtime: React.FC<Props> = ({ timeRangeHours, loading = false }) => {
+const DashboardOverviewRealtime: React.FC<Props> = ({ timeRangeHours, loading: _loading = false }) => {
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

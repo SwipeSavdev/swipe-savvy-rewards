@@ -1,11 +1,10 @@
-import React from 'react'
 
 interface SliderProps {
   min?: number
   max?: number
   step?: number
   value: number
-  onChange: (value: number) => void
+  onChange: (_value: number) => void
   disabled?: boolean
   className?: string
 }
