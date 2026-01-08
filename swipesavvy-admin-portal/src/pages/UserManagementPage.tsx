@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Users, Shield, Lock, FileText, Search, Plus, Edit, Trash2, Check, X, AlertCircle, ChevronRight, Filter } from 'lucide-react'
+import axios from 'axios'
+import { AlertCircle, Check, ChevronRight, Edit, FileText, Filter, Lock, Plus, Search, Shield, Trash2, Users, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 type TabKey = 'users' | 'roles' | 'permissions' | 'policies'
 
@@ -86,29 +87,31 @@ const MOCK_POLICIES: Policy[] = [
 
 const getRoleColor = (role: string) => {
   const colors: Record<string, string> = {
-    Admin: 'bg-red-100 text-red-800',
-    Manager: 'bg-blue-100 text-blue-800',
-    Operator: 'bg-green-100 text-green-800',
-    'Super Admin': 'bg-purple-100 text-purple-800',
-    Viewer: 'bg-gray-100 text-gray-800',
+    Admin: 'bg-[var(--color-status-danger-bg)] text-[var(--color-status-danger-text)]',
+    Manager: 'bg-[var(--color-status-info-bg)] text-[var(--color-status-info-text)]',
+    Operator: 'bg-[var(--color-status-success-bg)] text-[var(--color-status-success-text)]',
+    'Super Admin': 'bg-[var(--color-status-info-bg)] text-[var(--color-status-info-text)]',
+    Viewer: 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]',
   }
-  return colors[role] || 'bg-gray-100 text-gray-800'
+  return colors[role] || 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]'
 }
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'active':
-      return 'bg-green-100 text-green-800'
+      return 'bg-[var(--color-status-success-bg)] text-[var(--color-status-success-text)]'
     case 'inactive':
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]'
     case 'suspended':
-      return 'bg-red-100 text-red-800'
+      return 'bg-[var(--color-status-danger-bg)] text-[var(--color-status-danger-text)]'
     case 'draft':
-      return 'bg-yellow-100 text-yellow-800'
+      return 'bg-[var(--color-status-warning-bg)] text-[var(--color-status-warning-text)]'
     default:
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]'
   }
 }
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<AdminUser[]>(MOCK_USERS)
@@ -117,7 +120,44 @@ export default function UserManagementPage() {
   const [policies, setPolicies] = useState<Policy[]>(MOCK_POLICIES)
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<TabKey>('users')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  // Fetch data from backend
+  useEffect(() => {
+    fetchAllData()
+  }, [])
+
+  const fetchAllData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Fetch all data in parallel
+      const [usersRes, rolesRes, policiesRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/admin/users`),
+        axios.get(`${API_BASE_URL}/api/roles`),
+        axios.get(`${API_BASE_URL}/api/policies`),
+      ])
+
+      setUsers(usersRes.data.users || usersRes.data || [])
+      setRoles(rolesRes.data.roles || rolesRes.data || [])
+      setPolicies(policiesRes.data.policies || policiesRes.data || [])
+      // Keep permissions as mock for now since they're typically not CRUD-managed
+      setPermissions(MOCK_PERMISSIONS)
+    } catch (err: any) {
+      console.error('Failed to fetch data:', err)
+      // Fall back to mock data if API fails
+      setUsers(MOCK_USERS)
+      setRoles(MOCK_ROLES)
+      setPermissions(MOCK_PERMISSIONS)
+      setPolicies(MOCK_POLICIES)
+      setError(err.message || 'Failed to fetch data')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredUsers = users.filter(
     (user) =>
@@ -134,28 +174,62 @@ export default function UserManagementPage() {
     return acc
   }, {} as Record<string, Permission[]>)
 
-  const handleSuspendUser = (id: string) => {
-    setUsers(users.map((u) => (u.id === id ? { ...u, status: u.status === 'suspended' ? 'active' : 'suspended' } : u)))
+  const handleSuspendUser = async (id: string) => {
+    try {
+      const newStatus = users.find(u => u.id === id)?.status === 'suspended' ? 'active' : 'suspended'
+      await axios.put(`${API_BASE_URL}/api/admin/users/${id}`, { status: newStatus })
+      setUsers(users.map((u) => (u.id === id ? { ...u, status: newStatus as any } : u)))
+    } catch (err) {
+      console.error('Failed to update user:', err)
+      setError('Failed to update user status')
+    }
   }
 
-  const handleDeleteUser = (id: string) => {
-    setUsers(users.filter((u) => u.id !== id))
+  const handleDeleteUser = async (id: string) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`)
+      setUsers(users.filter((u) => u.id !== id))
+    } catch (err) {
+      console.error('Failed to delete user:', err)
+      setError('Failed to delete user')
+    }
   }
 
-  const handleToggleRoleStatus = (id: string) => {
-    setRoles(roles.map((r) => (r.id === id ? { ...r, status: r.status === 'active' ? 'inactive' : 'active' } : r)))
+  const handleToggleRoleStatus = async (id: string) => {
+    try {
+      const role = roles.find(r => r.id === id)
+      const newStatus = role?.status === 'active' ? 'inactive' : 'active'
+      await axios.put(`${API_BASE_URL}/api/roles/${id}`, { status: newStatus })
+      setRoles(roles.map((r) => (r.id === id ? { ...r, status: newStatus as any } : r)))
+    } catch (err) {
+      console.error('Failed to update role:', err)
+      setError('Failed to update role status')
+    }
   }
 
-  const handleDeleteRole = (id: string) => {
-    setRoles(roles.filter((r) => r.id !== id))
+  const handleDeleteRole = async (id: string) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/api/roles/${id}`)
+      setRoles(roles.filter((r) => r.id !== id))
+    } catch (err) {
+      console.error('Failed to delete role:', err)
+      setError('Failed to delete role')
+    }
   }
 
   const handleDeletePermission = (id: string) => {
+    // Permissions are typically read-only, but keep this for UI
     setPermissions(permissions.filter((p) => p.id !== id))
   }
 
-  const handleDeletePolicy = (id: string) => {
-    setPolicies(policies.filter((p) => p.id !== id))
+  const handleDeletePolicy = async (id: string) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/api/policies/${id}`)
+      setPolicies(policies.filter((p) => p.id !== id))
+    } catch (err) {
+      console.error('Failed to delete policy:', err)
+      setError('Failed to delete policy')
+    }
   }
 
   const tabs = [
@@ -178,6 +252,30 @@ export default function UserManagementPage() {
         </div>
       </div>
 
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-800">{error}</p>
+            <p className="text-xs text-red-600 mt-1">Using mock data as fallback. Please try refreshing the page.</p>
+          </div>
+          <button onClick={() => setError(null)} className="text-red-600 hover:text-red-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+          <div className="animate-spin">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+          </div>
+          <p className="text-sm text-blue-800">Loading user management data...</p>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
@@ -186,8 +284,8 @@ export default function UserManagementPage() {
               <p className="text-sm font-medium text-gray-600">Total Users</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{users.length}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Users className="w-6 h-6 text-blue-600" />
+            <div className="p-3 bg-[var(--color-status-info-bg)] rounded-lg">
+              <Users className="w-6 h-6 text-[var(--color-status-info-text)]" />
             </div>
           </div>
         </div>
@@ -195,10 +293,10 @@ export default function UserManagementPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Active Users</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">{users.filter((u) => u.status === 'active').length}</p>
+              <p className="text-3xl font-bold text-[var(--color-status-success-text)] mt-1">{users.filter((u) => u.status === 'active').length}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <Check className="w-6 h-6 text-green-600" />
+            <div className="p-3 bg-[var(--color-status-success-bg)] rounded-lg">
+              <Check className="w-6 h-6 text-[var(--color-status-success-text)]" />
             </div>
           </div>
         </div>
@@ -206,7 +304,7 @@ export default function UserManagementPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Roles</p>
-              <p className="text-3xl font-bold text-purple-600 mt-1">{roles.length}</p>
+              <p className="text-3xl font-bold text-[var(--color-status-info-text)] mt-1">{roles.length}</p>
             </div>
             <div className="p-3 bg-purple-100 rounded-lg">
               <Shield className="w-6 h-6 text-purple-600" />
@@ -237,7 +335,7 @@ export default function UserManagementPage() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.key
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-[var(--color-status-info-border)] text-[var(--color-status-info-text)]'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >

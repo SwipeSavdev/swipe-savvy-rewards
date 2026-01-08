@@ -1,4 +1,5 @@
 import Badge from '@/components/ui/Badge'
+import { BrandingKitIcon } from '@/components/ui/BrandingKitIcon'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Icon from '@/components/ui/Icon'
@@ -8,7 +9,10 @@ import ProgressBar from '@/components/ui/ProgressBar'
 import Select from '@/components/ui/Select'
 import Table, { type TableColumn } from '@/components/ui/Table'
 import { useToastStore } from '@/store/toastStore'
+import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 interface CharityApplication {
   id: string
@@ -163,6 +167,7 @@ const MOCK_APPLICATIONS: CharityApplication[] = [
 export default function CharityOnboardingPage() {
   const pushToast = useToastStore((s) => s.push)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [applications, setApplications] = useState<CharityApplication[]>([])
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -178,45 +183,30 @@ export default function CharityOnboardingPage() {
 
   // Load applications
   useEffect(() => {
+    fetchApplications()
+  }, [statusFilter, categoryFilter, query])
+
+  const fetchApplications = async () => {
     let mounted = true
-    ;(async () => {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        let filtered = MOCK_APPLICATIONS
+    try {
+      setLoading(true)
+      setError(null)
+      const params = new URLSearchParams()
+      if (query) params.append('q', query)
+      if (statusFilter !== 'all') params.append('status', statusFilter)
+      if (categoryFilter !== 'all') params.append('category', categoryFilter)
 
-        if (query) {
-          const lowerQuery = query.toLowerCase()
-          filtered = filtered.filter(
-            (a) =>
-              a.name.toLowerCase().includes(lowerQuery) ||
-              a.email.toLowerCase().includes(lowerQuery) ||
-              a.registrationNumber.toLowerCase().includes(lowerQuery)
-          )
-        }
-        if (statusFilter !== 'all') {
-          filtered = filtered.filter((a) => a.status === statusFilter)
-        }
-        if (categoryFilter !== 'all') {
-          filtered = filtered.filter((a) => a.category === categoryFilter)
-        }
-
-        if (mounted) {
-          setApplications(filtered)
-        }
-      } catch (error) {
-        pushToast({
-          variant: 'error',
-          message: 'Failed to load charity applications',
-        })
-      } finally {
-        if (mounted) setLoading(false)
+      const response = await axios.get(`${API_BASE_URL}/api/charities?${params.toString()}`)
+      if (mounted && response.data) {
+        setApplications(response.data || [])
       }
-    })()
-
-    return () => {
-      mounted = false
+    } catch (err: any) {
+      console.error('Failed to fetch charity applications:', err)
+      if (mounted) setError(err.message)
+    } finally {
+      if (mounted) setLoading(false)
     }
-  }, [query, statusFilter, categoryFilter, pushToast])
+  }
 
   const handleViewDetails = (app: CharityApplication) => {
     setSelectedApp(app)
@@ -504,6 +494,33 @@ export default function CharityOnboardingPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
+      {/* Error UI */}
+      {error && (
+        <Card className="bg-red-50 border border-red-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="text-red-600">
+              <BrandingKitIcon name="alert_circle" size="md" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+          </div>
+        </Card>
+      )}
+
+      {/* Loading UI */}
+      {loading && (
+        <Card className="bg-blue-50 border border-blue-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="animate-spin">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+            </div>
+            <p className="text-sm text-blue-800">Loading charity applications...</p>
+          </div>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-1">

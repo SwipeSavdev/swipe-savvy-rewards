@@ -1,0 +1,480 @@
+/**
+ * ============================================================================
+ * SWIPESAVVY BRAND DESIGN SYSTEM - Admin Portal
+ * Based on Brand Kit Design Tokens
+ * ============================================================================
+ * 
+ * This file applies the official brand design tokens to the admin portal's
+ * Tailwind configuration. Colors, typography, and spacing are automatically
+ * synced with the brand kit.
+ * 
+ * Design Tokens Source: brand-kit/handoff/design-tokens.json
+ * Implementation: CSS Custom Properties + Tailwind Config
+ */
+
+:root {
+  /* ========================================================================
+     BRAND COLORS (Primary Identity)
+     ======================================================================== */
+  
+  /* Navy - Primary brand color, used for primary actions and headers */
+  --color-brand-navy: #235393;
+  --color-brand-navy-dark: #1a3f7a;
+  --color-brand-navy-light: #3a6db8;
+  
+  /* Deep - Darkest brand color, used for deep backgrounds and text */
+  --color-brand-deep: #132136;
+  --color-brand-deep-light: #1a2a3f;
+  
+  /* Green - Success and positive actions */
+  --color-brand-green: #60ba46;
+  --color-brand-green-dark: #4a9a35;
+  --color-brand-green-light: #7acc5e;
+  
+  /* Yellow - Warning and attention states */
+  --color-brand-yellow: #fab915;
+  --color-brand-yellow-dark: #e8a60a;
+  --color-brand-yellow-light: #fcc548;
+  
+  /* ========================================================================
+     NEUTRAL PALETTE (Supporting Colors)
+     ======================================================================== */
+  
+  /* Greys - from lightest to darkest */
+  --color-grey-50: #f9fafb;
+  --color-grey-100: #f3f4f6;
+  --color-grey-200: #e5e7eb;
+  --color-grey-300: #d1d5db;
+  --color-grey-400: #9ca3af;
+  --color-grey-500: #6b7280;
+  --color-grey-600: #4b5563;
+  --color-grey-700: #374151;
+  --color-grey-800: #1f2937;
+  --color-grey-900: #111827;
+  
+  /* White and Black */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  
+  /* ========================================================================
+     SEMANTIC COLORS (Status & States)
+     ======================================================================== */
+  
+  /* Success - Positive confirmation */
+  --color-success-bg: rgba(96, 186, 70, 0.08);
+  --color-success-border: #60ba46;
+  --color-success-text: #4a9a35;
+  --color-success-icon: #60ba46;
+  
+  /* Warning - Caution and alerts */
+  --color-warning-bg: rgba(250, 185, 21, 0.08);
+  --color-warning-border: #fab915;
+  --color-warning-text: #e8a60a;
+  --color-warning-icon: #fab915;
+  
+  /* Danger - Errors and destructive actions */
+  --color-danger-bg: rgba(239, 68, 68, 0.08);
+  --color-danger-border: #ef4444;
+  --color-danger-text: #dc2626;
+  --color-danger-icon: #ef4444;
+  
+  /* Info - Informational content */
+  --color-info-bg: rgba(35, 83, 147, 0.08);
+  --color-info-border: #235393;
+  --color-info-text: #1a3f7a;
+  --color-info-icon: #235393;
+  
+  /* ========================================================================
+     LIGHT MODE (Default)
+     ======================================================================== */
+  
+  /* Background Colors */
+  --color-bg-page: #ffffff;
+  --color-bg-primary: #f9fafb;
+  --color-bg-secondary: #f3f4f6;
+  --color-bg-tertiary: #e5e7eb;
+  --color-bg-inverse: #111827;
+  --color-bg-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Text Colors */
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-tertiary: #6b7280;
+  --color-text-quaternary: #9ca3af;
+  --color-text-inverse: #ffffff;
+  --color-text-link: #235393;
+  --color-text-link-hover: #1a3f7a;
+  
+  /* Border Colors */
+  --color-border-primary: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+  --color-border-tertiary: #9ca3af;
+  --color-border-focus: #235393;
+  --color-border-inverse: #374151;
+  
+  /* Status Colors - Light Mode */
+  --color-status-success-bg: #ecfdf5;
+  --color-status-success-border: #86efac;
+  --color-status-success-text: #166534;
+  --color-status-success-icon: #60ba46;
+  
+  --color-status-warning-bg: #fffbeb;
+  --color-status-warning-border: #fde047;
+  --color-status-warning-text: #92400e;
+  --color-status-warning-icon: #fab915;
+  
+  --color-status-danger-bg: #fef2f2;
+  --color-status-danger-border: #fecaca;
+  --color-status-danger-text: #7f1d1d;
+  --color-status-danger-icon: #ef4444;
+  
+  --color-status-info-bg: #eff6ff;
+  --color-status-info-border: #bfdbfe;
+  --color-status-info-text: #1e3a8a;
+  --color-status-info-icon: #235393;
+  
+  /* Action Colors - Light Mode */
+  --color-action-primary-bg: #235393;
+  --color-action-primary-bg-hover: #1a3f7a;
+  --color-action-primary-bg-active: #132136;
+  --color-action-primary-text: #ffffff;
+  
+  --color-action-secondary-bg: #f3f4f6;
+  --color-action-secondary-bg-hover: #e5e7eb;
+  --color-action-secondary-bg-active: #d1d5db;
+  --color-action-secondary-border: #d1d5db;
+  --color-action-secondary-text: #111827;
+  
+  --color-action-ghost-text: #235393;
+  --color-action-ghost-hover-bg: rgba(35, 83, 147, 0.08);
+  
+  /* ========================================================================
+     DARK MODE
+     ======================================================================== */
+  
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Background Colors - Dark */
+    --color-bg-page: #0f1419;
+    --color-bg-primary: #1a1f2e;
+    --color-bg-secondary: #252d3f;
+    --color-bg-tertiary: #3a4557;
+    --color-bg-inverse: #f9fafb;
+    --color-bg-overlay: rgba(0, 0, 0, 0.8);
+    
+    /* Text Colors - Dark */
+    --color-text-primary: #f9fafb;
+    --color-text-secondary: #d1d5db;
+    --color-text-tertiary: #9ca3af;
+    --color-text-quaternary: #6b7280;
+    --color-text-inverse: #111827;
+    --color-text-link: #7acd56;
+    --color-text-link-hover: #9be477;
+    
+    /* Border Colors - Dark */
+    --color-border-primary: #3a4557;
+    --color-border-secondary: #4b5563;
+    --color-border-tertiary: #6b7280;
+    --color-border-focus: #60ba46;
+    --color-border-inverse: #9ca3af;
+    
+    /* Status Colors - Dark Mode */
+    --color-status-success-bg: rgba(96, 186, 70, 0.15);
+    --color-status-success-border: #60ba46;
+    --color-status-success-text: #7acc5e;
+    --color-status-success-icon: #60ba46;
+    
+    --color-status-warning-bg: rgba(250, 185, 21, 0.15);
+    --color-status-warning-border: #fab915;
+    --color-status-warning-text: #fcc548;
+    --color-status-warning-icon: #fab915;
+    
+    --color-status-danger-bg: rgba(239, 68, 68, 0.15);
+    --color-status-danger-border: #ef4444;
+    --color-status-danger-text: #fca5a5;
+    --color-status-danger-icon: #ef4444;
+    
+    --color-status-info-bg: rgba(35, 83, 147, 0.15);
+    --color-status-info-border: #7acd56;
+    --color-status-info-text: #a8e4c3;
+    --color-status-info-icon: #60ba46;
+    
+    /* Action Colors - Dark Mode */
+    --color-action-primary-bg: #235393;
+    --color-action-primary-bg-hover: #2d68b0;
+    --color-action-primary-bg-active: #1a3f7a;
+    --color-action-primary-text: #ffffff;
+    
+    --color-action-secondary-bg: #3a4557;
+    --color-action-secondary-bg-hover: #4b5563;
+    --color-action-secondary-bg-active: #6b7280;
+    --color-action-secondary-border: #4b5563;
+    --color-action-secondary-text: #f9fafb;
+    
+    --color-action-ghost-text: #7acd56;
+    --color-action-ghost-hover-bg: rgba(96, 186, 70, 0.15);
+    
+    color-scheme: dark;
+  }
+}
+
+/* ============================================================================
+   DARK MODE ATTRIBUTE SELECTOR (For manual theme switching)
+   ============================================================================ */
+
+[data-theme="dark"] {
+  /* Background Colors - Dark */
+  --color-bg-page: #0f1419;
+  --color-bg-primary: #1a1f2e;
+  --color-bg-secondary: #252d3f;
+  --color-bg-tertiary: #3a4557;
+  --color-bg-inverse: #f9fafb;
+  --color-bg-overlay: rgba(0, 0, 0, 0.8);
+  
+  /* Text Colors - Dark */
+  --color-text-primary: #f9fafb;
+  --color-text-secondary: #d1d5db;
+  --color-text-tertiary: #9ca3af;
+  --color-text-quaternary: #6b7280;
+  --color-text-inverse: #111827;
+  --color-text-link: #7acd56;
+  --color-text-link-hover: #9be477;
+  
+  /* Border Colors - Dark */
+  --color-border-primary: #3a4557;
+  --color-border-secondary: #4b5563;
+  --color-border-tertiary: #6b7280;
+  --color-border-focus: #60ba46;
+  --color-border-inverse: #9ca3af;
+  
+  /* Status Colors - Dark Mode */
+  --color-status-success-bg: rgba(96, 186, 70, 0.15);
+  --color-status-success-border: #60ba46;
+  --color-status-success-text: #7acc5e;
+  --color-status-success-icon: #60ba46;
+  
+  --color-status-warning-bg: rgba(250, 185, 21, 0.15);
+  --color-status-warning-border: #fab915;
+  --color-status-warning-text: #fcc548;
+  --color-status-warning-icon: #fab915;
+  
+  --color-status-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-status-danger-border: #ef4444;
+  --color-status-danger-text: #fca5a5;
+  --color-status-danger-icon: #ef4444;
+  
+  --color-status-info-bg: rgba(35, 83, 147, 0.15);
+  --color-status-info-border: #7acd56;
+  --color-status-info-text: #a8e4c3;
+  --color-status-info-icon: #60ba46;
+  
+  /* Action Colors - Dark Mode */
+  --color-action-primary-bg: #235393;
+  --color-action-primary-bg-hover: #2d68b0;
+  --color-action-primary-bg-active: #1a3f7a;
+  --color-action-primary-text: #ffffff;
+  
+  --color-action-secondary-bg: #3a4557;
+  --color-action-secondary-bg-hover: #4b5563;
+  --color-action-secondary-bg-active: #6b7280;
+  --color-action-secondary-border: #4b5563;
+  --color-action-secondary-text: #f9fafb;
+  
+  --color-action-ghost-text: #7acd56;
+  --color-action-ghost-hover-bg: rgba(96, 186, 70, 0.15);
+  
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   BRAND TYPOGRAPHY
+   ============================================================================ */
+
+:root {
+  /* Font Families */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+  
+  /* Font Sizes */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem; /* 36px */
+  
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+/* ============================================================================
+   BRAND SPACING & RADII
+   ============================================================================ */
+
+:root {
+  /* Spacing Scale (8px base) */
+  --spacing-1: 0.5rem; /* 8px */
+  --spacing-2: 1rem; /* 16px */
+  --spacing-3: 1.5rem; /* 24px */
+  --spacing-4: 2rem; /* 32px */
+  --spacing-5: 2.5rem; /* 40px */
+  --spacing-6: 3rem; /* 48px */
+  --spacing-8: 4rem; /* 64px */
+  
+  /* Border Radius */
+  --radius-sm: 12px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.22);
+  --shadow-float: 0 30px 80px rgba(0, 0, 0, 0.33);
+}
+
+/* ============================================================================
+   BRAND GRADIENTS
+   ============================================================================ */
+
+:root {
+  /* Primary Gradient - Navy to Deep */
+  --gradient-primary: linear-gradient(135deg, #235393 0%, #1a3f7a 100%);
+  
+  /* Success Gradient - Green */
+  --gradient-success: linear-gradient(135deg, #60ba46 0%, #4a9a35 100%);
+  
+  /* Warning Gradient - Yellow to Orange */
+  --gradient-warning: linear-gradient(135deg, #fab915 0%, #ff8c00 100%);
+  
+  /* Accent Gradient - Navy to Green */
+  --gradient-accent: linear-gradient(135deg, #235393 0%, #60ba46 100%);
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+/* Brand Color Utilities */
+.brand-navy {
+  color: #235393;
+}
+
+.brand-deep {
+  color: #132136;
+}
+
+.brand-green {
+  color: #60ba46;
+}
+
+.brand-yellow {
+  color: #fab915;
+}
+
+.bg-brand-navy {
+  background-color: #235393;
+}
+
+.bg-brand-green {
+  background-color: #60ba46;
+}
+
+.bg-brand-yellow {
+  background-color: #fab915;
+}
+
+.border-brand-navy {
+  border-color: #235393;
+}
+
+.border-brand-green {
+  border-color: #60ba46;
+}
+
+.border-brand-yellow {
+  border-color: #fab915;
+}
+
+/* Gradient Utilities */
+.gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.gradient-success {
+  background: var(--gradient-success);
+}
+
+.gradient-warning {
+  background: var(--gradient-warning);
+}
+
+.gradient-accent {
+  background: var(--gradient-accent);
+}
+
+/* Shadow Utilities */
+.shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+.shadow-float {
+  box-shadow: var(--shadow-float);
+}
+
+/* Brand Text Utilities */
+.text-brand {
+  color: #235393;
+}
+
+.text-brand-light {
+  color: #3a6db8;
+}
+
+.text-success {
+  color: #60ba46;
+}
+
+.text-warning {
+  color: #fab915;
+}
+
+.text-danger {
+  color: #ef4444;
+}
+
+/* ============================================================================
+   ANIMATION & TRANSITIONS
+   ============================================================================ */
+
+:root {
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================================ */
+
+/* Tailwind Default Breakpoints
+   sm: 640px
+   md: 768px
+   lg: 1024px
+   xl: 1280px
+   2xl: 1536px
+*/

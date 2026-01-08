@@ -333,8 +333,8 @@ export default function FeatureFlagsPage() {
                 onClick={() => handleToggleFeature(flag)}
                 className={`mt-4 px-4 py-2 rounded-lg font-medium transition-all ${
                   flag.status === 'on'
-                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                    ? 'bg-[var(--color-status-danger-bg)] text-[var(--color-status-danger-text)] hover:opacity-90'
+                    : 'bg-[var(--color-status-success-bg)] text-[var(--color-status-success-text)] hover:opacity-90'
                 }`}
               >
                 {flag.status === 'on' ? 'Disable' : 'Enable'}

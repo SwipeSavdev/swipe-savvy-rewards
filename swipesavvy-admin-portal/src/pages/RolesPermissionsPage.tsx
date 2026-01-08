@@ -1,11 +1,15 @@
 import Badge from '@/components/ui/Badge'
+import { BrandingKitIcon } from '@/components/ui/BrandingKitIcon'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import { type TableColumn } from '@/components/ui/Table'
 import { useToastStore } from '@/store/toastStore'
-import { useMemo, useState } from 'react'
+import axios from 'axios'
+import { useEffect, useMemo, useState } from 'react'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 interface Permission {
   id: string
@@ -371,6 +375,30 @@ export default function RolesPermissionsPage() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [showRoleModal, setShowRoleModal] = useState(false)
   const [showPermissionMatrix, setShowPermissionMatrix] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const [rolesRes, policiesRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/roles`),
+        axios.get(`${API_BASE_URL}/api/policies`),
+      ])
+      if (rolesRes.data) setRoles(rolesRes.data || MOCK_ROLES)
+      if (policiesRes.data) setPolicies(policiesRes.data || MOCK_POLICIES)
+    } catch (err: any) {
+      console.error('Failed to fetch roles/permissions data:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const [formData, setFormData] = useState({
     name: '',
@@ -600,6 +628,33 @@ export default function RolesPermissionsPage() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Error UI */}
+      {error && (
+        <Card className="bg-red-50 border border-red-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="text-red-600">
+              <BrandingKitIcon name="alert_circle" size="md" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+          </div>
+        </Card>
+      )}
+
+      {/* Loading UI */}
+      {loading && (
+        <Card className="bg-blue-50 border border-blue-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="animate-spin">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+            </div>
+            <p className="text-sm text-blue-800">Loading roles and permissions...</p>
+          </div>
+        </Card>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-[var(--ss-text-primary)]">

@@ -12,17 +12,23 @@
  * └─────────────────────────────────────────────────────┘
  */
 
-import { Outlet, useLocation } from 'react-router-dom'
-import Sidebar from './Sidebar'
-import Header from './Header'
-import { cn } from '@/utils/cn'
 import { useUiStore } from '@/store/uiStore'
+import { cn } from '@/utils/cn'
 import { useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
+import Header from './Header'
+import Sidebar from './Sidebar'
 
 export default function AppLayout() {
   const mobileOpen = useUiStore((s) => s.sidebarMobileOpen)
   const setMobileOpen = useUiStore((s) => s.setSidebarMobileOpen)
+  const theme = useUiStore((s) => s.theme)
   const location = useLocation()
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+  }, [theme])
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -30,11 +36,11 @@ export default function AppLayout() {
   }, [location.pathname, setMobileOpen])
 
   return (
-    <div className="min-h-screen bg-bg-canvas">
+    <div className="min-h-screen bg-[var(--color-bg-page)]">
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"
-        className="skip-to-content"
+        className="sr-only focus:not-sr-only"
       >
         Skip to main content
       </a>
@@ -48,13 +54,13 @@ export default function AppLayout() {
         {/* Mobile sidebar overlay */}
         <div
           className={cn(
-            'fixed inset-0 z-modal-backdrop lg:hidden',
+            'fixed inset-0 z-50 lg:hidden',
             mobileOpen ? 'block' : 'hidden'
           )}
         >
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-bg-inverse/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-[var(--color-bg-overlay)] backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
@@ -69,7 +75,10 @@ export default function AppLayout() {
           <Header />
           <main
             id="main-content"
-            className="flex-1 p-4 md:p-6 lg:p-8"
+            className="flex-1 overflow-y-auto bg-[var(--color-bg-page)] 
+                       p-[var(--spacing-2)] 
+                       md:p-[var(--spacing-3)] 
+                       lg:p-[var(--spacing-4)]"
             tabIndex={-1}
           >
             <Outlet />

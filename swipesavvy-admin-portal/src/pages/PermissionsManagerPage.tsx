@@ -2,7 +2,10 @@ import Badge from '@/components/ui/Badge'
 import { BrandingKitIcon, BrandingKitIconButton } from '@/components/ui/BrandingKitIcon'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import { useState } from 'react'
+import axios from 'axios'
+import { useEffect, useState } from 'react'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 interface Permission {
   id: string
@@ -117,13 +120,42 @@ const MOCK_PERMISSIONS: Permission[] = [
 export default function PermissionsManagerPage() {
   const [permissions, setPermissions] = useState<Permission[]>(MOCK_PERMISSIONS)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch permissions on mount
+  useEffect(() => {
+    fetchPermissions()
+  }, [])
+
+  const fetchPermissions = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      // Try to fetch from API, but permissions are often just read-only
+      const response = await axios.get(`${API_BASE_URL}/api/permissions`)
+      setPermissions(response.data.permissions || response.data || MOCK_PERMISSIONS)
+    } catch (err: any) {
+      console.error('Failed to fetch permissions:', err)
+      setError(err.message || 'Failed to fetch permissions')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredPermissions = selectedCategory
     ? permissions.filter((p) => p.category === selectedCategory)
     : permissions
 
-  const handleDeletePermission = (id: string) => {
-    setPermissions(permissions.filter((p) => p.id !== id))
+  const handleDeletePermission = async (id: string) => {
+    try {
+      // Permissions are typically read-only, so this may not be available on API
+      await axios.delete(`${API_BASE_URL}/api/permissions/${id}`)
+      setPermissions(permissions.filter((p) => p.id !== id))
+    } catch (err: any) {
+      console.error('Failed to delete permission:', err)
+      setError('Permissions cannot be deleted (read-only)')
+    }
   }
 
   const groupedByCategory = CATEGORIES.reduce(
@@ -147,6 +179,31 @@ export default function PermissionsManagerPage() {
           </div>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <Card className="bg-red-50 border border-red-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="text-red-600">
+              <BrandingKitIcon name="alert_circle" size="md" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+          </div>
+        </Card>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <Card className="bg-blue-50 border border-blue-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+            <p className="text-sm text-blue-800">Loading permissions...</p>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-white to-blue-50/30 dark:from-slate-900 dark:to-blue-900/20 border-l-4 border-[#235393]">
