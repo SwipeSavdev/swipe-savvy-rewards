@@ -1,175 +1,281 @@
+/**
+ * ============================================================================
+ * SWIPESAVVY ADMIN PORTAL - BADGE COMPONENT V5
+ * COMPLETE RESET - Built from scratch
+ * ============================================================================
+ *
+ * Design Philosophy: STATUS COLORS FOR STATUS ONLY
+ * - success: Green - positive outcomes, completed, healthy
+ * - warning: Amber - attention required, pending, caution
+ * - danger: Red - errors, critical, destructive
+ * - info: Blue - informational, neutral highlight
+ * - neutral: Gray - default, inactive, disabled
+ *
+ * NO decorative color usage. Badges are for status indication only.
+ */
+
 import { cn } from '@/utils/cn'
 import type { ReactNode } from 'react'
 
-export type BadgeVariant = 'solid' | 'soft' | 'outline'
-export type BadgeColorScheme = 'navy' | 'green' | 'yellow' | 'red' | 'gray'
-export type BadgeSize = 'sm' | 'md' | 'lg'
+// =============================================================================
+// TYPES
+// =============================================================================
 
-// Legacy variant names for backward compatibility
-export type LegacyBadgeVariant = 'primary' | 'success' | 'warning' | 'danger' | 'neutral'
+export type BadgeStatus = 'success' | 'warning' | 'danger' | 'info' | 'neutral'
+export type BadgeSize = 'sm' | 'md' | 'lg'
+// Visual styling variants
+export type BadgeStyleVariant = 'subtle' | 'solid' | 'outline'
+// Legacy variants that map to status + style (backwards compatibility)
+export type BadgeLegacyVariant = 'soft' | 'success' | 'warning' | 'danger' | 'neutral' | 'primary' | 'info'
+export type BadgeVariant = BadgeStyleVariant | BadgeLegacyVariant
 
 export interface BadgeProps {
-  readonly variant?: BadgeVariant | LegacyBadgeVariant
-  readonly colorScheme?: BadgeColorScheme
+  /** Status determines the color scheme */
+  readonly status?: BadgeStatus
+  /** Color scheme alias (backwards compatibility) */
+  readonly colorScheme?: string
+  /** Size preset */
   readonly size?: BadgeSize
+  /** Visual variant */
+  readonly variant?: BadgeVariant
+  /** Shows status dot indicator */
   readonly dot?: boolean
-  readonly removable?: boolean
-  readonly onRemove?: () => void
+  /** Badge content */
   readonly children: ReactNode
+  /** Additional CSS classes */
   readonly className?: string
 }
 
-// Map legacy variant names to colorScheme
-const legacyVariantMap: Record<LegacyBadgeVariant, BadgeColorScheme> = {
-  primary: 'navy',
-  success: 'green',
-  warning: 'yellow',
-  danger: 'red',
-  neutral: 'gray',
+// =============================================================================
+// STATUS STYLES - Using new design tokens
+// =============================================================================
+
+const subtleStatusStyles: Record<BadgeStatus, string> = {
+  success: 'bg-[var(--color-status-success-bg)] text-[var(--color-status-success-text)]',
+  warning: 'bg-[var(--color-status-warning-bg)] text-[var(--color-status-warning-text)]',
+  danger: 'bg-[var(--color-status-danger-bg)] text-[var(--color-status-danger-text)]',
+  info: 'bg-[var(--color-status-info-bg)] text-[var(--color-status-info-text)]',
+  neutral: 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)]',
 }
 
-function isLegacyVariant(variant: string): variant is LegacyBadgeVariant {
-  return variant in legacyVariantMap
+const solidStatusStyles: Record<BadgeStatus, string> = {
+  success: 'bg-[var(--color-status-success-icon)] text-white',
+  warning: 'bg-[var(--color-status-warning-icon)] text-white',
+  danger: 'bg-[var(--color-status-danger-icon)] text-white',
+  info: 'bg-[var(--color-status-info-icon)] text-white',
+  neutral: 'bg-[var(--color-text-tertiary)] text-white',
 }
 
-function resolveVariantAndColorScheme(
-  variant: BadgeVariant | LegacyBadgeVariant | undefined,
-  colorScheme: BadgeColorScheme | undefined
-): { resolvedVariant: BadgeVariant; resolvedColorScheme: BadgeColorScheme } {
-  // If colorScheme is explicitly provided, use it with the variant (default to 'soft')
-  if (colorScheme) {
-    const resolvedVariant: BadgeVariant = variant && !isLegacyVariant(variant) ? variant : 'soft'
-    return { resolvedVariant, resolvedColorScheme: colorScheme }
-  }
-
-  // If variant is a legacy semantic name, map it to colorScheme
-  if (variant && isLegacyVariant(variant)) {
-    return { resolvedVariant: 'soft', resolvedColorScheme: legacyVariantMap[variant] }
-  }
-
-  // Otherwise use the variant as-is (or default) with default colorScheme
-  const resolvedVariant: BadgeVariant = variant && !isLegacyVariant(variant) ? variant : 'soft'
-  return { resolvedVariant, resolvedColorScheme: 'gray' }
+const outlineStatusStyles: Record<BadgeStatus, string> = {
+  success: 'bg-transparent border border-[var(--color-status-success-border)] text-[var(--color-status-success-text)]',
+  warning: 'bg-transparent border border-[var(--color-status-warning-border)] text-[var(--color-status-warning-text)]',
+  danger: 'bg-transparent border border-[var(--color-status-danger-border)] text-[var(--color-status-danger-text)]',
+  info: 'bg-transparent border border-[var(--color-status-info-border)] text-[var(--color-status-info-text)]',
+  neutral: 'bg-transparent border border-[var(--color-border-primary)] text-[var(--color-text-secondary)]',
 }
 
-const colorSchemes: Record<BadgeColorScheme, Record<BadgeVariant, string>> = {
-  navy: {
-    solid: 'bg-ss-navy-500 text-white',
-    soft: 'bg-ss-navy-100 text-ss-navy-700 dark:bg-ss-navy-900 dark:text-ss-navy-300',
-    outline: 'border-ss-navy-500 text-ss-navy-500 dark:border-ss-navy-400 dark:text-ss-navy-400',
-  },
-  green: {
-    solid: 'bg-ss-green-500 text-white',
-    soft: 'bg-ss-green-100 text-ss-green-700 dark:bg-ss-green-900 dark:text-ss-green-300',
-    outline: 'border-ss-green-500 text-ss-green-600 dark:border-ss-green-400 dark:text-ss-green-400',
-  },
-  yellow: {
-    solid: 'bg-ss-yellow-500 text-ss-gray-900',
-    soft: 'bg-ss-yellow-100 text-ss-yellow-700 dark:bg-ss-yellow-900 dark:text-ss-yellow-300',
-    outline: 'border-ss-yellow-500 text-ss-yellow-600 dark:border-ss-yellow-400 dark:text-ss-yellow-400',
-  },
-  red: {
-    solid: 'bg-ss-red-500 text-white',
-    soft: 'bg-ss-red-100 text-ss-red-700 dark:bg-ss-red-900 dark:text-ss-red-300',
-    outline: 'border-ss-red-500 text-ss-red-500 dark:border-ss-red-400 dark:text-ss-red-400',
-  },
-  gray: {
-    solid: 'bg-ss-gray-500 text-white',
-    soft: 'bg-ss-gray-100 text-ss-gray-700 dark:bg-ss-gray-800 dark:text-ss-gray-300',
-    outline: 'border-ss-gray-400 text-ss-gray-600 dark:border-ss-gray-500 dark:text-ss-gray-400',
-  },
+const dotStyles: Record<BadgeStatus, string> = {
+  success: 'bg-[var(--color-status-success-icon)]',
+  warning: 'bg-[var(--color-status-warning-icon)]',
+  danger: 'bg-[var(--color-status-danger-icon)]',
+  info: 'bg-[var(--color-status-info-icon)]',
+  neutral: 'bg-[var(--color-text-tertiary)]',
 }
+
+// =============================================================================
+// SIZE STYLES
+// =============================================================================
 
 const sizeStyles: Record<BadgeSize, string> = {
-  sm: 'px-1.5 py-0.5 text-xs gap-1',
-  md: 'px-2.5 py-0.5 text-xs gap-1.5',
-  lg: 'px-3 py-1 text-sm gap-2',
+  sm: 'h-5 px-[var(--spacing-1-5)] text-[var(--font-size-2xs)] gap-[var(--spacing-1)]',
+  md: 'h-6 px-[var(--spacing-2)] text-[var(--font-size-xs)] gap-[var(--spacing-1-5)]',
+  lg: 'h-7 px-[var(--spacing-2-5)] text-[var(--font-size-sm)] gap-[var(--spacing-1-5)]',
 }
 
 const dotSizeStyles: Record<BadgeSize, string> = {
   sm: 'w-1.5 h-1.5',
   md: 'w-2 h-2',
-  lg: 'w-2.5 h-2.5',
+  lg: 'w-2 h-2',
+}
+
+// =============================================================================
+// BADGE COMPONENT
+// =============================================================================
+
+// Map legacy variants to status + style
+function resolveLegacyVariant(variant: BadgeVariant, status: BadgeStatus): { resolvedStatus: BadgeStatus; resolvedStyle: BadgeStyleVariant } {
+  // Legacy variants that are actually status colors
+  const legacyStatusMap: Record<string, BadgeStatus> = {
+    success: 'success',
+    warning: 'warning',
+    danger: 'danger',
+    neutral: 'neutral',
+    info: 'info',
+    primary: 'info', // primary maps to info (blue)
+  }
+
+  // If variant is a legacy status name, use it as the status
+  if (variant in legacyStatusMap) {
+    return {
+      resolvedStatus: legacyStatusMap[variant],
+      resolvedStyle: 'subtle',
+    }
+  }
+
+  // 'soft' is an alias for 'subtle'
+  if (variant === 'soft') {
+    return {
+      resolvedStatus: status,
+      resolvedStyle: 'subtle',
+    }
+  }
+
+  // Standard style variants
+  return {
+    resolvedStatus: status,
+    resolvedStyle: variant as BadgeStyleVariant,
+  }
+}
+
+// Map colorScheme string to BadgeStatus
+function resolveColorScheme(colorScheme: string | undefined): BadgeStatus | undefined {
+  if (!colorScheme) return undefined
+  const colorMap: Record<string, BadgeStatus> = {
+    green: 'success',
+    success: 'success',
+    yellow: 'warning',
+    amber: 'warning',
+    orange: 'warning',
+    warning: 'warning',
+    red: 'danger',
+    danger: 'danger',
+    error: 'danger',
+    blue: 'info',
+    info: 'info',
+    primary: 'info',
+    gray: 'neutral',
+    grey: 'neutral',
+    neutral: 'neutral',
+    purple: 'info',
+    teal: 'success',
+    cyan: 'info',
+  }
+  return colorMap[colorScheme.toLowerCase()] ?? 'neutral'
 }
 
 export default function Badge({
-  variant,
+  status = 'neutral',
   colorScheme,
   size = 'md',
+  variant = 'subtle',
   dot = false,
-  removable = false,
-  onRemove,
   children,
   className,
 }: BadgeProps) {
-  const { resolvedVariant, resolvedColorScheme } = resolveVariantAndColorScheme(variant, colorScheme)
+  const styleVariants = {
+    subtle: subtleStatusStyles,
+    solid: solidStatusStyles,
+    outline: outlineStatusStyles,
+  }
 
-  const baseStyles = 'inline-flex items-center font-medium rounded-ss-full transition-colors'
-  const borderStyles = resolvedVariant === 'outline' ? 'border' : ''
+  // colorScheme takes precedence if provided (backwards compatibility)
+  const effectiveStatus = resolveColorScheme(colorScheme) ?? status
+  const { resolvedStatus, resolvedStyle } = resolveLegacyVariant(variant, effectiveStatus)
 
   return (
     <span
       className={cn(
-        baseStyles,
-        borderStyles,
-        colorSchemes[resolvedColorScheme][resolvedVariant],
+        // Base styles
+        'inline-flex items-center justify-center',
+        'font-medium',
+        'rounded-[var(--radius-sm)]',
+        'whitespace-nowrap',
+        'uppercase tracking-[var(--letter-spacing-wide)]',
+        // Status styles
+        styleVariants[resolvedStyle][resolvedStatus],
+        // Size styles
         sizeStyles[size],
         className
       )}
     >
+      {/* Status dot indicator */}
       {dot && (
         <span
           className={cn(
             'rounded-full flex-shrink-0',
             dotSizeStyles[size],
-            resolvedVariant === 'solid' ? 'bg-current opacity-70' : 'bg-current'
+            dotStyles[resolvedStatus]
           )}
+          aria-hidden="true"
         />
       )}
       {children}
-      {removable && (
-        <button
-          type="button"
-          onClick={onRemove}
-          className={cn(
-            'flex-shrink-0 ml-0.5 -mr-1 p-0.5 rounded-full transition-colors',
-            'hover:bg-black/10 dark:hover:bg-white/10',
-            'focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-current'
-          )}
-          aria-label="Remove"
-        >
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      )}
     </span>
   )
 }
 
-// Semantic badge aliases for common use cases
-export type StatusBadgeStatus = 'active' | 'inactive' | 'pending' | 'error' | 'success' | 'warning'
+// =============================================================================
+// SEMANTIC STATUS BADGE
+// =============================================================================
+
+export type StatusBadgeStatus =
+  | 'active'
+  | 'inactive'
+  | 'pending'
+  | 'error'
+  | 'success'
+  | 'warning'
+  | 'draft'
+  | 'archived'
+  | 'processing'
 
 interface StatusBadgeProps {
   readonly status: StatusBadgeStatus
   readonly children?: ReactNode
   readonly className?: string
+  readonly dot?: boolean
 }
 
-const statusConfig: Record<StatusBadgeStatus, { colorScheme: BadgeColorScheme; label: string }> = {
-  active: { colorScheme: 'green', label: 'Active' },
-  inactive: { colorScheme: 'gray', label: 'Inactive' },
-  pending: { colorScheme: 'yellow', label: 'Pending' },
-  error: { colorScheme: 'red', label: 'Error' },
-  success: { colorScheme: 'green', label: 'Success' },
-  warning: { colorScheme: 'yellow', label: 'Warning' },
+const statusConfig: Record<StatusBadgeStatus, { badgeStatus: BadgeStatus; label: string }> = {
+  active: { badgeStatus: 'success', label: 'Active' },
+  inactive: { badgeStatus: 'neutral', label: 'Inactive' },
+  pending: { badgeStatus: 'warning', label: 'Pending' },
+  error: { badgeStatus: 'danger', label: 'Error' },
+  success: { badgeStatus: 'success', label: 'Success' },
+  warning: { badgeStatus: 'warning', label: 'Warning' },
+  draft: { badgeStatus: 'neutral', label: 'Draft' },
+  archived: { badgeStatus: 'neutral', label: 'Archived' },
+  processing: { badgeStatus: 'info', label: 'Processing' },
 }
 
-export function StatusBadge({ status, children, className }: StatusBadgeProps) {
+export function StatusBadge({ status, children, className, dot = true }: StatusBadgeProps) {
   const config = statusConfig[status]
   return (
-    <Badge colorScheme={config.colorScheme} variant="soft" dot className={className}>
-      {children || config.label}
+    <Badge status={config.badgeStatus} dot={dot} className={className}>
+      {children ?? config.label}
+    </Badge>
+  )
+}
+
+// =============================================================================
+// COUNT BADGE
+// =============================================================================
+
+interface CountBadgeProps {
+  readonly count: number
+  readonly max?: number
+  readonly status?: BadgeStatus
+  readonly className?: string
+}
+
+export function CountBadge({ count, max = 99, status = 'danger', className }: CountBadgeProps) {
+  const displayCount = count > max ? `${max}+` : count.toString()
+
+  if (count === 0) return null
+
+  return (
+    <Badge status={status} variant="solid" size="sm" className={cn('min-w-5', className)}>
+      {displayCount}
     </Badge>
   )
 }

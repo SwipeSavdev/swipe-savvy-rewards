@@ -13,7 +13,7 @@ export interface TabItem {
 export interface TabsProps {
   items: TabItem[]
   value?: string
-  onChange?: (key: string) => void
+  onChange?: (_key: string) => void
   variant?: TabsVariant
   className?: string
 }

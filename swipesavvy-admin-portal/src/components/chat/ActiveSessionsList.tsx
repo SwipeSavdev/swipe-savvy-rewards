@@ -21,11 +21,11 @@ interface ChatSession {
 interface Props {
   timeRangeHours: number;
   limit: number;
-  onSessionSelect?: (sessionId: string) => void;
+  onSessionSelect?: (_sessionId: string) => void;
 }
 
 const ActiveSessionsList: React.FC<Props> = ({
-  timeRangeHours,
+  timeRangeHours: _timeRangeHours,
   limit,
   onSessionSelect,
 }) => {

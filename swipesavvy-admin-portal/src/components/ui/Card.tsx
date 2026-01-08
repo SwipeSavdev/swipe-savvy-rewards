@@ -1,65 +1,61 @@
+/**
+ * ============================================================================
+ * SWIPESAVVY ADMIN PORTAL - CARD COMPONENT V5
+ * COMPLETE RESET - Built from scratch
+ * ============================================================================
+ *
+ * Design Philosophy: PRECISION OVER DELIGHT
+ * - default: Standard surface card with subtle border
+ * - outlined: Stronger border for emphasis
+ * - elevated: Subtle shadow for modal-like hierarchy
+ *
+ * Accessibility:
+ * - Clickable cards have proper role and keyboard support
+ * - Focus indicators are WCAG 2.2 AA compliant
+ */
+
 import { cn } from '@/utils/cn'
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
 
-export type CardVariant = 'default' | 'elevated' | 'outlined' | 'filled' | 'gradient'
+// =============================================================================
+// TYPES
+// =============================================================================
+
+export type CardVariant = 'default' | 'outlined' | 'elevated'
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg'
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: CardVariant
-  padding?: CardPadding
-  hoverable?: boolean
-  clickable?: boolean
-  children: ReactNode
+  /** Visual style variant */
+  readonly variant?: CardVariant
+  /** Internal padding */
+  readonly padding?: CardPadding
+  /** Adds hover effect */
+  readonly hoverable?: boolean
+  /** Makes card interactive with role="button" */
+  readonly clickable?: boolean
+  readonly children: ReactNode
 }
 
-const baseStyles = 'rounded-ss-lg transition-all duration-base'
+// =============================================================================
+// STYLES
+// =============================================================================
 
 const variantStyles: Record<CardVariant, string> = {
-  default: `
-    bg-white dark:bg-ss-gray-800
-    border border-[var(--ss-border)]
-  `,
-  elevated: `
-    bg-white dark:bg-ss-gray-800
-    shadow-ss-md hover:shadow-ss-lg
-    border border-transparent
-  `,
-  outlined: `
-    bg-white dark:bg-ss-gray-800
-    border-2 border-[var(--ss-border)]
-    hover:border-[var(--ss-border-strong)]
-  `,
-  filled: `
-    bg-ss-gray-50 dark:bg-ss-gray-800
-    border border-transparent
-  `,
-  gradient: `
-    bg-gradient-to-br from-ss-navy-500 to-ss-navy-700
-    text-white
-    shadow-ss-lg
-    border border-transparent
-  `,
+  default: 'bg-[var(--color-bg-primary)] border border-[var(--color-border-tertiary)]',
+  outlined: 'bg-[var(--color-bg-primary)] border border-[var(--color-border-primary)]',
+  elevated: 'bg-[var(--color-bg-primary)] shadow-[var(--shadow-md)]',
 }
 
 const paddingStyles: Record<CardPadding, string> = {
   none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
+  sm: 'p-[var(--spacing-3)]',
+  md: 'p-[var(--spacing-5)]',
+  lg: 'p-[var(--spacing-6)]',
 }
 
-const hoverStyles = `
-  hover:shadow-ss-lg
-  hover:-translate-y-0.5
-`
-
-const clickableStyles = `
-  cursor-pointer
-  hover:shadow-ss-lg
-  hover:-translate-y-0.5
-  active:translate-y-0
-  active:shadow-ss-md
-`
+// =============================================================================
+// CARD COMPONENT
+// =============================================================================
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
   (
@@ -75,7 +71,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
     },
     ref
   ) => {
-    const isHoverable = hoverable && !clickable
+    const isInteractive = hoverable || clickable
 
     const handleKeyDown = clickable
       ? (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -90,11 +86,26 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          baseStyles,
+          // Base styles
+          'rounded-[var(--radius-lg)]',
+          'transition-all duration-[var(--duration-fast)]',
+          // Variant styles
           variantStyles[variant],
+          // Padding styles
           paddingStyles[padding],
-          isHoverable && hoverStyles,
-          clickable && clickableStyles,
+          // Interactive styles
+          isInteractive && [
+            'hover:shadow-[var(--shadow-md)]',
+            'hover:border-[var(--color-border-primary)]',
+          ],
+          clickable && [
+            'cursor-pointer',
+            'active:shadow-[var(--shadow-sm)]',
+            'focus-visible:outline-none',
+            'focus-visible:ring-2',
+            'focus-visible:ring-[var(--color-border-focus)]',
+            'focus-visible:ring-offset-2',
+          ],
           className
         )}
         {...(clickable && {
@@ -113,34 +124,62 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
 
 Card.displayName = 'Card'
 
+// =============================================================================
+// CARD HEADER
+// =============================================================================
+
 export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
-  title?: string
-  subtitle?: string
-  action?: ReactNode
-  children?: ReactNode
+  readonly title?: string
+  readonly subtitle?: string
+  readonly action?: ReactNode
+  readonly children?: ReactNode
+  readonly bordered?: boolean
 }
 
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
-  ({ title, subtitle, action, children, className, ...props }, ref) => {
+  ({ title, subtitle, action, children, bordered = false, className, ...props }, ref) => {
+    // Custom children mode
     if (children) {
       return (
-        <div ref={ref} className={cn('mb-4', className)} {...props}>
+        <div
+          ref={ref}
+          className={cn(
+            'mb-[var(--spacing-4)]',
+            bordered && 'pb-[var(--spacing-4)] border-b border-[var(--color-border-primary)]',
+            className
+          )}
+          {...props}
+        >
           {children}
         </div>
       )
     }
 
+    // Title/subtitle mode
     return (
-      <div ref={ref} className={cn('flex items-start justify-between mb-4', className)} {...props}>
-        <div>
+      <div
+        ref={ref}
+        className={cn(
+          'flex items-start justify-between gap-[var(--spacing-4)]',
+          'mb-[var(--spacing-4)]',
+          bordered && 'pb-[var(--spacing-4)] border-b border-[var(--color-border-primary)]',
+          className
+        )}
+        {...props}
+      >
+        <div className="min-w-0 flex-1">
           {title && (
-            <h3 className="text-lg font-semibold text-[var(--ss-text-primary)]">{title}</h3>
+            <h3 className="text-[var(--font-size-lg)] font-semibold text-[var(--color-text-primary)] leading-tight">
+              {title}
+            </h3>
           )}
           {subtitle && (
-            <p className="text-sm text-[var(--ss-text-secondary)] mt-0.5">{subtitle}</p>
+            <p className="text-[var(--font-size-sm)] text-[var(--color-text-secondary)] mt-[var(--spacing-1)]">
+              {subtitle}
+            </p>
           )}
         </div>
-        {action && <div className="flex-shrink-0 ml-4">{action}</div>}
+        {action && <div className="flex-shrink-0">{action}</div>}
       </div>
     )
   }
@@ -148,14 +187,18 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
 
 CardHeader.displayName = 'CardHeader'
 
+// =============================================================================
+// CARD BODY
+// =============================================================================
+
 export interface CardBodyProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode
+  readonly children: ReactNode
 }
 
 export const CardBody = forwardRef<HTMLDivElement, CardBodyProps>(
   ({ children, className, ...props }, ref) => {
     return (
-      <div ref={ref} className={cn('', className)} {...props}>
+      <div ref={ref} className={cn(className)} {...props}>
         {children}
       </div>
     )
@@ -164,9 +207,14 @@ export const CardBody = forwardRef<HTMLDivElement, CardBodyProps>(
 
 CardBody.displayName = 'CardBody'
 
+// =============================================================================
+// CARD FOOTER
+// =============================================================================
+
 export interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode
-  align?: 'left' | 'center' | 'right' | 'between'
+  readonly children: ReactNode
+  readonly align?: 'left' | 'center' | 'right' | 'between'
+  readonly bordered?: boolean
 }
 
 const footerAlignStyles: Record<string, string> = {
@@ -177,12 +225,14 @@ const footerAlignStyles: Record<string, string> = {
 }
 
 export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
-  ({ children, align = 'right', className, ...props }, ref) => {
+  ({ children, align = 'right', bordered = true, className, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={cn(
-          'flex items-center gap-3 mt-4 pt-4 border-t border-[var(--ss-border)]',
+          'flex items-center gap-[var(--spacing-3)]',
+          'mt-[var(--spacing-4)]',
+          bordered && 'pt-[var(--spacing-4)] border-t border-[var(--color-border-primary)]',
           footerAlignStyles[align],
           className
         )}
@@ -197,5 +247,4 @@ export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
 CardFooter.displayName = 'CardFooter'
 
 export default Card
-
 export { Card }

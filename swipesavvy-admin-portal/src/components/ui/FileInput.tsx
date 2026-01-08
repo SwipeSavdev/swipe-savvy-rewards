@@ -8,7 +8,7 @@ export interface FileInputProps {
   hint?: string
   error?: string
   accept?: string
-  onFileSelected?: (file: File | null) => void
+  onFileSelected?: (_file: File | null) => void
 }
 
 export default function FileInput({ label, hint, error, accept, onFileSelected }: FileInputProps) {

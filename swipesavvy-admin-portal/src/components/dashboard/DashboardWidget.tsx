@@ -1,6 +1,5 @@
 import { ReactNode } from 'react'
 import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/Icon'
 import { X, Maximize2 } from 'lucide-react'
 

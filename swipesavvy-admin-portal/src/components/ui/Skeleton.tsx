@@ -1,3 +1,8 @@
+/**
+ * SwipeSavvy Admin Portal - Bank-Grade Skeleton Component
+ * Version: 4.0
+ */
+
 import { cn } from '@/utils/cn'
 
 export interface SkeletonProps {
@@ -5,5 +10,12 @@ export interface SkeletonProps {
 }
 
 export default function Skeleton({ className }: SkeletonProps) {
-  return <div className={cn('animate-pulse rounded-md bg-[var(--ss-surface-alt)]', className)} />
+  return (
+    <div
+      className={cn(
+        'animate-pulse rounded-sm bg-bg-muted',
+        className
+      )}
+    />
+  )
 }

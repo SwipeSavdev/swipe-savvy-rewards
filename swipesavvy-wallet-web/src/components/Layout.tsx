@@ -47,29 +47,28 @@ export function Layout() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       {/* Top Navigation */}
-      <nav className="bg-white border-b border-neutral-200 sticky top-0 z-fixed">
+      <nav className="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 sticky top-0 z-fixed">
         <div className="max-w-page mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+          <div className="flex justify-between h-14">
             {/* Logo & Brand */}
             <div className="flex items-center">
-              <Link to="/dashboard" className="flex items-center gap-3 group">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                  <span className="text-white font-bold text-xl">S</span>
+              <Link to="/dashboard" className="flex items-center gap-2.5 group">
+                <div className="w-8 h-8 bg-primary-600 rounded-md flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">S</span>
                 </div>
                 <div className="hidden sm:block">
-                  <span className="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+                  <span className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
                     SwipeSavvy
                   </span>
-                  <p className="text-xs text-neutral-500 -mt-0.5">Wallet</p>
                 </div>
               </Link>
             </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center">
-              <div className="flex items-center bg-neutral-100 rounded-xl p-1">
+              <div className="flex items-center gap-1">
                 {navigation.map((item) => {
                   const Icon = item.icon
                   const isActive = location.pathname === item.href
@@ -78,11 +77,11 @@ export function Layout() {
                       key={item.name}
                       to={item.href}
                       className={`
-                        flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                        transition-all duration-fast
+                        flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                        transition-colors duration-normal
                         ${isActive
-                          ? 'bg-white text-primary-600 shadow-sm'
-                          : 'text-neutral-600 hover:text-neutral-900'
+                          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                          : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700'
                         }
                       `}
                     >
@@ -95,14 +94,14 @@ export function Layout() {
             </div>
 
             {/* Right Side - Notifications & User */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {/* Notifications */}
               <button
-                className="relative p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                className="relative p-2 rounded-md text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                 aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-500 rounded-full" />
               </button>
 
               {/* User Menu */}
@@ -110,19 +109,19 @@ export function Layout() {
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className={`
-                    flex items-center gap-2 p-1.5 pr-3 rounded-xl
-                    transition-colors duration-fast
+                    flex items-center gap-2 p-1.5 pr-2.5 rounded-md
+                    transition-colors duration-normal
                     ${userMenuOpen
-                      ? 'bg-neutral-100'
-                      : 'hover:bg-neutral-50'
+                      ? 'bg-neutral-100 dark:bg-neutral-700'
+                      : 'hover:bg-neutral-100 dark:hover:bg-neutral-700'
                     }
                   `}
                 >
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-lg flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                  <div className="w-7 h-7 bg-primary-600 rounded-md flex items-center justify-center">
+                    <User className="w-3.5 h-3.5 text-white" />
                   </div>
                   <div className="hidden sm:block text-left">
-                    <p className="text-sm font-medium text-neutral-900 leading-tight">
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50 leading-tight">
                       {user?.name || 'User'}
                     </p>
                   </div>
@@ -131,25 +130,25 @@ export function Layout() {
 
                 {/* Dropdown Menu */}
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-neutral-200 py-1 animate-fade-in">
-                    <div className="px-4 py-3 border-b border-neutral-100">
-                      <p className="text-sm font-medium text-neutral-900">{user?.name}</p>
-                      <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
+                  <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-1 animate-fade-in">
+                    <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-700">
+                      <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{user?.name}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{user?.email}</p>
                     </div>
                     <div className="py-1">
                       <Link
                         to="/settings"
                         onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
                       >
                         <Settings className="w-4 h-4" />
                         Settings
                       </Link>
                     </div>
-                    <div className="border-t border-neutral-100 py-1">
+                    <div className="border-t border-neutral-100 dark:border-neutral-700 py-1">
                       <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors"
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/30 transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
                         Sign out
@@ -162,10 +161,10 @@ export function Layout() {
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition-colors"
+                className="md:hidden p-2 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                 aria-label="Toggle menu"
               >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
@@ -173,7 +172,7 @@ export function Layout() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-neutral-200 bg-white animate-slide-down">
+          <div className="md:hidden border-t border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 animate-slide-down">
             <div className="px-4 py-3 space-y-1">
               {navigation.map((item) => {
                 const Icon = item.icon
@@ -184,11 +183,11 @@ export function Layout() {
                     to={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`
-                      flex items-center gap-3 px-4 py-3 rounded-xl
-                      transition-colors duration-fast
+                      flex items-center gap-3 px-3 py-2.5 rounded-md
+                      transition-colors duration-normal
                       ${isActive
-                        ? 'bg-primary-50 text-primary-600'
-                        : 'text-neutral-600 hover:bg-neutral-50'
+                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                       }
                     `}
                   >
@@ -201,11 +200,11 @@ export function Layout() {
                 )
               })}
             </div>
-            <div className="px-4 py-3 border-t border-neutral-100">
+            <div className="px-4 py-3 border-t border-neutral-100 dark:border-neutral-700">
               <Link
                 to="/settings"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-neutral-600 hover:bg-neutral-50 transition-colors"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
               >
                 <Settings className="w-5 h-5" />
                 <span className="font-medium">Settings</span>
@@ -221,9 +220,9 @@ export function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-neutral-200 bg-white mt-auto">
+      <footer className="border-t border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 mt-auto">
         <div className="max-w-page mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <p className="text-center text-sm text-neutral-500">
+          <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">
             © {new Date().getFullYear()} SwipeSavvy. All rights reserved.
           </p>
         </div>

@@ -1,5 +1,4 @@
-import React from 'react'
-import { AlertCircle, TrendingUp, TrendingDown } from 'lucide-react'
+import { AlertCircle, TrendingDown } from 'lucide-react'
 
 interface MarginRiskCardProps {
   rewardsCostPct: number
