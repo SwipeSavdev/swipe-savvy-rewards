@@ -1,0 +1,41 @@
+# SwipeSavvy Terraform Variables
+# Copy this file to terraform.tfvars and fill in your values
+# NEVER commit terraform.tfvars to version control!
+
+# AWS Configuration
+aws_region  = "us-east-1"
+environment = "prod"  # dev, staging, prod
+
+# Network Configuration
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
+
+# Database Configuration
+db_name              = "swipesavvy"
+db_username          = "swipesavvy_admin"
+db_password          = "CHANGE_ME_STRONG_PASSWORD_HERE"
+db_instance_class    = "db.t3.medium"  # db.r5.large for production
+db_allocated_storage = 100
+
+# Redis Configuration
+redis_node_type = "cache.t3.medium"  # cache.r5.large for production
+
+# EC2 Configuration
+ec2_instance_type = "t3.medium"  # t3.large or c5.large for production
+ec2_key_name      = "swipesavvy-prod"  # Your EC2 key pair name
+
+# SSL/TLS
+acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
+
+# Domain
+domain_name = "swipesavvy.com"
+
+# Alerting
+alert_email = "ops@swipesavvy.com"
+
+# API Keys (SENSITIVE - keep secure!)
+together_api_key   = "your-together-api-key"
+sendgrid_api_key   = "your-sendgrid-api-key"
+twilio_account_sid = "your-twilio-account-sid"
+twilio_auth_token  = "your-twilio-auth-token"
