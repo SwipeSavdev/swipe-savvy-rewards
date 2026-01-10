@@ -60,7 +60,7 @@ const baseStyles = [
 const variantStyles: Record<ButtonVariant, string> = {
   primary: [
     'bg-[var(--color-action-primary-bg)]',
-    'text-[var(--color-action-primary-text)]',
+    '!text-white',
     'hover:bg-[var(--color-action-primary-bg-hover)]',
     'active:bg-[var(--color-action-primary-bg-active)]',
   ].join(' '),
@@ -92,7 +92,7 @@ const variantStyles: Record<ButtonVariant, string> = {
 
   danger: [
     'bg-[var(--color-action-danger-bg)]',
-    'text-[var(--color-action-danger-text)]',
+    '!text-white',
     'hover:bg-[var(--color-action-danger-bg-hover)]',
     'active:bg-[var(--color-action-danger-bg-active)]',
   ].join(' '),

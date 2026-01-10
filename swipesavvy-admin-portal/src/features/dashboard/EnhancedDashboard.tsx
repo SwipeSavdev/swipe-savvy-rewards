@@ -11,7 +11,7 @@
 
 'use client';
 
-import { GripHorizontal, RefreshCw, Settings, X } from 'lucide-react';
+import { GripHorizontal, RefreshCw, Settings, TrendingDown, TrendingUp, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
@@ -65,11 +65,11 @@ const MOCK_DATA = {
     { id: 4, name: 'Spring Collection', status: 'Completed', impressions: 3200000, clicks: 156000, conversions: 5616, roi: 342 },
   ],
   ai_recommendations: [
-    '🎯 Increase budget allocation to Paid Search - highest ROI at 287%',
-    '📈 Email campaigns show steady growth; consider A/B testing subject lines',
-    '⚡ Social Media engagement up 23% - expand video content strategy',
-    '🔍 Optimize landing pages for mobile - 64% of traffic is mobile',
-    '💡 Predictive model suggests 15% conversion increase with personalization',
+    'Increase budget allocation to Paid Search - highest ROI at 287%',
+    'Email campaigns show steady growth; consider A/B testing subject lines',
+    'Social Media engagement up 23% - expand video content strategy',
+    'Optimize landing pages for mobile - 64% of traffic is mobile',
+    'Predictive model suggests 15% conversion increase with personalization',
   ],
 };
 
@@ -246,7 +246,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
       {editMode && (
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-800">
-            <strong>✨ Edit Mode:</strong> Drag widgets to reorder them or click the X to hide widgets.
+            <strong>Edit Mode:</strong> Drag widgets to reorder them or click the X to hide widgets.
           </p>
         </div>
       )}
@@ -297,8 +297,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                     {widget.dataSource === 'ai_conversion_rate' && (
                       <div className="text-center">
                         <div className="text-4xl font-bold text-blue-600">{MOCK_DATA.ai_conversion_rate.value}%</div>
-                        <div className={`text-sm mt-2 ${MOCK_DATA.ai_conversion_rate.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                          {MOCK_DATA.ai_conversion_rate.trend === 'up' ? '↑' : '↓'} {Math.abs(MOCK_DATA.ai_conversion_rate.change)}%
+                        <div className={`text-sm mt-2 flex items-center justify-center gap-1 ${MOCK_DATA.ai_conversion_rate.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                          {MOCK_DATA.ai_conversion_rate.trend === 'up' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />} {Math.abs(MOCK_DATA.ai_conversion_rate.change)}%
                         </div>
                         <p className="text-xs text-slate-500 mt-2">30-day average</p>
                       </div>
@@ -306,8 +306,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                     {widget.dataSource === 'ai_roi' && (
                       <div className="text-center">
                         <div className="text-4xl font-bold text-green-600">{MOCK_DATA.ai_roi.value}{MOCK_DATA.ai_roi.unit}</div>
-                        <div className={`text-sm mt-2 ${MOCK_DATA.ai_roi.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                          {MOCK_DATA.ai_roi.trend === 'up' ? '↑' : '↓'} {Math.abs(MOCK_DATA.ai_roi.change)}%
+                        <div className={`text-sm mt-2 flex items-center justify-center gap-1 ${MOCK_DATA.ai_roi.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                          {MOCK_DATA.ai_roi.trend === 'up' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />} {Math.abs(MOCK_DATA.ai_roi.change)}%
                         </div>
                         <p className="text-xs text-slate-500 mt-2">Return on Ad Spend</p>
                       </div>
@@ -315,8 +315,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                     {widget.dataSource === 'ai_cpa' && (
                       <div className="text-center">
                         <div className="text-4xl font-bold text-purple-600">{MOCK_DATA.ai_cpa.unit}{MOCK_DATA.ai_cpa.value}</div>
-                        <div className={`text-sm mt-2 ${MOCK_DATA.ai_cpa.trend === 'down' ? 'text-green-600' : 'text-red-600'}`}>
-                          {MOCK_DATA.ai_cpa.trend === 'down' ? '↓' : '↑'} {Math.abs(MOCK_DATA.ai_cpa.change)}%
+                        <div className={`text-sm mt-2 flex items-center justify-center gap-1 ${MOCK_DATA.ai_cpa.trend === 'down' ? 'text-green-600' : 'text-red-600'}`}>
+                          {MOCK_DATA.ai_cpa.trend === 'down' ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />} {Math.abs(MOCK_DATA.ai_cpa.change)}%
                         </div>
                         <p className="text-xs text-slate-500 mt-2">Cost per Acquisition</p>
                       </div>
@@ -424,7 +424,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                       {widget.dataSource}
                     </p>
                     {widget.aiMetrics && (
-                      <p className="text-xs text-purple-600 mt-2">📊 AI Marketing</p>
+                      <p className="text-xs text-purple-600 mt-2">AI Marketing</p>
                     )}
                   </div>
                 )}

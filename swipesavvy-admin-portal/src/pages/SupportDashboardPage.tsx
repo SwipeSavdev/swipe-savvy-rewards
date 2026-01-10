@@ -1,7 +1,7 @@
 import { BrandingKitIcon } from '@/components/ui/BrandingKitIcon'
 import Card from '@/components/ui/Card'
 import axios from 'axios'
-import { ArrowUpRight, CheckCircle, ChevronRight, Clock, Headphones, RefreshCw, Star, Ticket, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowUpRight, Bug, CheckCircle, ChevronRight, Clock, CreditCard, DollarSign, Headphones, Key, RefreshCw, Smartphone, Sparkles, Star, Ticket, TrendingDown, TrendingUp, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -164,7 +164,7 @@ export default function SupportDashboardPage() {
             <div className="flex-1">
               <p className="text-sm font-medium text-red-800">{error}</p>
             </div>
-            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+            <button onClick={() => setError(null)} className="text-red-600"><X className="w-4 h-4" /></button>
           </div>
         </Card>
       )}
@@ -462,19 +462,19 @@ export default function SupportDashboardPage() {
           <p className="text-sm text-gray-600 mb-6">Quick links for common issue categories</p>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { name: 'Mobile Wallet Issues', icon: '📱', count: 45 },
-              { name: 'Bug Reports', icon: '🐛', count: 32 },
-              { name: 'Payment Problems', icon: '💳', count: 28 },
-              { name: 'Account Access', icon: '🔐', count: 24 },
-              { name: 'Refund Requests', icon: '💰', count: 20 },
-              { name: 'Feature Requests', icon: '✨', count: 15 },
+              { name: 'Mobile Wallet Issues', icon: <Smartphone className="w-5 h-5" />, count: 45 },
+              { name: 'Bug Reports', icon: <Bug className="w-5 h-5" />, count: 32 },
+              { name: 'Payment Problems', icon: <CreditCard className="w-5 h-5" />, count: 28 },
+              { name: 'Account Access', icon: <Key className="w-5 h-5" />, count: 24 },
+              { name: 'Refund Requests', icon: <DollarSign className="w-5 h-5" />, count: 20 },
+              { name: 'Feature Requests', icon: <Sparkles className="w-5 h-5" />, count: 15 },
             ].map((playbook) => (
               <div
                 key={playbook.name}
                 className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">{playbook.icon}</span>
+                  <span className="text-gray-600">{playbook.icon}</span>
                   <span className="text-sm font-medium text-gray-900">{playbook.name}</span>
                 </div>
                 <p className="text-xs text-gray-500">{playbook.count} active tickets</p>

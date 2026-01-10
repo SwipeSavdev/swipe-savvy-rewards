@@ -34,9 +34,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: 'ai_marketing_analytics', label: 'AI Marketing Analytics', to: '/admin/analytics', icon: 'chart_line' },
       { key: 'audit_logs', label: 'Audit Logs', to: '/admin/audit-logs', icon: 'lock' },
       { key: 'user_management', label: 'User Management', to: '/admin/user/management', icon: 'users' },
-      { key: 'roles_manager', label: 'Roles Manager', to: '/admin/user/roles', icon: 'shield' },
-      { key: 'permissions_manager', label: 'Permissions Manager', to: '/admin/user/permissions', icon: 'lock' },
-      { key: 'policy_manager', label: 'Policy Manager', to: '/admin/user/policies', icon: 'shield' },
     ],
   },
   {

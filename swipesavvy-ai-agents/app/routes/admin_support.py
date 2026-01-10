@@ -40,6 +40,74 @@ class TicketsListResponse(BaseModel):
     per_page: int
     total_pages: int
 
+
+class CreateTicketRequest(BaseModel):
+    subject: str
+    description: Optional[str] = None
+    customer_name: str
+    customer_email: str
+    priority: str = "medium"
+    category: str = "general"
+    status: str = "open"
+
+
+@router.post("/support/tickets")
+async def create_support_ticket(
+    request: CreateTicketRequest,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Create a new support ticket"""
+    try:
+        # Validate priority
+        valid_priorities = ['low', 'medium', 'high', 'critical']
+        priority = request.priority if request.priority in valid_priorities else 'medium'
+
+        # Validate status
+        valid_statuses = ['open', 'in_progress', 'closed', 'reopened']
+        status = request.status if request.status in valid_statuses else 'open'
+
+        # Create ticket
+        ticket = SupportTicketModel(
+            subject=request.subject,
+            description=request.description,
+            customer_name=request.customer_name,
+            customer_email=request.customer_email,
+            priority=priority,
+            category=request.category,
+            status=status,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
+        )
+
+        db.add(ticket)
+        db.commit()
+        db.refresh(ticket)
+
+        logger.info(f"Created support ticket: {ticket.id}")
+
+        return {
+            "success": True,
+            "message": "Ticket created successfully",
+            "ticket": SupportTicketResponse(
+                id=str(ticket.id),
+                subject=ticket.subject,
+                description=ticket.description,
+                status=ticket.status,
+                priority=ticket.priority,
+                customerName=ticket.customer_name,
+                customerEmail=ticket.customer_email,
+                category=ticket.category,
+                createdAt=ticket.created_at.isoformat() if ticket.created_at else None,
+                updatedAt=ticket.updated_at.isoformat() if ticket.updated_at else None,
+                assignedTo=None
+            )
+        }
+    except Exception as e:
+        logger.error(f"Error creating support ticket: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create support ticket: {str(e)}")
+
+
 @router.get("/support/tickets")
 async def list_support_tickets(
     page: int = Query(1, ge=1),

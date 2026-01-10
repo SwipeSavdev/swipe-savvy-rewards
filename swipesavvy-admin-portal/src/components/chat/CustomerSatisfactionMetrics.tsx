@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 import { apiClient } from '../../services/api';
 
 interface SatisfactionMetrics {
@@ -65,7 +66,7 @@ const CustomerSatisfactionMetrics: React.FC<Props> = ({ timeRangeHours }) => {
         <div className="summary-stat">
           <div className="stat-label">Average Rating</div>
           <div className="stat-value large">
-            {metrics.avg_rating.toFixed(1)} ⭐
+            {metrics.avg_rating.toFixed(1)} <Star className="w-5 h-5 inline text-yellow-500" />
           </div>
         </div>
         <div className="summary-stat">
@@ -85,7 +86,7 @@ const CustomerSatisfactionMetrics: React.FC<Props> = ({ timeRangeHours }) => {
         {ratingPercentages.map(({ rating, count, percentage }) => (
           <div key={rating} className="rating-bar">
             <div className="rating-label">
-              <span>{rating} ⭐</span>
+              <span>{rating} <Star className="w-4 h-4 inline text-yellow-500" /></span>
               <span className="count">({count})</span>
             </div>
             <div className="bar-container">

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Activity, AlertCircle, ArrowDownRight, ArrowUpRight, Calendar, CreditCard, DollarSign, Users } from 'lucide-react'
+import { Activity, AlertCircle, ArrowDownRight, ArrowUpRight, Calendar, CreditCard, DollarSign, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
@@ -190,7 +190,7 @@ export default function AnalyticsPage() {
             <p className="text-xs text-red-600 mt-1">Using fallback data. Please try refreshing the page.</p>
           </div>
           <button onClick={() => setError(null)} className="text-red-600 hover:text-red-700">
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}

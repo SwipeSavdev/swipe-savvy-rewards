@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Plus, Settings } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { RefreshCw, Settings } from 'lucide-react'
 import StatCard from '@/components/ui/StatCard'
 import DashboardWidget from '@/components/dashboard/DashboardWidget'
 import LineChart from '@/components/charts/LineChart'
@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/Icon'
 import MarginRiskCard from '@/components/cards/MarginRiskCard'
 import { Api } from '@/services/api'
+import { useEventSubscription } from '@/store/eventBusStore'
 import { useToastStore } from '@/store/toastStore'
 
 interface Widget {
@@ -36,8 +37,10 @@ export default function DashboardPageNew() {
   const pushToast = useToastStore((s) => s.push)
   const [widgets, setWidgets] = useState<Widget[]>(AVAILABLE_WIDGETS)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [data, setData] = useState<any>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
 
   // Mock data generator
   const generateMockData = () => {
@@ -124,64 +127,94 @@ export default function DashboardPageNew() {
     }
   }
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      try {
+  // Dashboard data loading function
+  const loadDashboard = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
         setLoading(true)
+      }
 
-        // Try to fetch real data from API
-        try {
-          const overview = await Api.dashboardApi.getOverview()
+      // Try to fetch real data from API
+      try {
+        const overview = await Api.dashboardApi.getOverview()
 
-          // Merge API data with mock visualization data
-          const mockData = generateMockData()
+        // Merge API data with mock visualization data
+        const mockData = generateMockData()
 
-          // Update stats with real API data if available
-          if (overview && overview.stats) {
-            mockData.stats = {
-              ...mockData.stats,
-              totalFraudCases: {
-                value: overview.stats.transactions?.value || mockData.stats.totalFraudCases.value,
-                trendPct: overview.stats.transactions?.trendPct || 0,
-                trendDirection: overview.stats.transactions?.trendDirection || 'up'
-              },
-              totalTransactions: {
-                value: overview.stats.transactions?.value || mockData.stats.totalTransactions.value,
-                trendPct: overview.stats.transactions?.trendPct || 0,
-                trendDirection: overview.stats.transactions?.trendDirection || 'up'
-              },
-              customersInProgram: {
-                value: overview.stats.users?.value || overview.total_users || mockData.stats.customersInProgram.value,
-                trendPct: overview.stats.users?.trendPct || 0,
-                trendDirection: overview.stats.users?.trendDirection || 'up'
-              },
-            }
+        // Update stats with real API data if available
+        if (overview && overview.stats) {
+          mockData.stats = {
+            ...mockData.stats,
+            totalFraudCases: {
+              value: overview.stats.transactions?.value || mockData.stats.totalFraudCases.value,
+              trendPct: overview.stats.transactions?.trendPct || 0,
+              trendDirection: overview.stats.transactions?.trendDirection || 'up'
+            },
+            totalTransactions: {
+              value: overview.stats.transactions?.value || mockData.stats.totalTransactions.value,
+              trendPct: overview.stats.transactions?.trendPct || 0,
+              trendDirection: overview.stats.transactions?.trendDirection || 'up'
+            },
+            customersInProgram: {
+              value: overview.stats.users?.value || overview.total_users || mockData.stats.customersInProgram.value,
+              trendPct: overview.stats.users?.trendPct || 0,
+              trendDirection: overview.stats.users?.trendDirection || 'up'
+            },
           }
-
-          setData(mockData)
-        } catch (apiError) {
-          console.warn('API unavailable, using mock data:', apiError)
-          // Fallback to mock data if API fails
-          const mockData = generateMockData()
-          setData(mockData)
         }
-      } catch (error) {
-        console.error('Failed to load dashboard:', error)
-        pushToast({
-          variant: 'error',
-          title: 'Dashboard',
-          message: 'Failed to load dashboard data.',
-        })
-        // Still show mock data on error
+
+        setData(mockData)
+        setLastRefresh(new Date())
+      } catch (apiError) {
+        console.warn('API unavailable, using mock data:', apiError)
+        // Fallback to mock data if API fails
         const mockData = generateMockData()
         setData(mockData)
-      } finally {
-        setLoading(false)
+        setLastRefresh(new Date())
       }
+    } catch (error) {
+      console.error('Failed to load dashboard:', error)
+      pushToast({
+        variant: 'error',
+        title: 'Dashboard',
+        message: 'Failed to load dashboard data.',
+      })
+      // Still show mock data on error
+      const mockData = generateMockData()
+      setData(mockData)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
     }
+  }, [pushToast])
 
+  // Initial load
+  useEffect(() => {
     loadDashboard()
-  }, [])
+  }, [loadDashboard])
+
+  // Subscribe to all relevant events for auto-refresh
+  useEventSubscription(
+    [
+      'merchant:created', 'merchant:updated', 'merchant:deleted',
+      'charity:approved', 'charity:rejected',
+      'ticket:created', 'ticket:resolved',
+      'campaign:published',
+      'user:created', 'user:deleted',
+    ],
+    () => {
+      // Debounce refresh to avoid too many API calls
+      loadDashboard(true)
+    }
+  )
+
+  // Manual refresh handler
+  const handleRefresh = () => {
+    loadDashboard(true)
+    pushToast({ variant: 'success', title: 'Dashboard', message: 'Data refreshed' })
+  }
 
   const toggleWidget = (widgetId: string) => {
     setWidgets((prev) => prev.map((w) => (w.id === widgetId ? { ...w, enabled: !w.enabled } : w)))
@@ -206,15 +239,32 @@ export default function DashboardPageNew() {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="font-headline text-xl font-semibold text-[var(--ss-text)]">Dashboard</h1>
-          <p className="mt-1 text-sm text-[var(--ss-text-muted)]">Fraud and risk analytics overview.</p>
+          <p className="mt-1 text-sm text-[var(--ss-text-muted)]">
+            Fraud and risk analytics overview.
+            {lastRefresh && (
+              <span className="ml-2 text-xs">
+                Last updated: {lastRefresh.toLocaleTimeString()}
+              </span>
+            )}
+          </p>
         </div>
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="p-2 hover:bg-[var(--ss-surface-alt)] rounded transition-colors"
-          title="Dashboard settings"
-        >
-          <Settings className="w-5 h-5 text-[var(--ss-text)]" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="p-2 hover:bg-[var(--ss-surface-alt)] rounded transition-colors disabled:opacity-50"
+            title="Refresh dashboard"
+          >
+            <RefreshCw className={`w-5 h-5 text-[var(--ss-text)] ${refreshing ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-2 hover:bg-[var(--ss-surface-alt)] rounded transition-colors"
+            title="Dashboard settings"
+          >
+            <Settings className="w-5 h-5 text-[var(--ss-text)]" />
+          </button>
+        </div>
       </div>
 
       {/* Settings Panel */}

@@ -10,10 +10,11 @@ import AnalyticsPage from '@/pages/AnalyticsPage'
 import AuditLogsPage from '@/pages/AuditLogsPage'
 import CharityOnboardingPage from '@/pages/CharityOnboardingPage'
 import DashboardPageNew from '@/pages/DashboardPageNew'
-import EnhancedFeatureFlagsPage from '@/pages/EnhancedFeatureFlagsPage'
+import FeatureFlagsPage from '@/pages/FeatureFlagsPage'
 import IconSystemDemo from '@/pages/IconSystemDemo'
 import LoginPage from '@/pages/LoginPage'
 import MerchantsPage from '@/pages/MerchantsPage'
+import MerchantOnboardingPage from '@/pages/MerchantOnboardingPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import PermissionsManagerPage from '@/pages/PermissionsManagerPage'
 import PolicyManagerPage from '@/pages/PolicyManagerPage'
@@ -38,6 +39,7 @@ export default function AppRoutes() {
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/analytics/risk-reports" element={<RiskReportsPage />} />
           <Route path="/merchants" element={<MerchantsPage />} />
+          <Route path="/merchants/:merchantId/onboarding" element={<MerchantOnboardingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/support" element={<SupportDashboardPage />} />
           <Route path="/support/tickets" element={<SupportTicketsPage />} />
@@ -54,7 +56,7 @@ export default function AppRoutes() {
           <Route path="/admin/analytics/:view" element={<EnhancedDashboard />} />
           <Route path="/donations/charities" element={<CharityOnboardingPage />} />
           <Route path="/tools/ai-marketing" element={<AiMarketingPage />} />
-          <Route path="/tools/feature-flags" element={<EnhancedFeatureFlagsPage />} />
+          <Route path="/tools/feature-flags" element={<FeatureFlagsPage />} />
           <Route path="/tools/icon-system" element={<IconSystemDemo />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

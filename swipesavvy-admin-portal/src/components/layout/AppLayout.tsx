@@ -35,6 +35,24 @@ export default function AppLayout() {
     setMobileOpen(false)
   }, [location.pathname, setMobileOpen])
 
+  // Scroll main content to top on route change
+  useEffect(() => {
+    const mainContent = document.getElementById('main-content')
+    if (mainContent) {
+      // Scroll immediately
+      mainContent.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      // Also scroll after a frame to catch any lazy-loaded content
+      requestAnimationFrame(() => {
+        mainContent.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      })
+      // And once more after a short delay for async content
+      const timeoutId = setTimeout(() => {
+        mainContent.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      }, 100)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [location.pathname])
+
   return (
     <div className="min-h-screen bg-[var(--color-bg-page)]">
       {/* Skip to content link for accessibility */}
