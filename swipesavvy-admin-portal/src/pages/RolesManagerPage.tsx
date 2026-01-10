@@ -2,7 +2,11 @@ import Badge from '@/components/ui/Badge'
 import { BrandingKitIcon, BrandingKitIconButton } from '@/components/ui/BrandingKitIcon'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import { useState } from 'react'
+import axios from 'axios'
+import { X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 interface Role {
   id: string
@@ -64,17 +68,56 @@ const MOCK_ROLES: Role[] = [
 
 export default function RolesManagerPage() {
   const [roles, setRoles] = useState<Role[]>(MOCK_ROLES)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleDeleteRole = (id: string) => {
-    setRoles(roles.filter((r) => r.id !== id))
+  // Fetch roles on mount
+  useEffect(() => {
+    fetchRoles()
+  }, [])
+
+  const fetchRoles = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await axios.get(`${API_BASE_URL}/api/roles`)
+      setRoles(response.data.roles || response.data || MOCK_ROLES)
+    } catch (err: any) {
+      console.error('Failed to fetch roles:', err)
+      setError(err.message || 'Failed to fetch roles')
+      // Keep mock data as fallback
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleToggleStatus = (id: string) => {
-    setRoles(
-      roles.map((r) =>
-        r.id === id ? { ...r, status: r.status === 'active' ? 'inactive' : 'active' } : r,
-      ),
-    )
+  const handleDeleteRole = async (id: string) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/api/roles/${id}`)
+      setRoles(roles.filter((r) => r.id !== id))
+    } catch (err: any) {
+      console.error('Failed to delete role:', err)
+      setError('Failed to delete role')
+    }
+  }
+
+  const handleToggleStatus = async (id: string) => {
+    const role = roles.find(r => r.id === id)
+    if (!role) return
+
+    const newStatus = role.status === 'active' ? 'inactive' : 'active'
+
+    try {
+      await axios.put(`${API_BASE_URL}/api/roles/${id}`, { status: newStatus })
+      setRoles(
+        roles.map((r) =>
+          r.id === id ? { ...r, status: newStatus } : r,
+        ),
+      )
+    } catch (err: any) {
+      console.error('Failed to update role status:', err)
+      setError('Failed to update role status')
+    }
   }
 
   return (
@@ -90,6 +133,36 @@ export default function RolesManagerPage() {
           </div>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <Card className="bg-red-50 border border-red-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="text-red-600">
+              <BrandingKitIcon name="alert_circle" size="md" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">{error}</p>
+              <p className="text-xs text-red-600 mt-1">Using fallback data. Please try refreshing.</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-red-600 hover:text-red-700">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <Card className="bg-blue-50 border border-blue-200">
+          <div className="p-4 flex items-center gap-3">
+            <div className="animate-spin">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+            </div>
+            <p className="text-sm text-blue-800">Loading roles...</p>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-white to-blue-50/30 dark:from-slate-900 dark:to-blue-900/20 border-l-4 border-[#235393]">

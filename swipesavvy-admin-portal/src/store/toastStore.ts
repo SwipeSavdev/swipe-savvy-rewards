@@ -13,8 +13,8 @@ export interface ToastItem {
 
 interface ToastState {
   toasts: ToastItem[]
-  push: (toast: Omit<ToastItem, 'id'> & { id?: string } & { durationMs?: number }) => void
-  remove: (id: string) => void
+  push: (_toast: Omit<ToastItem, 'id'> & { id?: string } & { durationMs?: number }) => void
+  remove: (_id: string) => void
   clear: () => void
 }
 

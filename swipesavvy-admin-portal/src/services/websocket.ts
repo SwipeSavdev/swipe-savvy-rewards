@@ -39,7 +39,7 @@ class DashboardWebSocketManager {
         this.ws = new WebSocket(this.url);
 
         this.ws.onopen = () => {
-          console.log('✅ Dashboard WebSocket connected');
+          console.log('[OK] Dashboard WebSocket connected');
           this.reconnectAttempts = 0;
 
           // Send authentication
@@ -67,12 +67,12 @@ class DashboardWebSocketManager {
         };
 
         this.ws.onerror = (error) => {
-          console.error('❌ WebSocket error:', error);
+          console.error('[ERROR] WebSocket error:', error);
           reject(error);
         };
 
         this.ws.onclose = () => {
-          console.log('❌ Dashboard WebSocket disconnected');
+          console.log('[DISCONNECTED] Dashboard WebSocket disconnected');
           this.stopHeartbeat();
           this.notifyConnectionChange(false);
 
@@ -158,7 +158,7 @@ class DashboardWebSocketManager {
    * Handle incoming messages
    */
   private handleMessage(message: MessageEvent): void {
-    console.log(`📨 Dashboard message: ${message.type}`, message.data);
+    console.log(`[MSG] Dashboard message: ${message.type}`, message.data);
 
     const handlers = this.messageHandlers.get(message.type) || [];
     handlers.forEach((handler) => {
@@ -200,7 +200,7 @@ class DashboardWebSocketManager {
     
     if (this.reconnectAttempts <= 3) {
       // Only log first 3 attempts to avoid console spam
-      console.log(`⏳ Reconnecting in ${delay.toFixed(0)}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+      console.log(`[RECONNECT] Reconnecting in ${delay.toFixed(0)}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
     }
 
     this.reconnectTimer = setTimeout(() => {

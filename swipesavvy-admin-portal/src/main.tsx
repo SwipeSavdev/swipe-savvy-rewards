@@ -16,7 +16,7 @@ window.addEventListener('error', (event) => {
 })
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('❌ Unhandled rejection:', event.reason)
+  console.error('[ERROR] Unhandled rejection:', event.reason)
   if (event.reason instanceof Error) {
     console.error('Error message:', event.reason.message)
     console.error('Error stack:', event.reason.stack)
@@ -35,13 +35,13 @@ window.addEventListener('unhandledrejection', (event) => {
 })
 
 const rootElement = document.getElementById('root')
-console.log('✅ Root element found:', rootElement)
+console.log('[OK] Root element found:', rootElement)
 
 if (!rootElement) {
   throw new Error('Root element #root not found in DOM')
 }
 
-console.log('🚀 Mounting React app to #root')
+console.log('[INIT] Mounting React app to #root')
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>

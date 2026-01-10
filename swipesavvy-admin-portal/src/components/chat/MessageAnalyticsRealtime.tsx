@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Check, CheckCheck, Eye, File, FileText, Image, Music, Video, XCircle } from 'lucide-react';
 import { useRealtimeDashboard, useRealtimeData } from '@/services/websocket';
 import { apiClient } from '@/services/api';
 
@@ -147,7 +148,7 @@ const MessageAnalyticsRealtime: React.FC<MessageAnalyticsRealtimeProps> = ({
             <div className="type-chart">
               <div className="type-bar">
                 <div className="type-label">
-                  <span>📄 Text</span>
+                  <span><FileText className="w-4 h-4 inline mr-1" /> Text</span>
                   <span>{analytics.messagesByType.text}</span>
                 </div>
                 <div className="type-bar-container">
@@ -163,7 +164,7 @@ const MessageAnalyticsRealtime: React.FC<MessageAnalyticsRealtimeProps> = ({
 
               <div className="type-bar">
                 <div className="type-label">
-                  <span>🖼️ Image</span>
+                  <span><Image className="w-4 h-4 inline mr-1" /> Image</span>
                   <span>{analytics.messagesByType.image}</span>
                 </div>
                 <div className="type-bar-container">
@@ -179,7 +180,7 @@ const MessageAnalyticsRealtime: React.FC<MessageAnalyticsRealtimeProps> = ({
 
               <div className="type-bar">
                 <div className="type-label">
-                  <span>📎 File</span>
+                  <span><File className="w-4 h-4 inline mr-1" /> File</span>
                   <span>{analytics.messagesByType.file}</span>
                 </div>
                 <div className="type-bar-container">
@@ -195,7 +196,7 @@ const MessageAnalyticsRealtime: React.FC<MessageAnalyticsRealtimeProps> = ({
 
               <div className="type-bar">
                 <div className="type-label">
-                  <span>🎵 Audio</span>
+                  <span><Music className="w-4 h-4 inline mr-1" /> Audio</span>
                   <span>{analytics.messagesByType.audio}</span>
                 </div>
                 <div className="type-bar-container">
@@ -211,7 +212,7 @@ const MessageAnalyticsRealtime: React.FC<MessageAnalyticsRealtimeProps> = ({
 
               <div className="type-bar">
                 <div className="type-label">
-                  <span>🎬 Video</span>
+                  <span><Video className="w-4 h-4 inline mr-1" /> Video</span>
                   <span>{analytics.messagesByType.video}</span>
                 </div>
                 <div className="type-bar-container">
@@ -233,7 +234,7 @@ const MessageAnalyticsRealtime: React.FC<MessageAnalyticsRealtimeProps> = ({
             <div className="status-chart">
               <div className="status-bar">
                 <div className="status-label">
-                  <span>✓ Sent</span>
+                  <span><Check className="w-4 h-4 inline mr-1" /> Sent</span>
                   <span>{analytics.messagesByStatus.sent}</span>
                 </div>
                 <div className="status-bar-container">
@@ -249,7 +250,7 @@ const MessageAnalyticsRealtime: React.FC<MessageAnalyticsRealtimeProps> = ({
 
               <div className="status-bar">
                 <div className="status-label">
-                  <span>✓✓ Delivered</span>
+                  <span><CheckCheck className="w-4 h-4 inline mr-1" /> Delivered</span>
                   <span>{analytics.messagesByStatus.delivered}</span>
                 </div>
                 <div className="status-bar-container">
@@ -265,7 +266,7 @@ const MessageAnalyticsRealtime: React.FC<MessageAnalyticsRealtimeProps> = ({
 
               <div className="status-bar">
                 <div className="status-label">
-                  <span>👁️ Read</span>
+                  <span><Eye className="w-4 h-4 inline mr-1" /> Read</span>
                   <span>{analytics.messagesByStatus.read}</span>
                 </div>
                 <div className="status-bar-container">
@@ -281,7 +282,7 @@ const MessageAnalyticsRealtime: React.FC<MessageAnalyticsRealtimeProps> = ({
 
               <div className="status-bar">
                 <div className="status-label">
-                  <span>❌ Failed</span>
+                  <span><XCircle className="w-4 h-4 inline mr-1" /> Failed</span>
                   <span>{analytics.messagesByStatus.failed}</span>
                 </div>
                 <div className="status-bar-container">

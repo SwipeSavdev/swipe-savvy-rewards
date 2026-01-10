@@ -9,7 +9,7 @@ export interface RadioOption {
 export interface RadioGroupProps {
   name: string
   value: string
-  onChange: (value: string) => void
+  onChange: (_value: string) => void
   options: RadioOption[]
   className?: string
 }

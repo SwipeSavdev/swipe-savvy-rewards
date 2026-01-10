@@ -1,3 +1,6 @@
+// Standard chart height for consistent dashboard layouts
+const CHART_HEIGHT = 280
+
 interface PieChartProps {
   data: Array<{
     label: string
@@ -9,9 +12,9 @@ interface PieChartProps {
 
 const defaultColors = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
 
-export default function PieChart({ data, height = 250 }: PieChartProps) {
+export default function PieChart({ data, height = CHART_HEIGHT }: PieChartProps) {
   if (!data || data.length === 0) {
-    return <div className="h-64 flex items-center justify-center text-gray-400">No data available</div>
+    return <div style={{ height }} className="flex items-center justify-center text-gray-400">No data available</div>
   }
 
   const total = data.reduce((sum, d) => sum + d.value, 0)
@@ -50,9 +53,9 @@ export default function PieChart({ data, height = 250 }: PieChartProps) {
   })
 
   return (
-    <div className="flex gap-6">
-      <div className="flex-1">
-        <svg viewBox="0 0 100 100" height={height} className="w-full">
+    <div style={{ height }} className="flex gap-6 items-center">
+      <div className="flex-1 flex items-center justify-center">
+        <svg viewBox="0 0 100 100" style={{ height: height - 16, maxWidth: height - 16 }}>
           {slices.map((slice, i) => (
             <path key={i} d={slice.pathData} fill={slice.color} stroke="white" strokeWidth="1" opacity="0.85" />
           ))}

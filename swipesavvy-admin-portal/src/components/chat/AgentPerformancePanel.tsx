@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BarChart3, MessageSquare, Phone, Star, Zap } from 'lucide-react';
 import { apiClient } from '../../services/api';
 
 interface AgentMetrics {
@@ -74,27 +75,27 @@ const AgentPerformancePanel: React.FC<Props> = ({ timeRangeHours, agentId }) => 
                 <MetricRow
                   label="Sessions"
                   value={agent.sessions_handled}
-                  icon="📞"
+                  icon={<Phone className="w-4 h-4" />}
                 />
                 <MetricRow
                   label="Messages"
                   value={agent.total_messages}
-                  icon="💬"
+                  icon={<MessageSquare className="w-4 h-4" />}
                 />
                 <MetricRow
                   label="Avg Msg/Session"
                   value={agent.avg_messages_per_session.toFixed(1)}
-                  icon="📊"
+                  icon={<BarChart3 className="w-4 h-4" />}
                 />
                 <MetricRow
                   label="Avg Response"
                   value={`${agent.avg_response_time_seconds.toFixed(1)}s`}
-                  icon="⚡"
+                  icon={<Zap className="w-4 h-4" />}
                 />
                 <MetricRow
                   label="Rating"
                   value={agent.avg_customer_rating.toFixed(1)}
-                  icon="⭐"
+                  icon={<Star className="w-4 h-4" />}
                   highlight={agent.avg_customer_rating >= 4.5}
                 />
               </div>
@@ -109,7 +110,7 @@ const AgentPerformancePanel: React.FC<Props> = ({ timeRangeHours, agentId }) => 
 interface MetricRowProps {
   label: string;
   value: string | number;
-  icon: string;
+  icon: React.ReactNode;
   highlight?: boolean;
 }
 

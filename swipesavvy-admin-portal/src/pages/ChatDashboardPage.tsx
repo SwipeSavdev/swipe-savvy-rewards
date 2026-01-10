@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DashboardOverview from '../components/chat/DashboardOverview';
 import ActiveSessionsList from '../components/chat/ActiveSessionsList';
 import AgentPerformancePanel from '../components/chat/AgentPerformancePanel';
 import CustomerSatisfactionMetrics from '../components/chat/CustomerSatisfactionMetrics';
+import DashboardOverview from '../components/chat/DashboardOverview';
 import MessageAnalytics from '../components/chat/MessageAnalytics';
 import WaitingSessionsQueue from '../components/chat/WaitingSessionsQueue';
 import '../styles/chat-dashboard.css';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 interface DashboardFilters {
   timeRange: number; // hours (1, 24, 168, 720)
@@ -45,6 +48,31 @@ const ChatDashboardPage: React.FC = () => {
   const handleTimeRangeChange = useCallback((hours: number) => {
     setFilters(prev => ({ ...prev, timeRange: hours }));
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.get(`${API_BASE_URL}/api/chat/dashboard`, {
+        params: {
+          timeRange: filters.timeRange,
+          limit: filters.sessionLimit,
+          ...(filters.agentId ? { agentId: filters.agentId } : {}),
+        },
+      });
+      // Data is used by child components; they maintain their own state
+    } catch (err: any) {
+      console.error('Failed to fetch chat dashboard:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch data when filters change
+  useEffect(() => {
+    fetchDashboardData();
+  }, [filters.timeRange, filters.sessionLimit, filters.agentId]);
 
   const handleSessionLimitChange = useCallback((limit: number) => {
     setFilters(prev => ({ ...prev, sessionLimit: limit }));

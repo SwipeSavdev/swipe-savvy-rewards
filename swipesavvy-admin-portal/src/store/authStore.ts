@@ -9,7 +9,7 @@ interface AuthState {
   loading: boolean
   error: string | null
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (_email: string, _password: string) => Promise<void>
   logout: () => void
   autoLoginWithDemo: () => Promise<void>
 }
@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
         await new Promise(resolve => setTimeout(resolve, 500))
         try {
           await get().login('admin@swipesavvy.com', 'Admin123!')
-        } catch (err) {
+        } catch (_err) {
           // Don't throw - let the user login manually from the login page
         }
       },

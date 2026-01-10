@@ -1,11 +1,10 @@
-import React from 'react'
 
 interface SliderProps {
   min?: number
   max?: number
   step?: number
   value: number
-  onChange: (value: number) => void
+  onChange: (_value: number) => void
   disabled?: boolean
   className?: string
 }
@@ -28,9 +27,9 @@ export default function Slider({
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
       disabled={disabled}
-      className={`w-full h-2 bg-[var(--ss-border)] rounded-lg appearance-none cursor-pointer accent-[var(--ss-primary)] disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`w-full h-2 bg-[var(--color-border-primary)] rounded-lg appearance-none cursor-pointer accent-[var(--color-action-primary-bg)] disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       style={{
-        background: `linear-gradient(to right, var(--ss-primary) 0%, var(--ss-primary) ${((value - min) / (max - min)) * 100}%, var(--ss-border) ${((value - min) / (max - min)) * 100}%, var(--ss-border) 100%)`,
+        background: `linear-gradient(to right, var(--color-action-primary-bg) 0%, var(--color-action-primary-bg) ${((value - min) / (max - min)) * 100}%, var(--color-border-primary) ${((value - min) / (max - min)) * 100}%, var(--color-border-primary) 100%)`,
       }}
     />
   )

@@ -21,6 +21,17 @@ from app.models import AdminUser
 
 logger = logging.getLogger(__name__)
 
+# Password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against a hash"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    """Hash a password"""
+    return pwd_context.hash(password)
+
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
 
@@ -335,53 +346,75 @@ async def get_demo_credentials(db: Session = Depends(get_db)):
 async def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
     """
     Admin login endpoint with rate limiting.
-    
+
     **Rate limit:** 5 attempts per minute per IP
     **Validates:** Email format, password not empty
-    
-    **Demo credentials:**
+
+    **Demo credentials (dev/test only):**
     - Email: admin@swipesavvy.com
     - Password: TempPassword123!
-    
+
     **In production:** Query database with hashed password verification
     """
     # Email validation is done by EmailStr in LoginRequest
     # Additional password validation is done in LoginRequest.__init__
-    
-    # Find user - normalize email to lowercase
-    user = DEMO_USERS.get(req.email.lower())
-    
-    if not user or user["password"] != req.password:
+
+    user_data = None
+    email_lower = req.email.lower()
+
+    # First check demo users (only in dev/test environments)
+    demo_user = DEMO_USERS.get(email_lower)
+    if demo_user and demo_user["password"] == req.password:
+        user_data = demo_user
+        logger.info(f"Demo user login: {req.email}")
+
+    # If no demo user found, check database
+    if not user_data:
+        db_user = db.query(AdminUser).filter(AdminUser.email == email_lower).first()
+        if db_user and verify_password(req.password, db_user.password_hash):
+            user_data = {
+                "id": str(db_user.id),
+                "name": db_user.full_name,
+                "email": db_user.email,
+                "role": db_user.role,
+                "status": db_user.status
+            }
+            # Update last login
+            db_user.last_login = datetime.utcnow()
+            db.commit()
+            logger.info(f"Database user login: {req.email}")
+
+    if not user_data:
         logger.warning(f"Failed login attempt for email: {req.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
-    
-    if user["status"] != "active":
+
+    if user_data.get("status") != "active":
         logger.warning(f"Login attempt for inactive user: {req.email}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is not active"
         )
-    
+
     # Create token
     token, expires_at = create_access_token(
-        user_id=user["id"],
-        user_email=user["email"],
-        role=user["role"]
+        user_id=user_data["id"],
+        user_email=user_data["email"],
+        role=user_data["role"]
     )
-    
+
     logger.info(f"Successful login for user: {req.email}")
-    
+
     return LoginResponse(
         session={
             "token": token,
             "user": UserInfo(
-                id=user["id"],
-                name=user["name"],
-                email=user["email"],
-                role=user["role"]
+                id=user_data["id"],
+                name=user_data["name"],
+                email=user_data["email"],
+                role=user_data["role"]
             )
         },
         token=token,

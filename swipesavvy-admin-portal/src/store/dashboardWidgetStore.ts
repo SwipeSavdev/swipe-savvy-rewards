@@ -16,11 +16,11 @@ export interface DashboardWidget {
 interface DashboardWidgetState {
   mainDashboardWidgets: DashboardWidget[]
   supportDashboardWidgets: DashboardWidget[]
-  setMainDashboardWidgets: (widgets: DashboardWidget[]) => void
-  setSupportDashboardWidgets: (widgets: DashboardWidget[]) => void
-  toggleWidgetVisibility: (dashboard: 'mainDashboard' | 'supportDashboard', widgetId: string) => void
-  reorderWidgets: (dashboard: 'mainDashboard' | 'supportDashboard', widgets: DashboardWidget[]) => void
-  resetToDefaults: (dashboard: 'mainDashboard' | 'supportDashboard') => void
+  setMainDashboardWidgets: (_widgets: DashboardWidget[]) => void
+  setSupportDashboardWidgets: (_widgets: DashboardWidget[]) => void
+  toggleWidgetVisibility: (_dashboard: 'mainDashboard' | 'supportDashboard', _widgetId: string) => void
+  reorderWidgets: (_dashboard: 'mainDashboard' | 'supportDashboard', _widgets: DashboardWidget[]) => void
+  resetToDefaults: (_dashboard: 'mainDashboard' | 'supportDashboard') => void
 }
 
 const defaultMainWidgets: DashboardWidget[] = [

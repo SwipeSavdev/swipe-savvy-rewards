@@ -2,11 +2,12 @@
 Database Connection and Session Management
 
 Handles SQLAlchemy setup, connection pooling, and session management
-for the SwipeSavvy backend.
+for the SwipeSavvy backend. Also provides Redis cache integration.
 """
 
 import os
-from sqlalchemy import create_engine, event
+from typing import Dict, Any
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import QueuePool
 import logging
@@ -69,3 +70,57 @@ def reset_db():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     logger.info("Database reset successfully")
+
+
+def get_health_status() -> Dict[str, Any]:
+    """Get health status of database and cache connections."""
+    status = {
+        "database": {"status": "unknown"},
+        "cache": {"status": "unknown"},
+    }
+
+    # Check database connection
+    try:
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+        status["database"] = {
+            "status": "healthy",
+            "connected": True,
+            "pool_size": engine.pool.size() if hasattr(engine.pool, 'size') else None,
+        }
+    except Exception as e:
+        status["database"] = {
+            "status": "unhealthy",
+            "connected": False,
+            "error": str(e),
+        }
+
+    # Check Redis cache
+    try:
+        from app.services.cache_service import check_redis_health
+        status["cache"] = check_redis_health()
+    except ImportError:
+        status["cache"] = {
+            "status": "unavailable",
+            "connected": False,
+            "message": "Redis cache service not configured",
+        }
+    except Exception as e:
+        status["cache"] = {
+            "status": "error",
+            "connected": False,
+            "error": str(e),
+        }
+
+    # Overall status
+    db_healthy = status["database"].get("connected", False)
+    cache_healthy = status["cache"].get("connected", False)
+
+    if db_healthy and cache_healthy:
+        status["overall"] = "healthy"
+    elif db_healthy:
+        status["overall"] = "degraded"  # DB up, cache down
+    else:
+        status["overall"] = "unhealthy"
+
+    return status

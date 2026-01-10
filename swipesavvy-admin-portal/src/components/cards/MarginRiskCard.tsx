@@ -1,5 +1,4 @@
-import React from 'react'
-import { AlertCircle, TrendingUp, TrendingDown } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Check, TrendingDown } from 'lucide-react'
 
 interface MarginRiskCardProps {
   rewardsCostPct: number
@@ -37,7 +36,7 @@ export default function MarginRiskCard({
   const progressPercent = (rewardsCostPct / thresholdPct) * 100
 
   return (
-    <div className={`p-4 rounded-lg border ${getStatusColor()}`}>
+    <div style={{ height: 280 }} className={`p-4 rounded-lg border flex flex-col ${getStatusColor()}`}>
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className={`font-semibold text-sm ${getTextColor()}`}>Gross Margin Protection</h3>
@@ -99,21 +98,21 @@ export default function MarginRiskCard({
             <>
               <AlertCircle className="w-4 h-4 text-red-600" />
               <span className="text-xs font-semibold text-red-700">
-                ⚠️ AT RISK: Rewards costs exceed safe threshold!
+                <AlertTriangle className="w-3 h-3 inline mr-1" /> AT RISK: Rewards costs exceed safe threshold!
               </span>
             </>
           ) : trendDirection === 'warning' ? (
             <>
               <AlertCircle className="w-4 h-4 text-amber-600" />
               <span className="text-xs font-semibold text-amber-700">
-                ⚠️ WARNING: Approaching safe threshold
+                <AlertTriangle className="w-3 h-3 inline mr-1" /> WARNING: Approaching safe threshold
               </span>
             </>
           ) : (
             <>
               <TrendingDown className="w-4 h-4 text-green-600" />
               <span className="text-xs font-semibold text-green-700">
-                ✓ HEALTHY: Rewards costs within safe range
+                <Check className="w-3 h-3 inline mr-1" /> HEALTHY: Rewards costs within safe range
               </span>
             </>
           )}
@@ -121,7 +120,7 @@ export default function MarginRiskCard({
       </div>
 
       {/* Explanation */}
-      <p className="text-xs opacity-60 mt-3 leading-relaxed">
+      <p className="text-xs opacity-60 mt-auto leading-relaxed">
         At {grossMarginPct}% gross margin, rewards costs exceeding {thresholdPct}% of revenue will result in
         margin erosion and potential losses. Current trajectory: {isAtRisk ? 'CRITICAL' : trendDirection === 'warning' ? 'WARNING' : 'SAFE'}.
       </p>

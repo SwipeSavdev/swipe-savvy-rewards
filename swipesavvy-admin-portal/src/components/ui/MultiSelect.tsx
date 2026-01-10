@@ -15,7 +15,7 @@ export interface MultiSelectProps {
   placeholder?: string
   options: MultiSelectOption[]
   values: string[]
-  onChange: (values: string[]) => void
+  onChange: (_values: string[]) => void
   className?: string
 }
 
