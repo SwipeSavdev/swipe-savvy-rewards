@@ -10,7 +10,7 @@ sentence-transformers==2.2.2
 tiktoken==0.5.2
 
 # Database & ORM
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.11
 sqlalchemy==2.0.23
 redis==5.0.1
 
