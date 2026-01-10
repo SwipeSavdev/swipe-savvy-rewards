@@ -44,6 +44,7 @@ resource "aws_elasticache_subnet_group" "main" {
 }
 
 # Parameter Group with optimized settings
+# Note: appendonly and appendfsync are not modifiable in ElastiCache
 resource "aws_elasticache_parameter_group" "main" {
   name        = "${var.name_prefix}-redis-params"
   family      = "redis7"
@@ -53,17 +54,6 @@ resource "aws_elasticache_parameter_group" "main" {
   parameter {
     name  = "maxmemory-policy"
     value = "allkeys-lru"
-  }
-
-  # Persistence
-  parameter {
-    name  = "appendonly"
-    value = "yes"
-  }
-
-  parameter {
-    name  = "appendfsync"
-    value = "everysec"
   }
 
   # Timeout
