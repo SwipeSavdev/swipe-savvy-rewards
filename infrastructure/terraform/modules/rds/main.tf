@@ -68,18 +68,20 @@ resource "aws_db_subnet_group" "main" {
 }
 
 # DB Parameter Group with optimized settings
+# Static parameters require pending-reboot apply method
 resource "aws_db_parameter_group" "main" {
   name        = "${var.name_prefix}-db-params"
   family      = "postgres15"
   description = "Custom parameter group for ${var.name_prefix}"
 
-  # Connection settings
+  # Connection settings (static - requires reboot)
   parameter {
-    name  = "max_connections"
-    value = "200"
+    name         = "max_connections"
+    value        = "200"
+    apply_method = "pending-reboot"
   }
 
-  # Logging
+  # Logging (dynamic)
   parameter {
     name  = "log_statement"
     value = "ddl"
@@ -90,21 +92,24 @@ resource "aws_db_parameter_group" "main" {
     value = "1000" # Log queries taking > 1 second
   }
 
-  # Performance
+  # Performance (static - requires reboot)
   parameter {
-    name  = "shared_buffers"
-    value = "{DBInstanceClassMemory/4096}" # 25% of memory
+    name         = "shared_buffers"
+    value        = "{DBInstanceClassMemory/4096}" # 25% of memory
+    apply_method = "pending-reboot"
   }
 
   parameter {
-    name  = "effective_cache_size"
-    value = "{DBInstanceClassMemory*3/4096}" # 75% of memory
+    name         = "effective_cache_size"
+    value        = "{DBInstanceClassMemory*3/4096}" # 75% of memory
+    apply_method = "pending-reboot"
   }
 
-  # SSL
+  # SSL (static - requires reboot)
   parameter {
-    name  = "rds.force_ssl"
-    value = "1"
+    name         = "rds.force_ssl"
+    value        = "1"
+    apply_method = "pending-reboot"
   }
 
   tags = var.tags
@@ -116,7 +121,7 @@ resource "aws_db_instance" "main" {
 
   # Engine configuration
   engine               = "postgres"
-  engine_version       = "15.4"
+  engine_version       = "15.10"
   instance_class       = var.db_instance_class
   allocated_storage    = var.db_allocated_storage
   max_allocated_storage = var.db_allocated_storage * 2 # Auto-scaling up to 2x
