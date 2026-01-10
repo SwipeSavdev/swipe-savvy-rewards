@@ -15,7 +15,21 @@ export interface ChatRequest {
   context?: {
     screen?: string;
     action?: string;
+    isVerified?: boolean;
+    userTier?: string;
   };
+}
+
+/**
+ * Customer mode configuration for mobile app
+ * - No internal system details exposed
+ * - Focus on customer-facing support
+ * - Identity verification for sensitive actions
+ */
+export interface CustomerMode {
+  enabled: boolean;
+  requireVerification: boolean;
+  allowedActions: string[];
 }
 
 export interface ChatEvent {
@@ -38,6 +52,11 @@ export class SwipeSavvyAI {
   private dataService: DataService;
   private userContext: AIUserContext | null = null;
   private contextUpdateInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly customerMode: CustomerMode = {
+    enabled: true, // Always customer mode in mobile app
+    requireVerification: true,
+    allowedActions: ['check_balance', 'view_transactions', 'get_rewards', 'request_support', 'escalate_to_human'],
+  };
 
   constructor(config: AIClientConfig) {
     this.config = config;
@@ -85,27 +104,41 @@ export class SwipeSavvyAI {
 
     // Use XMLHttpRequest for React Native streaming support
     const xhr = new XMLHttpRequest();
-    let buffer = '';
+    let processedLength = 0; // Track how much of responseText we've processed
+    let pendingData = ''; // Buffer for incomplete lines
     let isComplete = false;
     const eventQueue: ChatEvent[] = [];
     let resolveNext: ((value: ChatEvent) => void) | null = null;
     let rejectNext: ((error: Error) => void) | null = null;
 
-    xhr.open('POST', `${this.config.baseUrl}/api/v1/chat`);
+    xhr.open('POST', `${this.config.baseUrl}/api/v1/ai-concierge`);
     xhr.setRequestHeader('Authorization', `Bearer ${this.config.accessToken}`);
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.setRequestHeader('X-Request-ID', this.generateRequestId());
 
     // Handle streaming data
     xhr.onprogress = () => {
-      const newData = xhr.responseText.substring(buffer.length);
-      buffer = xhr.responseText;
+      // Only get NEW data since last progress event
+      const newData = xhr.responseText.substring(processedLength);
+      if (!newData) return;
 
-      // Only process complete lines (ending with \n)
-      const lastNewlineIndex = buffer.lastIndexOf('\n');
-      if (lastNewlineIndex === -1) return; // No complete lines yet
+      processedLength = xhr.responseText.length;
 
-      const completeData = buffer.substring(0, lastNewlineIndex + 1);
+      // Add new data to any pending incomplete data
+      const dataToProcess = pendingData + newData;
+
+      // Find the last complete line
+      const lastNewlineIndex = dataToProcess.lastIndexOf('\n');
+      if (lastNewlineIndex === -1) {
+        // No complete lines yet, save all as pending
+        pendingData = dataToProcess;
+        return;
+      }
+
+      // Split into complete lines and pending data
+      const completeData = dataToProcess.substring(0, lastNewlineIndex + 1);
+      pendingData = dataToProcess.substring(lastNewlineIndex + 1);
+
       const lines = completeData.split('\n');
 
       for (const line of lines) {
@@ -114,7 +147,7 @@ export class SwipeSavvyAI {
 
         const data = trimmedLine.slice(6).trim();
         if (data === '[DONE]') continue;
-        
+
         try {
           const event: ChatEvent = JSON.parse(data);
           if (resolveNext) {
@@ -337,6 +370,205 @@ ${ctx.linkedBanks.map(bank => `- ${bank.bank}: ${bank.status}`).join('\n')}
 Use this context to provide personalized assistance. When users ask about their finances, refer to their actual data. Always be helpful, accurate, and proactive about financial wellness.`;
 
     return basePrompt + contextData;
+  }
+
+  /**
+   * Build customer-facing system prompt (no internal details)
+   * Used exclusively for mobile app customers
+   */
+  buildCustomerSystemPrompt(context?: AIUserContext): string {
+    const ctx = context || this.userContext;
+
+    const customerPrompt = `You are Savvy, SwipeSavvy's friendly AI assistant helping customers manage their finances and rewards.
+
+Your Role:
+- Help customers check balances, view transactions, and understand their rewards
+- Answer questions about SwipeSavvy features and benefits
+- Provide guidance on earning and redeeming rewards
+- Assist with common account questions
+- Connect customers with human support when needed
+
+Important Guidelines:
+1. NEVER mention internal systems, admin tools, or employee-facing features
+2. NEVER process refunds or make account changes directly - guide customers through the app or escalate
+3. For sensitive actions (transfers over $500, account changes, disputes), ALWAYS recommend verifying identity first
+4. If a customer seems frustrated or the issue is complex, proactively offer to connect them with a human agent
+5. Keep responses friendly, concise, and focused on solving the customer's problem
+6. NEVER share information about other customers or internal processes
+
+Escalation Triggers - Offer human support when:
+- Customer mentions fraud, unauthorized transactions, or security concerns
+- Issue involves account lockout or access problems
+- Customer has tried multiple times without success
+- Customer explicitly requests human support
+- Transaction disputes or refund requests
+- Technical errors that require investigation`;
+
+    if (!ctx) {
+      return customerPrompt;
+    }
+
+    // Add minimal customer context (no internal details)
+    const customerContext = `
+
+Customer Context:
+- Name: ${ctx.user.name}
+- Membership Tier: ${ctx.user.tier}
+- Account Status: Active
+- Rewards Available: ${ctx.rewards.length} active offers
+
+Remember: Focus on helping ${ctx.user.name} with their immediate needs while maintaining security and privacy.`;
+
+    return customerPrompt + customerContext;
+  }
+
+  /**
+   * Check if action requires identity verification
+   */
+  requiresVerification(action: string): boolean {
+    const sensitiveActions = [
+      'transfer',
+      'send_money',
+      'change_password',
+      'update_email',
+      'update_phone',
+      'close_account',
+      'dispute_transaction',
+      'request_refund',
+      'link_bank',
+      'unlink_bank',
+    ];
+    return sensitiveActions.some(a => action.toLowerCase().includes(a));
+  }
+
+  /**
+   * Get allowed actions for customer mode
+   */
+  getAllowedActions(): string[] {
+    return this.customerMode.allowedActions;
+  }
+
+  /**
+   * Check if customer should be escalated to human support
+   */
+  shouldEscalateToHuman(messages: Array<{ role: string; content: string }>): {
+    shouldEscalate: boolean;
+    reason: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+  } {
+    const conversationText = messages.map(m => m.content).join(' ').toLowerCase();
+
+    // Critical - immediate escalation
+    const criticalKeywords = ['fraud', 'unauthorized', 'hacked', 'stolen', 'identity theft'];
+    if (criticalKeywords.some(k => conversationText.includes(k))) {
+      return {
+        shouldEscalate: true,
+        reason: 'Security concern detected',
+        priority: 'critical',
+      };
+    }
+
+    // High priority
+    const highPriorityKeywords = ['locked out', 'cannot access', 'account frozen', 'missing money', 'wrong balance'];
+    if (highPriorityKeywords.some(k => conversationText.includes(k))) {
+      return {
+        shouldEscalate: true,
+        reason: 'Account access or balance issue',
+        priority: 'high',
+      };
+    }
+
+    // User explicitly requesting human
+    const humanRequestKeywords = ['speak to human', 'real person', 'talk to agent', 'customer service', 'support agent'];
+    if (humanRequestKeywords.some(k => conversationText.includes(k))) {
+      return {
+        shouldEscalate: true,
+        reason: 'Customer requested human support',
+        priority: 'medium',
+      };
+    }
+
+    // Long conversation without resolution
+    if (messages.length > 10) {
+      const userMessages = messages.filter(m => m.role === 'user');
+      if (userMessages.length > 5) {
+        return {
+          shouldEscalate: true,
+          reason: 'Extended conversation may need human assistance',
+          priority: 'low',
+        };
+      }
+    }
+
+    return {
+      shouldEscalate: false,
+      reason: '',
+      priority: 'low',
+    };
+  }
+
+  /**
+   * Prepare escalation context for human handoff
+   */
+  prepareEscalationContext(
+    messages: Array<{ role: string; content: string; timestamp?: Date }>,
+    sessionId: string,
+  ): {
+    summary: string;
+    customerIntent: string;
+    attemptedResolutions: string[];
+    sentiment: 'positive' | 'neutral' | 'frustrated' | 'angry';
+    keyDetails: Record<string, string>;
+  } {
+    const userMessages = messages.filter(m => m.role === 'user');
+    const assistantMessages = messages.filter(m => m.role === 'assistant');
+
+    // Extract customer intent from first few messages
+    const firstUserMessages = userMessages.slice(0, 3).map(m => m.content).join(' ');
+
+    // Analyze sentiment based on keywords
+    const conversationText = userMessages.map(m => m.content).join(' ').toLowerCase();
+    let sentiment: 'positive' | 'neutral' | 'frustrated' | 'angry' = 'neutral';
+
+    if (conversationText.includes('thank') || conversationText.includes('great') || conversationText.includes('helpful')) {
+      sentiment = 'positive';
+    } else if (conversationText.includes('angry') || conversationText.includes('terrible') || conversationText.includes('worst')) {
+      sentiment = 'angry';
+    } else if (conversationText.includes('frustrat') || conversationText.includes('annoying') || conversationText.includes('not working')) {
+      sentiment = 'frustrated';
+    }
+
+    // Extract key details
+    const keyDetails: Record<string, string> = {};
+
+    // Look for transaction IDs
+    const txnRegex = /txn[_-]?\w+|transaction[_\s]?id[:\s]*(\w+)/i;
+    const txnMatch = txnRegex.exec(conversationText);
+    if (txnMatch) {
+      keyDetails['transaction_id'] = txnMatch[1] || txnMatch[0];
+    }
+
+    // Look for amounts
+    const amountRegex = /\$[\d,]+\.?\d*/;
+    const amountMatch = amountRegex.exec(conversationText);
+    if (amountMatch) {
+      keyDetails['amount_mentioned'] = amountMatch[0];
+    }
+
+    // Look for dates
+    const dateRegex = /(\d{1,2}\/\d{1,2}\/\d{2,4})|yesterday|today|last week/i;
+    const dateMatch = dateRegex.exec(conversationText);
+    if (dateMatch) {
+      keyDetails['date_mentioned'] = dateMatch[0];
+    }
+
+    return {
+      summary: `Customer conversation (${messages.length} messages) - Session: ${sessionId}`,
+      customerIntent: firstUserMessages.substring(0, 200),
+      attemptedResolutions: assistantMessages.slice(-3).map(m => m.content.substring(0, 100)),
+      sentiment,
+      keyDetails,
+    };
   }
 
   private delay(ms: number): Promise<void> {

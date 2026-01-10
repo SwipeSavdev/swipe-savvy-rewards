@@ -7,6 +7,7 @@ import Modal from '@/components/ui/Modal'
 import { type TableColumn } from '@/components/ui/Table'
 import { useToastStore } from '@/store/toastStore'
 import axios from 'axios'
+import { X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -638,7 +639,7 @@ export default function RolesPermissionsPage() {
             <div className="flex-1">
               <p className="text-sm font-medium text-red-800">{error}</p>
             </div>
-            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+            <button onClick={() => setError(null)} className="text-red-600"><X className="w-4 h-4" /></button>
           </div>
         </Card>
       )}

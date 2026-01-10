@@ -3,6 +3,7 @@ import { BrandingKitIcon, BrandingKitIconButton } from '@/components/ui/Branding
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import axios from 'axios'
+import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -145,7 +146,7 @@ export default function RolesManagerPage() {
               <p className="text-xs text-red-600 mt-1">Using fallback data. Please try refreshing.</p>
             </div>
             <button onClick={() => setError(null)} className="text-red-600 hover:text-red-700">
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </div>
         </Card>

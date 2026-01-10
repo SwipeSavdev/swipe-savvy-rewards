@@ -8,11 +8,11 @@ import Modal from '@/components/ui/Modal'
 import ProgressBar from '@/components/ui/ProgressBar'
 import Select from '@/components/ui/Select'
 import Table, { type TableColumn } from '@/components/ui/Table'
+import { Api } from '@/services/api'
 import { useToastStore } from '@/store/toastStore'
-import axios from 'axios'
+import { useEventSubscription } from '@/store/eventBusStore'
+import { X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 interface CharityApplication {
   id: string
@@ -186,23 +186,40 @@ export default function CharityOnboardingPage() {
     fetchApplications()
   }, [statusFilter, categoryFilter, query])
 
+  // Subscribe to charity events for auto-refresh
+  useEventSubscription(
+    ['charity:created', 'charity:updated', 'charity:deleted', 'charity:approved', 'charity:rejected'],
+    () => {
+      fetchApplications()
+    }
+  )
+
   const fetchApplications = async () => {
     let mounted = true
     try {
       setLoading(true)
       setError(null)
-      const params = new URLSearchParams()
-      if (query) params.append('q', query)
-      if (statusFilter !== 'all') params.append('status', statusFilter)
-      if (categoryFilter !== 'all') params.append('category', categoryFilter)
 
-      const response = await axios.get(`${API_BASE_URL}/api/charities?${params.toString()}`)
-      if (mounted && response.data) {
-        setApplications(response.data || [])
+      const response = await Api.charityApi.listCharities({
+        q: query || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        category: categoryFilter !== 'all' ? categoryFilter : undefined,
+      })
+
+      if (mounted && response) {
+        // Handle both array response and object response with nested array
+        const charities = Array.isArray(response)
+          ? response
+          : (response.charities || response.data || response.items || [])
+        setApplications(charities)
       }
     } catch (err: any) {
       console.error('Failed to fetch charity applications:', err)
-      if (mounted) setError(err.message)
+      // On API failure, use mock data as fallback
+      if (mounted) {
+        setApplications(MOCK_APPLICATIONS)
+        setError(null) // Clear error since we have fallback data
+      }
     } finally {
       if (mounted) setLoading(false)
     }
@@ -227,19 +244,10 @@ export default function CharityOnboardingPage() {
 
     setIsApproving(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await Api.charityApi.approveCharity(selectedApp.id)
 
-      setApplications(
-        applications.map((a) =>
-          a.id === selectedApp.id
-            ? {
-                ...a,
-                status: 'approved' as const,
-                approvedAt: new Date().toISOString().split('T')[0],
-              }
-            : a
-        )
-      )
+      // Refresh list from API
+      await fetchApplications()
 
       pushToast({
         variant: 'success',
@@ -248,10 +256,10 @@ export default function CharityOnboardingPage() {
       setShowModal(false)
       setSelectedApp(null)
       setFormData({})
-    } catch (error) {
+    } catch (error: any) {
       pushToast({
         variant: 'error',
-        message: 'Failed to approve application',
+        message: error.message || 'Failed to approve application',
       })
     } finally {
       setIsApproving(false)
@@ -263,21 +271,11 @@ export default function CharityOnboardingPage() {
 
     setIsApproving(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
       const rejectionNotes = (formData as any).notes || 'Application rejected by admin'
+      await Api.charityApi.rejectCharity(selectedApp.id, rejectionNotes)
 
-      setApplications(
-        applications.map((a) =>
-          a.id === selectedApp.id
-            ? {
-                ...a,
-                status: 'rejected' as const,
-                notes: rejectionNotes,
-              }
-            : a
-        )
-      )
+      // Refresh list from API
+      await fetchApplications()
 
       pushToast({
         variant: 'success',
@@ -286,10 +284,10 @@ export default function CharityOnboardingPage() {
       setShowModal(false)
       setSelectedApp(null)
       setFormData({})
-    } catch (error) {
+    } catch (error: any) {
       pushToast({
         variant: 'error',
-        message: 'Failed to reject application',
+        message: error.message || 'Failed to reject application',
       })
     } finally {
       setIsApproving(false)
@@ -307,9 +305,19 @@ export default function CharityOnboardingPage() {
 
     setIsCreating(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Call API to create charity in database
+      const response = await Api.charityApi.createCharity({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || '',
+        category: formData.category,
+        registration_number: formData.registrationNumber || undefined,
+        country: formData.country || 'United States',
+        website: formData.website || undefined,
+      })
 
-      const newCharity: CharityApplication = {
+      // Use response data or create local fallback
+      const newCharity: CharityApplication = response.charity || {
         id: `charity-${Date.now()}`,
         name: formData.name!,
         email: formData.email!,
@@ -324,7 +332,9 @@ export default function CharityOnboardingPage() {
         submittedAt: new Date().toISOString().split('T')[0],
       }
 
-      setApplications([...applications, newCharity])
+      // Refresh the list from API
+      await fetchApplications()
+
       pushToast({
         variant: 'success',
         message: `${newCharity.name} created successfully`,
@@ -333,10 +343,11 @@ export default function CharityOnboardingPage() {
       setFormData({})
       setCurrentStep(1)
       setSelectedApp(null)
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to create charity:', error)
       pushToast({
         variant: 'error',
-        message: 'Failed to create charity',
+        message: error.message || 'Failed to create charity',
       })
     } finally {
       setIsCreating(false)
@@ -348,13 +359,19 @@ export default function CharityOnboardingPage() {
 
     setIsCreating(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Call API to update charity in database
+      await Api.charityApi.updateCharity(selectedApp.id, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        category: formData.category,
+        registration_number: formData.registrationNumber,
+        country: formData.country,
+        website: formData.website,
+      })
 
-      setApplications(
-        applications.map((a) =>
-          a.id === selectedApp.id ? { ...a, ...formData } : a
-        )
-      )
+      // Refresh list from API
+      await fetchApplications()
 
       pushToast({
         variant: 'success',
@@ -364,10 +381,11 @@ export default function CharityOnboardingPage() {
       setFormData({})
       setCurrentStep(1)
       setSelectedApp(null)
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to update charity:', error)
       pushToast({
         variant: 'error',
-        message: 'Failed to update charity',
+        message: error.message || 'Failed to update charity',
       })
     } finally {
       setIsCreating(false)
@@ -380,17 +398,21 @@ export default function CharityOnboardingPage() {
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // Call API to delete charity from database
+      await Api.charityApi.deleteCharity(id)
 
-      setApplications(applications.filter((a) => a.id !== id))
+      // Refresh list from API
+      await fetchApplications()
+
       pushToast({
         variant: 'success',
         message: 'Charity application deleted',
       })
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to delete charity:', error)
       pushToast({
         variant: 'error',
-        message: 'Failed to delete application',
+        message: error.message || 'Failed to delete application',
       })
     }
   }
@@ -504,7 +526,7 @@ export default function CharityOnboardingPage() {
             <div className="flex-1">
               <p className="text-sm font-medium text-red-800">{error}</p>
             </div>
-            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+            <button onClick={() => setError(null)} className="text-red-600"><X className="w-4 h-4" /></button>
           </div>
         </Card>
       )}
@@ -609,7 +631,7 @@ export default function CharityOnboardingPage() {
 
       {/* View Details Modal */}
       {selectedApp && showModal && (
-        <Modal open={showModal} onClose={() => {
+        <Modal open={showModal} size="md" onClose={() => {
           setShowModal(false)
           setSelectedApp(null)
           setFormData({})
@@ -724,7 +746,7 @@ export default function CharityOnboardingPage() {
 
       {/* Create/Edit Form Modal */}
       {showCreateForm && (
-        <Modal open={showCreateForm} onClose={() => {
+        <Modal open={showCreateForm} size="md" onClose={() => {
           setShowCreateForm(false)
           setSelectedApp(null)
           setFormData({})

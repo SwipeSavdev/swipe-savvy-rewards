@@ -190,7 +190,7 @@ export default function Sidebar() {
                               'transition-colors duration-[var(--duration-fast)]',
                               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]',
                               isActive
-                                ? 'bg-[var(--color-action-primary-bg)] bg-opacity-10 text-[var(--color-action-primary-bg)]'
+                                ? 'bg-blue-50 dark:bg-blue-900/20 text-[var(--color-action-primary-bg)]'
                                 : 'text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-secondary)]',
                               collapsed && 'justify-center px-[var(--spacing-2)]'
                             )

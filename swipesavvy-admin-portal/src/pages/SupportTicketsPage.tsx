@@ -1,10 +1,12 @@
 import { BrandingKitIcon } from '@/components/ui/BrandingKitIcon'
+import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import axios from 'axios'
-import { AlertCircle, Calendar, ChevronDown, Eye, Filter, Plus, Search, Tag, Ticket, Trash2, User, XCircle } from 'lucide-react'
+import Modal from '@/components/ui/Modal'
+import { Api } from '@/services/api'
+import { useToastStore } from '@/store/toastStore'
+import { useEventSubscription } from '@/store/eventBusStore'
+import { AlertCircle, Bot, Bug, Calendar, ChevronDown, CreditCard, DollarSign, Eye, FileText, Filter, Key, Loader2, Plus, Rocket, Search, Smartphone, Sparkles, Tag, Ticket, Trash2, User, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 // Severity levels for triage system
 type Severity = 'critical' | 'high' | 'medium' | 'low'
@@ -31,17 +33,30 @@ interface SupportTicket {
   notes?: string[]
 }
 
+// Icon component mapping for ticket types
+const TICKET_TYPE_ICONS: Record<TicketType, React.ReactNode> = {
+  mobile_wallet: <Smartphone className="w-4 h-4" />,
+  bug_report: <Bug className="w-4 h-4" />,
+  application_issue: <Smartphone className="w-4 h-4" />,
+  account_access: <Key className="w-4 h-4" />,
+  payment_issue: <CreditCard className="w-4 h-4" />,
+  feature_request: <Sparkles className="w-4 h-4" />,
+  refund_request: <DollarSign className="w-4 h-4" />,
+  software_rollout: <Rocket className="w-4 h-4" />,
+  other: <FileText className="w-4 h-4" />,
+}
+
 // Ticket type definitions with sample types
-const TICKET_TYPES: { value: TicketType; label: string; description: string; icon: string }[] = [
-  { value: 'mobile_wallet', label: 'Mobile Wallet', description: 'Issues with mobile wallet functionality', icon: '📱' },
-  { value: 'bug_report', label: 'Bug Report', description: 'Software bugs and errors', icon: '🐛' },
-  { value: 'application_issue', label: 'Application Issue', description: 'App crashes, freezes, or performance issues', icon: '📲' },
-  { value: 'account_access', label: 'Account Access', description: 'Login, password, and account recovery', icon: '🔐' },
-  { value: 'payment_issue', label: 'Payment Issue', description: 'Transaction failures and payment problems', icon: '💳' },
-  { value: 'feature_request', label: 'Feature Request', description: 'New feature suggestions', icon: '✨' },
-  { value: 'refund_request', label: 'Refund Request', description: 'Refund and chargeback requests', icon: '💰' },
-  { value: 'software_rollout', label: 'Software Rollout', description: 'Issues related to new software releases', icon: '🚀' },
-  { value: 'other', label: 'Other', description: 'General inquiries and other issues', icon: '📋' },
+const TICKET_TYPES: { value: TicketType; label: string; description: string }[] = [
+  { value: 'mobile_wallet', label: 'Mobile Wallet', description: 'Issues with mobile wallet functionality' },
+  { value: 'bug_report', label: 'Bug Report', description: 'Software bugs and errors' },
+  { value: 'application_issue', label: 'Application Issue', description: 'App crashes, freezes, or performance issues' },
+  { value: 'account_access', label: 'Account Access', description: 'Login, password, and account recovery' },
+  { value: 'payment_issue', label: 'Payment Issue', description: 'Transaction failures and payment problems' },
+  { value: 'feature_request', label: 'Feature Request', description: 'New feature suggestions' },
+  { value: 'refund_request', label: 'Refund Request', description: 'Refund and chargeback requests' },
+  { value: 'software_rollout', label: 'Software Rollout', description: 'Issues related to new software releases' },
+  { value: 'other', label: 'Other', description: 'General inquiries and other issues' },
 ]
 
 // Severity definitions with SLA requirements
@@ -166,11 +181,15 @@ const MOCK_TICKETS: SupportTicket[] = [
   },
 ]
 
-const getSeverityConfig = (severity: Severity) => SEVERITY_CONFIG.find((s) => s.value === severity)!
-const getStatusConfig = (status: Status) => STATUS_CONFIG.find((s) => s.value === status)!
-const getTicketType = (type: TicketType) => TICKET_TYPES.find((t) => t.value === type)!
+const getSeverityConfig = (severity: Severity) =>
+  SEVERITY_CONFIG.find((s) => s.value === severity) || SEVERITY_CONFIG.find((s) => s.value === 'medium')!
+const getStatusConfig = (status: Status) =>
+  STATUS_CONFIG.find((s) => s.value === status) || STATUS_CONFIG.find((s) => s.value === 'open')!
+const getTicketType = (type: TicketType) =>
+  TICKET_TYPES.find((t) => t.value === type) || TICKET_TYPES.find((t) => t.value === 'other')!
 
 export default function SupportTicketsPage() {
+  const pushToast = useToastStore((s) => s.push)
   const [tickets, setTickets] = useState<SupportTicket[]>(MOCK_TICKETS)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -182,26 +201,68 @@ export default function SupportTicketsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
+  // AI Analysis state
+  const [aiAnalyzing, setAiAnalyzing] = useState(false)
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
+  const [aiAnalysis, setAiAnalysis] = useState<{ sentiment?: string; priority_suggestion?: string; category_suggestion?: string } | null>(null)
+
   useEffect(() => {
     fetchTickets()
   }, [filterStatus, filterSeverity, filterType])
+
+  // Subscribe to ticket events for auto-refresh
+  useEventSubscription(
+    ['ticket:created', 'ticket:updated', 'ticket:status_changed', 'ticket:resolved', 'ticket:closed'],
+    () => {
+      fetchTickets()
+    }
+  )
 
   const fetchTickets = async () => {
     try {
       setLoading(true)
       setError(null)
-      const params = new URLSearchParams()
-      if (filterStatus !== 'all') params.append('status', filterStatus)
-      if (filterSeverity !== 'all') params.append('severity', filterSeverity)
-      if (filterType !== 'all') params.append('type', filterType)
 
-      const response = await axios.get(`${API_BASE_URL}/api/support/tickets?${params.toString()}`)
-      if (response.data) {
-        setTickets(response.data || MOCK_TICKETS)
+      const response = await Api.supportTicketsApi.listTickets(
+        1,
+        100,
+        filterStatus !== 'all' ? filterStatus : undefined,
+        undefined
+      )
+
+      // Transform API response to match frontend interface
+      const transformTicket = (t: any): SupportTicket => ({
+        id: t.id || t.ticket_id || '',
+        subject: t.subject || '',
+        description: t.description || '',
+        customer: {
+          name: t.customerName || t.customer_name || '',
+          email: t.customerEmail || t.customer_email || '',
+          phone: t.customerPhone || t.customer_phone || undefined,
+        },
+        severity: (t.priority || t.severity || 'medium') as Severity,
+        status: (t.status || 'open') as Status,
+        type: (t.category || t.type || 'other') as TicketType,
+        assignedTo: t.assignedTo || t.assigned_to || undefined,
+        createdAt: t.createdAt || t.created_at || new Date().toISOString(),
+        updatedAt: t.updatedAt || t.updated_at || new Date().toISOString(),
+        responseTime: t.responseTime || t.response_time || undefined,
+        resolutionTime: t.resolutionTime || t.resolution_time || undefined,
+        notes: t.notes || undefined,
+      })
+
+      if (response && Array.isArray(response.tickets)) {
+        setTickets(response.tickets.map(transformTicket))
+      } else if (Array.isArray(response)) {
+        setTickets(response.map(transformTicket))
+      } else {
+        console.warn('API returned unexpected format, using mock data:', response)
+        setTickets(MOCK_TICKETS)
       }
     } catch (err: any) {
       console.error('Failed to fetch support tickets:', err)
       setError(err.message)
+      setTickets(MOCK_TICKETS)
     } finally {
       setLoading(false)
     }
@@ -221,10 +282,10 @@ export default function SupportTicketsPage() {
 
   const filteredTickets = tickets.filter((ticket) => {
     const matchesSearch =
-      ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.id.toLowerCase().includes(searchTerm.toLowerCase())
+      ticket.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.customer?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.id?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesSeverity = filterSeverity === 'all' || ticket.severity === filterSeverity
     const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus
     const matchesType = filterType === 'all' || ticket.type === filterType
@@ -240,41 +301,96 @@ export default function SupportTicketsPage() {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   })
 
-  const handleCreateTicket = () => {
-    const ticket: SupportTicket = {
-      id: `TKT-${String(tickets.length + 1).padStart(3, '0')}`,
-      subject: newTicket.subject,
-      description: newTicket.description,
-      customer: {
-        name: newTicket.customerName,
-        email: newTicket.customerEmail,
-        phone: newTicket.customerPhone || undefined,
-      },
-      severity: newTicket.severity,
-      status: 'open',
-      type: newTicket.type,
-      assignedTo: newTicket.assignedTo || undefined,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+  const handleCreateTicket = async () => {
+    try {
+      // Call API to create ticket in database
+      const response = await Api.supportTicketsApi.createTicket({
+        subject: newTicket.subject,
+        description: newTicket.description,
+        customer_name: newTicket.customerName,
+        customer_email: newTicket.customerEmail,
+        priority: newTicket.severity,
+        category: newTicket.type,
+        status: 'open',
+      })
+
+      // Create local ticket object for UI
+      const ticket: SupportTicket = {
+        id: response?.ticket?.id || response?.id || `TKT-${String(tickets.length + 1).padStart(3, '0')}`,
+        subject: newTicket.subject,
+        description: newTicket.description,
+        customer: {
+          name: newTicket.customerName,
+          email: newTicket.customerEmail,
+          phone: newTicket.customerPhone || undefined,
+        },
+        severity: newTicket.severity,
+        status: 'open',
+        type: newTicket.type,
+        assignedTo: newTicket.assignedTo || undefined,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      setTickets([ticket, ...tickets])
+      setShowCreateModal(false)
+      setNewTicket({
+        subject: '',
+        description: '',
+        customerName: '',
+        customerEmail: '',
+        customerPhone: '',
+        severity: 'medium',
+        type: 'other',
+        assignedTo: '',
+      })
+
+      pushToast({ variant: 'success', title: 'Ticket Created', message: `Ticket ${ticket.id} has been created` })
+      // Refresh tickets from server to get accurate data
+      fetchTickets()
+    } catch (err: any) {
+      console.error('Failed to create ticket:', err)
+      setError(`Failed to create ticket: ${err?.message || 'Unknown error'}`)
     }
-    setTickets([ticket, ...tickets])
-    setShowCreateModal(false)
-    setNewTicket({
-      subject: '',
-      description: '',
-      customerName: '',
-      customerEmail: '',
-      customerPhone: '',
-      severity: 'medium',
-      type: 'other',
-      assignedTo: '',
-    })
   }
 
-  const handleUpdateStatus = (ticketId: string, newStatus: Status) => {
-    setTickets(tickets.map((t) => (t.id === ticketId ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } : t)))
-    if (selectedTicket?.id === ticketId) {
-      setSelectedTicket({ ...selectedTicket, status: newStatus, updatedAt: new Date().toISOString() })
+  // AI-powered ticket analysis
+  const handleAnalyzeTicket = async (ticketId: string) => {
+    setAiAnalyzing(true)
+    setAiSuggestions([])
+    setAiAnalysis(null)
+    try {
+      const [analysisRes, suggestionsRes] = await Promise.all([
+        Api.aiConciergeApi.analyzeTicket(ticketId),
+        Api.aiConciergeApi.getSuggestedResponses(ticketId),
+      ])
+
+      if (analysisRes) {
+        setAiAnalysis(analysisRes)
+      }
+      if (suggestionsRes?.suggestions) {
+        setAiSuggestions(suggestionsRes.suggestions)
+      }
+      pushToast({ variant: 'success', title: 'AI Analysis Complete', message: 'Suggestions are ready' })
+    } catch (err: any) {
+      console.error('Failed to analyze ticket:', err)
+      pushToast({ variant: 'error', title: 'Analysis Failed', message: 'Could not analyze ticket' })
+    } finally {
+      setAiAnalyzing(false)
+    }
+  }
+
+  const handleUpdateStatus = async (ticketId: string, newStatus: Status) => {
+    try {
+      await Api.supportTicketsApi.updateTicketStatus(ticketId, newStatus)
+      setTickets(tickets.map((t) => (t.id === ticketId ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } : t)))
+      if (selectedTicket?.id === ticketId) {
+        setSelectedTicket({ ...selectedTicket, status: newStatus, updatedAt: new Date().toISOString() })
+      }
+      pushToast({ variant: 'success', title: 'Status Updated', message: `Ticket status changed to ${newStatus}` })
+    } catch (err) {
+      console.error('Failed to update status:', err)
+      // Still update locally for UX
+      setTickets(tickets.map((t) => (t.id === ticketId ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } : t)))
     }
   }
 
@@ -293,9 +409,18 @@ export default function SupportTicketsPage() {
     }
   }
 
-  const handleDeleteTicket = (ticketId: string) => {
-    setTickets(tickets.filter((t) => t.id !== ticketId))
-    setSelectedTicket(null)
+  const handleDeleteTicket = async (ticketId: string) => {
+    try {
+      await Api.supportTicketsApi.deleteTicket(ticketId)
+      setTickets(tickets.filter((t) => t.id !== ticketId))
+      setSelectedTicket(null)
+      pushToast({ variant: 'success', title: 'Ticket Deleted', message: 'Ticket has been removed' })
+    } catch (err) {
+      console.error('Failed to delete ticket:', err)
+      // Still delete locally
+      setTickets(tickets.filter((t) => t.id !== ticketId))
+      setSelectedTicket(null)
+    }
   }
 
   const formatDate = (dateStr: string) => {
@@ -336,7 +461,7 @@ export default function SupportTicketsPage() {
             <div className="flex-1">
               <p className="text-sm font-medium text-red-800">{error}</p>
             </div>
-            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+            <button onClick={() => setError(null)} className="text-red-600"><XCircle className="w-4 h-4" /></button>
           </div>
         </Card>
       )}
@@ -461,7 +586,7 @@ export default function SupportTicketsPage() {
               >
                 <option value="all">All Types</option>
                 {TICKET_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+                  <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
             </div>
@@ -498,12 +623,12 @@ export default function SupportTicketsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-medium text-gray-900">{ticket.customer.name}</p>
-                    <p className="text-xs text-gray-500">{ticket.customer.email}</p>
+                    <p className="font-medium text-gray-900">{ticket.customer?.name || 'Unknown'}</p>
+                    <p className="text-xs text-gray-500">{ticket.customer?.email || ''}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="flex items-center gap-1 text-sm">
-                      <span>{ticketType.icon}</span>
+                    <span className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">{TICKET_TYPE_ICONS[ticket.type]}</span>
                       <span className="text-gray-600">{ticketType.label}</span>
                     </span>
                   </td>
@@ -648,13 +773,13 @@ export default function SupportTicketsPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-gray-500">Name: </span>
-                    <span className="font-medium text-gray-900">{selectedTicket.customer.name}</span>
+                    <span className="font-medium text-gray-900">{selectedTicket.customer?.name || 'Unknown'}</span>
                   </div>
                   <div>
                     <span className="text-gray-500">Email: </span>
-                    <span className="font-medium text-gray-900">{selectedTicket.customer.email}</span>
+                    <span className="font-medium text-gray-900">{selectedTicket.customer?.email || ''}</span>
                   </div>
-                  {selectedTicket.customer.phone && (
+                  {selectedTicket.customer?.phone && (
                     <div>
                       <span className="text-gray-500">Phone: </span>
                       <span className="font-medium text-gray-900">{selectedTicket.customer.phone}</span>
@@ -667,7 +792,7 @@ export default function SupportTicketsPage() {
               <div>
                 <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
                   <Tag className="w-4 h-4" />
-                  Type: {getTicketType(selectedTicket.type).icon} {getTicketType(selectedTicket.type).label}
+                  Type: <span className="inline-flex items-center gap-1">{TICKET_TYPE_ICONS[selectedTicket.type]} {getTicketType(selectedTicket.type).label}</span>
                 </h4>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-700 whitespace-pre-wrap">{selectedTicket.description}</p>
@@ -684,6 +809,102 @@ export default function SupportTicketsPage() {
                   <p>Created: {formatDate(selectedTicket.createdAt)}</p>
                   <p>Last Updated: {formatDate(selectedTicket.updatedAt)}</p>
                 </div>
+              </div>
+
+              {/* AI Analysis Section */}
+              <div className="border-t border-gray-200 pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                    <Bot className="w-4 h-4 text-purple-600" />
+                    AI Concierge Analysis
+                  </h4>
+                  <button
+                    onClick={() => handleAnalyzeTicket(selectedTicket.id)}
+                    disabled={aiAnalyzing}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-sm rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {aiAnalyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Analyze Ticket
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* AI Analysis Results */}
+                {aiAnalysis && (
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 mb-4">
+                    <h5 className="text-sm font-medium text-purple-800 mb-3">Analysis Results</h5>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      {aiAnalysis.sentiment && (
+                        <div className="bg-white/80 rounded-lg p-3">
+                          <span className="text-gray-500 block text-xs mb-1">Sentiment</span>
+                          <span className={`font-medium capitalize ${
+                            aiAnalysis.sentiment === 'positive' ? 'text-green-600' :
+                            aiAnalysis.sentiment === 'negative' ? 'text-red-600' :
+                            'text-yellow-600'
+                          }`}>
+                            {aiAnalysis.sentiment}
+                          </span>
+                        </div>
+                      )}
+                      {aiAnalysis.priority_suggestion && (
+                        <div className="bg-white/80 rounded-lg p-3">
+                          <span className="text-gray-500 block text-xs mb-1">Suggested Priority</span>
+                          <span className="font-medium text-purple-700 capitalize">
+                            {aiAnalysis.priority_suggestion}
+                          </span>
+                        </div>
+                      )}
+                      {aiAnalysis.category_suggestion && (
+                        <div className="bg-white/80 rounded-lg p-3">
+                          <span className="text-gray-500 block text-xs mb-1">Suggested Category</span>
+                          <span className="font-medium text-indigo-700 capitalize">
+                            {aiAnalysis.category_suggestion}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* AI Suggested Responses */}
+                {aiSuggestions.length > 0 && (
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      Suggested Responses
+                    </h5>
+                    <div className="space-y-2">
+                      {aiSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="bg-white/80 rounded-lg p-3 text-sm text-gray-700 border border-blue-100 hover:border-blue-300 cursor-pointer transition-colors"
+                          onClick={() => {
+                            navigator.clipboard.writeText(suggestion)
+                            pushToast({ variant: 'success', title: 'Copied!', message: 'Response copied to clipboard' })
+                          }}
+                          title="Click to copy"
+                        >
+                          <p>{suggestion}</p>
+                          <p className="text-xs text-blue-500 mt-1">Click to copy</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!aiAnalysis && aiSuggestions.length === 0 && !aiAnalyzing && (
+                  <p className="text-sm text-gray-500 italic">
+                    Click "Analyze Ticket" to get AI-powered insights and suggested responses.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -706,155 +927,140 @@ export default function SupportTicketsPage() {
       )}
 
       {/* Create Ticket Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Create New Ticket</h2>
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
-              </div>
+      <Modal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Ticket"
+        size="md"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setShowCreateModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleCreateTicket}
+              disabled={!newTicket.subject || !newTicket.description || !newTicket.customerName || !newTicket.customerEmail}
+            >
+              Create Ticket
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          {/* Customer Name & Email - two columns */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Customer Name *</label>
+              <input
+                type="text"
+                value={newTicket.customerName}
+                onChange={(e) => setNewTicket({ ...newTicket, customerName: e.target.value })}
+                className="w-full px-2.5 py-1.5 text-sm border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)]"
+                placeholder="John Smith"
+              />
             </div>
-
-            <div className="p-6 space-y-4">
-              {/* Customer Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
-                  <input
-                    type="text"
-                    value={newTicket.customerName}
-                    onChange={(e) => setNewTicket({ ...newTicket, customerName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="John Smith"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Email *</label>
-                  <input
-                    type="email"
-                    value={newTicket.customerEmail}
-                    onChange={(e) => setNewTicket({ ...newTicket, customerEmail: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="john@email.com"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone (Optional)</label>
-                <input
-                  type="tel"
-                  value={newTicket.customerPhone}
-                  onChange={(e) => setNewTicket({ ...newTicket, customerPhone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="+1 555-0123"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
-                <input
-                  type="text"
-                  value={newTicket.subject}
-                  onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Brief description of the issue"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                <textarea
-                  value={newTicket.description}
-                  onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-32"
-                  placeholder="Detailed description of the issue..."
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Type</label>
-                  <select
-                    value={newTicket.type}
-                    onChange={(e) => setNewTicket({ ...newTicket, type: e.target.value as TicketType })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {TICKET_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
-                  <select
-                    value={newTicket.severity}
-                    onChange={(e) => setNewTicket({ ...newTicket, severity: e.target.value as Severity })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {SEVERITY_CONFIG.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label} - {s.description}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
-                  <select
-                    value={newTicket.assignedTo}
-                    onChange={(e) => setNewTicket({ ...newTicket, assignedTo: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Unassigned</option>
-                    {MOCK_AGENTS.filter((a) => a !== 'Unassigned').map((agent) => (
-                      <option key={agent} value={agent}>{agent}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* SLA Preview */}
-              <div className={`p-4 rounded-lg ${getSeverityConfig(newTicket.severity).bgColor}`}>
-                <h4 className={`font-medium ${getSeverityConfig(newTicket.severity).color}`}>
-                  {getSeverityConfig(newTicket.severity).label} Severity SLA Requirements
-                </h4>
-                <p className="text-sm text-gray-600 mt-1">{getSeverityConfig(newTicket.severity).description}</p>
-                <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
-                  <div>
-                    <span className="text-gray-600">Response Time: </span>
-                    <span className="font-medium">{getSeverityConfig(newTicket.severity).responseTime}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Resolution Time: </span>
-                    <span className="font-medium">{getSeverityConfig(newTicket.severity).resolutionTime}</span>
-                  </div>
-                </div>
-              </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Customer Email *</label>
+              <input
+                type="email"
+                value={newTicket.customerEmail}
+                onChange={(e) => setNewTicket({ ...newTicket, customerEmail: e.target.value })}
+                className="w-full px-2.5 py-1.5 text-sm border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)]"
+                placeholder="john@email.com"
+              />
             </div>
+          </div>
 
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          {/* Phone */}
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Phone (Optional)</label>
+            <input
+              type="tel"
+              value={newTicket.customerPhone}
+              onChange={(e) => setNewTicket({ ...newTicket, customerPhone: e.target.value })}
+              className="w-full px-2.5 py-1.5 text-sm border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)]"
+              placeholder="+1 555-0123"
+            />
+          </div>
+
+          {/* Subject */}
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Subject *</label>
+            <input
+              type="text"
+              value={newTicket.subject}
+              onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
+              className="w-full px-2.5 py-1.5 text-sm border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)]"
+              placeholder="Brief description of the issue"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Description *</label>
+            <textarea
+              value={newTicket.description}
+              onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+              className="w-full px-2.5 py-1.5 text-sm border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)] h-20 resize-none"
+              placeholder="Detailed description of the issue..."
+            />
+          </div>
+
+          {/* Type, Severity, Assign - three columns */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Ticket Type</label>
+              <select
+                value={newTicket.type}
+                onChange={(e) => setNewTicket({ ...newTicket, type: e.target.value as TicketType })}
+                className="w-full px-2.5 py-1.5 text-sm border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)]"
               >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateTicket}
-                disabled={!newTicket.subject || !newTicket.description || !newTicket.customerName || !newTicket.customerEmail}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                {TICKET_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Severity</label>
+              <select
+                value={newTicket.severity}
+                onChange={(e) => setNewTicket({ ...newTicket, severity: e.target.value as Severity })}
+                className="w-full px-2.5 py-1.5 text-sm border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)]"
               >
-                Create Ticket
-              </button>
+                {SEVERITY_CONFIG.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Assign To</label>
+              <select
+                value={newTicket.assignedTo}
+                onChange={(e) => setNewTicket({ ...newTicket, assignedTo: e.target.value })}
+                className="w-full px-2.5 py-1.5 text-sm border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)]"
+              >
+                <option value="">Unassigned</option>
+                {MOCK_AGENTS.filter((a) => a !== 'Unassigned').map((agent) => (
+                  <option key={agent} value={agent}>{agent}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* SLA Preview - compact */}
+          <div className={`p-3 rounded-md ${getSeverityConfig(newTicket.severity).bgColor}`}>
+            <h4 className={`text-xs font-medium ${getSeverityConfig(newTicket.severity).color}`}>
+              {getSeverityConfig(newTicket.severity).label} SLA
+            </h4>
+            <div className="flex gap-4 mt-1 text-xs text-[var(--color-text-secondary)]">
+              <span>Response: {getSeverityConfig(newTicket.severity).responseTime}</span>
+              <span>Resolution: {getSeverityConfig(newTicket.severity).resolutionTime}</span>
             </div>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

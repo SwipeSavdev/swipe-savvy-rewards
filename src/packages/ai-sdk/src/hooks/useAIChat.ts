@@ -86,7 +86,7 @@ export function useAIChat(options: UseAIChatOptions = {}) {
 
       for await (const event of stream) {
         if (event.type === 'message') {
-          fullResponse = event.content || '';
+          fullResponse += event.content || '';
           setCurrentResponse(fullResponse);
         }
 

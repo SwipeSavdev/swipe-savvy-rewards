@@ -5,16 +5,24 @@ Endpoints for managing platform settings in the admin portal
 Settings are persisted to the database.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 from sqlalchemy.orm import Session
 import logging
 import json
+import os
+import uuid
+import shutil
 
 from app.database import get_db
 from app.models import Setting
+
+# Directory for storing uploaded branding images
+BRANDING_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "branding")
+os.makedirs(BRANDING_UPLOAD_DIR, exist_ok=True)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/admin", tags=["admin-settings"])
@@ -183,6 +191,202 @@ async def get_all_settings(db: Session = Depends(get_db)) -> Dict[str, Any]:
         logger.error(f"Error getting settings: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get settings")
 
+
+# ============================================================================
+# Branding Image Management Endpoints (must be before generic {category}/{key} routes)
+# ============================================================================
+
+@router.get("/settings/branding/images")
+async def get_branding_images(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Get all uploaded branding images"""
+    try:
+        # Query directly to handle case when no images exist yet
+        setting = db.query(Setting).filter(
+            Setting.category == "branding",
+            Setting.key == "images"
+        ).first()
+
+        images = []
+        if setting and setting.value:
+            try:
+                images = json.loads(setting.value)
+            except json.JSONDecodeError:
+                images = []
+
+        return {
+            "success": True,
+            "images": images
+        }
+    except Exception as e:
+        logger.error(f"Error getting branding images: {str(e)}")
+        # Return empty images instead of error when none exist
+        return {
+            "success": True,
+            "images": []
+        }
+
+
+@router.get("/settings/branding/images/file/{filename}")
+async def get_branding_image_file(filename: str):
+    """Serve a branding image file"""
+    try:
+        file_path = os.path.join(BRANDING_UPLOAD_DIR, filename)
+
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="Image not found")
+
+        # Determine content type
+        ext = os.path.splitext(filename)[1].lower()
+        content_types = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".svg": "image/svg+xml",
+            ".ico": "image/x-icon",
+            ".gif": "image/gif",
+            ".webp": "image/webp"
+        }
+        content_type = content_types.get(ext, "application/octet-stream")
+
+        return FileResponse(file_path, media_type=content_type)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving branding image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to serve image")
+
+
+@router.post("/settings/branding/upload")
+async def upload_branding_image(
+    file: UploadFile = File(...),
+    type: str = Form(...),
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Upload a branding image (logo, favicon, or banner)"""
+    try:
+        # Validate file type
+        allowed_types = ["image/png", "image/jpeg", "image/svg+xml", "image/x-icon", "image/gif", "image/webp"]
+        if file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed: {', '.join(allowed_types)}"
+            )
+
+        # Validate image type
+        valid_image_types = ["logo", "favicon", "banner"]
+        if type not in valid_image_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid image type. Must be one of: {', '.join(valid_image_types)}"
+            )
+
+        # Generate unique filename
+        file_ext = os.path.splitext(file.filename)[1] or ".png"
+        unique_id = str(uuid.uuid4())[:8]
+        new_filename = f"{type}_{unique_id}{file_ext}"
+        file_path = os.path.join(BRANDING_UPLOAD_DIR, new_filename)
+
+        # Save file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Get current images and remove any existing image of the same type
+        setting = db.query(Setting).filter(
+            Setting.category == "branding",
+            Setting.key == "images"
+        ).first()
+
+        images = []
+        if setting and setting.value:
+            try:
+                images = json.loads(setting.value)
+            except json.JSONDecodeError:
+                images = []
+
+        images = [img for img in images if img.get("type") != type]
+
+        # Add new image
+        new_image = {
+            "id": unique_id,
+            "name": file.filename,
+            "url": f"/api/v1/admin/settings/branding/images/file/{new_filename}",
+            "type": type,
+            "uploadedAt": datetime.utcnow().isoformat(),
+            "filename": new_filename
+        }
+        images.append(new_image)
+
+        # Save to database
+        save_setting_to_db(db, "branding", "images", images)
+
+        logger.info(f"Uploaded branding image: {new_filename} (type: {type})")
+
+        return {
+            "success": True,
+            "message": f"{type.capitalize()} uploaded successfully",
+            "image": new_image
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading branding image: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+
+
+@router.delete("/settings/branding/images/{image_id}")
+async def delete_branding_image(image_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Delete a branding image"""
+    try:
+        # Get current images
+        setting = db.query(Setting).filter(
+            Setting.category == "branding",
+            Setting.key == "images"
+        ).first()
+
+        images = []
+        if setting and setting.value:
+            try:
+                images = json.loads(setting.value)
+            except json.JSONDecodeError:
+                images = []
+
+        # Find the image
+        image_to_delete = None
+        for img in images:
+            if img.get("id") == image_id:
+                image_to_delete = img
+                break
+
+        if not image_to_delete:
+            raise HTTPException(status_code=404, detail="Image not found")
+
+        # Delete the file
+        if image_to_delete.get("filename"):
+            file_path = os.path.join(BRANDING_UPLOAD_DIR, image_to_delete["filename"])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+        # Remove from list and save
+        images = [img for img in images if img.get("id") != image_id]
+        save_setting_to_db(db, "branding", "images", images)
+
+        logger.info(f"Deleted branding image: {image_id}")
+
+        return {
+            "success": True,
+            "message": "Image deleted successfully",
+            "deletedId": image_id
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting branding image: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete image: {str(e)}")
+
+
+# ============================================================================
+# Generic Settings Routes (after specific routes)
+# ============================================================================
 
 @router.get("/settings/{category}")
 async def get_settings_by_category(category: str, db: Session = Depends(get_db)) -> Dict[str, Any]:

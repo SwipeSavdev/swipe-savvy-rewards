@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BarChart3, Check, Clock, Hourglass, MessageSquare, Radio, TrendingUp, Zap } from 'lucide-react';
 import { apiClient } from '../../services/api';
 
 interface OverviewStats {
@@ -64,49 +65,49 @@ const DashboardOverview: React.FC<Props> = ({ timeRangeHours, loading: _loading 
         <StatCard
           title="Total Sessions"
           value={stats.total_sessions}
-          icon="📊"
+          icon={<BarChart3 className="w-5 h-5" />}
           color="blue"
         />
         <StatCard
           title="Active Sessions"
           value={stats.active_sessions}
-          icon="🟢"
+          icon={<Radio className="w-5 h-5" />}
           color="green"
         />
         <StatCard
           title="Waiting Sessions"
           value={stats.waiting_sessions}
-          icon="⏳"
+          icon={<Hourglass className="w-5 h-5" />}
           color="orange"
         />
         <StatCard
           title="Closed Sessions"
           value={stats.closed_sessions}
-          icon="✓"
+          icon={<Check className="w-5 h-5" />}
           color="gray"
         />
         <StatCard
           title="Total Messages"
           value={stats.total_messages}
-          icon="💬"
+          icon={<MessageSquare className="w-5 h-5" />}
           color="purple"
         />
         <StatCard
           title="Avg Msg/Session"
           value={stats.avg_messages_per_session.toFixed(1)}
-          icon="📈"
+          icon={<TrendingUp className="w-5 h-5" />}
           color="blue"
         />
         <StatCard
           title="Avg Response Time"
           value={`${stats.avg_response_time_seconds.toFixed(1)}s`}
-          icon="⚡"
+          icon={<Zap className="w-5 h-5" />}
           color="red"
         />
         <StatCard
           title="Time Range"
           value={`${stats.time_range_hours}h`}
-          icon="🕐"
+          icon={<Clock className="w-5 h-5" />}
           color="gray"
         />
       </div>
@@ -117,7 +118,7 @@ const DashboardOverview: React.FC<Props> = ({ timeRangeHours, loading: _loading 
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: string;
+  icon: React.ReactNode;
   color: string;
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BarChart3, Check, Clock, Hourglass, MessageSquare, Radio, TrendingUp, Zap } from 'lucide-react';
 import { apiClient } from '../../services/api';
 import { useLiveMetrics, useRealtimeDashboard } from '../../services/websocket';
 
@@ -72,7 +73,7 @@ const DashboardOverviewRealtime: React.FC<Props> = ({ timeRangeHours, loading: _
     return (
       <div className="stats-grid loading">
         Loading overview...
-        {isConnected && <span className="live-indicator">🔴 LIVE</span>}
+        {isConnected && <span className="live-indicator"><Radio className="w-3 h-3 text-red-500" /> LIVE</span>}
       </div>
     );
   }
@@ -102,14 +103,14 @@ const DashboardOverviewRealtime: React.FC<Props> = ({ timeRangeHours, loading: _
         <StatCard
           title="Total Sessions"
           value={stats.total_sessions}
-          icon="📊"
+          icon={<BarChart3 className="w-5 h-5" />}
           color="blue"
           isLive={isConnected}
         />
         <StatCard
           title="Active Sessions"
           value={stats.active_sessions}
-          icon="🟢"
+          icon={<Radio className="w-5 h-5" />}
           color="green"
           isLive={isConnected}
           highlight={stats.active_sessions > 0}
@@ -117,7 +118,7 @@ const DashboardOverviewRealtime: React.FC<Props> = ({ timeRangeHours, loading: _
         <StatCard
           title="Waiting Sessions"
           value={stats.waiting_sessions}
-          icon="⏳"
+          icon={<Hourglass className="w-5 h-5" />}
           color="orange"
           isLive={isConnected}
           highlight={stats.waiting_sessions > 0}
@@ -125,35 +126,35 @@ const DashboardOverviewRealtime: React.FC<Props> = ({ timeRangeHours, loading: _
         <StatCard
           title="Closed Sessions"
           value={stats.closed_sessions}
-          icon="✓"
+          icon={<Check className="w-5 h-5" />}
           color="gray"
           isLive={isConnected}
         />
         <StatCard
           title="Total Messages"
           value={stats.total_messages}
-          icon="💬"
+          icon={<MessageSquare className="w-5 h-5" />}
           color="purple"
           isLive={isConnected}
         />
         <StatCard
           title="Avg Msg/Session"
           value={stats.avg_messages_per_session.toFixed(1)}
-          icon="📈"
+          icon={<TrendingUp className="w-5 h-5" />}
           color="blue"
           isLive={isConnected}
         />
         <StatCard
           title="Avg Response Time"
           value={`${stats.avg_response_time_seconds.toFixed(1)}s`}
-          icon="⚡"
+          icon={<Zap className="w-5 h-5" />}
           color="red"
           isLive={isConnected}
         />
         <StatCard
           title="Time Range"
           value={`${stats.time_range_hours}h`}
-          icon="🕐"
+          icon={<Clock className="w-5 h-5" />}
           color="gray"
           isLive={isConnected}
         />
@@ -165,7 +166,7 @@ const DashboardOverviewRealtime: React.FC<Props> = ({ timeRangeHours, loading: _
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: string;
+  icon: React.ReactNode;
   color: string;
   isLive?: boolean;
   highlight?: boolean;

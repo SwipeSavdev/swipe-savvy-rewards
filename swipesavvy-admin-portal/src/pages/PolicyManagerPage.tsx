@@ -3,6 +3,7 @@ import { BrandingKitIcon, BrandingKitIconButton } from '@/components/ui/Branding
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import axios from 'axios'
+import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -109,7 +110,7 @@ export default function PolicyManagerPage() {
             <div className="flex-1">
               <p className="text-sm font-medium text-red-800">{error}</p>
             </div>
-            <button onClick={() => setError(null)} className="text-red-600">✕</button>
+            <button onClick={() => setError(null)} className="text-red-600"><X className="w-4 h-4" /></button>
           </div>
         </Card>
       )}

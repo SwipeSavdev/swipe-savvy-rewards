@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Star } from 'lucide-react';
 import { useRealtimeDashboard, useRealtimeData } from '@/services/websocket';
 import { apiClient } from '@/services/api';
 
@@ -151,7 +152,7 @@ const CustomerSatisfactionMetricsRealtime: React.FC<
           <h4>Rating Distribution</h4>
 
           <div className="rating-bar">
-            <div className="rating-label">⭐⭐⭐⭐⭐ 5 Stars</div>
+            <div className="rating-label"><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /> 5 Stars</div>
             <div className="bar-container">
               <div
                 className="bar-fill"
@@ -165,7 +166,7 @@ const CustomerSatisfactionMetricsRealtime: React.FC<
           </div>
 
           <div className="rating-bar">
-            <div className="rating-label">⭐⭐⭐⭐ 4 Stars</div>
+            <div className="rating-label"><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /> 4 Stars</div>
             <div className="bar-container">
               <div
                 className="bar-fill"
@@ -179,7 +180,7 @@ const CustomerSatisfactionMetricsRealtime: React.FC<
           </div>
 
           <div className="rating-bar">
-            <div className="rating-label">⭐⭐⭐ 3 Stars</div>
+            <div className="rating-label"><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /> 3 Stars</div>
             <div className="bar-container">
               <div
                 className="bar-fill"
@@ -193,7 +194,7 @@ const CustomerSatisfactionMetricsRealtime: React.FC<
           </div>
 
           <div className="rating-bar">
-            <div className="rating-label">⭐⭐ 2 Stars</div>
+            <div className="rating-label"><Star className="w-3 h-3 inline text-yellow-500" /><Star className="w-3 h-3 inline text-yellow-500" /> 2 Stars</div>
             <div className="bar-container">
               <div
                 className="bar-fill"
@@ -207,7 +208,7 @@ const CustomerSatisfactionMetricsRealtime: React.FC<
           </div>
 
           <div className="rating-bar">
-            <div className="rating-label">⭐ 1 Star</div>
+            <div className="rating-label"><Star className="w-3 h-3 inline text-yellow-500" /> 1 Star</div>
             <div className="bar-container">
               <div
                 className="bar-fill"

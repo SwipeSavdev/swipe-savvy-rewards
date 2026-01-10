@@ -276,6 +276,14 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not include admin merchants routes: {e}")
 
+# Include admin merchant onboarding routes (Fiserv integration)
+try:
+    from app.routes.admin_merchant_onboarding import router as admin_merchant_onboarding_router
+    app.include_router(admin_merchant_onboarding_router)
+    logger.info("✅ Admin merchant onboarding routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include admin merchant onboarding routes: {e}")
+
 # Include admin support tickets management routes
 try:
     from app.routes.admin_support import router as admin_support_router
@@ -323,6 +331,14 @@ try:
     logger.info("✅ Admin RBAC routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include admin RBAC routes: {e}")
+
+# Include admin charity management routes
+try:
+    from app.routes.admin_charities import router as admin_charities_router
+    app.include_router(admin_charities_router, prefix="/api")
+    logger.info("✅ Admin charity routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include admin charity routes: {e}")
 
 # Include payment routes (Phase 10)
 try:

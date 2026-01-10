@@ -1,3 +1,6 @@
+// Standard chart height for consistent dashboard layouts
+const CHART_HEIGHT = 280
+
 interface LineChartProps {
   data: Array<{
     label: string
@@ -7,9 +10,9 @@ interface LineChartProps {
   color?: string
 }
 
-export default function LineChart({ data, height = 250, color = '#3b82f6' }: LineChartProps) {
+export default function LineChart({ data, height = CHART_HEIGHT, color = '#3b82f6' }: LineChartProps) {
   if (!data || data.length === 0) {
-    return <div className="h-64 flex items-center justify-center text-gray-400">No data available</div>
+    return <div style={{ height }} className="flex items-center justify-center text-gray-400">No data available</div>
   }
 
   const maxValue = Math.max(...data.map((d) => d.value))
@@ -25,9 +28,12 @@ export default function LineChart({ data, height = 250, color = '#3b82f6' }: Lin
 
   const pathData = `M ${points.join(' L ')}`
 
+  // Reserve space for labels below the chart
+  const svgHeight = height - 32
+
   return (
-    <div>
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" height={height} className="w-full">
+    <div style={{ height }} className="flex flex-col">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ height: svgHeight }} className="w-full flex-1">
         {/* Grid lines */}
         <line x1="0" y1="25" x2="100" y2="25" stroke="#e5e7eb" strokeWidth="0.5" />
         <line x1="0" y1="50" x2="100" y2="50" stroke="#e5e7eb" strokeWidth="0.5" />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Check, CheckCheck, FileText, Mail, MessageSquare, Send } from 'lucide-react';
 import { apiClient } from '../../services/api';
 
 interface MessageAnalyticsData {
@@ -58,14 +59,14 @@ const MessageAnalytics: React.FC<Props> = ({ timeRangeHours }) => {
       
       <div className="analytics-overview">
         <div className="overview-stat">
-          <div className="stat-icon">💬</div>
+          <div className="stat-icon"><MessageSquare className="w-5 h-5" /></div>
           <div className="stat-content">
             <div className="stat-label">Total Messages</div>
             <div className="stat-value">{analytics.total_messages}</div>
           </div>
         </div>
         <div className="overview-stat">
-          <div className="stat-icon">📝</div>
+          <div className="stat-icon"><FileText className="w-5 h-5" /></div>
           <div className="stat-content">
             <div className="stat-label">Avg Length</div>
             <div className="stat-value">{analytics.avg_message_length} chars</div>
@@ -121,13 +122,18 @@ const MessageAnalytics: React.FC<Props> = ({ timeRangeHours }) => {
   );
 };
 
-function getStatusIcon(status: string): string {
-  const icons: Record<string, string> = {
-    sent: '📤',
-    delivered: '✓',
-    read: '✓✓',
-  };
-  return icons[status.toLowerCase()] || '📨';
+function getStatusIcon(status: string): React.ReactNode {
+  const statusLower = status.toLowerCase();
+  switch (statusLower) {
+    case 'sent':
+      return <Send className="w-4 h-4 inline" />;
+    case 'delivered':
+      return <Check className="w-4 h-4 inline" />;
+    case 'read':
+      return <CheckCheck className="w-4 h-4 inline" />;
+    default:
+      return <Mail className="w-4 h-4 inline" />;
+  }
 }
 
 export default MessageAnalytics;

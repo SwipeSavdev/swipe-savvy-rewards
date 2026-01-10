@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Radio, RefreshCw } from 'lucide-react';
 import { apiClient } from '../../services/api';
 import {
   useRealtimeDashboard,
@@ -83,7 +84,7 @@ const ActiveSessionsListRealtime: React.FC<Props> = ({
     return (
       <div className="sessions-list loading">
         Loading active sessions...
-        {isConnected && <span className="live-indicator">🔴 LIVE</span>}
+        {isConnected && <span className="live-indicator"><Radio className="w-3 h-3 text-red-500" /> LIVE</span>}
       </div>
     );
   }
@@ -103,7 +104,7 @@ const ActiveSessionsListRealtime: React.FC<Props> = ({
             </span>
           )}
           <button onClick={handleRefresh} className="btn-refresh">
-            ↻ Refresh
+            <RefreshCw className="w-4 h-4 inline mr-1" /> Refresh
           </button>
           <span className="last-update">Updated: {lastUpdate}</span>
         </div>

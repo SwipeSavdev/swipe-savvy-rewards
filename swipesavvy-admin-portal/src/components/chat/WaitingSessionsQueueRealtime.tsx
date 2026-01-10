@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Check, Clock, MessageSquare, Radio, RefreshCw } from 'lucide-react';
 import { apiClient } from '../../services/api';
 import {
   useRealtimeDashboard,
@@ -62,7 +63,7 @@ const WaitingSessionsQueueRealtime: React.FC = () => {
     return (
       <div className="waiting-queue loading">
         Loading waiting sessions...
-        {isConnected && <span className="live-indicator">🔴 LIVE</span>}
+        {isConnected && <span className="live-indicator"><Radio className="w-3 h-3 text-red-500" /> LIVE</span>}
       </div>
     );
   }
@@ -82,7 +83,7 @@ const WaitingSessionsQueueRealtime: React.FC = () => {
             </span>
           )}
           <button onClick={handleRefresh} className="btn-refresh">
-            ↻ Refresh
+            <RefreshCw className="w-4 h-4 inline mr-1" /> Refresh
           </button>
           <span className="last-update">Updated: {lastUpdate}</span>
         </div>
@@ -90,7 +91,7 @@ const WaitingSessionsQueueRealtime: React.FC = () => {
 
       {sessions.length === 0 ? (
         <div className="empty-state success">
-          ✓ All customers are being served!
+          <Check className="w-4 h-4 inline mr-1" /> All customers are being served!
         </div>
       ) : (
         <div className="queue-list">
@@ -114,10 +115,10 @@ const WaitingSessionsQueueRealtime: React.FC = () => {
                 </div>
                 <div className="queue-details">
                   <span className="wait-time">
-                    ⏳ {formatWaitTime(session.wait_time_seconds)}
+                    <Clock className="w-4 h-4 inline mr-1" />{formatWaitTime(session.wait_time_seconds)}
                   </span>
                   <span className="message-count">
-                    💬 {session.message_count} messages
+                    <MessageSquare className="w-4 h-4 inline mr-1" />{session.message_count} messages
                   </span>
                 </div>
               </div>

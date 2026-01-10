@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { cn } from '@/utils/cn'
 import Icon from './Icon'
 
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl'
+
 export interface ModalProps {
   open: boolean
   title?: string
@@ -11,9 +13,20 @@ export interface ModalProps {
   footer?: ReactNode
   onClose: () => void
   className?: string
+  size?: ModalSize
 }
 
-export default function Modal({ open, title, description, children, footer, onClose, className }: ModalProps) {
+const sizeClasses: Record<ModalSize, string> = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  '3xl': 'max-w-3xl',
+  '4xl': 'max-w-4xl',
+}
+
+export default function Modal({ open, title, description, children, footer, onClose, className, size = 'lg' }: ModalProps) {
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -26,7 +39,7 @@ export default function Modal({ open, title, description, children, footer, onCl
   if (!open) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-6">
       <div
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
         onClick={onClose}
@@ -37,19 +50,20 @@ export default function Modal({ open, title, description, children, footer, onCl
         role="dialog"
         aria-modal="true"
         className={cn(
-          'relative w-full max-w-lg rounded-lg border border-[var(--ss-border)] bg-[var(--ss-surface)] shadow-md',
+          'relative w-full max-h-[85vh] flex flex-col rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] shadow-lg',
+          sizeClasses[size],
           className,
         )}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--ss-border)] p-4">
+        <div className="flex-shrink-0 flex items-start justify-between gap-3 border-b border-[var(--color-border-primary)] p-4">
           <div>
-            {title ? <h2 className="font-headline text-base font-semibold text-[var(--ss-text)]">{title}</h2> : null}
-            {description ? <p className="mt-1 text-sm text-[var(--ss-text-muted)]">{description}</p> : null}
+            {title ? <h2 className="font-headline text-base font-semibold text-[var(--color-text-primary)]">{title}</h2> : null}
+            {description ? <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{description}</p> : null}
           </div>
 
           <button
             type="button"
-            className="rounded-md p-2 text-[var(--ss-text-muted)] hover:bg-[var(--ss-surface-alt)]"
+            className="rounded-md p-2 text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-secondary)]"
             onClick={onClose}
             aria-label="Close"
           >
@@ -57,9 +71,9 @@ export default function Modal({ open, title, description, children, footer, onCl
           </button>
         </div>
 
-        <div className="p-4">{children}</div>
+        <div className="flex-1 overflow-y-auto p-4">{children}</div>
 
-        {footer ? <div className="border-t border-[var(--ss-border)] p-4">{footer}</div> : null}
+        {footer ? <div className="flex-shrink-0 border-t border-[var(--color-border-primary)] p-4">{footer}</div> : null}
       </div>
     </div>,
     document.body,
