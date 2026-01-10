@@ -1,0 +1,531 @@
+/**
+ * ============================================================================
+ * SWIPESAVVY DESIGN SYSTEM V5 - COMPLETE RESET
+ * ============================================================================
+ *
+ * This is a BRAND NEW design system built from scratch.
+ * NO legacy code, NO shortcuts, NO reuse.
+ *
+ * Design Philosophy:
+ * ──────────────────
+ * ADMIN UX: "Precision over delight"
+ *   - Bank-grade trust heuristics
+ *   - Color for STATUS ONLY (never decorative)
+ *   - High information density without clutter
+ *   - Optimized for 8+ hour operational sessions
+ *
+ * CONSUMER UX: "Trust, clarity, emotional safety"
+ *   - Feel like a digital banking app
+ *   - Guide users step-by-step
+ *   - AI transparency and control
+ *   - Safe entering personal data
+ *
+ * Accessibility:
+ * ──────────────
+ * - WCAG 2.2 AA minimum (both modes)
+ * - 4.5:1 contrast for normal text
+ * - 3:1 contrast for large text
+ * - Visible focus indicators everywhere
+ * - Keyboard navigation complete
+ * - Screen reader support
+ * - prefers-reduced-motion respected
+ *
+ * ============================================================================
+ */
+
+/* ============================================================================
+   LIGHT MODE (Default)
+   ============================================================================ */
+
+:root {
+  /* ──────────────────────────────────────────────────────────────────────────
+     PRIMITIVE COLORS
+     Raw color values - never use directly in components
+     ────────────────────────────────────────────────────────────────────────── */
+
+  /* SwipeSavvy Brand Colors */
+  --brand-navy: #235393;         /* Primary brand - professional blue */
+  --brand-deep: #132136;         /* Deep - dark backgrounds */
+  --brand-green: #60BA46;        /* Success/positive - vibrant green */
+  --brand-yellow: #FAB915;       /* Accent/highlight - golden yellow */
+
+  /* Neutrals - Slate palette for professional look */
+  --primitive-slate-50: #f8fafc;
+  --primitive-slate-100: #f1f5f9;
+  --primitive-slate-200: #e2e8f0;
+  --primitive-slate-300: #cbd5e1;
+  --primitive-slate-400: #94a3b8;
+  --primitive-slate-500: #64748b;
+  --primitive-slate-600: #475569;
+  --primitive-slate-700: #334155;
+  --primitive-slate-800: #1e293b;
+  --primitive-slate-900: #0f172a;
+  --primitive-slate-950: #020617;
+
+  /* Navy - Primary brand color (replaces generic blue for primary actions) */
+  --primitive-navy-50: #e8f0f8;
+  --primitive-navy-100: #c5d9ed;
+  --primitive-navy-200: #9fc0e0;
+  --primitive-navy-300: #79a6d3;
+  --primitive-navy-400: #5a8dc4;
+  --primitive-navy-500: #3a74b5;
+  --primitive-navy-600: #235393;   /* Brand Navy - Primary */
+  --primitive-navy-700: #1c4275;
+  --primitive-navy-800: #153257;
+  --primitive-navy-900: #0e213a;
+
+  /* Blue - Secondary interactive color */
+  --primitive-blue-50: #eff6ff;
+  --primitive-blue-100: #dbeafe;
+  --primitive-blue-200: #bfdbfe;
+  --primitive-blue-300: #93c5fd;
+  --primitive-blue-400: #60a5fa;
+  --primitive-blue-500: #3b82f6;
+  --primitive-blue-600: #2563eb;
+  --primitive-blue-700: #1d4ed8;
+  --primitive-blue-800: #1e40af;
+  --primitive-blue-900: #1e3a8a;
+
+  /* Green - Success status ONLY (Brand Green #60BA46) */
+  --primitive-green-50: #f0fdf4;
+  --primitive-green-100: #dcfce7;
+  --primitive-green-200: #bbf7d0;
+  --primitive-green-300: #86efac;
+  --primitive-green-400: #6bc952;       /* Lighter brand green */
+  --primitive-green-500: #60BA46;       /* Brand Green - Primary */
+  --primitive-green-600: #4da038;
+  --primitive-green-700: #3d8a2d;
+  --primitive-green-800: #2d6a21;
+  --primitive-green-900: #1e4a16;
+
+  /* Amber/Yellow - Warning & Accent (Brand Yellow #FAB915) */
+  --primitive-amber-50: #fffbeb;
+  --primitive-amber-100: #fef3c7;
+  --primitive-amber-200: #fde68a;
+  --primitive-amber-300: #fcd34d;
+  --primitive-amber-400: #FAB915;       /* Brand Yellow - Primary */
+  --primitive-amber-500: #f0a500;
+  --primitive-amber-600: #d97706;
+  --primitive-amber-700: #b45309;
+  --primitive-amber-800: #92400e;
+  --primitive-amber-900: #78350f;
+
+  /* Red - Danger/Error status ONLY */
+  --primitive-red-50: #fef2f2;
+  --primitive-red-100: #fee2e2;
+  --primitive-red-200: #fecaca;
+  --primitive-red-300: #fca5a5;
+  --primitive-red-400: #f87171;
+  --primitive-red-500: #ef4444;
+  --primitive-red-600: #dc2626;
+  --primitive-red-700: #b91c1c;
+  --primitive-red-800: #991b1b;
+  --primitive-red-900: #7f1d1d;
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Background
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --color-bg-page: var(--primitive-slate-50);
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: var(--primitive-slate-100);
+  --color-bg-tertiary: var(--primitive-slate-200);
+  --color-bg-inverse: var(--primitive-slate-900);
+  --color-bg-overlay: rgba(15, 23, 42, 0.5);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Text
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --color-text-primary: var(--primitive-slate-900);
+  --color-text-secondary: var(--primitive-slate-600);
+  --color-text-tertiary: var(--primitive-slate-500);
+  --color-text-quaternary: var(--primitive-slate-400);
+  --color-text-inverse: #ffffff;
+  --color-text-link: var(--primitive-blue-600);
+  --color-text-link-hover: var(--primitive-blue-700);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Border
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --color-border-primary: var(--primitive-slate-200);
+  --color-border-secondary: var(--primitive-slate-300);
+  --color-border-tertiary: var(--primitive-slate-100);
+  --color-border-focus: var(--primitive-blue-500);
+  --color-border-inverse: var(--primitive-slate-700);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Status (ONLY for status indication)
+     ────────────────────────────────────────────────────────────────────────── */
+
+  /* Success */
+  --color-status-success-bg: var(--primitive-green-50);
+  --color-status-success-border: var(--primitive-green-200);
+  --color-status-success-text: var(--primitive-green-700);
+  --color-status-success-icon: var(--primitive-green-500);
+
+  /* Warning */
+  --color-status-warning-bg: var(--primitive-amber-50);
+  --color-status-warning-border: var(--primitive-amber-200);
+  --color-status-warning-text: var(--primitive-amber-700);
+  --color-status-warning-icon: var(--primitive-amber-500);
+
+  /* Danger */
+  --color-status-danger-bg: var(--primitive-red-50);
+  --color-status-danger-border: var(--primitive-red-200);
+  --color-status-danger-text: var(--primitive-red-700);
+  --color-status-danger-icon: var(--primitive-red-500);
+
+  /* Info - Uses lighter navy shades for brand consistency */
+  --color-status-info-bg: var(--primitive-navy-50);
+  --color-status-info-border: var(--primitive-navy-200);
+  --color-status-info-text: var(--primitive-navy-700);
+  --color-status-info-icon: var(--primitive-navy-500);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Interactive
+     ────────────────────────────────────────────────────────────────────────── */
+
+  /* Primary Action - Brand Navy */
+  --color-action-primary-bg: var(--primitive-navy-600);
+  --color-action-primary-bg-hover: var(--primitive-navy-700);
+  --color-action-primary-bg-active: var(--primitive-navy-800);
+  --color-action-primary-text: #ffffff;
+
+  /* Secondary Action */
+  --color-action-secondary-bg: transparent;
+  --color-action-secondary-bg-hover: var(--primitive-slate-100);
+  --color-action-secondary-bg-active: var(--primitive-slate-200);
+  --color-action-secondary-border: var(--primitive-slate-300);
+  --color-action-secondary-text: var(--primitive-slate-700);
+
+  /* Ghost Action */
+  --color-action-ghost-bg: transparent;
+  --color-action-ghost-bg-hover: var(--primitive-slate-100);
+  --color-action-ghost-bg-active: var(--primitive-slate-200);
+  --color-action-ghost-text: var(--primitive-slate-600);
+
+  /* Danger Action */
+  --color-action-danger-bg: var(--primitive-red-600);
+  --color-action-danger-bg-hover: var(--primitive-red-700);
+  --color-action-danger-bg-active: var(--primitive-red-800);
+  --color-action-danger-text: #ffffff;
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     TYPOGRAPHY
+     ────────────────────────────────────────────────────────────────────────── */
+
+  /* Font Families */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
+
+  /* Font Sizes */
+  --font-size-2xs: 0.625rem;    /* 10px */
+  --font-size-xs: 0.6875rem;    /* 11px */
+  --font-size-sm: 0.8125rem;    /* 13px */
+  --font-size-base: 0.875rem;   /* 14px */
+  --font-size-md: 1rem;         /* 16px */
+  --font-size-lg: 1.125rem;     /* 18px */
+  --font-size-xl: 1.25rem;      /* 20px */
+  --font-size-2xl: 1.5rem;      /* 24px */
+  --font-size-3xl: 1.875rem;    /* 30px */
+  --font-size-4xl: 2.25rem;     /* 36px */
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line Heights */
+  --line-height-none: 1;
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+
+  /* Letter Spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SPACING (4px base grid)
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --spacing-0: 0;
+  --spacing-px: 1px;
+  --spacing-0-5: 0.125rem;      /* 2px */
+  --spacing-1: 0.25rem;         /* 4px */
+  --spacing-1-5: 0.375rem;      /* 6px */
+  --spacing-2: 0.5rem;          /* 8px */
+  --spacing-2-5: 0.625rem;      /* 10px */
+  --spacing-3: 0.75rem;         /* 12px */
+  --spacing-3-5: 0.875rem;      /* 14px */
+  --spacing-4: 1rem;            /* 16px */
+  --spacing-5: 1.25rem;         /* 20px */
+  --spacing-6: 1.5rem;          /* 24px */
+  --spacing-7: 1.75rem;         /* 28px */
+  --spacing-8: 2rem;            /* 32px */
+  --spacing-9: 2.25rem;         /* 36px */
+  --spacing-10: 2.5rem;         /* 40px */
+  --spacing-11: 2.75rem;        /* 44px */
+  --spacing-12: 3rem;           /* 48px */
+  --spacing-14: 3.5rem;         /* 56px */
+  --spacing-16: 4rem;           /* 64px */
+  --spacing-20: 5rem;           /* 80px */
+  --spacing-24: 6rem;           /* 96px */
+  --spacing-32: 8rem;           /* 128px */
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     BORDER RADIUS
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --radius-none: 0;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SHADOWS
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --shadow-none: none;
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  /* Focus Ring */
+  --shadow-focus-ring: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     TRANSITIONS
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --duration-instant: 0ms;
+  --duration-fast: 100ms;
+  --duration-normal: 150ms;
+  --duration-slow: 200ms;
+  --duration-slower: 300ms;
+  --duration-slowest: 500ms;
+
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.27, 1.55);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     Z-INDEX
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --z-below: -1;
+  --z-base: 0;
+  --z-raised: 1;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-overlay: 1200;
+  --z-modal: 1300;
+  --z-popover: 1400;
+  --z-tooltip: 1500;
+  --z-toast: 1600;
+  --z-max: 9999;
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     LAYOUT
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --layout-header-height: 56px;
+  --layout-sidebar-width: 240px;
+  --layout-sidebar-width-collapsed: 56px;
+  --layout-page-max-width: 1440px;
+  --layout-content-max-width: 1200px;
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     COMPONENTS
+     ────────────────────────────────────────────────────────────────────────── */
+
+  /* Input heights */
+  --component-height-xs: 28px;
+  --component-height-sm: 32px;
+  --component-height-md: 36px;
+  --component-height-lg: 40px;
+  --component-height-xl: 44px;
+
+  /* Table */
+  --component-table-header-height: 40px;
+  --component-table-row-height: 48px;
+  --component-table-row-height-compact: 36px;
+
+  /* Icons */
+  --component-icon-xs: 12px;
+  --component-icon-sm: 14px;
+  --component-icon-md: 16px;
+  --component-icon-lg: 20px;
+  --component-icon-xl: 24px;
+}
+
+/* ============================================================================
+   DARK MODE - True Dark (Deep Charcoal, NOT pure black)
+   Optimized for extended operational sessions
+   ============================================================================ */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Background (Dark)
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --color-bg-page: #0a0c10;                 /* Deep charcoal base */
+  --color-bg-primary: #12151a;              /* Card/surface */
+  --color-bg-secondary: #1a1e26;            /* Elevated surfaces */
+  --color-bg-tertiary: #242936;             /* Hover states */
+  --color-bg-inverse: var(--primitive-slate-100);
+  --color-bg-overlay: rgba(0, 0, 0, 0.7);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Text (Dark)
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --color-text-primary: var(--primitive-slate-100);
+  --color-text-secondary: var(--primitive-slate-400);
+  --color-text-tertiary: var(--primitive-slate-500);
+  --color-text-quaternary: var(--primitive-slate-600);
+  --color-text-inverse: var(--primitive-slate-900);
+  --color-text-link: var(--primitive-blue-400);
+  --color-text-link-hover: var(--primitive-blue-300);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Border (Dark)
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --color-border-primary: #2a303c;
+  --color-border-secondary: #3d4554;
+  --color-border-tertiary: #1e232d;
+  --color-border-focus: var(--primitive-blue-500);
+  --color-border-inverse: var(--primitive-slate-300);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Status (Dark)
+     ────────────────────────────────────────────────────────────────────────── */
+
+  /* Success */
+  --color-status-success-bg: rgba(34, 197, 94, 0.15);
+  --color-status-success-border: rgba(34, 197, 94, 0.3);
+  --color-status-success-text: var(--primitive-green-400);
+  --color-status-success-icon: var(--primitive-green-500);
+
+  /* Warning */
+  --color-status-warning-bg: rgba(245, 158, 11, 0.15);
+  --color-status-warning-border: rgba(245, 158, 11, 0.3);
+  --color-status-warning-text: var(--primitive-amber-400);
+  --color-status-warning-icon: var(--primitive-amber-500);
+
+  /* Danger */
+  --color-status-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-status-danger-border: rgba(239, 68, 68, 0.3);
+  --color-status-danger-text: var(--primitive-red-400);
+  --color-status-danger-icon: var(--primitive-red-500);
+
+  /* Info - Uses lighter navy shades for brand consistency */
+  --color-status-info-bg: rgba(35, 83, 147, 0.15);
+  --color-status-info-border: rgba(35, 83, 147, 0.3);
+  --color-status-info-text: var(--primitive-navy-300);
+  --color-status-info-icon: var(--primitive-navy-400);
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SEMANTIC TOKENS - Interactive (Dark)
+     ────────────────────────────────────────────────────────────────────────── */
+
+  /* Primary Action - Brand Navy */
+  --color-action-primary-bg: var(--primitive-navy-500);
+  --color-action-primary-bg-hover: var(--primitive-navy-400);
+  --color-action-primary-bg-active: var(--primitive-navy-600);
+  --color-action-primary-text: #ffffff;
+
+  /* Secondary Action */
+  --color-action-secondary-bg: transparent;
+  --color-action-secondary-bg-hover: #242936;
+  --color-action-secondary-bg-active: #2e3545;
+  --color-action-secondary-border: #3d4554;
+  --color-action-secondary-text: var(--primitive-slate-300);
+
+  /* Ghost Action */
+  --color-action-ghost-bg: transparent;
+  --color-action-ghost-bg-hover: #1a1e26;
+  --color-action-ghost-bg-active: #242936;
+  --color-action-ghost-text: var(--primitive-slate-400);
+
+  /* Danger Action */
+  --color-action-danger-bg: var(--primitive-red-600);
+  --color-action-danger-bg-hover: var(--primitive-red-500);
+  --color-action-danger-bg-active: var(--primitive-red-700);
+  --color-action-danger-text: #ffffff;
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     SHADOWS (Dark) - More subtle for dark mode
+     ────────────────────────────────────────────────────────────────────────── */
+
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+
+  --shadow-focus-ring: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border-primary: var(--primitive-slate-400);
+    --color-border-secondary: var(--primitive-slate-500);
+  }
+
+  [data-theme="dark"] {
+    --color-border-primary: var(--primitive-slate-500);
+    --color-border-secondary: var(--primitive-slate-400);
+  }
+}
+
+/* Focus visible */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}

@@ -15,7 +15,7 @@ export interface ComboboxProps {
   placeholder?: string
   options: ComboboxOption[]
   value: string | null
-  onChange: (value: string | null) => void
+  onChange: (_value: string | null) => void
   className?: string
 }
 

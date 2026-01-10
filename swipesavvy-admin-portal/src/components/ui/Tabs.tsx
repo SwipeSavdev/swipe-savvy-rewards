@@ -13,7 +13,7 @@ export interface TabItem {
 export interface TabsProps {
   items: TabItem[]
   value?: string
-  onChange?: (key: string) => void
+  onChange?: (_key: string) => void
   variant?: TabsVariant
   className?: string
 }
@@ -28,9 +28,9 @@ export default function Tabs({ items, value, onChange, variant = 'default', clas
   }
 
   const tabStyle: Record<TabsVariant, string> = {
-    default: 'rounded-md border border-[var(--ss-border)] bg-[var(--ss-surface)] p-1',
-    pills: 'rounded-[var(--ss-radius-pill)] bg-[var(--ss-surface-alt)] p-1',
-    underline: 'border-b border-[var(--ss-border)]',
+    default: 'rounded-md border border-[var(--color-border-primary)] bg-[var(--color-bg-primary)] p-1',
+    pills: 'rounded-full bg-[var(--color-bg-secondary)] p-1',
+    underline: 'border-b border-[var(--color-border-primary)]',
   }
 
   const buttonBase = 'text-sm font-medium transition-colors'
@@ -49,14 +49,14 @@ export default function Tabs({ items, value, onChange, variant = 'default', clas
                 buttonBase,
                 variant === 'underline'
                   ? cn(
-                      'relative px-3 py-2 text-[var(--ss-text-muted)] hover:text-[var(--ss-text)]',
-                      isActive && 'text-[var(--ss-primary)]',
+                      'relative px-3 py-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+                      isActive && 'text-[var(--color-action-primary-bg)]',
                     )
                   : cn(
                       'rounded-md px-3 py-2',
                       isActive
-                        ? 'bg-[var(--ss-primary-soft)] text-[var(--ss-primary)]'
-                        : 'text-[var(--ss-text-muted)] hover:text-[var(--ss-text)] hover:bg-[var(--ss-surface-alt)]',
+                        ? 'bg-[var(--color-action-primary-bg)] text-[var(--color-action-primary-text)]'
+                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]',
                     ),
               )}
               aria-current={isActive}
@@ -64,13 +64,13 @@ export default function Tabs({ items, value, onChange, variant = 'default', clas
               <span className="inline-flex items-center gap-2">
                 {t.label}
                 {typeof t.badge === 'number' ? (
-                  <span className="rounded-[var(--ss-radius-pill)] bg-[var(--ss-surface)] px-2 py-0.5 text-xs text-[var(--ss-text-muted)]">
+                  <span className="rounded-full bg-[var(--color-bg-tertiary)] px-2 py-0.5 text-xs text-[var(--color-text-tertiary)]">
                     {t.badge}
                   </span>
                 ) : null}
               </span>
               {variant === 'underline' && isActive ? (
-                <span className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[var(--ss-primary)]" />
+                <span className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[var(--color-action-primary-bg)]" />
               ) : null}
             </button>
           )

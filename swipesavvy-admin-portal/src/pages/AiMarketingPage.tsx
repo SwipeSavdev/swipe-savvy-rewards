@@ -1,3 +1,11 @@
+/**
+ * AI Marketing Page - Enhanced Version
+ * Features: Campaigns, Analytics Dashboard, A/B Testing, Audience Builder
+ */
+
+import ABTestingPanel from '@/components/marketing/ABTestingPanel'
+import AudienceBuilder from '@/components/marketing/AudienceBuilder'
+import MarketingAnalytics from '@/components/marketing/MarketingAnalytics'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -6,11 +14,24 @@ import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
 import Table, { type TableColumn } from '@/components/ui/Table'
+import Tabs from '@/components/ui/Tabs'
 import { Api } from '@/services/api'
+import { useEventSubscription } from '@/store/eventBusStore'
 import { useToastStore } from '@/store/toastStore'
 import type { AiCampaign } from '@/types/aiMarketing'
 import { formatDateTime } from '@/utils/dates'
-import { CheckCircle, Edit, Lightbulb, Loader, Sparkles, TrendingUp } from 'lucide-react'
+import {
+  BarChart3,
+  CheckCircle,
+  Edit,
+  FlaskConical,
+  Lightbulb,
+  Loader,
+  Megaphone,
+  Sparkles,
+  TrendingUp,
+  Users,
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 interface CampaignCopy {
@@ -28,7 +49,11 @@ interface AudienceInsights {
   challenges?: string[]
 }
 
-export default function AiMarketingPage() {
+// ============================================================================
+// CAMPAIGNS TAB COMPONENT
+// ============================================================================
+
+function CampaignsTab() {
   const pushToast = useToastStore((s) => s.push)
   const [loading, setLoading] = useState(true)
   const [campaigns, setCampaigns] = useState<AiCampaign[]>([])
@@ -55,33 +80,34 @@ export default function AiMarketingPage() {
   const fetchCampaigns = async (shouldShowLoading = true) => {
     if (shouldShowLoading) setLoading(true)
     try {
-      const res = await Api.aiCampaignsApi.getAiCampaigns({ page: 1, limit: 100 })
-      setCampaigns((res.campaigns || res || []).map((c: any) => ({
-        id: c.id || c.campaign_id,
-        name: c.name || c.campaign_name,
-        description: c.description || '',
-        objective: c.campaign_type?.includes('promotional') ? 'activation' : 'retention',
-        status: c.status,
-        type: c.campaign_type || c.type,
-        targetAudience: c.target_pattern || '',
-        audienceSize: 0,
-        reach: 0,
-        channel: 'email',
-        startDate: c.created_at || c.startDate,
-        endDate: '',
-        budget: 0,
-        spent: 0,
-        engagement: 0,
-        conversions: 0,
-        roi: 0,
-        createdBy: 'admin',
-        lastUpdatedAt: c.updated_at,
-        lastUpdated: c.updated_at,
-        createdAt: c.created_at,
-      })))
+      const res = await Api.aiCampaignsApi.listCampaigns(1, 100)
+      setCampaigns(
+        (res.campaigns || res || []).map((c: any) => ({
+          id: c.id || c.campaign_id,
+          name: c.name || c.campaign_name,
+          description: c.description || '',
+          objective: c.campaign_type?.includes('promotional') ? 'activation' : 'retention',
+          status: c.status,
+          type: c.campaign_type || c.type,
+          targetAudience: c.target_pattern || '',
+          audienceSize: 0,
+          reach: 0,
+          channel: 'email',
+          startDate: c.created_at || c.startDate,
+          endDate: '',
+          budget: 0,
+          spent: 0,
+          engagement: 0,
+          conversions: 0,
+          roi: 0,
+          createdBy: 'admin',
+          lastUpdatedAt: c.updated_at,
+          lastUpdated: c.updated_at,
+          createdAt: c.created_at,
+        }))
+      )
     } catch (err: any) {
       console.error('Failed to fetch campaigns:', err)
-      // Set empty array on error
       setCampaigns([])
     } finally {
       if (shouldShowLoading) setLoading(false)
@@ -98,18 +124,25 @@ export default function AiMarketingPage() {
     }
   }, [])
 
+  // Subscribe to campaign events for cross-module updates
+  useEventSubscription(
+    ['campaign:created', 'campaign:updated', 'campaign:published', 'campaign:deleted'],
+    () => {
+      fetchCampaigns(false)
+    }
+  )
+
   const publishCampaign = async (campaignId: string) => {
     try {
       setPublishingId(campaignId)
       const result = await Api.aiCampaignsApi.publishCampaign(campaignId)
-      
+
       if (result?.status === 'success') {
         pushToast({
           variant: 'success',
           title: 'Campaign published',
           message: 'Your campaign has been successfully published',
         })
-        // Refresh campaigns list
         await fetchCampaigns(false)
       }
     } catch (error: any) {
@@ -124,7 +157,6 @@ export default function AiMarketingPage() {
   }
 
   const openEditModal = (campaign: AiCampaign) => {
-    console.log('openEditModal called with campaign:', campaign)
     setSelectedCampaign(campaign)
     setEditName(campaign.name)
     setEditDescription(campaign.targetAudience || '')
@@ -134,15 +166,10 @@ export default function AiMarketingPage() {
   }
 
   const updateCampaign = async () => {
-    console.log('updateCampaign called, selectedCampaign:', selectedCampaign)
-    if (!selectedCampaign) {
-      console.error('No selectedCampaign set!')
-      return
-    }
-    
+    if (!selectedCampaign) return
+
     try {
       setLoading(true)
-      console.log('Calling API with:', { name: editName, description: editDescription, campaign_type: editType, status: editStatus })
       await Api.aiCampaignsApi.updateCampaign(selectedCampaign.id, {
         name: editName,
         description: editDescription,
@@ -155,12 +182,10 @@ export default function AiMarketingPage() {
         title: 'Campaign updated',
         message: 'Your campaign has been updated successfully',
       })
-      
-      // Refresh the campaigns list
+
       await fetchCampaigns(false)
       setEditOpen(false)
     } catch (error: any) {
-      console.error('Update error:', error)
       pushToast({
         variant: 'error',
         title: 'Failed to update campaign',
@@ -181,7 +206,7 @@ export default function AiMarketingPage() {
         cell: (c) => (
           <div className="min-w-0">
             <p className="truncate font-semibold">{c.name}</p>
-            <p className="truncate text-xs text-[var(--ss-text-muted)]">
+            <p className="truncate text-xs text-[var(--color-text-secondary)]">
               Objective: {c.objective} · Channel: {c.channel}
             </p>
           </div>
@@ -213,14 +238,22 @@ export default function AiMarketingPage() {
         sortable: true,
         align: 'right',
         accessor: (c) => c.audienceSize,
-        cell: (c) => <span className="text-[var(--ss-text-muted)]">{(c.audienceSize ?? 0).toLocaleString()}</span>,
+        cell: (c) => (
+          <span className="text-[var(--color-text-secondary)]">
+            {(c.audienceSize ?? 0).toLocaleString()}
+          </span>
+        ),
       },
       {
         key: 'lastUpdatedAt',
         header: 'Updated',
         sortable: true,
         accessor: (c) => c.lastUpdatedAt,
-        cell: (c) => <span className="text-[var(--ss-text-muted)]">{formatDateTime(c.lastUpdatedAt ?? '')}</span>,
+        cell: (c) => (
+          <span className="text-[var(--color-text-secondary)]">
+            {formatDateTime(c.lastUpdatedAt ?? '')}
+          </span>
+        ),
       },
       {
         key: 'actions',
@@ -234,7 +267,7 @@ export default function AiMarketingPage() {
             onClick={() => openAIInsights(c)}
             className="flex items-center gap-2"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="h-4 w-4" />
             Enhance
           </Button>
         ),
@@ -256,12 +289,12 @@ export default function AiMarketingPage() {
               >
                 {publishingId === c.id ? (
                   <>
-                    <Loader className="w-4 h-4 animate-spin" />
+                    <Loader className="h-4 w-4 animate-spin" />
                     Publishing...
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="w-4 h-4" />
+                    <CheckCircle className="h-4 w-4" />
                     Publish
                   </>
                 )}
@@ -272,8 +305,6 @@ export default function AiMarketingPage() {
             const status = c.status as string
             if (status === 'active' || status === 'running') {
               variant = 'success'
-            } else if (status === 'draft') {
-              variant = 'neutral'
             } else if (status === 'paused') {
               variant = 'warning'
             } else if (status === 'completed' || status === 'archived') {
@@ -292,37 +323,33 @@ export default function AiMarketingPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
-              console.log('Edit button clicked, c is:', c, 'typeof:', typeof c)
-              openEditModal(c)
-            }}
+            onClick={() => openEditModal(c)}
             className="flex items-center gap-2"
           >
-            <Edit className="w-4 h-4" />
+            <Edit className="h-4 w-4" />
             Edit
           </Button>
         ),
       },
     ],
-    [],
+    [publishingId]
   )
 
   const generateAICopy = async () => {
     if (!selectedCampaign) return
-    
+
     setAiLoading(true)
     try {
-      // Use target patterns based on campaign objective
       const patterns = objective === 'activation' ? ['high_spender', 'new_shopper'] : ['frequent_shopper']
-      
+
       const response = await Api.aiCampaignsApi.generateCopy({
         campaign_name: selectedCampaign.name || 'Campaign',
         target_patterns: patterns,
         campaign_type: selectedCampaign.type || 'promotional',
         audience_size: selectedCampaign.audienceSize || 1000,
-        offer_value: offerValue
+        offer_value: offerValue,
       })
-      
+
       if (response?.campaign_copy) {
         setCampaignCopy(response.campaign_copy)
         pushToast({ variant: 'success', title: 'Success', message: 'AI copy generated successfully' })
@@ -330,7 +357,6 @@ export default function AiMarketingPage() {
         pushToast({ variant: 'error', title: 'Error', message: 'No copy generated' })
       }
     } catch (error: any) {
-      console.error('Generate copy error:', error)
       pushToast({ variant: 'error', title: 'Error', message: error?.message || 'Failed to generate AI copy' })
     } finally {
       setAiLoading(false)
@@ -339,16 +365,16 @@ export default function AiMarketingPage() {
 
   const getAudienceInsights = async () => {
     if (!selectedCampaign) return
-    
+
     setAiLoading(true)
     try {
       const patterns = objective === 'activation' ? ['high_spender', 'new_shopper'] : ['frequent_shopper']
-      
+
       const response = await Api.aiCampaignsApi.getAudienceInsights({
         target_patterns: patterns,
-        lookback_days: 90
+        lookback_days: 90,
       })
-      
+
       if (response?.insights) {
         setAudienceInsights(response.insights)
         pushToast({ variant: 'success', title: 'Success', message: 'Audience insights generated' })
@@ -356,7 +382,6 @@ export default function AiMarketingPage() {
         pushToast({ variant: 'error', title: 'Error', message: 'No insights generated' })
       }
     } catch (error: any) {
-      console.error('Audience insights error:', error)
       pushToast({ variant: 'error', title: 'Error', message: error?.message || 'Failed to get insights' })
     } finally {
       setAiLoading(false)
@@ -395,10 +420,9 @@ export default function AiMarketingPage() {
         title: 'Campaign created',
         message: `"${name}" has been created successfully.`,
       })
-      
-      // Refresh the campaigns list from the server
+
       await fetchCampaigns(false)
-      
+
       setOpen(false)
       setName('')
       setOfferType('discount')
@@ -419,8 +443,9 @@ export default function AiMarketingPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-headline text-xl font-semibold text-[var(--ss-text)]">AI Marketing</h1>
-          <p className="mt-1 text-sm text-[var(--ss-text-muted)]">Create and manage AI-assisted customer campaigns.</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Create and manage AI-assisted customer campaigns.
+          </p>
         </div>
         <Button onClick={() => setOpen(true)}>New campaign</Button>
       </div>
@@ -429,11 +454,12 @@ export default function AiMarketingPage() {
         <Table data={campaigns} columns={columns} loading={loading} pageSize={10} emptyMessage="No campaigns yet." />
       </Card>
 
+      {/* Create Campaign Modal */}
       <Modal
         open={open}
         onClose={() => setOpen(false)}
         title="New AI Campaign"
-        description="Create a campaign draft. Replace this with your AI prompt builder + audience selection flow."
+        description="Create a new marketing campaign. Configure your target audience, channel, and offer details."
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
@@ -445,8 +471,19 @@ export default function AiMarketingPage() {
           </div>
         }
       >
-        <Form spacing="md" onSubmit={(e) => { e.preventDefault(); onCreate() }}>
-          <Input label="Campaign name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Winback December" />
+        <Form
+          spacing="md"
+          onSubmit={(e) => {
+            e.preventDefault()
+            onCreate()
+          }}
+        >
+          <Input
+            label="Campaign name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Winback December"
+          />
           <Select
             label="Objective"
             value={objective}
@@ -497,9 +534,6 @@ export default function AiMarketingPage() {
               ]}
             />
           </div>
-          <div className="rounded-lg border border-[var(--ss-border)] bg-[var(--ss-surface-alt)] p-4 text-sm text-[var(--ss-text-muted)]">
-            Placeholder: add message variations, experimentation, and approval workflows.
-          </div>
         </Form>
       </Modal>
 
@@ -514,27 +548,24 @@ export default function AiMarketingPage() {
             <Button variant="outline" onClick={() => setEditOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button onClick={() => { 
-              console.log('Update button clicked')
-              updateCampaign() 
-            }} disabled={loading}>
+            <Button onClick={updateCampaign} disabled={loading}>
               {loading ? 'Updating...' : 'Update'}
             </Button>
           </div>
         }
       >
         <div className="space-y-4">
-          <Input 
-            label="Campaign name" 
-            value={editName} 
-            onChange={(e) => setEditName(e.target.value)} 
-            placeholder="Campaign name" 
+          <Input
+            label="Campaign name"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            placeholder="Campaign name"
           />
-          <Input 
-            label="Description" 
-            value={editDescription} 
-            onChange={(e) => setEditDescription(e.target.value)} 
-            placeholder="Campaign description" 
+          <Input
+            label="Description"
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            placeholder="Campaign description"
           />
           <Select
             label="Type"
@@ -572,8 +603,8 @@ export default function AiMarketingPage() {
           {/* Campaign Copy Section */}
           <div>
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 font-semibold text-[var(--ss-text)]">
-                <Sparkles className="w-5 h-5 text-blue-500" />
+              <h3 className="flex items-center gap-2 font-semibold text-[var(--color-text-primary)]">
+                <Sparkles className="h-5 w-5 text-[var(--color-status-info-text)]" />
                 AI-Generated Copy
               </h3>
               <Button
@@ -582,31 +613,35 @@ export default function AiMarketingPage() {
                 disabled={aiLoading}
                 variant={campaignCopy ? 'outline' : 'primary'}
               >
-                {aiLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {aiLoading ? <Loader className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 {campaignCopy ? 'Regenerate' : 'Generate'}
               </Button>
             </div>
             {campaignCopy && (
-              <Card className="space-y-3 bg-blue-50 p-4">
+              <Card className="space-y-3 bg-[var(--color-status-info-bg)] p-4">
                 <div>
-                  <p className="text-sm font-medium text-[var(--ss-text-muted)]">Headline</p>
-                  <p className="mt-1 text-sm font-semibold text-[var(--ss-text)]">{campaignCopy.headline}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">Headline</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">
+                    {campaignCopy.headline}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--ss-text-muted)]">Description</p>
-                  <p className="mt-1 text-sm text-[var(--ss-text)]">{campaignCopy.description}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">Description</p>
+                  <p className="mt-1 text-sm text-[var(--color-text-primary)]">{campaignCopy.description}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--ss-text-muted)]">Call to Action</p>
-                  <Badge variant="success" className="mt-1">{campaignCopy.cta}</Badge>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">Call to Action</p>
+                  <Badge variant="success" className="mt-1">
+                    {campaignCopy.cta}
+                  </Badge>
                 </div>
                 {campaignCopy.selling_points && campaignCopy.selling_points.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-[var(--ss-text-muted)]">Key Selling Points</p>
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">Key Selling Points</p>
                     <ul className="mt-2 space-y-1">
                       {campaignCopy.selling_points.map((point, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm text-[var(--ss-text)]">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        <li key={idx} className="flex items-center gap-2 text-sm text-[var(--color-text-primary)]">
+                          <CheckCircle className="h-4 w-4 text-[var(--color-status-success-text)]" />
                           {point}
                         </li>
                       ))}
@@ -620,8 +655,8 @@ export default function AiMarketingPage() {
           {/* Audience Insights Section */}
           <div>
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 font-semibold text-[var(--ss-text)]">
-                <Lightbulb className="w-5 h-5 text-yellow-500" />
+              <h3 className="flex items-center gap-2 font-semibold text-[var(--color-text-primary)]">
+                <Lightbulb className="h-5 w-5 text-yellow-500" />
                 Audience Insights
               </h3>
               <Button
@@ -630,23 +665,23 @@ export default function AiMarketingPage() {
                 disabled={aiLoading}
                 variant={audienceInsights ? 'outline' : 'primary'}
               >
-                {aiLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Lightbulb className="w-4 h-4" />}
+                {aiLoading ? <Loader className="h-4 w-4 animate-spin" /> : <Lightbulb className="h-4 w-4" />}
                 {audienceInsights ? 'Refresh' : 'Analyze'}
               </Button>
             </div>
             {audienceInsights && (
-              <Card className="space-y-3 bg-yellow-50 p-4">
+              <Card className="space-y-3 bg-[var(--color-status-warning-bg)] p-4">
                 <div>
-                  <p className="text-sm font-medium text-[var(--ss-text-muted)]">Characteristics</p>
-                  <p className="mt-1 text-sm text-[var(--ss-text)]">{audienceInsights.characteristics}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">Characteristics</p>
+                  <p className="mt-1 text-sm text-[var(--color-text-primary)]">{audienceInsights.characteristics}</p>
                 </div>
                 {audienceInsights.opportunities && audienceInsights.opportunities.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-[var(--ss-text-muted)]">Engagement Opportunities</p>
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">Engagement Opportunities</p>
                     <ul className="mt-2 space-y-1">
                       {audienceInsights.opportunities.map((opp, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm text-[var(--ss-text)]">
-                          <TrendingUp className="w-4 h-4 text-orange-600" />
+                        <li key={idx} className="flex items-center gap-2 text-sm text-[var(--color-text-primary)]">
+                          <TrendingUp className="h-4 w-4 text-orange-600" />
                           {opp}
                         </li>
                       ))}
@@ -654,15 +689,19 @@ export default function AiMarketingPage() {
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium text-[var(--ss-text-muted)]">Recommended Offer</p>
-                  <Badge variant="warning" className="mt-1">{audienceInsights.offer_recommendation}</Badge>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">Recommended Offer</p>
+                  <Badge variant="warning" className="mt-1">
+                    {audienceInsights.offer_recommendation}
+                  </Badge>
                 </div>
                 {audienceInsights.channels && (
                   <div>
-                    <p className="text-sm font-medium text-[var(--ss-text-muted)]">Best Channels</p>
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">Best Channels</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {audienceInsights.channels.map((channel, idx) => (
-                        <Badge key={idx} variant="success">{channel}</Badge>
+                      {audienceInsights.channels.map((ch, idx) => (
+                        <Badge key={idx} variant="success">
+                          {ch}
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -671,6 +710,53 @@ export default function AiMarketingPage() {
             )}
           </div>
         </div>
-      </Modal>    </div>
+      </Modal>
+    </div>
+  )
+}
+
+// ============================================================================
+// MAIN PAGE COMPONENT
+// ============================================================================
+
+export default function AiMarketingPage() {
+  const tabItems = [
+    {
+      key: 'campaigns',
+      label: 'Campaigns',
+      icon: <Megaphone className="h-4 w-4" />,
+      content: <CampaignsTab />,
+    },
+    {
+      key: 'analytics',
+      label: 'Analytics',
+      icon: <BarChart3 className="h-4 w-4" />,
+      content: <MarketingAnalytics />,
+    },
+    {
+      key: 'ab-testing',
+      label: 'A/B Testing',
+      icon: <FlaskConical className="h-4 w-4" />,
+      content: <ABTestingPanel />,
+    },
+    {
+      key: 'audience',
+      label: 'Audience Builder',
+      icon: <Users className="h-4 w-4" />,
+      content: <AudienceBuilder />,
+    },
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-headline text-xl font-semibold text-[var(--color-text-primary)]">AI Marketing</h1>
+        <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+          AI-powered campaigns, analytics, A/B testing, and audience segmentation.
+        </p>
+      </div>
+
+      <Tabs items={tabItems} />
+    </div>
   )
 }

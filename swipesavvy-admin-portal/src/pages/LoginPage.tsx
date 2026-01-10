@@ -1,19 +1,35 @@
+/**
+ * SwipeSavvy Admin Portal - Bank-Grade Login Page
+ * Version: 4.0
+ *
+ * Bank-grade login requirements:
+ * - Clear, professional appearance
+ * - Accessible form with proper labels
+ * - Error state handling
+ * - Loading state feedback
+ */
+
 import { useAuthStore } from '@/store/authStore'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { Lock, Mail, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
+import Card from '@/components/ui/Card'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as any)?.from ?? '/dashboard'
+  const from = (location.state as { from?: string })?.from ?? '/dashboard'
 
   const login = useAuthStore((s) => s.login)
   const loading = useAuthStore((s) => s.loading)
   const error = useAuthStore((s) => s.error)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
-  const [email, setEmail] = useState('admin@swipesavvy.com')
-  const [password, setPassword] = useState('Admin123!')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({})
 
   useEffect(() => {
@@ -33,83 +49,126 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--ss-bg)]">
-      <div className="mx-auto flex min-h-screen max-w-[1200px] items-center justify-center px-4">
-        <div className="w-full max-w-md">
-          <div className="rounded-lg border border-[var(--ss-border)] bg-[var(--ss-surface)] p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--ss-primary)] text-white font-semibold text-sm">
-                SS
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-[var(--ss-text)]">Sign in</h2>
-                <p className="text-sm text-[var(--ss-text-muted)]">SwipeSavvy Admin Portal</p>
-              </div>
+    <div className="min-h-screen bg-bg-canvas flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo & Title */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-interactive-primary mb-4">
+            <Lock className="w-7 h-7 text-interactive-primary-text" />
+          </div>
+          <h1 className="text-2xl font-semibold text-text-primary">SwipeSavvy</h1>
+          <p className="text-text-secondary mt-1">Admin Portal</p>
+        </div>
+
+        <Card variant="outlined" padding="lg">
+          {/* Error Alert */}
+          {error && (
+            <div
+              className="mb-6 p-4 rounded-md bg-status-danger-subtle border border-status-danger/20 flex items-start gap-3"
+              role="alert"
+            >
+              <AlertCircle className="w-5 h-5 text-status-danger flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-status-danger-text">{error}</p>
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={onSubmit} className="space-y-5">
+            {/* Email */}
+            <Input
+              id="email"
+              type="email"
+              label="Email Address"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              leftIcon={<Mail className="w-5 h-5" />}
+              errorText={fieldErrors.email}
+              autoComplete="email"
+              isRequired
+            />
+
+            {/* Password */}
+            <div>
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                label="Password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                leftIcon={<Lock className="w-5 h-5" />}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-text-tertiary hover:text-text-primary transition-colors pointer-events-auto"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                }
+                errorText={fieldErrors.password}
+                autoComplete="current-password"
+                isRequired
+              />
             </div>
 
-            {error && (
-              <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3">
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
-            )}
-
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-[var(--ss-text)] mb-1">
-                  Email
-                </label>
+            {/* Remember & Forgot */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  className="w-full px-3 py-2 border border-[var(--ss-border)] rounded-md text-[var(--ss-text)] bg-[var(--ss-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--ss-primary)]"
-                  placeholder="admin@swipesavvy.com"
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-border-default text-interactive-primary focus:ring-border-focus"
                 />
-                {fieldErrors.email && (
-                  <p className="text-sm text-red-600 mt-1">{fieldErrors.email}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-[var(--ss-text)] mb-1">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  className="w-full px-3 py-2 border border-[var(--ss-border)] rounded-md text-[var(--ss-text)] bg-[var(--ss-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--ss-primary)]"
-                  placeholder="Enter password"
-                />
-                {fieldErrors.password && (
-                  <p className="text-sm text-red-600 mt-1">{fieldErrors.password}</p>
-                )}
-              </div>
-
+                <span className="text-sm text-text-secondary">Remember me</span>
+              </label>
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[var(--ss-primary)] text-white font-medium py-2 px-4 rounded-md hover:bg-opacity-90 disabled:opacity-50 transition"
+                type="button"
+                className="text-sm text-text-link hover:underline font-medium"
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                Forgot password?
               </button>
-            </form>
+            </div>
 
-            <div className="mt-6 rounded-lg border border-[var(--ss-border)] bg-[var(--ss-surface-alt)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ss-text-muted)]">Demo credentials</p>
-              <p className="mt-2 text-sm text-[var(--ss-text)]">
-                Email: <code className="font-mono text-xs">admin@swipesavvy.com</code>
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              fullWidth
+              loading={loading}
+            >
+              Sign In
+            </Button>
+          </form>
+
+          {/* Demo Credentials */}
+          <div className="mt-6 p-4 rounded-md bg-status-info-subtle border border-status-info/20">
+            <p className="text-sm font-medium text-status-info-text mb-2">
+              Demo Credentials
+            </p>
+            <div className="space-y-1 text-sm text-status-info-text">
+              <p>
+                Email:{' '}
+                <code className="bg-bg-surface px-1.5 py-0.5 rounded text-xs font-mono">
+                  admin@swipesavvy.com
+                </code>
               </p>
-              <p className="text-sm text-[var(--ss-text)]">
-                Password: <code className="font-mono text-xs">TempPassword123!</code>
+              <p>
+                Password:{' '}
+                <code className="bg-bg-surface px-1.5 py-0.5 rounded text-xs font-mono">
+                  Admin123
+                </code>
               </p>
             </div>
           </div>
-        </div>
+        </Card>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-text-tertiary mt-6">
+          © {new Date().getFullYear()} SwipeSavvy. All rights reserved.
+        </p>
       </div>
     </div>
   )

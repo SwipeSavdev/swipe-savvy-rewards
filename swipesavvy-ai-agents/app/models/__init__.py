@@ -25,6 +25,9 @@ CHAT_SESSIONS_ID = 'chat_sessions.id'
 # Note: Don't import specific chat classes here as they may conflict with our own definitions
 import app.models.chat
 
+# Import notification models to register them with the database Base
+from app.models.notifications import DeviceToken, NotificationHistory, NotificationPreferences, NotificationTemplate
+
 # ============================================
 # swipesavvy_dev Models (Admin Portal)
 # ============================================
@@ -72,7 +75,7 @@ class AdminUser(Base):
     audit_logs = relationship("AuditLog", foreign_keys="AuditLog.user_id")
     
     __table_args__ = (
-        CheckConstraint("role IN ('admin', 'support_manager', 'analyst', 'viewer')"),
+        CheckConstraint("role IN ('super_admin', 'admin', 'support_manager', 'analyst', 'viewer', 'operator')"),
         CheckConstraint("status IN ('active', 'inactive', 'suspended')"),
     )
 
@@ -130,21 +133,23 @@ class SupportTicket(Base):
 class FeatureFlag(Base):
     """Feature rollout flags for A/B testing"""
     __tablename__ = "feature_flags"
-    
-    id = Column(UUID, primary_key=True, default=uuid4)
-    name = Column(String(255), unique=True, nullable=False, index=True)
-    display_name = Column(String(255), nullable=False)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
+    category = Column(String(50), nullable=False, index=True)
     enabled = Column(Boolean, default=False, index=True)
     rollout_percentage = Column(Integer, default=0)
-    environment = Column(String(50), default='development', index=True)
-    targeted_users = Column(ARRAY(String), default=list)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    owner_email = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
-    
+    created_by = Column(String(255), nullable=True)
+    updated_by = Column(String(255), nullable=True)
+
     __table_args__ = (
-        CheckConstraint("environment IN ('development', 'staging', 'production')"),
+        CheckConstraint("category IN ('UI', 'Advanced', 'Experimental', 'Rollout')"),
+        CheckConstraint("rollout_percentage >= 0 AND rollout_percentage <= 100"),
     )
 
 
@@ -421,8 +426,187 @@ class AnalyticsEvent(Base):
     )
 
 
+# ============================================
+# Role-Based Access Control (RBAC) Models
+# ============================================
+
+class Role(Base):
+    """Admin roles with permissions"""
+    __tablename__ = "roles"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    permissions = Column(ARRAY(String), default=list, nullable=False)
+    is_system = Column(Boolean, default=False)  # System roles cannot be deleted
+    status = Column(String(50), default='active', nullable=False)
+    user_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'inactive')"),
+    )
+
+
+class Policy(Base):
+    """Access control policies"""
+    __tablename__ = "policies"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    resource = Column(String(100), nullable=False)  # e.g., 'merchants', 'users', 'transactions'
+    actions = Column(ARRAY(String), default=list, nullable=False)  # e.g., ['read', 'write', 'delete']
+    conditions = Column(JSONB, default=dict, nullable=True)  # Optional conditions for the policy
+    effect = Column(String(10), default='allow', nullable=False)  # 'allow' or 'deny'
+    priority = Column(Integer, default=0)  # Higher priority policies evaluated first
+    is_system = Column(Boolean, default=False)
+    status = Column(String(50), default='active', nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'inactive')"),
+        CheckConstraint("effect IN ('allow', 'deny')"),
+    )
+
+
+class Permission(Base):
+    """Available permissions in the system"""
+    __tablename__ = "permissions"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), nullable=False)  # e.g., 'merchants', 'users', 'analytics'
+    resource = Column(String(100), nullable=False)
+    action = Column(String(50), nullable=False)  # e.g., 'read', 'write', 'delete', 'manage'
+    is_system = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ============================================
+# Charity Onboarding Models
+# ============================================
+
+class Charity(Base):
+    """Charity organizations for donation management"""
+    __tablename__ = "charities"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    phone = Column(String(50), nullable=True)
+    category = Column(String(100), nullable=False)
+    registration_number = Column(String(100), unique=True, nullable=True)
+    country = Column(String(100), default='United States')
+    website = Column(String(255), nullable=True)
+    documents_submitted = Column(Integer, default=0)
+    status = Column(String(50), default='incomplete', nullable=False, index=True)
+    completion_percentage = Column(Integer, default=0)
+    notes = Column(Text, nullable=True)
+    submitted_at = Column(DateTime, default=datetime.utcnow)
+    approved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('pending', 'approved', 'rejected', 'incomplete')"),
+        CheckConstraint("completion_percentage >= 0 AND completion_percentage <= 100"),
+    )
+
+
+# ============================================
+# Merchant Onboarding (Fiserv Integration)
+# ============================================
+
+class MerchantOnboarding(Base):
+    """Merchant onboarding for Fiserv AccessOne North Boarding API"""
+    __tablename__ = "merchant_onboardings"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    merchant_id = Column(UUID, ForeignKey('merchants.id'), nullable=False, index=True)
+
+    # Fiserv Reference IDs
+    ext_ref_id = Column(String(50), unique=True, nullable=False, index=True)  # Our reference
+    mpa_id = Column(String(50), nullable=True, index=True)  # Fiserv's MPA ID
+    north_number = Column(String(50), nullable=True)  # Fiserv North Number
+
+    # Status tracking
+    status = Column(String(50), default='draft', nullable=False, index=True)
+    fiserv_status = Column(String(100), nullable=True)
+    fiserv_status_message = Column(Text, nullable=True)
+    step = Column(Integer, default=1)  # Current onboarding step (1-6)
+    completion_percentage = Column(Integer, default=0)
+
+    # Business Information (Step 1)
+    legal_name = Column(String(255), nullable=True)
+    dba_name = Column(String(255), nullable=True)
+    tax_id = Column(String(20), nullable=True)
+    business_type = Column(String(100), nullable=True)
+    mcc_code = Column(String(10), nullable=True)
+    business_street = Column(String(255), nullable=True)
+    business_city = Column(String(100), nullable=True)
+    business_state = Column(String(50), nullable=True)
+    business_zip = Column(String(20), nullable=True)
+    business_country = Column(String(100), default='US')
+    website = Column(String(255), nullable=True)
+    customer_service_phone = Column(String(20), nullable=True)
+
+    # Owner/Principal Information (Step 2)
+    owner_name = Column(String(255), nullable=True)
+    owner_ssn_last4 = Column(String(4), nullable=True)
+    owner_dob = Column(Date, nullable=True)
+    owner_phone = Column(String(20), nullable=True)
+    owner_email = Column(String(255), nullable=True)
+    owner_street = Column(String(255), nullable=True)
+    owner_city = Column(String(100), nullable=True)
+    owner_state = Column(String(50), nullable=True)
+    owner_zip = Column(String(20), nullable=True)
+    owner_country = Column(String(100), default='US')
+
+    # Bank Account Information (Step 3)
+    bank_name = Column(String(255), nullable=True)
+    routing_number = Column(String(9), nullable=True)
+    account_number_encrypted = Column(String(255), nullable=True)  # Encrypted for security
+
+    # Processing Information (Step 4)
+    monthly_volume = Column(Numeric(15, 2), nullable=True)
+    avg_ticket = Column(Numeric(10, 2), nullable=True)
+    high_ticket = Column(Numeric(10, 2), nullable=True)
+
+    # Document tracking (Step 5)
+    documents = Column(JSONB, default=list)  # List of uploaded document references
+
+    # Timestamps
+    submitted_at = Column(DateTime, nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+    rejected_at = Column(DateTime, nullable=True)
+    last_status_check = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship to merchant
+    merchant = relationship("Merchant", backref="onboarding")
+
+    __table_args__ = (
+        CheckConstraint("status IN ('draft', 'submitted', 'pending_credit', 'pending_bos', 'approved', 'rejected')"),
+        CheckConstraint("step >= 1 AND step <= 6"),
+        CheckConstraint("completion_percentage >= 0 AND completion_percentage <= 100"),
+    )
+
+
 # Export all models
 __all__ = [
+    # Core models
+    "Base",
     "User",
     "AdminUser",
     "Merchant",
@@ -434,10 +618,24 @@ __all__ = [
     "AIModel",
     "DashboardAnalytic",
     "CampaignPerformance",
+    # Wallet models
     "Wallet",
     "WalletTransaction",
     "PaymentMethod",
     "Payment",
     "Subscription",
+    # Analytics
     "AnalyticsEvent",
+    # RBAC models
+    "Role",
+    "Policy",
+    "Permission",
+    # Onboarding models
+    "Charity",
+    "MerchantOnboarding",
+    # Notification models
+    "DeviceToken",
+    "NotificationHistory",
+    "NotificationPreferences",
+    "NotificationTemplate",
 ]

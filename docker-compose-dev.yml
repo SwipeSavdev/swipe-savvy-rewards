@@ -1,60 +1,125 @@
-# Simplified Docker Compose for SwipeSavvy Development
-# Skips external image pulls, focuses on local builds
+# SwipeSavvy Development Environment with Hot Reload
+# Run with: docker-compose -f docker-compose-dev.yml up -d
+#
+# Features:
+# - Hot reload for all services
+# - PostgreSQL with persistent data
+# - Redis cache
+# - MailHog for email testing
 version: '3.8'
 
 services:
-  # AI Agent Service (Main API Gateway)
-  ai-agent:
+  # ==========================================
+  # AI Agent Service (FastAPI with Hot Reload)
+  # ==========================================
+  api:
     build:
       context: ./swipesavvy-ai-agents
       dockerfile: Dockerfile
-    container_name: swipesavvy-ai-agent
+    container_name: swipesavvy-api
     ports:
       - "8000:8000"
     environment:
-      - NODE_ENV=development
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-test}
-      - DEBUG=true
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://swipesavvy:swipesavvy_dev@postgres:5432/swipesavvy_dev
+      - REDIS_URL=redis://redis:6379/0
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY:-test}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY:-test}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-test}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-test}
+      - LOG_LEVEL=DEBUG
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
     volumes:
-      - ./swipesavvy-ai-agents:/app
+      - ./swipesavvy-ai-agents:/app:cached
+      - api-logs:/app/logs
+    networks:
+      - swipesavvy-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    # Hot reload enabled
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/app"]
+
+  # ==========================================
+  # Admin Portal (Vite with HMR)
+  # ==========================================
+  admin-portal:
+    build:
+      context: ./swipesavvy-admin-portal
+      dockerfile: Dockerfile
+    container_name: swipesavvy-admin
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - NODE_ENV=development
+    volumes:
+      - ./swipesavvy-admin-portal:/app:cached
       - /app/node_modules
+    networks:
+      - swipesavvy-network
+    depends_on:
+      - api
+    restart: unless-stopped
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: swipesavvy-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=swipesavvy
+      - POSTGRES_PASSWORD=swipesavvy_dev
+      - POSTGRES_DB=swipesavvy_dev
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swipesavvy -d swipesavvy_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - swipesavvy-network
     restart: unless-stopped
 
-  # Mobile Wallet Service
-  mobile-wallet:
-    build:
-      context: ./swipesavvy-mobile-wallet
-      dockerfile: Dockerfile
-    container_name: swipesavvy-mobile-wallet
+  # ==========================================
+  # Redis Cache
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: swipesavvy-redis
     ports:
-      - "8001:8001"
-    environment:
-      - NODE_ENV=development
-      - STRIPE_API_KEY=${STRIPE_API_KEY:-sk_test}
-      - DEBUG=true
+      - "6379:6379"
     volumes:
-      - ./swipesavvy-mobile-wallet:/app
-      - /app/node_modules
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - swipesavvy-network
     restart: unless-stopped
 
-  # Customer Website
-  customer-website:
-    build:
-      context: ./swipesavvy-customer-website
-      dockerfile: Dockerfile
-    container_name: swipesavvy-customer-website
+  # ==========================================
+  # MailHog (Email Testing)
+  # ==========================================
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: swipesavvy-mailhog
     ports:
-      - "8080:8080"
-    environment:
-      - NODE_ENV=development
-      - API_BASE_URL=http://localhost:8000
-      - DEBUG=true
-    volumes:
-      - ./swipesavvy-customer-website:/app
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
     networks:
       - swipesavvy-network
     restart: unless-stopped
@@ -62,3 +127,12 @@ services:
 networks:
   swipesavvy-network:
     driver: bridge
+    name: swipesavvy-dev-network
+
+volumes:
+  postgres-data:
+    name: swipesavvy-dev-postgres
+  redis-data:
+    name: swipesavvy-dev-redis
+  api-logs:
+    name: swipesavvy-dev-logs

@@ -1,10 +1,17 @@
+/**
+ * SwipeSavvy Admin Portal - Bank-Grade Pagination Component
+ * Version: 4.0
+ *
+ * Clear page info with accessible navigation
+ */
+
 import { cn } from '@/utils/cn'
 import Button from './Button'
 
 export interface PaginationProps {
   page: number
   totalPages: number
-  onPageChange: (page: number) => void
+  onPageChange: (_page: number) => void
   className?: string
 }
 
@@ -24,51 +31,77 @@ export default function Pagination({ page, totalPages, onPageChange, className }
   const pages = range(start, end)
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)} aria-label="Pagination">
-      <Button variant="outline" size="sm" onClick={() => onPageChange(1)} disabled={clampedPage === 1}>
+    <nav
+      className={cn('flex flex-wrap items-center gap-2', className)}
+      aria-label="Pagination"
+    >
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => onPageChange(1)}
+        disabled={clampedPage === 1}
+        aria-label="Go to first page"
+      >
         First
       </Button>
-      <Button variant="outline" size="sm" onClick={() => onPageChange(clampedPage - 1)} disabled={clampedPage === 1}>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => onPageChange(clampedPage - 1)}
+        disabled={clampedPage === 1}
+        aria-label="Go to previous page"
+      >
         Prev
       </Button>
 
       <div className="flex items-center gap-1">
-        {start > 1 ? <span className="px-2 text-sm text-[var(--ss-text-muted)]">…</span> : null}
+        {start > 1 && (
+          <span className="px-2 text-sm text-text-tertiary" aria-hidden="true">
+            …
+          </span>
+        )}
         {pages.map((p) => (
           <button
             key={p}
             type="button"
             onClick={() => onPageChange(p)}
             className={cn(
-              'h-9 rounded-md px-3 text-sm transition-colors',
+              'h-8 min-w-[32px] rounded-md px-3 text-sm font-medium transition-all duration-fast',
               p === clampedPage
-                ? 'bg-[var(--ss-primary)] text-white'
-                : 'border border-[var(--ss-border)] bg-[var(--ss-surface)] text-[var(--ss-text)] hover:bg-[var(--ss-surface-alt)]',
+                ? 'bg-interactive-primary text-interactive-primary-text'
+                : 'bg-bg-surface border border-border-default text-text-primary hover:bg-bg-subtle hover:border-border-strong'
             )}
-            aria-current={p === clampedPage}
+            aria-current={p === clampedPage ? 'page' : undefined}
+            aria-label={`Page ${p}`}
           >
             {p}
           </button>
         ))}
-        {end < totalPages ? <span className="px-2 text-sm text-[var(--ss-text-muted)]">…</span> : null}
+        {end < totalPages && (
+          <span className="px-2 text-sm text-text-tertiary" aria-hidden="true">
+            …
+          </span>
+        )}
       </div>
 
       <Button
-        variant="outline"
+        variant="secondary"
         size="sm"
         onClick={() => onPageChange(clampedPage + 1)}
         disabled={clampedPage === totalPages}
+        aria-label="Go to next page"
       >
         Next
       </Button>
       <Button
-        variant="outline"
+        variant="secondary"
         size="sm"
         onClick={() => onPageChange(totalPages)}
         disabled={clampedPage === totalPages}
+        aria-label="Go to last page"
       >
         Last
       </Button>
-    </div>
+    </nav>
   )
 }

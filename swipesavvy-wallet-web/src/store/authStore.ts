@@ -21,7 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem('token'),
   isAuthenticated: !!localStorage.getItem('token'),
 
-  login: async (email: string, password: string) => {
+  login: async (email: string, _password: string) => {
     // Mock login - in production, call real API
     const mockUser: User = {
       id: 'user-001',

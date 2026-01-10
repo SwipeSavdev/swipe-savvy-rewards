@@ -1,6 +1,5 @@
 import { ReactNode } from 'react'
 import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/Icon'
 import { X, Maximize2 } from 'lucide-react'
 
@@ -57,7 +56,7 @@ export default function DashboardWidget({
       {/* Content */}
       <div className="mt-4">
         {isLoading ? (
-          <div className="h-64 flex items-center justify-center">
+          <div style={{ height: 280 }} className="flex items-center justify-center">
             <div className="text-center">
               <div className="inline-block animate-spin">
                 <Icon name="settings" className="h-6 w-6 text-[var(--ss-primary)]" />
@@ -66,7 +65,7 @@ export default function DashboardWidget({
             </div>
           </div>
         ) : error ? (
-          <div className="h-64 flex items-center justify-center">
+          <div style={{ height: 280 }} className="flex items-center justify-center">
             <div className="text-center">
               <Icon name="warning" className="h-6 w-6 text-[var(--ss-danger)] mx-auto" />
               <p className="mt-2 text-sm text-[var(--ss-danger)]">{error}</p>

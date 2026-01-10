@@ -1,6 +1,5 @@
 import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/Icon'
-import type { DashboardWidget } from '@/store/dashboardWidgetStore'
 import { useDashboardWidgetStore } from '@/store/dashboardWidgetStore'
 
 interface WidgetCustomizerProps {

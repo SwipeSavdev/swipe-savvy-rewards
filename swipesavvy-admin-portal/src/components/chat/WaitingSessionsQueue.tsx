@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Check, Clock, MessageSquare } from 'lucide-react';
 import { apiClient } from '../../services/api';
 
 interface WaitingSession {
@@ -51,7 +52,7 @@ const WaitingSessionsQueue: React.FC = () => {
     <div className="waiting-sessions-queue">
       <h3>Waiting Queue ({sessions.length})</h3>
       {sessions.length === 0 ? (
-        <div className="empty-state">✓ All customers are being served!</div>
+        <div className="empty-state"><Check className="w-4 h-4 inline mr-1" /> All customers are being served!</div>
       ) : (
         <div className="queue-list">
           {sessions.map((session, index) => (
@@ -66,10 +67,10 @@ const WaitingSessionsQueue: React.FC = () => {
                 </div>
                 <div className="queue-details">
                   <span className="wait-time">
-                    ⏳ {formatWaitTime(session.wait_time_seconds)}
+                    <Clock className="w-4 h-4 inline mr-1" />{formatWaitTime(session.wait_time_seconds)}
                   </span>
                   <span className="message-count">
-                    💬 {session.message_count} messages
+                    <MessageSquare className="w-4 h-4 inline mr-1" />{session.message_count} messages
                   </span>
                 </div>
               </div>
