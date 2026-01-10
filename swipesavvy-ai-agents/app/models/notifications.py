@@ -3,14 +3,14 @@ Database models for Phase 10 Task 2: Push Notifications
 Supports device token storage, notification history, and preferences.
 """
 
-from sqlalchemy import Column, String, UUID, Boolean, DateTime, Text, Integer, Enum, ForeignKey, JSONB
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
-import enum
 
-Base = declarative_base()
+# Use shared Base from app.database to ensure all models are in the same registry
+from app.database import Base
 
 
 class DeviceToken(Base):
