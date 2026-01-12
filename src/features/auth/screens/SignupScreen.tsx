@@ -529,17 +529,41 @@ export function SignupScreen() {
       if (kycResult.success) {
         // Signup via auth store
         await signup(signupData, kycResult);
-        Alert.alert(
-          'Welcome to SwipeSavvy!',
-          `Your account has been created with ${kycResult.tier === 'tier1' ? 'Tier 1' : 'Tier 2'} status.`,
-          [{ text: 'Get Started', style: 'default' }]
-        );
+
+        // Check if user is authenticated (verification not required) or needs verification
+        const { isAuthenticated, user } = useAuthStore.getState();
+
+        if (isAuthenticated) {
+          // User is fully authenticated - show welcome message
+          Alert.alert(
+            'Welcome to SwipeSavvy!',
+            `Your account has been created with ${kycResult.tier === 'tier1' ? 'Tier 1' : 'Tier 2'} status.`,
+            [{ text: 'Get Started', style: 'default' }]
+          );
+        } else if (user) {
+          // User created but needs verification - navigate to verification screen
+          Alert.alert(
+            'Verify Your Account',
+            'Please check your email and phone for verification codes.',
+            [
+              {
+                text: 'Continue',
+                onPress: () => (navigation as any).navigate('VerifyAccount', {
+                  email: signupData.personal.email,
+                  phone: signupData.personal.phone,
+                  userId: user.id
+                }),
+              },
+            ]
+          );
+        }
       } else {
         Alert.alert('Verification Failed', kycResult.message || 'Please check your information and try again.');
       }
     } catch (error) {
       console.error('Signup error:', error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsLoading(false);
     }

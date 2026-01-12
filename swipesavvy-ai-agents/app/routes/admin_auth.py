@@ -410,12 +410,12 @@ async def login(req: LoginRequest, request: Request, db: Session = Depends(get_d
     return LoginResponse(
         session={
             "token": token,
-            "user": UserInfo(
-                id=user_data["id"],
-                name=user_data["name"],
-                email=user_data["email"],
-                role=user_data["role"]
-            )
+            "user": {
+                "id": user_data["id"],
+                "name": user_data["name"],
+                "email": user_data["email"],
+                "role": user_data["role"]
+            }
         },
         token=token,
         expires_at=expires_at

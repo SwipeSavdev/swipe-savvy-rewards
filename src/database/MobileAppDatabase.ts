@@ -3,19 +3,24 @@
  * Manages SQLite database operations for offline support and persistence
  */
 
+import { Platform } from 'react-native';
 import { MOBILE_APP_SQL_STATEMENTS } from './schema';
 
 let SQLite: any = null;
 
-// Create a fallback mock for SQLite when not available
+// Create a fallback mock for SQLite when not available (web platform)
 const createSQLiteFallback = () => ({
   openDatabaseAsync: async () => ({
     execAsync: async () => undefined,
     runAsync: async () => undefined,
     getFirstAsync: async () => undefined,
     getAllAsync: async () => [],
+    closeAsync: async () => undefined,
   }),
 });
+
+// Check if we're on web platform
+const isWeb = Platform.OS === 'web';
 
 export class MobileAppDatabase {
   private static instance: MobileAppDatabase;
@@ -35,6 +40,14 @@ export class MobileAppDatabase {
    */
   async initialize(): Promise<void> {
     try {
+      // On web platform, use localStorage-based fallback
+      if (isWeb) {
+        console.log('📱 Web platform detected - using localStorage fallback');
+        SQLite = createSQLiteFallback();
+        this.db = await SQLite.openDatabaseAsync('swipesavvy_mobile.db');
+        return;
+      }
+
       // Try to import expo-sqlite, fall back to mock if not available
       if (!SQLite) {
         try {

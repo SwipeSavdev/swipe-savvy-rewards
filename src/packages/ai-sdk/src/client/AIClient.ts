@@ -62,21 +62,28 @@ export class SwipeSavvyAI {
     this.config = config;
     this.mockMode = process.env.MOCK_API === 'true' || Constants.expoConfig?.extra?.MOCK_API === 'true';
     
+    // Get API URL from config, env vars, or app.json extra config
+    const resolvedBaseUrl = config.baseUrl
+      || process.env.EXPO_PUBLIC_API_URL
+      || Constants.expoConfig?.extra?.API_BASE_URL
+      || Constants.expoConfig?.extra?.AI_API_BASE_URL
+      || 'https://api.swipesavvy.com';
+
     // Initialize data service for fetching user context
     this.dataService = new DataService(
-      config.baseUrl || Constants.expoConfig?.extra?.AI_API_BASE_URL,
+      resolvedBaseUrl,
       config.accessToken,
       config.userId
     );
-    
+
     console.log('🔧 AI Client Mock Mode:', this.mockMode, {
       processEnv: process.env.MOCK_API,
       expoConfig: Constants.expoConfig?.extra?.MOCK_API,
-      baseUrl: config.baseUrl || Constants.expoConfig?.extra?.AI_API_BASE_URL
+      baseUrl: resolvedBaseUrl
     });
-    
+
     this.client = axios.create({
-      baseURL: config.baseUrl || Constants.expoConfig?.extra?.AI_API_BASE_URL,
+      baseURL: resolvedBaseUrl,
       timeout: config.timeout || 30000,
       headers: {
         'Authorization': `Bearer ${config.accessToken}`,

@@ -27,8 +27,8 @@ import jwt
 
 from app.database import get_db
 from app.models import User, UserKYCHistory, OFACScreeningResult
-from app.services.email_service import EmailService
-from app.services.sms_service import SMSService
+from app.services.aws_ses_service import AWSSESService
+from app.services.aws_sns_service import AWSSNSService
 
 router = APIRouter(prefix="/api/v1/auth", tags=["User Authentication"])
 
@@ -348,6 +348,7 @@ async def signup(
     )
 
     db.add(user)
+    db.flush()  # Flush to get user.id without committing transaction
 
     # Log KYC history
     log_kyc_history(
@@ -401,14 +402,16 @@ async def signup(
     }
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login")
 async def login(
     request: LoginRequest,
+    background_tasks: BackgroundTasks,
     req: Request,
     db: Session = Depends(get_db)
 ):
     """
-    Authenticate user and return JWT tokens.
+    Authenticate user and send OTP for verification.
+    Two-factor authentication is required for every login.
     """
     # Find user
     user = db.query(User).filter(User.email == request.email.lower()).first()
@@ -447,26 +450,36 @@ async def login(
     if user.status == 'deleted':
         raise HTTPException(status_code=403, detail="Account has been deleted")
 
-    # Reset failed attempts on successful login
+    # Reset failed attempts on successful password verification
     user.failed_login_attempts = 0
     user.locked_until = None
-    user.last_login = datetime.utcnow()
+
+    # Generate OTP code for login verification
+    otp_code = generate_verification_code()
+    user.phone_verification_code = otp_code
+    user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
     db.commit()
 
-    # Generate tokens
-    access_token = create_access_token(str(user.id), user.email)
-    refresh_token = create_refresh_token(str(user.id))
+    # Send OTP via SMS in background
+    background_tasks.add_task(
+        send_verification_sms,
+        phone=user.phone,
+        code=otp_code
+    )
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        expires_in=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
-        user={
+    # Return response indicating OTP is required (no tokens yet)
+    return {
+        "otp_required": True,
+        "verification_required": True,
+        "message": "Verification code sent to your phone",
+        "user_id": str(user.id),
+        "user": {
             "id": str(user.id),
             "email": user.email,
             "name": user.name,
             "first_name": user.first_name,
             "last_name": user.last_name,
+            "phone": user.phone,
             "status": user.status,
             "role": user.role,
             "kyc_tier": user.kyc_tier,
@@ -474,7 +487,7 @@ async def login(
             "email_verified": user.email_verified,
             "phone_verified": user.phone_verified
         }
-    )
+    }
 
 
 @router.post("/verify-email")
@@ -529,6 +542,75 @@ async def verify_email(
     }
 
 
+class VerifyLoginOTPRequest(BaseModel):
+    """Verify OTP for login"""
+    user_id: str
+    code: str = Field(..., min_length=6, max_length=6)
+
+
+@router.post("/verify-login-otp")
+async def verify_login_otp(
+    request: VerifyLoginOTPRequest,
+    req: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Verify OTP code during login and return JWT tokens.
+    This endpoint does not require authentication as it's part of the login flow.
+    """
+    # Find user by ID
+    user = db.query(User).filter(User.id == request.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if code has expired
+    if not user.phone_verification_expires or user.phone_verification_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please login again.")
+
+    # Verify the OTP code
+    if user.phone_verification_code != request.code:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+
+    # Clear OTP data
+    user.phone_verification_code = None
+    user.phone_verification_expires = None
+    user.last_login = datetime.utcnow()
+
+    # Mark phone as verified if not already
+    if not user.phone_verified:
+        user.phone_verified = True
+        user.phone_verified_at = datetime.utcnow()
+
+    db.commit()
+
+    # Generate tokens - user is now fully authenticated
+    access_token = create_access_token(str(user.id), user.email)
+    refresh_token = create_refresh_token(str(user.id))
+
+    return {
+        "success": True,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": ACCESS_TOKEN_EXPIRE_HOURS * 3600,
+        "user": {
+            "id": str(user.id),
+            "email": user.email,
+            "name": user.name,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone": user.phone,
+            "status": user.status,
+            "role": user.role,
+            "kyc_tier": user.kyc_tier,
+            "kyc_status": user.kyc_status,
+            "email_verified": user.email_verified,
+            "phone_verified": user.phone_verified
+        }
+    }
+
+
 @router.post("/verify-phone")
 async def verify_phone(
     request: PhoneVerificationRequest,
@@ -536,7 +618,7 @@ async def verify_phone(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Verify user phone with OTP code"""
+    """Verify user phone with OTP code (for initial signup verification)"""
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
@@ -581,6 +663,43 @@ async def verify_phone(
     }
 
 
+class ResendLoginOTPRequest(BaseModel):
+    """Resend OTP for login verification"""
+    user_id: str
+
+
+@router.post("/resend-login-otp")
+async def resend_login_otp(
+    request: ResendLoginOTPRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """
+    Resend OTP code for login verification.
+    This endpoint does not require authentication as it's part of the login flow.
+    """
+    # Find user by ID
+    user = db.query(User).filter(User.id == request.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Generate new OTP code
+    otp_code = generate_verification_code()
+    user.phone_verification_code = otp_code
+    user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
+    db.commit()
+
+    # Send OTP via SMS in background
+    background_tasks.add_task(
+        send_verification_sms,
+        phone=user.phone,
+        code=otp_code
+    )
+
+    return {"success": True, "message": "Verification code sent"}
+
+
 @router.post("/resend-verification")
 async def resend_verification(
     request: ResendVerificationRequest,
@@ -588,7 +707,7 @@ async def resend_verification(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Resend email or phone verification"""
+    """Resend email or phone verification (requires authentication)"""
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
@@ -806,50 +925,37 @@ async def check_phone_availability(
 # ============================================
 
 async def send_verification_email(email: str, first_name: str, token: str):
-    """Send email verification link"""
+    """Send email verification link using AWS SES"""
     try:
-        email_service = EmailService()
-        base_url = os.getenv("APP_BASE_URL", "https://app.swipesavvy.com")
-        verification_link = f"{base_url}/verify-email?token={token}"
-
-        await email_service.send_template_email(
+        email_service = AWSSESService()
+        await email_service.send_verification_email(
             to_email=email,
-            template_name="email_verification",
-            template_data={
-                "first_name": first_name,
-                "verification_link": verification_link,
-                "expires_in": "24 hours"
-            }
+            verification_token=token,
+            user_name=first_name
         )
     except Exception as e:
         print(f"Failed to send verification email: {e}")
 
 
 async def send_verification_sms(phone: str, code: str):
-    """Send phone verification code via SMS"""
+    """Send phone verification code via SMS using AWS SNS"""
     try:
-        sms_service = SMSService()
-        message = f"Your SwipeSavvy verification code is: {code}. This code expires in 10 minutes."
-        await sms_service.send_sms(phone, message)
+        sms_service = AWSSNSService()
+        result = await sms_service.send_verification_code(phone, code)
+        if not result.get("success"):
+            print(f"Failed to send verification SMS: {result.get('error')}")
     except Exception as e:
         print(f"Failed to send verification SMS: {e}")
 
 
 async def send_password_reset_email(email: str, first_name: str, token: str):
-    """Send password reset email"""
+    """Send password reset email using AWS SES"""
     try:
-        email_service = EmailService()
-        base_url = os.getenv("APP_BASE_URL", "https://app.swipesavvy.com")
-        reset_link = f"{base_url}/reset-password?token={token}"
-
-        await email_service.send_template_email(
+        email_service = AWSSESService()
+        await email_service.send_password_reset_email(
             to_email=email,
-            template_name="password_reset",
-            template_data={
-                "first_name": first_name,
-                "reset_link": reset_link,
-                "expires_in": "1 hour"
-            }
+            reset_token=token,
+            user_name=first_name
         )
     except Exception as e:
         print(f"Failed to send password reset email: {e}")

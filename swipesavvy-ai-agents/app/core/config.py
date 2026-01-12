@@ -40,13 +40,18 @@ class Settings:
     # Override for production
     if ENVIRONMENT == "production":
         CORS_ORIGINS = [
+            # Production domains
+            "https://www.swipesavvy.com",
+            "https://swipesavvy.com",
+            "https://api.swipesavvy.com",
             "https://admin.swipesavvy.com",
             "https://wallet.swipesavvy.com",
-            "https://swipesavvy.com",
+            "https://app.swipesavvy.com",
+            # Current AWS IP (temporary until DNS propagates)
             "http://54.224.8.14",
+            "http://54.224.8.14:5173",
             "http://54.224.8.14:3001",
-            "http://54.224.8.14:3002",
-            "*",  # Allow all for now until DNS is configured
+            "http://54.224.8.14:8000",
         ]
     
     # Database
@@ -141,31 +146,45 @@ class Settings:
     @property
     def allowed_origins(self):
         """Get CORS origins based on environment"""
-        
+
         if self.ENVIRONMENT == "production":
             return [
+                # Main production domains
+                "https://www.swipesavvy.com",
+                "https://swipesavvy.com",
                 "https://api.swipesavvy.com",
-                "https://app.swipesavvy.com",
                 "https://admin.swipesavvy.com",
+                "https://wallet.swipesavvy.com",
+                "https://app.swipesavvy.com",
+                # Temporary AWS IP access
+                "http://54.224.8.14",
+                "http://54.224.8.14:5173",
+                "http://54.224.8.14:3001",
             ]
-        
+
         elif self.ENVIRONMENT == "staging":
             return [
+                "https://staging.swipesavvy.com",
                 "https://staging-api.swipesavvy.com",
-                "https://staging-app.swipesavvy.com",
-                "http://localhost:5173",  # For local testing
+                "https://staging-admin.swipesavvy.com",
+                "https://staging-wallet.swipesavvy.com",
+                "http://localhost:5173",
                 "http://localhost:3000",
                 "http://localhost:8081",
             ]
-        
+
         else:  # development
             return [
                 "http://localhost:8081",
                 "http://localhost:5173",
                 "http://localhost:3000",
+                "http://localhost:3001",
                 "http://127.0.0.1:8081",
                 "http://127.0.0.1:5173",
                 "http://127.0.0.1:3000",
+                "http://127.0.0.1:3001",
+                "http://192.168.1.142:5173",
+                "http://192.168.1.142:3000",
                 "exp://localhost:8081",
             ]
 

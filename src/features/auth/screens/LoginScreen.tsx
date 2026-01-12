@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '../stores/authStore';
@@ -16,7 +16,29 @@ export function LoginScreen() {
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) return;
     clearError();
-    await login(email, password);
+    try {
+      const result = await login(email, password);
+
+      // Check if OTP verification is required
+      if (result?.verification_required && result.user) {
+        Alert.alert(
+          'Verify Your Identity',
+          'A verification code has been sent to your phone.',
+          [
+            {
+              text: 'Continue',
+              onPress: () => navigation.navigate('VerifyAccount', {
+                email: result.user.email,
+                phone: result.user.phone || '',
+                userId: result.user.id,
+              }),
+            },
+          ]
+        );
+      }
+    } catch {
+      // Error is already set in the store
+    }
   };
 
   const handleSignup = () => {

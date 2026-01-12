@@ -1,21 +1,25 @@
 """Admin User Management Routes
 
-This module provides endpoints for managing admin portal users.
-Includes admin user listing, creation, details, status updates, and deletion.
+This module provides endpoints for managing admin portal users AND customer users.
+Includes user listing, creation, invitation, details, status updates, and deletion.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body, Header, Depends
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import jwt
 import os
 import bcrypt
+import secrets
+import logging
 
 from app.database import get_db
-from app.models import AdminUser
+from app.models import AdminUser, User
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/admin/users", tags=["admin-users"])
 
@@ -36,9 +40,21 @@ def verify_token(token: str) -> dict:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+def generate_invite_token() -> str:
+    """Generate a secure invitation token."""
+    return secrets.token_urlsafe(32)
+
 # ============================================================================
 # Request/Response Models
 # ============================================================================
+
+class CustomerUserCreateRequest(BaseModel):
+    """Request body for creating/inviting a customer user"""
+    email: EmailStr
+    name: str
+    phone: Optional[str] = None
+    invite: bool = True  # If True, send invitation email; if False, require password
+
 
 class AdminUserCreateRequest(BaseModel):
     """Request body for creating a new admin user"""
@@ -79,25 +95,25 @@ class AdminUserListResponse(BaseModel):
 
 
 # ============================================================================
-# Endpoints
+# Customer User Endpoints (for UsersPage.tsx)
 # ============================================================================
 
 @router.get("", response_model=AdminUserListResponse)
-async def list_admin_users(
+async def list_users(
     page: int = Query(1, ge=1),
     per_page: int = Query(25, ge=1, le=100),
-    role: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
     """
-    List all admin users with pagination and filtering
+    List all customer users with pagination and filtering
 
     Query Parameters:
     - page: Page number (default: 1)
     - per_page: Items per page (default: 25, max: 100)
-    - role: Filter by role (super_admin, admin, support, analyst)
+    - status: Filter by status (active, invited, suspended)
     - search: Search by email or name
     """
     # Token is optional for demo
@@ -105,37 +121,37 @@ async def list_admin_users(
         token = authorization.replace("Bearer ", "")
         verify_token(token)
 
-    # Build query
-    query = db.query(AdminUser)
+    # Build query for customer users (User model)
+    query = db.query(User)
 
-    # Filter by role
-    if role:
-        query = query.filter(AdminUser.role == role)
+    # Filter by status
+    if status:
+        query = query.filter(User.status == status)
 
     # Search by email or name
     if search:
         search_pattern = f"%{search}%"
         query = query.filter(
-            (AdminUser.email.ilike(search_pattern)) |
-            (AdminUser.full_name.ilike(search_pattern))
+            (User.email.ilike(search_pattern)) |
+            (User.name.ilike(search_pattern))
         )
 
     # Get total count
     total = query.count()
     total_pages = (total + per_page - 1) // per_page
 
-    # Apply pagination
-    users = query.offset((page - 1) * per_page).limit(per_page).all()
+    # Apply pagination and order by created_at descending
+    users = query.order_by(User.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
 
     return AdminUserListResponse(
         users=[
             AdminUserResponse(
                 id=str(u.id),
                 email=u.email,
-                name=u.full_name,  # Map full_name to name for frontend
-                role=u.role,
-                department=u.department,
-                status=u.status,
+                name=u.name or u.email.split('@')[0],  # Fallback to email prefix if no name
+                role="customer",  # All are customers
+                department=None,
+                status=u.status or "active",
                 created_at=u.created_at.isoformat() if u.created_at else None,
                 last_login=u.last_login.isoformat() if u.last_login else None,
             )
@@ -149,42 +165,62 @@ async def list_admin_users(
 
 
 @router.post("", response_model=AdminUserResponse, status_code=201)
-async def create_admin_user(req: AdminUserCreateRequest, db: Session = Depends(get_db)):
+async def create_user(req: CustomerUserCreateRequest, db: Session = Depends(get_db)):
     """
-    Create a new admin user
+    Create/invite a new customer user
 
     Request Body:
-    - email: Admin email address (must be unique)
-    - full_name: Admin full name
-    - password: Password
-    - role: Role (super_admin, admin, support, analyst)
-    - department: Optional department
+    - email: User email address (must be unique)
+    - name: User's full name
+    - phone: Optional phone number
+    - invite: If True, send invitation email
     """
-    # Check if email already exists
-    existing_user = db.query(AdminUser).filter(AdminUser.email == req.email.lower()).first()
+    # Check if email already exists in User table
+    existing_user = db.query(User).filter(User.email == req.email.lower()).first()
     if existing_user:
-        raise HTTPException(status_code=409, detail="Admin user with this email already exists")
+        raise HTTPException(status_code=409, detail="User with this email already exists")
 
-    # Create new admin user
-    new_user = AdminUser(
+    # Generate invite token for password setup
+    invite_token = generate_invite_token()
+
+    # Create new customer user with 'invited' status
+    new_user = User(
         email=req.email.lower(),
-        full_name=req.full_name,
-        password_hash=hash_password(req.password),
-        role=req.role,
-        department=req.department,
-        status="active",
+        name=req.name,
+        phone=req.phone,
+        password_hash=hash_password(invite_token),  # Temporary password, user will set their own
+        status="invited",  # Set as invited until they complete signup
     )
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
+    # Send invitation email if requested
+    if req.invite:
+        try:
+            from app.services.aws_ses_service import AWSSESService
+            ses_service = AWSSESService()
+
+            # Send invitation email using the new template
+            invite_link = f"https://app.swipesavvy.com/invite?token={invite_token}&email={req.email}"
+            await ses_service.send_user_invitation(
+                to_email=req.email,
+                name=req.name,
+                invite_link=invite_link,
+                inviter_name="SwipeSavvy Admin"
+            )
+            logger.info(f"Invitation email sent to {req.email}")
+        except Exception as e:
+            logger.error(f"Failed to send invitation email to {req.email}: {e}")
+            # Don't fail the request if email fails - user is still created
+
     return AdminUserResponse(
         id=str(new_user.id),
         email=new_user.email,
-        name=new_user.full_name,
-        role=new_user.role,
-        department=new_user.department,
+        name=new_user.name,
+        role="customer",
+        department=None,
         status=new_user.status,
         created_at=new_user.created_at.isoformat() if new_user.created_at else None,
         last_login=None,

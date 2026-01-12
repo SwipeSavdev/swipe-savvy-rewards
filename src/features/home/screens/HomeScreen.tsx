@@ -420,14 +420,14 @@ export function HomeScreen() {
           <View style={styles.actionRow}>
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => (navigation as any).navigate('Accounts')}
+              onPress={() => (navigation as any).navigate('Wallet')}
             >
               <IconBox
-                icon={<MaterialCommunityIcons name="qrcode-scan" size={20} color={BRAND_COLORS.yellow} />}
+                icon={<MaterialCommunityIcons name="wallet" size={20} color={BRAND_COLORS.yellow} />}
                 variant="yellow"
               />
-              <Text style={styles.actionText}>Scan/Pay</Text>
-              <Text style={styles.actionSubtext}>Fast checkout</Text>
+              <Text style={styles.actionText}>Wallet</Text>
+              <Text style={styles.actionSubtext}>Add & withdraw</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -446,7 +446,7 @@ export function HomeScreen() {
           <View style={styles.actionRow}>
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => (navigation as any).navigate('Accounts')}
+              onPress={() => (navigation as any).navigate('Cards')}
             >
               <IconBox
                 icon={<MaterialCommunityIcons name="credit-card-plus" size={20} color={BRAND_COLORS.navy} />}
@@ -458,7 +458,7 @@ export function HomeScreen() {
 
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => (navigation as any).navigate('Accounts')}
+              onPress={() => (navigation as any).navigate('Analytics')}
             >
               <IconBox
                 icon={<MaterialCommunityIcons name="chart-line" size={20} color={BRAND_COLORS.green} />}
@@ -470,7 +470,7 @@ export function HomeScreen() {
 
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => (navigation as any).navigate('Accounts')}
+              onPress={() => (navigation as any).navigate('SavingsGoals')}
             >
               <IconBox
                 icon={<MaterialCommunityIcons name="target" size={20} color={BRAND_COLORS.yellow} />}
@@ -478,6 +478,44 @@ export function HomeScreen() {
               />
               <Text style={styles.actionText}>Goals</Text>
               <Text style={styles.actionSubtext}>Savings targets</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => (navigation as any).navigate('Budget')}
+            >
+              <IconBox
+                icon={<MaterialCommunityIcons name="calculator" size={20} color={BRAND_COLORS.deep} />}
+                variant="deep"
+              />
+              <Text style={styles.actionText}>Budget</Text>
+              <Text style={styles.actionSubtext}>Track spending</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => (navigation as any).navigate('Profile')}
+            >
+              <IconBox
+                icon={<MaterialCommunityIcons name="account" size={20} color={BRAND_COLORS.navy} />}
+                variant="default"
+              />
+              <Text style={styles.actionText}>Profile</Text>
+              <Text style={styles.actionSubtext}>Your account</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => (navigation as any).navigate('Settings')}
+            >
+              <IconBox
+                icon={<MaterialCommunityIcons name="cog" size={20} color={BRAND_COLORS.green} />}
+                variant="green"
+              />
+              <Text style={styles.actionText}>Settings</Text>
+              <Text style={styles.actionSubtext}>Preferences</Text>
             </TouchableOpacity>
           </View>
 

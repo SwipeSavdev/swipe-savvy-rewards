@@ -39,7 +39,9 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
     },
     "plugins": [
       "expo-secure-store",
@@ -57,8 +59,10 @@
         "projectId": "your-project-id"
       },
       "MOCK_API": "false",
-      "AI_API_BASE_URL": "http://54.224.8.14:8000",
-      "DEBUG_MODE": "true"
+      "API_BASE_URL": "https://api.swipesavvy.com",
+      "AI_API_BASE_URL": "https://api.swipesavvy.com",
+      "WS_URL": "wss://api.swipesavvy.com/ws",
+      "DEBUG_MODE": "false"
     }
   }
 }
