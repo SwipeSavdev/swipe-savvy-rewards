@@ -34,7 +34,8 @@ FROM_EMAIL = os.getenv("SES_FROM_EMAIL", "noreply@swipesavvy.com")
 FROM_NAME = os.getenv("SES_FROM_NAME", "SwipeSavvy")
 
 # For development/testing, enable mock mode if AWS not configured
-MOCK_EMAIL = os.getenv("MOCK_EMAIL", "true").lower() == "true" or not AWS_ACCESS_KEY_ID
+# Default to false in production - set MOCK_EMAIL=true for local development
+MOCK_EMAIL = os.getenv("MOCK_EMAIL", "false").lower() == "true" or not AWS_ACCESS_KEY_ID
 
 
 class AWSSESService:

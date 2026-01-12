@@ -30,7 +30,8 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 SNS_SENDER_ID = os.getenv("SNS_SENDER_ID", "SwipeSavvy")
 
 # For development/testing, enable mock mode if AWS not configured
-MOCK_SMS = os.getenv("MOCK_SMS", "true").lower() == "true" or not AWS_ACCESS_KEY_ID
+# Default to false in production - set MOCK_SMS=true for local development
+MOCK_SMS = os.getenv("MOCK_SMS", "false").lower() == "true" or not AWS_ACCESS_KEY_ID
 
 
 class AWSSNSService:
