@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 // Chart colors
 const COLORS = {
@@ -122,7 +123,14 @@ export default function SupportDashboardPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await axios.get(`${API_BASE_URL}/api/support/dashboard?timeRange=${timeRange}`)
+
+      // If using mock API, skip the real API call and use default data
+      if (USE_MOCK_API) {
+        setLoading(false)
+        return
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/api/support/dashboard/metrics?timeRange=${timeRange}`)
       if (response.data && response.data.stats) {
         setDashboardData(response.data)
       }

@@ -7,6 +7,7 @@ import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 interface Role {
   id: string
@@ -80,7 +81,14 @@ export default function RolesManagerPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await axios.get(`${API_BASE_URL}/api/roles`)
+
+      // If using mock API, skip the real API call and use mock data
+      if (USE_MOCK_API) {
+        setLoading(false)
+        return
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/api/v1/admin/roles`)
       setRoles(response.data.roles || response.data || MOCK_ROLES)
     } catch (err: any) {
       console.error('Failed to fetch roles:', err)
@@ -93,7 +101,7 @@ export default function RolesManagerPage() {
 
   const handleDeleteRole = async (id: string) => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/roles/${id}`)
+      await axios.delete(`${API_BASE_URL}/api/v1/admin/roles/${id}`)
       setRoles(roles.filter((r) => r.id !== id))
     } catch (err: any) {
       console.error('Failed to delete role:', err)
@@ -108,7 +116,7 @@ export default function RolesManagerPage() {
     const newStatus = role.status === 'active' ? 'inactive' : 'active'
 
     try {
-      await axios.put(`${API_BASE_URL}/api/roles/${id}`, { status: newStatus })
+      await axios.put(`${API_BASE_URL}/api/v1/admin/roles/${id}`, { status: newStatus })
       setRoles(
         roles.map((r) =>
           r.id === id ? { ...r, status: newStatus } : r,

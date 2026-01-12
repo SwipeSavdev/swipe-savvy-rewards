@@ -1,5 +1,6 @@
 # ALB Module for SwipeSavvy
 # Application Load Balancer with HTTPS, health checks, and logging
+# Supports host-based routing for all swipesavvy.com subdomains
 
 variable "name_prefix" {
   type = string
@@ -24,6 +25,12 @@ variable "certificate_arn" {
 variable "health_check_path" {
   type    = string
   default = "/health"
+}
+
+variable "domain_name" {
+  description = "Root domain name for host-based routing"
+  type        = string
+  default     = "swipesavvy.com"
 }
 
 variable "tags" {
@@ -161,6 +168,84 @@ resource "aws_lb_target_group" "admin" {
   })
 }
 
+# Target Group for Wallet Web (Vite on port 3001)
+resource "aws_lb_target_group" "wallet" {
+  name     = "${var.name_prefix}-wallet-tg"
+  port     = 3001
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+    path                = "/"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    matcher             = "200"
+  }
+
+  deregistration_delay = 30
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-wallet-tg"
+  })
+}
+
+# Target Group for Customer Website (port 8080)
+resource "aws_lb_target_group" "website" {
+  name     = "${var.name_prefix}-website-tg"
+  port     = 8080
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+    path                = "/"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    matcher             = "200"
+  }
+
+  deregistration_delay = 30
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-website-tg"
+  })
+}
+
+# Target Group for Mobile App PWA (static files served on port 3000)
+resource "aws_lb_target_group" "app" {
+  name     = "${var.name_prefix}-app-tg"
+  port     = 3000
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+    path                = "/"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    matcher             = "200"
+  }
+
+  deregistration_delay = 30
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-app-tg"
+  })
+}
+
 # HTTPS Listener
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main.arn
@@ -196,10 +281,29 @@ resource "aws_lb_listener" "http" {
   tags = var.tags
 }
 
-# Listener rule for admin portal
-resource "aws_lb_listener_rule" "admin" {
+# Listener rule for API (api.swipesavvy.com)
+resource "aws_lb_listener_rule" "api" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.api.arn
+  }
+
+  condition {
+    host_header {
+      values = ["api.${var.domain_name}"]
+    }
+  }
+
+  tags = var.tags
+}
+
+# Listener rule for Admin Portal (admin.swipesavvy.com)
+resource "aws_lb_listener_rule" "admin" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 200
 
   action {
     type             = "forward"
@@ -208,26 +312,64 @@ resource "aws_lb_listener_rule" "admin" {
 
   condition {
     host_header {
-      values = ["admin.*"]
+      values = ["admin.${var.domain_name}"]
     }
   }
 
   tags = var.tags
 }
 
-# Listener rule for API
-resource "aws_lb_listener_rule" "api" {
+# Listener rule for Wallet Web (wallet.swipesavvy.com)
+resource "aws_lb_listener_rule" "wallet" {
   listener_arn = aws_lb_listener.https.arn
-  priority     = 200
+  priority     = 300
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.api.arn
+    target_group_arn = aws_lb_target_group.wallet.arn
   }
 
   condition {
-    path_pattern {
-      values = ["/api/*", "/health", "/docs", "/openapi.json"]
+    host_header {
+      values = ["wallet.${var.domain_name}"]
+    }
+  }
+
+  tags = var.tags
+}
+
+# Listener rule for Mobile App PWA (app.swipesavvy.com)
+resource "aws_lb_listener_rule" "app" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 400
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app.arn
+  }
+
+  condition {
+    host_header {
+      values = ["app.${var.domain_name}"]
+    }
+  }
+
+  tags = var.tags
+}
+
+# Listener rule for Main Website (www.swipesavvy.com and swipesavvy.com)
+resource "aws_lb_listener_rule" "website" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 500
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.website.arn
+  }
+
+  condition {
+    host_header {
+      values = ["www.${var.domain_name}", var.domain_name]
     }
   }
 
@@ -236,32 +378,62 @@ resource "aws_lb_listener_rule" "api" {
 
 # Outputs
 output "dns_name" {
-  value = aws_lb.main.dns_name
+  description = "ALB DNS name"
+  value       = aws_lb.main.dns_name
 }
 
 output "zone_id" {
-  value = aws_lb.main.zone_id
+  description = "ALB hosted zone ID"
+  value       = aws_lb.main.zone_id
 }
 
 output "arn" {
-  value = aws_lb.main.arn
+  description = "ALB ARN"
+  value       = aws_lb.main.arn
 }
 
 output "arn_suffix" {
-  value = aws_lb.main.arn_suffix
+  description = "ALB ARN suffix for CloudWatch metrics"
+  value       = aws_lb.main.arn_suffix
 }
 
 output "target_group_arns" {
+  description = "All target group ARNs for ASG attachment"
   value = [
     aws_lb_target_group.api.arn,
-    aws_lb_target_group.admin.arn
+    aws_lb_target_group.admin.arn,
+    aws_lb_target_group.wallet.arn,
+    aws_lb_target_group.website.arn,
+    aws_lb_target_group.app.arn,
   ]
 }
 
 output "api_target_group_arn" {
-  value = aws_lb_target_group.api.arn
+  description = "API target group ARN"
+  value       = aws_lb_target_group.api.arn
 }
 
 output "admin_target_group_arn" {
-  value = aws_lb_target_group.admin.arn
+  description = "Admin Portal target group ARN"
+  value       = aws_lb_target_group.admin.arn
+}
+
+output "wallet_target_group_arn" {
+  description = "Wallet Web target group ARN"
+  value       = aws_lb_target_group.wallet.arn
+}
+
+output "website_target_group_arn" {
+  description = "Customer Website target group ARN"
+  value       = aws_lb_target_group.website.arn
+}
+
+output "app_target_group_arn" {
+  description = "Mobile App PWA target group ARN"
+  value       = aws_lb_target_group.app.arn
+}
+
+output "https_listener_arn" {
+  description = "HTTPS listener ARN"
+  value       = aws_lb_listener.https.arn
 }

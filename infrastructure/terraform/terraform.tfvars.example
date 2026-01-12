@@ -2,39 +2,70 @@
 # Copy this file to terraform.tfvars and fill in your values
 # NEVER commit terraform.tfvars to version control!
 
-# AWS Configuration
+# ===========================================
+# AWS CONFIGURATION
+# ===========================================
 aws_region  = "us-east-1"
 environment = "prod"  # dev, staging, prod
 
-# Network Configuration
+# ===========================================
+# DOMAIN & DNS
+# ===========================================
+domain_name = "swipesavvy.com"
+
+# Set to true to create a new Route 53 hosted zone
+# Set to false if you already have a hosted zone
+create_hosted_zone = true
+
+# If create_hosted_zone = false, provide your existing zone ID
+# existing_zone_id = "Z1234567890ABC"
+
+# ===========================================
+# SSL/TLS CERTIFICATE
+# ===========================================
+# Set to true to create and validate a new ACM certificate
+create_acm_certificate = true
+
+# If create_acm_certificate = false, provide your certificate ARN
+# acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
+
+# ===========================================
+# NETWORK CONFIGURATION
+# ===========================================
 vpc_cidr             = "10.0.0.0/16"
 public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
 private_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
 
-# Database Configuration
+# ===========================================
+# DATABASE (RDS PostgreSQL)
+# ===========================================
 db_name              = "swipesavvy"
 db_username          = "swipesavvy_admin"
-db_password          = "CHANGE_ME_STRONG_PASSWORD_HERE"
-db_instance_class    = "db.t3.medium"  # db.r5.large for production
+db_password          = "CHANGE_ME_STRONG_PASSWORD_HERE"  # Use TF_VAR_db_password env var
+db_instance_class    = "db.t3.medium"  # db.r5.large for high traffic
 db_allocated_storage = 100
 
-# Redis Configuration
-redis_node_type = "cache.t3.medium"  # cache.r5.large for production
+# ===========================================
+# CACHE (ElastiCache Redis)
+# ===========================================
+redis_node_type = "cache.t3.medium"  # cache.r5.large for high traffic
 
-# EC2 Configuration
-ec2_instance_type = "t3.medium"  # t3.large or c5.large for production
+# ===========================================
+# COMPUTE (EC2 Auto Scaling)
+# ===========================================
+ec2_instance_type = "t3.medium"  # t3.large or c5.large for high traffic
 ec2_key_name      = "swipesavvy-prod"  # Your EC2 key pair name
 
-# SSL/TLS
-acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
-
-# Domain
-domain_name = "swipesavvy.com"
-
-# Alerting
+# ===========================================
+# MONITORING & ALERTING
+# ===========================================
 alert_email = "ops@swipesavvy.com"
 
-# API Keys (SENSITIVE - keep secure!)
+# ===========================================
+# API KEYS
+# Recommended: Use environment variables instead of hardcoding
+# TF_VAR_together_api_key, TF_VAR_sendgrid_api_key, etc.
+# ===========================================
 together_api_key   = "your-together-api-key"
 sendgrid_api_key   = "your-sendgrid-api-key"
 twilio_account_sid = "your-twilio-account-sid"

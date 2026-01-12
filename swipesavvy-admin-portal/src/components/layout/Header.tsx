@@ -35,6 +35,7 @@ import {
   Sun,
   ChevronDown,
   ChevronRight,
+  LogIn,
 } from 'lucide-react'
 
 // =============================================================================
@@ -51,6 +52,7 @@ export default function Header() {
 
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   const pushToast = useToastStore((s) => s.push)
 
@@ -244,87 +246,108 @@ export default function Header() {
             )}
           </button>
 
-          {/* User Menu */}
-          <DropdownMenu
-            trigger={
-              <span
-                className={cn(
-                  'flex items-center gap-[var(--spacing-2)]',
-                  'rounded-[var(--radius-sm)] p-[var(--spacing-2)]',
-                  'hover:bg-[var(--color-bg-secondary)]',
-                  'transition-colors duration-[var(--duration-fast)]',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]'
-                )}
-                aria-label="User menu"
-              >
-                {/* Avatar */}
+          {/* User Menu or Sign In Button */}
+          {isAuthenticated ? (
+            <DropdownMenu
+              trigger={
                 <span
                   className={cn(
-                    'flex h-8 w-8 items-center justify-center',
-                    'rounded-[var(--radius-sm)]',
-                    'bg-[var(--color-status-info-bg)] text-[var(--color-status-info-text)]',
-                    'text-[var(--font-size-sm)] font-semibold'
+                    'flex items-center gap-[var(--spacing-2)]',
+                    'rounded-[var(--radius-sm)] p-[var(--spacing-2)]',
+                    'hover:bg-[var(--color-bg-secondary)]',
+                    'transition-colors duration-[var(--duration-fast)]',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]'
                   )}
-                  aria-hidden="true"
+                  aria-label="User menu"
                 >
-                  {user?.name
-                    ?.split(' ')
-                    .map((p) => p[0])
-                    .slice(0, 2)
-                    .join('') ?? 'A'}
+                  {/* Avatar */}
+                  <span
+                    className={cn(
+                      'flex h-8 w-8 items-center justify-center',
+                      'rounded-[var(--radius-sm)]',
+                      'bg-[var(--color-status-info-bg)] text-[var(--color-status-info-text)]',
+                      'text-[var(--font-size-sm)] font-semibold'
+                    )}
+                    aria-hidden="true"
+                  >
+                    {user?.name
+                      ?.split(' ')
+                      .map((p) => p[0])
+                      .slice(0, 2)
+                      .join('') ?? 'A'}
+                  </span>
+                  {/* Name & Role */}
+                  <span className="hidden sm:block text-left">
+                    <p className="text-[var(--font-size-sm)] font-medium text-[var(--color-text-primary)] leading-tight">
+                      {user?.name ?? 'System Admin'}
+                    </p>
+                    <p className="text-[var(--font-size-xs)] text-[var(--color-text-tertiary)] leading-tight">
+                      {user?.role ?? 'admin'}
+                    </p>
+                  </span>
+                  <ChevronDown
+                    className="hidden h-4 w-4 text-[var(--color-text-tertiary)] sm:block"
+                    aria-hidden="true"
+                  />
                 </span>
-                {/* Name & Role */}
-                <span className="hidden sm:block text-left">
-                  <p className="text-[var(--font-size-sm)] font-medium text-[var(--color-text-primary)] leading-tight">
-                    {user?.name ?? 'System Admin'}
-                  </p>
-                  <p className="text-[var(--font-size-xs)] text-[var(--color-text-tertiary)] leading-tight">
-                    {user?.role ?? 'admin'}
-                  </p>
-                </span>
-                <ChevronDown
-                  className="hidden h-4 w-4 text-[var(--color-text-tertiary)] sm:block"
-                  aria-hidden="true"
-                />
-              </span>
-            }
-            items={[
-              {
-                key: 'profile',
-                label: 'Profile',
-                icon: 'profile',
-                onSelect: () => {
-                  pushToast({
-                    variant: 'info',
-                    title: 'Profile',
-                    message: 'User profile page coming soon.',
-                  })
+              }
+              items={[
+                {
+                  key: 'profile',
+                  label: 'Profile',
+                  icon: 'profile',
+                  onSelect: () => {
+                    pushToast({
+                      variant: 'info',
+                      title: 'Profile',
+                      message: 'User profile page coming soon.',
+                    })
+                  },
                 },
-              },
-              {
-                key: 'settings',
-                label: 'Settings',
-                icon: 'settings',
-                onSelect: () => navigate('/settings'),
-              },
-              {
-                key: 'theme',
-                label: theme === 'dark' ? 'Light Mode' : 'Dark Mode',
-                icon: 'sparkles',
-                onSelect: toggleTheme,
-              },
-              {
-                key: 'logout',
-                label: 'Sign out',
-                icon: 'lock',
-                variant: 'danger',
-                onSelect: () => {
-                  logout()
-                  navigate('/login')
+                {
+                  key: 'settings',
+                  label: 'Settings',
+                  icon: 'settings',
+                  onSelect: () => navigate('/settings'),
                 },
-              },
-            ]}
-          />
+                {
+                  key: 'theme',
+                  label: theme === 'dark' ? 'Light Mode' : 'Dark Mode',
+                  icon: 'sparkles',
+                  onSelect: toggleTheme,
+                },
+                {
+                  key: 'logout',
+                  label: 'Sign out',
+                  icon: 'lock',
+                  variant: 'danger',
+                  onSelect: () => {
+                    logout()
+                    navigate('/login')
+                  },
+                },
+              ]}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className={cn(
+                'inline-flex items-center gap-[var(--spacing-2)]',
+                'h-10 px-[var(--spacing-4)]',
+                'rounded-[var(--radius-sm)]',
+                'bg-[var(--color-action-primary-bg)] text-[var(--color-action-primary-text)]',
+                'hover:bg-[var(--color-action-primary-bg-hover)]',
+                'transition-colors duration-[var(--duration-fast)]',
+                'font-medium text-[var(--font-size-sm)]',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]'
+              )}
+              aria-label="Sign in"
+            >
+              <LogIn className="w-4 h-4" aria-hidden="true" />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

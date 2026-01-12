@@ -7,6 +7,7 @@ import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 interface Policy {
   id: string
@@ -66,7 +67,14 @@ export default function PolicyManagerPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await axios.get(`${API_BASE_URL}/api/policies`)
+
+      // If using mock API, skip the real API call and use mock data
+      if (USE_MOCK_API) {
+        setLoading(false)
+        return
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/api/v1/admin/policies`)
       setpolicies(response.data.policies || response.data || MOCK_POLICIES)
     } catch (err: any) {
       console.error('Failed to fetch policies:', err)
@@ -78,7 +86,7 @@ export default function PolicyManagerPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/policies/${id}`)
+      await axios.delete(`${API_BASE_URL}/api/v1/admin/policies/${id}`)
       setpolicies(policies.filter((p) => p.id !== id))
     } catch (err: any) {
       console.error('Failed to delete policy:', err)

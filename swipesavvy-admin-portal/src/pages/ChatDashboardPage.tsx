@@ -10,6 +10,7 @@ import WaitingSessionsQueue from '../components/chat/WaitingSessionsQueue';
 import '../styles/chat-dashboard.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true';
 
 interface DashboardFilters {
   timeRange: number; // hours (1, 24, 168, 720)
@@ -53,7 +54,14 @@ const ChatDashboardPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${API_BASE_URL}/api/chat/dashboard`, {
+
+      // If using mock API, skip the real API call
+      if (USE_MOCK_API) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/api/v1/admin/chat-dashboard/overview`, {
         params: {
           timeRange: filters.timeRange,
           limit: filters.sessionLimit,
