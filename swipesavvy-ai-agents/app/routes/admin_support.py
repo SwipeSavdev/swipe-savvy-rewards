@@ -29,8 +29,8 @@ class SupportTicketResponse(BaseModel):
     customerName: str
     customerEmail: str
     category: Optional[str]
-    createdAt: str
-    updatedAt: str
+    createdAt: Optional[str]
+    updatedAt: Optional[str]
     assignedTo: Optional[str]
 
 class TicketsListResponse(BaseModel):

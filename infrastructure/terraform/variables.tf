@@ -83,13 +83,32 @@ variable "ec2_key_name" {
 
 # SSL/TLS
 variable "acm_certificate_arn" {
-  description = "ARN of ACM certificate for HTTPS"
+  description = "ARN of ACM certificate for HTTPS (used if create_acm_certificate = false)"
   type        = string
+  default     = ""
+}
+
+variable "create_acm_certificate" {
+  description = "Whether to create a new ACM certificate"
+  type        = bool
+  default     = true
 }
 
 # Domain
 variable "domain_name" {
-  description = "Domain name for the application"
+  description = "Domain name for the application (e.g., swipesavvy.com)"
+  type        = string
+  default     = "swipesavvy.com"
+}
+
+variable "create_hosted_zone" {
+  description = "Whether to create a new Route 53 hosted zone"
+  type        = bool
+  default     = true
+}
+
+variable "existing_zone_id" {
+  description = "Existing Route 53 hosted zone ID (if create_hosted_zone = false)"
   type        = string
   default     = ""
 }

@@ -90,14 +90,14 @@ async def get_dashboard_overview(
         verify_token(token)
     
     try:
-        # Get actual counts from database
-        total_users = db.query(User).count()
-        total_merchants = db.query(Merchant).count()
-        
+        # Get actual counts from database using raw SQL (to avoid model/schema mismatch)
+        from sqlalchemy import text
+        total_users = db.execute(text("SELECT COUNT(*) FROM users")).scalar() or 0
+        total_merchants = db.execute(text("SELECT COUNT(*) FROM merchants")).scalar() or 0
+
         # Get wallet transaction count and volume
-        transactions = db.query(WalletTransaction).all()
-        transaction_count = len(transactions)
-        total_revenue = sum(float(t.amount or 0) for t in transactions) if transactions else 0
+        transaction_count = db.execute(text("SELECT COUNT(*) FROM wallet_transactions")).scalar() or 0
+        total_revenue = db.execute(text("SELECT COALESCE(SUM(amount), 0) FROM wallet_transactions")).scalar() or 0
         
         # Create stats with real data
         stats = DashboardStats(
@@ -188,15 +188,15 @@ async def get_analytics_overview(db: Session = Depends(get_db)):
     Get high-level analytics overview from database.
     """
     try:
-        # Get real metrics from database
-        total_users = db.query(User).count()
-        transactions = db.query(WalletTransaction).all()
-        transaction_count = len(transactions)
-        total_revenue = sum(float(t.amount or 0) for t in transactions) if transactions else 0
-        
+        # Get real metrics from database using raw SQL (to avoid model/schema mismatch)
+        from sqlalchemy import text
+        total_users = db.execute(text("SELECT COUNT(*) FROM users")).scalar() or 0
+        transaction_count = db.execute(text("SELECT COUNT(*) FROM wallet_transactions")).scalar() or 0
+        total_revenue = float(db.execute(text("SELECT COALESCE(SUM(amount), 0) FROM wallet_transactions")).scalar() or 0)
+
         # Calculate conversion (transactions / users)
         conversion = (transaction_count / total_users * 100) if total_users > 0 else 0
-        
+
         return AnalyticsOverview(
             activeUsers=total_users,
             transactions=transaction_count,
@@ -399,3 +399,206 @@ async def get_support_stats(db: Session = Depends(get_db)):
             "avg_response_time": 0,
             "slaMetrics": {}
         }
+
+
+# ============================================================================
+# Seed Sample Data Endpoint
+# ============================================================================
+
+@router.post("/seed-sample-data")
+async def seed_sample_data(db: Session = Depends(get_db)):
+    """
+    Seed the database with sample data for demo purposes.
+    Creates sample users, merchants, transactions, and support tickets.
+    """
+    import random
+    from uuid import uuid4
+    from decimal import Decimal
+    from passlib.context import CryptContext
+    from sqlalchemy import text
+
+    # Pre-generate a password hash to avoid issues
+    default_password_hash = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4UaaD3NJnwB6H7/."  # hash of "Demo123"
+
+    try:
+        results = {
+            "users_created": 0,
+            "merchants_created": 0,
+            "transactions_created": 0,
+            "support_tickets_created": 0,
+            "message": ""
+        }
+
+        # Check if data already exists using raw SQL to avoid model mismatch
+        existing_users = db.execute(text("SELECT COUNT(*) FROM users")).scalar()
+        if existing_users > 10:
+            return {
+                "message": f"Database already has {existing_users} users. Skipping seed.",
+                "seeded": False,
+                **results
+            }
+
+        # Sample user names
+        first_names = ["John", "Jane", "Michael", "Sarah", "David", "Emily", "Chris", "Amanda", "Robert", "Jessica",
+                      "William", "Elizabeth", "James", "Maria", "Thomas", "Jennifer", "Daniel", "Linda", "Matthew", "Barbara"]
+        last_names = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez",
+                     "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin"]
+
+        # Sample merchant categories
+        merchant_categories = [
+            ("TechMart Electronics", "technology", "retail"),
+            ("Fresh Foods Market", "grocery", "retail"),
+            ("City Cafe & Bistro", "restaurant", "food_service"),
+            ("AutoCare Services", "automotive", "service"),
+            ("FashionHub Boutique", "apparel", "retail"),
+            ("HealthPlus Pharmacy", "healthcare", "pharmacy"),
+            ("QuickGas Station", "gas", "fuel"),
+            ("HomeDepot Supplies", "home_improvement", "retail"),
+            ("SportZone Athletics", "sports", "retail"),
+            ("BookWorm Stores", "books", "retail"),
+            ("PetPals Supply", "pets", "retail"),
+            ("GreenGrocers", "grocery", "retail"),
+            ("Urban Coffee House", "coffee", "food_service"),
+            ("Elite Fitness Gym", "fitness", "service"),
+            ("Garden Paradise", "garden", "retail")
+        ]
+
+        # Create sample users using raw SQL (to avoid model/schema mismatch)
+        sample_user_ids = []
+        for i in range(25):
+            first_name = random.choice(first_names)
+            last_name = random.choice(last_names)
+            email = f"{first_name.lower()}.{last_name.lower()}{i}@example.com"
+
+            # Check if user exists
+            existing = db.execute(text("SELECT id FROM users WHERE email = :email"), {"email": email}).fetchone()
+            if existing:
+                sample_user_ids.append(existing[0])
+                continue
+
+            user_id = uuid4()
+            created_at = datetime.now(timezone.utc) - timedelta(days=random.randint(1, 180))
+            db.execute(text("""
+                INSERT INTO users (id, email, password_hash, name, phone, status, role, created_at)
+                VALUES (:id, :email, :password_hash, :name, :phone, :status, :role, :created_at)
+            """), {
+                "id": str(user_id),
+                "email": email,
+                "password_hash": default_password_hash,
+                "name": f"{first_name} {last_name}",
+                "phone": f"+1{random.randint(200, 999)}{random.randint(100, 999)}{random.randint(1000, 9999)}",
+                "status": random.choice(['active', 'active', 'active', 'inactive']),
+                "role": "user",
+                "created_at": created_at
+            })
+            sample_user_ids.append(user_id)
+            results["users_created"] += 1
+
+        db.commit()
+
+        # Create sample merchants using raw SQL
+        merchant_names = []
+        for i, (name, category, biz_type) in enumerate(merchant_categories):
+            email = f"contact@{name.lower().replace(' ', '').replace('&', '')[:15]}.com"
+
+            existing = db.execute(text("SELECT id FROM merchants WHERE email = :email"), {"email": email}).fetchone()
+            if existing:
+                merchant_names.append(name)
+                continue
+
+            merchant_id = uuid4()
+            created_at = datetime.now(timezone.utc) - timedelta(days=random.randint(30, 365))
+            db.execute(text("""
+                INSERT INTO merchants (id, name, email, phone, website, country, location, business_type, status, transaction_count, success_rate, monthly_volume, join_date, created_at)
+                VALUES (:id, :name, :email, :phone, :website, :country, :location, :business_type, :status, :transaction_count, :success_rate, :monthly_volume, :join_date, :created_at)
+            """), {
+                "id": str(merchant_id),
+                "name": name,
+                "email": email,
+                "phone": f"+1{random.randint(200, 999)}{random.randint(100, 999)}{random.randint(1000, 9999)}",
+                "website": f"https://www.{name.lower().replace(' ', '').replace('&', '')[:15]}.com",
+                "country": "United States",
+                "location": f"{random.choice(['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'])}, {random.choice(['NY', 'CA', 'IL', 'TX', 'AZ'])}",
+                "business_type": biz_type,
+                "status": random.choice(['active', 'active', 'active', 'pending']),
+                "transaction_count": random.randint(100, 10000),
+                "success_rate": round(random.uniform(95.0, 99.9), 2),
+                "monthly_volume": round(random.uniform(50000, 500000), 2),
+                "join_date": created_at,
+                "created_at": created_at
+            })
+            merchant_names.append(name)
+            results["merchants_created"] += 1
+
+        db.commit()
+
+        # Create sample wallet transactions using raw SQL
+        for user_id in sample_user_ids[:20]:  # First 20 users
+            num_transactions = random.randint(5, 20)
+            for _ in range(num_transactions):
+                tx_id = uuid4()
+                created_at = datetime.now(timezone.utc) - timedelta(days=random.randint(1, 60), hours=random.randint(0, 23))
+                db.execute(text("""
+                    INSERT INTO wallet_transactions (id, user_id, transaction_type, amount, currency, status, description, payment_method, reference_number, created_at)
+                    VALUES (:id, :user_id, :transaction_type, :amount, :currency, :status, :description, :payment_method, :reference_number, :created_at)
+                """), {
+                    "id": str(tx_id),
+                    "user_id": str(user_id),
+                    "transaction_type": random.choice(['deposit', 'withdrawal', 'transfer', 'payment']),
+                    "amount": round(random.uniform(10, 500), 2),
+                    "currency": "USD",
+                    "status": random.choice(['completed', 'completed', 'completed', 'pending']),
+                    "description": f"Transaction at {random.choice(merchant_names) if merchant_names else 'Store'}",
+                    "payment_method": random.choice(['card', 'bank_transfer', 'wallet']),
+                    "reference_number": f"TXN{random.randint(100000, 999999)}",
+                    "created_at": created_at
+                })
+                results["transactions_created"] += 1
+
+        db.commit()
+
+        # Create sample support tickets using raw SQL
+        ticket_subjects = [
+            ("Payment not processed", "high"),
+            ("Unable to verify account", "medium"),
+            ("Refund request", "medium"),
+            ("App login issues", "low"),
+            ("Transaction dispute", "high"),
+            ("Account balance incorrect", "high"),
+            ("How to add payment method?", "low"),
+            ("Transfer failed", "medium"),
+            ("Merchant not found", "low"),
+            ("KYC verification stuck", "medium")
+        ]
+
+        for i, (subject, priority) in enumerate(ticket_subjects):
+            ticket_id = uuid4()
+            created_at = datetime.now(timezone.utc) - timedelta(days=random.randint(0, 14))
+            db.execute(text("""
+                INSERT INTO support_tickets (id, subject, description, customer_name, customer_email, category, status, priority, created_at)
+                VALUES (:id, :subject, :description, :customer_name, :customer_email, :category, :status, :priority, :created_at)
+            """), {
+                "id": str(ticket_id),
+                "subject": subject,
+                "description": f"Customer reported issue: {subject}. Please investigate and resolve.",
+                "customer_name": f"Customer {i+1}",
+                "customer_email": f"customer{i+1}@example.com",
+                "category": random.choice(['technical', 'billing', 'account', 'general']),
+                "status": random.choice(['open', 'in_progress', 'closed']),
+                "priority": priority,
+                "created_at": created_at
+            })
+            results["support_tickets_created"] += 1
+
+        db.commit()
+
+        results["message"] = "Sample data seeded successfully!"
+        results["seeded"] = True
+
+        logger.info(f"Seeded sample data: {results}")
+        return results
+
+    except Exception as e:
+        logger.error(f"Error seeding sample data: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to seed sample data: {str(e)}")

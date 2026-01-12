@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 // Chart colors
 const CHART_COLORS = {
@@ -211,21 +212,9 @@ export default function RiskReportsPage() {
   }, [])
 
   const fetchRiskData = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await axios.get(`${API_BASE_URL}/api/analytics/risk-reports`)
-      // Store response data if needed, otherwise use default data
-      if (response.data) {
-        console.log('Risk data loaded:', response.data)
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch risk data:', err)
-      setError(err.message || 'Failed to fetch risk data')
-      // Continue with default data
-    } finally {
-      setLoading(false)
-    }
+    // Risk reports use static financial model data calculated client-side
+    // No backend endpoint exists for this - data is derived from FINANCIAL_MODEL constants
+    setLoading(false)
   }
 
   const filteredRisks = selectedCategory

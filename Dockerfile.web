@@ -1,0 +1,24 @@
+# SwipeSavvy Mobile App - Web PWA Build
+# Serves the Expo web build via nginx
+
+FROM nginx:1.25-alpine
+
+# Install curl for health checks
+RUN apk add --no-cache curl && \
+    rm -f /etc/nginx/conf.d/default.conf
+
+# Copy nginx configuration
+COPY nginx.web.conf /etc/nginx/nginx.conf
+
+# Copy built web assets
+COPY --chown=nginx:nginx dist-web /usr/share/nginx/html
+
+# Expose port 3000 (matches ALB target group for app.swipesavvy.com)
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Run nginx
+CMD ["nginx", "-g", "daemon off;"]

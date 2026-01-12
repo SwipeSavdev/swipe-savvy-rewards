@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 // Default/fallback data
 const DEFAULT_REVENUE_DATA = [
@@ -89,11 +90,17 @@ export default function AnalyticsPage() {
       }
       const days = daysMap[dateRange] || 30
 
+      // If using mock API, skip the real API call and use default data
+      if (USE_MOCK_API) {
+        setLoading(false)
+        return
+      }
+
       // Fetch overview stats and chart data in parallel
       const [overviewRes, transactionRes, revenueRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/analytics/overview`),
-        axios.get(`${API_BASE_URL}/api/analytics/transactions`, { params: { days } }),
-        axios.get(`${API_BASE_URL}/api/analytics/revenue`, { params: { days } }),
+        axios.get(`${API_BASE_URL}/api/v1/admin/analytics/overview`),
+        axios.get(`${API_BASE_URL}/api/v1/admin/analytics/transactions`, { params: { days } }),
+        axios.get(`${API_BASE_URL}/api/v1/admin/analytics/revenue`, { params: { days } }),
       ])
 
       // Update stats from API

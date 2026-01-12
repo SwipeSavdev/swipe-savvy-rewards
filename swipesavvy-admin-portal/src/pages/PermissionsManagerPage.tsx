@@ -7,6 +7,7 @@ import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 interface Permission {
   id: string
@@ -133,8 +134,15 @@ export default function PermissionsManagerPage() {
     try {
       setLoading(true)
       setError(null)
+
+      // If using mock API, skip the real API call and use mock data
+      if (USE_MOCK_API) {
+        setLoading(false)
+        return
+      }
+
       // Try to fetch from API, but permissions are often just read-only
-      const response = await axios.get(`${API_BASE_URL}/api/permissions`)
+      const response = await axios.get(`${API_BASE_URL}/api/v1/admin/permissions`)
       setPermissions(response.data.permissions || response.data || MOCK_PERMISSIONS)
     } catch (err: any) {
       console.error('Failed to fetch permissions:', err)
@@ -151,7 +159,7 @@ export default function PermissionsManagerPage() {
   const handleDeletePermission = async (id: string) => {
     try {
       // Permissions are typically read-only, so this may not be available on API
-      await axios.delete(`${API_BASE_URL}/api/permissions/${id}`)
+      await axios.delete(`${API_BASE_URL}/api/v1/admin/permissions/${id}`)
       setPermissions(permissions.filter((p) => p.id !== id))
     } catch (err: any) {
       console.error('Failed to delete permission:', err)

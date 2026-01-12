@@ -233,6 +233,36 @@ module "elasticache" {
   tags = local.common_tags
 }
 
+# Route 53 Hosted Zone (created first if needed)
+resource "aws_route53_zone" "main" {
+  count = var.domain_name != "" && var.create_hosted_zone ? 1 : 0
+
+  name    = var.domain_name
+  comment = "SwipeSavvy production hosted zone"
+
+  tags = merge(local.common_tags, {
+    Name = var.domain_name
+  })
+}
+
+locals {
+  # Resolve hosted zone ID
+  route53_zone_id = var.domain_name != "" ? (
+    var.create_hosted_zone ? aws_route53_zone.main[0].zone_id : var.existing_zone_id
+  ) : ""
+}
+
+# ACM Certificate (if creating new)
+module "acm" {
+  source = "./modules/acm"
+  count  = var.domain_name != "" && var.create_acm_certificate ? 1 : 0
+
+  domain_name = var.domain_name
+  zone_id     = local.route53_zone_id
+
+  tags = local.common_tags
+}
+
 # Application Load Balancer
 module "alb" {
   source = "./modules/alb"
@@ -242,9 +272,25 @@ module "alb" {
   subnet_ids         = module.vpc.public_subnet_ids
   security_group_ids = [aws_security_group.alb.id]
 
-  certificate_arn    = var.acm_certificate_arn
+  # Use either created certificate or provided ARN
+  certificate_arn = var.create_acm_certificate && var.domain_name != "" ? module.acm[0].certificate_arn : var.acm_certificate_arn
+  domain_name     = var.domain_name
 
-  health_check_path  = "/health"
+  health_check_path = "/health"
+
+  tags = local.common_tags
+}
+
+# Route 53 DNS Records (created after ALB)
+module "dns" {
+  source = "./modules/dns"
+  count  = var.domain_name != "" ? 1 : 0
+
+  domain_name        = var.domain_name
+  alb_dns_name       = module.alb.dns_name
+  alb_zone_id        = module.alb.zone_id
+  create_hosted_zone = false  # Zone already created above
+  existing_zone_id   = local.route53_zone_id
 
   tags = local.common_tags
 }

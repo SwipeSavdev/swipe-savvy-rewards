@@ -69,3 +69,31 @@ output "redis_url" {
   value       = "redis://${module.elasticache.endpoint}:${module.elasticache.port}"
   sensitive   = true
 }
+
+# DNS Outputs
+output "route53_zone_id" {
+  description = "Route 53 hosted zone ID"
+  value       = var.domain_name != "" && var.create_hosted_zone ? aws_route53_zone.main[0].zone_id : var.existing_zone_id
+}
+
+output "route53_name_servers" {
+  description = "Route 53 name servers (update your domain registrar with these)"
+  value       = var.domain_name != "" && var.create_hosted_zone ? aws_route53_zone.main[0].name_servers : []
+}
+
+output "acm_certificate_arn_output" {
+  description = "ACM certificate ARN"
+  value       = var.domain_name != "" && var.create_acm_certificate ? module.acm[0].certificate_arn : var.acm_certificate_arn
+}
+
+# Production URLs
+output "production_urls" {
+  description = "Production URLs for all SwipeSavvy services"
+  value = var.domain_name != "" ? {
+    api     = "https://api.${var.domain_name}"
+    admin   = "https://admin.${var.domain_name}"
+    wallet  = "https://wallet.${var.domain_name}"
+    app     = "https://app.${var.domain_name}"
+    website = "https://www.${var.domain_name}"
+  } : {}
+}

@@ -11,6 +11,7 @@ import { X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 interface Permission {
   id: string
@@ -387,9 +388,16 @@ export default function RolesPermissionsPage() {
     try {
       setLoading(true)
       setError(null)
+
+      // If using mock API, skip the real API call and use mock data
+      if (USE_MOCK_API) {
+        setLoading(false)
+        return
+      }
+
       const [rolesRes, policiesRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/roles`),
-        axios.get(`${API_BASE_URL}/api/policies`),
+        axios.get(`${API_BASE_URL}/api/v1/admin/roles`),
+        axios.get(`${API_BASE_URL}/api/v1/admin/policies`),
       ])
       if (rolesRes.data) setRoles(rolesRes.data || MOCK_ROLES)
       if (policiesRes.data) setPolicies(policiesRes.data || MOCK_POLICIES)
