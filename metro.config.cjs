@@ -18,10 +18,13 @@ config.transformer = {
 // Optimize resolver
 config.resolver = {
   ...config.resolver,
-  sourceExts: ['tsx', 'ts', 'jsx', 'js', 'json'],
+  // Add .web.ts extension priority for web builds and .cjs for nanoid compatibility
+  sourceExts: ['web.tsx', 'web.ts', 'tsx', 'ts', 'web.jsx', 'web.js', 'jsx', 'js', 'json', 'cjs', 'mjs'],
   assetExts: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'ttf', 'otf', 'woff', 'woff2', 'svg'],
   blockList: [
     /\.git/,
+    // Block native-only modules from web builds
+    /node_modules\/expo-sqlite\/web\/wa-sqlite/,
   ],
   extraNodeModules: {
     '@contexts': path.resolve(srcPath, 'contexts'),

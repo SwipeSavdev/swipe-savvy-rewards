@@ -18,11 +18,17 @@ import { SavingsGoalsScreen } from '../../features/home/screens/SavingsGoalsScre
 import { SpendingAnalysisScreen } from '../../features/home/screens/SpendingAnalysisScreen';
 import { ProfileScreen } from '../../features/profile/screens/ProfileScreen';
 import { TransfersScreen } from '../../features/transfers/screens/TransfersScreen';
+import { WalletScreen } from '../../features/wallet/screens/WalletScreen';
+import { SettingsScreen } from '../../features/settings/screens/SettingsScreen';
+import { PreferredMerchantsScreen } from '../../features/merchants/screens/PreferredMerchantsScreen';
+import { DealsScreen } from '../../features/merchants/screens/DealsScreen';
 
 export type MainTabParamList = {
   Home: undefined;
+  Cards: undefined;
   Accounts: undefined;
   Transfers: undefined;
+  Settings: undefined;
 };
 
 export type MainStackParamList = {
@@ -30,7 +36,6 @@ export type MainStackParamList = {
   Rewards: undefined;
   RewardsDonate: undefined;
   Leaderboard: undefined;
-  Cards: undefined;
   AccountDetail: { accountId: string; accountName: string; accountType: string };
   Budget: undefined;
   BudgetDetail: { budgetId: string };
@@ -38,6 +43,9 @@ export type MainStackParamList = {
   SavingsGoals: undefined;
   SpendingAnalysis: undefined;
   Profile: undefined;
+  Wallet: undefined;
+  PreferredMerchants: undefined;
+  Deals: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -46,6 +54,8 @@ const Stack = createNativeStackNavigator<MainStackParamList>();
 const MemoizedHomeScreen = React.memo(HomeScreen);
 const MemoizedAccountsScreen = React.memo(AccountsScreen);
 const MemoizedTransfersScreen = React.memo(TransfersScreen);
+const MemoizedCardsScreen = React.memo(CardsScreen);
+const MemoizedSettingsScreen = React.memo(SettingsScreen);
 
 // Bottom Tab Navigator - memoized to prevent unnecessary re-renders
 const TabNavigatorComponent = React.memo(function TabNavigator() {
@@ -57,7 +67,7 @@ const TabNavigatorComponent = React.memo(function TabNavigator() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => (
           <NavigationIcon
-            name={route.name.toLowerCase() as 'home' | 'accounts' | 'transfers'}
+            name={route.name.toLowerCase() as 'home' | 'accounts' | 'transfers' | 'cards' | 'settings'}
             focused={focused}
             color={color}
             size={size}
@@ -85,10 +95,20 @@ const TabNavigatorComponent = React.memo(function TabNavigator() {
         component={MemoizedAccountsScreen}
         options={{ title: 'Accounts' }}
       />
-      <Tab.Screen 
-        name="Transfers" 
+      <Tab.Screen
+        name="Transfers"
         component={MemoizedTransfersScreen}
         options={{ title: 'Transfers' }}
+      />
+      <Tab.Screen
+        name="Cards"
+        component={MemoizedCardsScreen}
+        options={{ title: 'Cards' }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={MemoizedSettingsScreen}
+        options={{ title: 'Settings' }}
       />
     </Tab.Navigator>
   );
@@ -114,48 +134,58 @@ export const MainStack = React.memo(function MainStackComponent() {
         
         {/* Stack screens - appear with back button */}
         <Stack.Group screenOptions={{ presentation: 'card' }}>
-          <Stack.Screen 
-            name="Cards" 
-            component={CardsScreen}
-            options={{ title: 'Saved Cards', headerShown: true }}
-          />
-          <Stack.Screen 
-            name="AccountDetail" 
+          <Stack.Screen
+            name="AccountDetail"
             component={AccountBalanceDetailScreen}
             options={{ headerShown: false }}
           />
-          <Stack.Screen 
-            name="Leaderboard" 
+          <Stack.Screen
+            name="Leaderboard"
             component={LeaderboardScreen}
             options={{ title: 'Leaderboard', headerShown: true }}
           />
-          <Stack.Screen 
-            name="Budget" 
+          <Stack.Screen
+            name="Budget"
             component={BudgetScreen}
             options={{ title: 'Budgets', headerShown: true }}
           />
-          <Stack.Screen 
-            name="BudgetDetail" 
+          <Stack.Screen
+            name="BudgetDetail"
             component={BudgetDetailScreen}
             options={{ headerShown: false }}
           />
-          <Stack.Screen 
-            name="Analytics" 
+          <Stack.Screen
+            name="Analytics"
             component={AnalyticsScreen}
             options={{ title: 'Analytics', headerShown: true }}
           />
-          <Stack.Screen 
-            name="SavingsGoals" 
+          <Stack.Screen
+            name="SavingsGoals"
             component={SavingsGoalsScreen}
             options={{ title: 'Savings Goals', headerShown: true }}
           />
-          <Stack.Screen 
-            name="SpendingAnalysis" 
+          <Stack.Screen
+            name="SpendingAnalysis"
             component={SpendingAnalysisScreen}
             options={{ title: 'Spending Analysis', headerShown: true }}
           />
+          <Stack.Screen
+            name="Wallet"
+            component={WalletScreen}
+            options={{ title: 'Wallet', headerShown: true }}
+          />
+          <Stack.Screen
+            name="PreferredMerchants"
+            component={PreferredMerchantsScreen}
+            options={{ title: 'Preferred Merchants', headerShown: true }}
+          />
+          <Stack.Screen
+            name="Deals"
+            component={DealsScreen}
+            options={{ title: 'Deals & Offers', headerShown: true }}
+          />
         </Stack.Group>
-        
+
         {/* Modal screens */}
         <Stack.Group screenOptions={{ presentation: 'modal' }}>
           <Stack.Screen 

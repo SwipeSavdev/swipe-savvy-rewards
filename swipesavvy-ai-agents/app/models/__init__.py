@@ -35,22 +35,146 @@ from app.models.notifications import DeviceToken, NotificationHistory, Notificat
 class User(Base):
     """Regular app users and merchants"""
     __tablename__ = "users"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
     phone = Column(String(20), nullable=True)
-    status = Column(String(50), default='active', nullable=False, index=True)
+    date_of_birth = Column(Date, nullable=True)
+    status = Column(String(50), default='pending', nullable=False, index=True)
     role = Column(String(50), default='user', nullable=False)
+
+    # Address fields
+    street_address = Column(String(255), nullable=True)
+    city = Column(String(100), nullable=True)
+    state = Column(String(50), nullable=True)
+    zip_code = Column(String(20), nullable=True)
+    country = Column(String(100), default='US', nullable=True)
+
+    # KYC fields
+    kyc_tier = Column(String(20), default='tier1', nullable=False, index=True)
+    kyc_status = Column(String(50), default='pending', nullable=False, index=True)
+    kyc_verified_at = Column(DateTime, nullable=True)
+    ssn_last4 = Column(String(4), nullable=True)  # Last 4 digits of SSN (encrypted)
+    ssn_hash = Column(String(255), nullable=True)  # Full SSN hash for verification
+
+    # Email/Phone verification
+    email_verified = Column(Boolean, default=False, nullable=False)
+    email_verified_at = Column(DateTime, nullable=True)
+    email_verification_token = Column(String(255), nullable=True)
+    email_verification_expires = Column(DateTime, nullable=True)
+    phone_verified = Column(Boolean, default=False, nullable=False)
+    phone_verified_at = Column(DateTime, nullable=True)
+    phone_verification_code = Column(String(10), nullable=True)
+    phone_verification_expires = Column(DateTime, nullable=True)
+
+    # Password reset
+    password_reset_token = Column(String(255), nullable=True)
+    password_reset_expires = Column(DateTime, nullable=True)
+
+    # Identity verification
+    identity_verification_id = Column(String(255), nullable=True)  # External IDV provider ID
+    identity_verification_status = Column(String(50), nullable=True)
+
+    # Security
+    failed_login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime, nullable=True)
+
+    # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
-    
+
+    # Relationships
+    kyc_documents = relationship("UserKYCDocument", back_populates="user", lazy="dynamic")
+    kyc_history = relationship("UserKYCHistory", back_populates="user", lazy="dynamic")
+
     # Check constraints
     __table_args__ = (
-        CheckConstraint("status IN ('active', 'inactive', 'suspended', 'deleted')"),
+        CheckConstraint("status IN ('active', 'inactive', 'suspended', 'deleted', 'pending')"),
         CheckConstraint("role IN ('admin', 'support', 'user', 'merchant')"),
+        CheckConstraint("kyc_tier IN ('tier1', 'tier2', 'tier3')"),
+        CheckConstraint("kyc_status IN ('pending', 'in_review', 'approved', 'rejected', 'requires_info', 'expired')"),
+    )
+
+
+class UserKYCDocument(Base):
+    """User KYC document uploads and verification"""
+    __tablename__ = "user_kyc_documents"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+    document_type = Column(String(50), nullable=False, index=True)
+    document_subtype = Column(String(50), nullable=True)  # front, back, selfie
+    file_path = Column(String(500), nullable=False)  # S3 path
+    file_name = Column(String(255), nullable=False)
+    file_size = Column(Integer, nullable=True)
+    mime_type = Column(String(100), nullable=True)
+    status = Column(String(50), default='pending', nullable=False, index=True)
+    verification_result = Column(JSONB, default=dict, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    expires_at = Column(DateTime, nullable=True)  # Document expiration
+    verified_at = Column(DateTime, nullable=True)
+    verified_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="kyc_documents")
+
+    __table_args__ = (
+        CheckConstraint("document_type IN ('drivers_license', 'passport', 'state_id', 'ssn_card', 'utility_bill', 'bank_statement', 'selfie')"),
+        CheckConstraint("status IN ('pending', 'verified', 'rejected', 'expired')"),
+    )
+
+
+class UserKYCHistory(Base):
+    """KYC verification history and audit trail"""
+    __tablename__ = "user_kyc_history"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+    action = Column(String(100), nullable=False)
+    previous_status = Column(String(50), nullable=True)
+    new_status = Column(String(50), nullable=True)
+    previous_tier = Column(String(20), nullable=True)
+    new_tier = Column(String(20), nullable=True)
+    verification_type = Column(String(50), nullable=True)  # email, phone, document, identity
+    verification_provider = Column(String(100), nullable=True)  # plaid, twilio, sendgrid
+    verification_result = Column(JSONB, default=dict, nullable=True)
+    notes = Column(Text, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    performed_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)  # Admin who performed action
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    # Relationships
+    user = relationship("User", back_populates="kyc_history")
+
+
+class OFACScreeningResult(Base):
+    """OFAC/Sanctions screening results"""
+    __tablename__ = "ofac_screening_results"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+    screening_type = Column(String(50), nullable=False)  # ofac, pep, adverse_media
+    provider = Column(String(100), nullable=True)
+    status = Column(String(50), default='pending', nullable=False, index=True)
+    match_score = Column(Float, nullable=True)
+    matches = Column(JSONB, default=list, nullable=True)
+    raw_response = Column(JSONB, default=dict, nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    reviewed_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
+    review_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    __table_args__ = (
+        CheckConstraint("screening_type IN ('ofac', 'pep', 'adverse_media', 'sanctions')"),
+        CheckConstraint("status IN ('pending', 'clear', 'potential_match', 'confirmed_match', 'false_positive')"),
     )
 
 
@@ -524,8 +648,180 @@ class Charity(Base):
 
 
 # ============================================
-# Merchant Onboarding (Fiserv Integration)
+# Merchant Subscriptions & Preferred Merchants
 # ============================================
+
+class MerchantSubscription(Base):
+    """
+    Merchant subscription plans that determine placement priority.
+    Selected during merchant onboarding process.
+
+    Tier Benefits:
+    - platinum: Top placement (score 100), featured banner, unlimited deals, priority support, analytics
+    - gold: High placement (score 75), featured deals, up to 10 active deals, analytics
+    - silver: Standard placement (score 50), up to 5 active deals
+    - bronze: Basic placement (score 25), up to 2 active deals
+    - free: Minimal placement (score 0), 1 active deal
+    """
+    __tablename__ = "merchant_subscriptions"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    merchant_id = Column(UUID, ForeignKey('merchants.id'), unique=True, nullable=False, index=True)
+
+    # Subscription tier determines placement priority
+    tier = Column(String(50), default='free', nullable=False, index=True)
+
+    # Pricing
+    monthly_fee = Column(Numeric(10, 2), default=0.00)
+    annual_fee = Column(Numeric(10, 2), nullable=True)
+    billing_cycle = Column(String(20), default='monthly')  # monthly, annual
+
+    # Stripe billing
+    stripe_subscription_id = Column(String(255), nullable=True)
+    stripe_customer_id = Column(String(255), nullable=True)
+
+    # Plan limits based on tier
+    max_active_deals = Column(Integer, default=1)
+    featured_placement = Column(Boolean, default=False)
+    banner_enabled = Column(Boolean, default=False)
+    priority_support = Column(Boolean, default=False)
+    analytics_access = Column(Boolean, default=False)
+    custom_branding = Column(Boolean, default=False)
+
+    # Placement score (calculated from tier)
+    # platinum=100, gold=75, silver=50, bronze=25, free=0
+    placement_score = Column(Integer, default=0)
+
+    # Status
+    status = Column(String(50), default='active', nullable=False, index=True)
+    trial_ends_at = Column(DateTime, nullable=True)
+    current_period_start = Column(DateTime, nullable=True)
+    current_period_end = Column(DateTime, nullable=True)
+    canceled_at = Column(DateTime, nullable=True)
+
+    # Link to onboarding (subscription selected during onboarding)
+    onboarding_id = Column(UUID, ForeignKey('merchant_onboardings.id'), nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    merchant = relationship("Merchant", backref="subscription")
+
+    __table_args__ = (
+        CheckConstraint("tier IN ('platinum', 'gold', 'silver', 'bronze', 'free')"),
+        CheckConstraint("status IN ('active', 'inactive', 'past_due', 'canceled', 'trialing')"),
+        CheckConstraint("billing_cycle IN ('monthly', 'annual')"),
+    )
+
+
+class PreferredMerchant(Base):
+    """Preferred merchants displayed to consumers with special deals"""
+    __tablename__ = "preferred_merchants"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    merchant_id = Column(UUID, ForeignKey('merchants.id'), nullable=False, index=True)
+
+    # Display configuration
+    display_name = Column(String(255), nullable=True)  # Override merchant name for display
+    description = Column(Text, nullable=True)
+    logo_url = Column(String(500), nullable=True)
+    banner_url = Column(String(500), nullable=True)
+    category = Column(String(100), nullable=False, index=True)
+
+    # Location info
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    address = Column(String(500), nullable=True)
+    city = Column(String(100), nullable=True)
+    state = Column(String(50), nullable=True)
+    zip_code = Column(String(20), nullable=True)
+
+    # Cashback/Rewards
+    cashback_percentage = Column(Numeric(5, 2), default=0.00)
+    bonus_points_multiplier = Column(Numeric(3, 1), default=1.0)
+
+    # Display priority and status (final priority = base_priority + subscription placement_score)
+    priority = Column(Integer, default=0)  # Base priority set by admin
+    is_featured = Column(Boolean, default=False)  # Requires gold+ subscription
+    show_banner = Column(Boolean, default=False)  # Requires platinum subscription
+    status = Column(String(50), default='active', nullable=False, index=True)
+
+    # Validity period
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+
+    # Metadata
+    tags = Column(ARRAY(String), default=list)
+    metadata = Column(JSONB, default=dict)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
+
+    # Relationships
+    merchant = relationship("Merchant", backref="preferred_config")
+    deals = relationship("MerchantDeal", back_populates="preferred_merchant", lazy="dynamic")
+
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'inactive', 'scheduled')"),
+        CheckConstraint("cashback_percentage >= 0 AND cashback_percentage <= 100"),
+        CheckConstraint("bonus_points_multiplier >= 1"),
+    )
+
+
+class MerchantDeal(Base):
+    """Special deals and offers from preferred merchants"""
+    __tablename__ = "merchant_deals"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    preferred_merchant_id = Column(UUID, ForeignKey('preferred_merchants.id'), nullable=False, index=True)
+
+    # Deal details
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    deal_type = Column(String(50), nullable=False)  # percentage_off, fixed_amount, bogo, cashback_boost, points_multiplier
+
+    # Deal value
+    discount_value = Column(Numeric(10, 2), nullable=True)  # Amount or percentage
+    min_purchase = Column(Numeric(10, 2), nullable=True)  # Minimum purchase to qualify
+    max_discount = Column(Numeric(10, 2), nullable=True)  # Cap on discount
+
+    # Terms
+    terms_and_conditions = Column(Text, nullable=True)
+    promo_code = Column(String(50), nullable=True)
+    redemption_limit = Column(Integer, nullable=True)  # Max redemptions total
+    per_user_limit = Column(Integer, default=1)  # Max redemptions per user
+
+    # Display
+    image_url = Column(String(500), nullable=True)
+    priority = Column(Integer, default=0)
+    is_featured = Column(Boolean, default=False)
+    status = Column(String(50), default='active', nullable=False, index=True)
+
+    # Validity
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+
+    # Tracking
+    redemption_count = Column(Integer, default=0)
+    view_count = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
+
+    # Relationships
+    preferred_merchant = relationship("PreferredMerchant", back_populates="deals")
+
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'inactive', 'expired', 'scheduled')"),
+        CheckConstraint("deal_type IN ('percentage_off', 'fixed_amount', 'bogo', 'cashback_boost', 'points_multiplier', 'free_item')"),
+    )
+
 
 class MerchantOnboarding(Base):
     """Merchant onboarding for Fiserv AccessOne North Boarding API"""
@@ -618,6 +914,10 @@ __all__ = [
     "AIModel",
     "DashboardAnalytic",
     "CampaignPerformance",
+    # KYC models
+    "UserKYCDocument",
+    "UserKYCHistory",
+    "OFACScreeningResult",
     # Wallet models
     "Wallet",
     "WalletTransaction",
@@ -633,6 +933,10 @@ __all__ = [
     # Onboarding models
     "Charity",
     "MerchantOnboarding",
+    # Preferred Merchants & Deals
+    "MerchantSubscription",
+    "PreferredMerchant",
+    "MerchantDeal",
     # Notification models
     "DeviceToken",
     "NotificationHistory",

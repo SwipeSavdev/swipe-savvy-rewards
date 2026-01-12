@@ -158,11 +158,11 @@ export function SettingsScreen() {
     {
       id: 'kyc',
       title: 'Identity Verification',
-      subtitle: user?.kyc_status === 'approved' ? 'Verified' : 'Complete verification',
+      subtitle: user?.kycStatus === 'approved' ? 'Verified' : 'Complete verification',
       icon: 'shield-check',
       iconVariant: 'green',
       showArrow: true,
-      badge: user?.kyc_status === 'approved' ? undefined : 'Action Required',
+      badge: user?.kycStatus === 'approved' ? undefined : 'Action Required',
       action: () => navigation.navigate('KYCVerification'),
     },
     {

@@ -11,6 +11,7 @@ const ChatDashboardPage = lazy(() => import('./ChatDashboardPage'))
 const SupportTicketsPage = lazy(() => import('./SupportTicketsPage'))
 const AISupportConciergePage = lazy(() => import('./AISupportConciergePage'))
 const MerchantsPage = lazy(() => import('./MerchantsPage'))
+const PreferredMerchantsPage = lazy(() => import('./PreferredMerchantsPage'))
 const UsersPage = lazy(() => import('./UsersPage'))
 const AdminUsersPage = lazy(() => import('./AdminUsersPage'))
 const SettingsPage = lazy(() => import('./SettingsPage'))
@@ -71,6 +72,11 @@ export default function AppRoutes() {
         <Route path="/merchants" element={
           <Suspense fallback={<LoadingFallback />}>
             <MerchantsPage />
+          </Suspense>
+        } />
+        <Route path="/merchants/preferred" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <PreferredMerchantsPage />
           </Suspense>
         } />
         <Route path="/users" element={

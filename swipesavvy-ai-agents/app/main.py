@@ -340,6 +340,22 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not include admin charity routes: {e}")
 
+# Include user authentication routes (Signup, Login, Verification)
+try:
+    from app.routes.user_auth import router as user_auth_router
+    app.include_router(user_auth_router)
+    logger.info("✅ User authentication routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include user auth routes: {e}")
+
+# Include user KYC routes (Document upload, Identity verification, OFAC)
+try:
+    from app.routes.user_kyc import router as user_kyc_router
+    app.include_router(user_kyc_router)
+    logger.info("✅ User KYC routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include user KYC routes: {e}")
+
 # Include payment routes (Phase 10)
 try:
     from app.routes.payments import router as payments_router
@@ -371,6 +387,30 @@ try:
     logger.info("✅ Chat dashboard routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include chat dashboard routes: {e}")
+
+# Include mobile API routes (Accounts, Wallet, Analytics, Goals, Budgets, Leaderboard)
+try:
+    from app.routes.mobile_api import router as mobile_api_router
+    app.include_router(mobile_api_router)
+    logger.info("✅ Mobile API routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include mobile API routes: {e}")
+
+# Include AWS Location Service routes (Geocoding, Places, Routing, Geofencing, Tracking)
+try:
+    from app.routes.location import router as location_router
+    app.include_router(location_router)
+    logger.info("✅ Location services routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include location routes: {e}")
+
+# Include Preferred Merchants routes (Merchants, Deals, Subscriptions)
+try:
+    from app.routes.preferred_merchants import router as preferred_merchants_router
+    app.include_router(preferred_merchants_router)
+    logger.info("✅ Preferred merchants routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include preferred merchants routes: {e}")
 
 # Include AI Concierge routes (existing)
 try:

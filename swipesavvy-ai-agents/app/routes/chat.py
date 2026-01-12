@@ -313,66 +313,6 @@ async def websocket_endpoint(
                 logger.info(f"Cleaned up WebSocket: user={user_id}, session={chat_session_id}")
             except Exception as e:
                 logger.error(f"Error during disconnect cleanup: {str(e)}")
-                
-                elif message_data.message_type in ["image", "file"]:
-                    # Handle file attachments
-                    if not message_data.file_url:
-                        await websocket.send_json({
-                            "success": False,
-                            "message": "File URL required"
-                        })
-                        continue
-                    
-                    db_message = ChatService.create_message(
-                        db=db,
-                        chat_session_id=chat_session_id,
-                        sender_id=user_id,
-                        message_type=message_data.message_type,
-                        content=message_data.content,
-                        file_url=message_data.file_url,
-                        file_name=message_data.file_name,
-                        file_size=message_data.file_size,
-                        file_type=message_data.file_type,
-                        reply_to_id=message_data.reply_to_id,
-                        mentions=message_data.mentions
-                    )
-                    db.commit()
-                    
-                    ws_message = WebSocketMessage(
-                        message_type="message",
-                        chat_session_id=str(chat_session_id),
-                        user_id=str(user_id),
-                        content=message_data.content,
-                        metadata={
-                            "message_id": str(db_message.id),
-                            "message_type": message_data.message_type,
-                            "file_url": message_data.file_url,
-                            "file_name": message_data.file_name,
-                            "file_size": message_data.file_size,
-                            "file_type": message_data.file_type
-                        }
-                    )
-                    
-                    await manager.broadcast(str(chat_session_id), ws_message)
-            
-            except Exception as e:
-                logger.error(f"Error processing message: {str(e)}", exc_info=True)
-                await websocket.send_json({
-                    "success": False,
-                    "message": f"Error processing message: {str(e)}"
-                })
-    
-    except WebSocketDisconnect:
-        if user_id:
-            await manager.disconnect(str(chat_session_id), str(user_id))
-            logger.info(f"WebSocket disconnected: user={user_id}, session={chat_session_id}")
-    
-    except Exception as e:
-        logger.error(f"WebSocket error: {str(e)}", exc_info=True)
-        try:
-            await websocket.close(code=status.WS_1011_SERVER_ERROR, reason="Internal error")
-        except Exception:
-            pass
 
 
 # ============================================================================

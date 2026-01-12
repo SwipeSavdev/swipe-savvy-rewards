@@ -20,8 +20,14 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (accessToken && userId) {
+      // Use EXPO_PUBLIC_API_URL from environment (preferred) or app.json extra config
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL
+        || Constants.expoConfig?.extra?.API_BASE_URL
+        || Constants.expoConfig?.extra?.AI_API_BASE_URL
+        || 'https://api.swipesavvy.com';
+
       const config: AIClientConfig = {
-        baseUrl: Constants.expoConfig?.extra?.AI_API_BASE_URL || 'http://localhost:8000',
+        baseUrl: apiUrl,
         accessToken,
         userId,
       };

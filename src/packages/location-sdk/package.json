@@ -1,0 +1,31 @@
+{
+  "name": "@swipesavvy/location-sdk",
+  "version": "1.0.0",
+  "description": "SwipeSavvy Location SDK - GPS tracking, merchant discovery, geofencing, and routing",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "swipesavvy",
+    "location",
+    "gps",
+    "geofencing",
+    "routing",
+    "aws-location",
+    "react-native",
+    "expo"
+  ],
+  "author": "SwipeSavvy",
+  "license": "MIT",
+  "peerDependencies": {
+    "expo-location": ">=17.0.0",
+    "react": ">=18.0.0",
+    "react-native": ">=0.72.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.0.0"
+  }
+}
