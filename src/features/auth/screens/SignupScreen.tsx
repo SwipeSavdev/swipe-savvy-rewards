@@ -47,6 +47,7 @@ const PersonalInfoStep: StepComponent = ({ data, updateData, errors }) => {
           <TextInput
             style={[styles.input, errors.firstName && styles.inputError]}
             placeholder="John"
+            placeholderTextColor="#999999"
             value={data.personal.firstName}
             onChangeText={(v) => updatePersonal('firstName', v)}
             autoCapitalize="words"
@@ -58,6 +59,7 @@ const PersonalInfoStep: StepComponent = ({ data, updateData, errors }) => {
           <TextInput
             style={[styles.input, errors.lastName && styles.inputError]}
             placeholder="Doe"
+            placeholderTextColor="#999999"
             value={data.personal.lastName}
             onChangeText={(v) => updatePersonal('lastName', v)}
             autoCapitalize="words"
@@ -70,6 +72,7 @@ const PersonalInfoStep: StepComponent = ({ data, updateData, errors }) => {
       <TextInput
         style={[styles.input, errors.email && styles.inputError]}
         placeholder="john.doe@example.com"
+        placeholderTextColor="#999999"
         value={data.personal.email}
         onChangeText={(v) => updatePersonal('email', v)}
         keyboardType="email-address"
@@ -82,6 +85,7 @@ const PersonalInfoStep: StepComponent = ({ data, updateData, errors }) => {
       <TextInput
         style={[styles.input, errors.phone && styles.inputError]}
         placeholder="(555) 123-4567"
+        placeholderTextColor="#999999"
         value={data.personal.phone}
         onChangeText={(v) => updatePersonal('phone', formatPhoneNumber(v))}
         keyboardType="phone-pad"
@@ -92,6 +96,7 @@ const PersonalInfoStep: StepComponent = ({ data, updateData, errors }) => {
       <TextInput
         style={[styles.input, errors.dateOfBirth && styles.inputError]}
         placeholder="MM/DD/YYYY"
+        placeholderTextColor="#999999"
         value={data.personal.dateOfBirth}
         onChangeText={(v) => updatePersonal('dateOfBirth', formatDateInput(v))}
         keyboardType="number-pad"
@@ -119,6 +124,7 @@ const AddressStep: StepComponent = ({ data, updateData, errors }) => {
       <TextInput
         style={[styles.input, errors.street && styles.inputError]}
         placeholder="123 Main Street"
+        placeholderTextColor="#999999"
         value={data.address.street}
         onChangeText={(v) => updateAddress('street', v)}
         autoCapitalize="words"
@@ -129,6 +135,7 @@ const AddressStep: StepComponent = ({ data, updateData, errors }) => {
       <TextInput
         style={styles.input}
         placeholder="Apt 4B"
+        placeholderTextColor="#999999"
         value={data.address.unit}
         onChangeText={(v) => updateAddress('unit', v)}
       />
@@ -137,6 +144,7 @@ const AddressStep: StepComponent = ({ data, updateData, errors }) => {
       <TextInput
         style={[styles.input, errors.city && styles.inputError]}
         placeholder="New York"
+        placeholderTextColor="#999999"
         value={data.address.city}
         onChangeText={(v) => updateAddress('city', v)}
         autoCapitalize="words"
@@ -162,6 +170,7 @@ const AddressStep: StepComponent = ({ data, updateData, errors }) => {
           <TextInput
             style={[styles.input, errors.zipCode && styles.inputError]}
             placeholder="10001"
+            placeholderTextColor="#999999"
             value={data.address.zipCode}
             onChangeText={(v) => updateAddress('zipCode', v.replace(/\D/g, '').slice(0, 5))}
             keyboardType="number-pad"
@@ -226,6 +235,7 @@ const IdentityStep: StepComponent = ({ data, updateData, errors }) => {
       <TextInput
         style={[styles.input, errors.ssn && styles.inputError]}
         placeholder="XXXX"
+        placeholderTextColor="#999999"
         value={data.identity.ssn}
         onChangeText={(v) => updateIdentity('ssn', v.replace(/\D/g, '').slice(0, 4))}
         keyboardType="number-pad"
@@ -282,6 +292,7 @@ const SecurityStep: StepComponent = ({ data, updateData, errors }) => {
         <TextInput
           style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}
           placeholder="Create a password"
+          placeholderTextColor="#999999"
           value={password}
           onChangeText={handlePasswordChange}
           secureTextEntry={!showPassword}
@@ -323,6 +334,7 @@ const SecurityStep: StepComponent = ({ data, updateData, errors }) => {
       <TextInput
         style={[styles.input, errors.confirmPassword && styles.inputError]}
         placeholder="Re-enter your password"
+        placeholderTextColor="#999999"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry={!showPassword}
