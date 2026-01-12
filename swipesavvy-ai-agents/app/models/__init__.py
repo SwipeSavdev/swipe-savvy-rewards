@@ -752,9 +752,9 @@ class PreferredMerchant(Base):
     start_date = Column(DateTime, nullable=True)
     end_date = Column(DateTime, nullable=True)
 
-    # Metadata
+    # Extra data
     tags = Column(ARRAY(String), default=list)
-    metadata = Column(JSONB, default=dict)
+    extra_data = Column(JSONB, default=dict)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
