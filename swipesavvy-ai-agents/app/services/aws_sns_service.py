@@ -28,10 +28,12 @@ AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 SNS_SENDER_ID = os.getenv("SNS_SENDER_ID", "SwipeSavvy")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
-# For development/testing, enable mock mode if AWS not configured
-# Default to false in production - set MOCK_SMS=true for local development
-MOCK_SMS = os.getenv("MOCK_SMS", "false").lower() == "true" or not AWS_ACCESS_KEY_ID
+# For development/testing, enable mock mode
+# In production (ECS), use IAM role - no access keys needed
+# Set MOCK_SMS=true explicitly to enable mock mode
+MOCK_SMS = os.getenv("MOCK_SMS", "true" if ENVIRONMENT == "development" else "false").lower() == "true"
 
 
 class AWSSNSService:
@@ -44,13 +46,19 @@ class AWSSNSService:
 
         if not self.mock_mode:
             try:
-                self.client = boto3.client(
-                    'sns',
-                    region_name=AWS_REGION,
-                    aws_access_key_id=AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-                )
-                logger.info(f"AWS SNS service initialized in region: {AWS_REGION}")
+                # Use explicit credentials if provided (local dev), otherwise use IAM role (ECS)
+                if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+                    self.client = boto3.client(
+                        'sns',
+                        region_name=AWS_REGION,
+                        aws_access_key_id=AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+                    )
+                    logger.info(f"AWS SNS service initialized with explicit credentials in region: {AWS_REGION}")
+                else:
+                    # ECS/Lambda: Use IAM role credentials automatically
+                    self.client = boto3.client('sns', region_name=AWS_REGION)
+                    logger.info(f"AWS SNS service initialized with IAM role in region: {AWS_REGION}")
             except Exception as e:
                 logger.error(f"Failed to initialize AWS SNS client: {e}")
                 self.mock_mode = True
