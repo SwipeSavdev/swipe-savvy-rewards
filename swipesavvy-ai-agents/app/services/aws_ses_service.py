@@ -32,10 +32,12 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 FROM_EMAIL = os.getenv("SES_FROM_EMAIL", "noreply@swipesavvy.com")
 FROM_NAME = os.getenv("SES_FROM_NAME", "SwipeSavvy")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
-# For development/testing, enable mock mode if AWS not configured
-# Default to false in production - set MOCK_EMAIL=true for local development
-MOCK_EMAIL = os.getenv("MOCK_EMAIL", "false").lower() == "true" or not AWS_ACCESS_KEY_ID
+# For development/testing, enable mock mode
+# In production (ECS), use IAM role - no access keys needed
+# Set MOCK_EMAIL=true explicitly to enable mock mode
+MOCK_EMAIL = os.getenv("MOCK_EMAIL", "true" if ENVIRONMENT == "development" else "false").lower() == "true"
 
 
 class AWSSESService:
@@ -49,13 +51,19 @@ class AWSSESService:
 
         if not self.mock_mode:
             try:
-                self.client = boto3.client(
-                    'ses',
-                    region_name=AWS_REGION,
-                    aws_access_key_id=AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-                )
-                logger.info(f"AWS SES service initialized in region: {AWS_REGION}")
+                # Use explicit credentials if provided (local dev), otherwise use IAM role (ECS)
+                if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+                    self.client = boto3.client(
+                        'ses',
+                        region_name=AWS_REGION,
+                        aws_access_key_id=AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+                    )
+                    logger.info(f"AWS SES service initialized with explicit credentials in region: {AWS_REGION}")
+                else:
+                    # ECS/Lambda: Use IAM role credentials automatically
+                    self.client = boto3.client('ses', region_name=AWS_REGION)
+                    logger.info(f"AWS SES service initialized with IAM role in region: {AWS_REGION}")
             except Exception as e:
                 logger.error(f"Failed to initialize AWS SES client: {e}")
                 self.mock_mode = True
