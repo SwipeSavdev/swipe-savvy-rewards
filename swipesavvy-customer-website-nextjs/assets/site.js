@@ -117,60 +117,133 @@ document.addEventListener('DOMContentLoaded', function(){
     scrollDepth: 0,
     timeOnPage: 0,
     mouseMovements: 0,
-    hasInteracted: false,
+    hasInteracted: false,        // User clicked something or sent a message
+    hasTakenAction: false,       // User completed a conversion action (form submit, link click, etc.)
     exitIntentTriggered: false,
-    promoShown: false,
+    entranceGreetingShown: false,
     widgetOpened: false,
+    widgetDismissed: false,      // User explicitly closed the widget
     lastActivity: Date.now()
   };
 
   // Configurable triggers (can be A/B tested)
   const TRIGGERS = {
-    timeDelay: 8000,           // Show attention animation after 8 seconds
-    scrollDepth: 30,           // Trigger at 30% scroll depth
-    idleTime: 15000,           // Show promo after 15 seconds idle
-    exitIntentDelay: 500,      // Exit intent detection sensitivity
-    promoMessages: [
-      "Got questions? Ask Savvy AI!",
-      "Need help choosing a plan?",
-      "Chat with us - we're here!",
-      "Questions about pricing?"
-    ]
+    entranceDelay: 3000,         // Auto-open widget 3 seconds after page load
+    exitIntentEnabled: true,     // Enable exit intent detection
+    entranceGreetings: [
+      "Hi! I'm Savvy AI. How can I help you today?",
+      "Welcome! Ask me anything about SwipeSavvy.",
+      "Hey there! Need help finding what you're looking for?",
+      "Hi! I can answer questions about pricing, features, and more."
+    ],
+    exitGreetings: [
+      "Wait! Before you go - do you have any questions I can help with?",
+      "Hold on! Is there something I can help you find?",
+      "Don't leave yet! Let me help you with any questions.",
+      "Before you go - I can help with pricing, demos, or any questions!"
+    ],
+    // Page-specific greetings based on URL
+    pageGreetings: {
+      '/platform': "Interested in our platform? I can walk you through the features!",
+      '/solutions': "Looking for a solution? Tell me about your business needs!",
+      '/contact': "Want to get in touch? I can help or connect you with our team!",
+      '/support': "Need support? I'm here to help troubleshoot any issues!",
+      '/industries': "I can help you find the right solution for your industry!"
+    }
   };
 
-  // Update pill text with promo message
-  function showPromoMessage(message) {
-    if (!pill || engagementState.promoShown) return;
-    engagementState.promoShown = true;
-    const promoText = message || TRIGGERS.promoMessages[Math.floor(Math.random() * TRIGGERS.promoMessages.length)];
-    pill.textContent = promoText;
-    pill.classList.add('promo');
-    pill.style.display = 'block';
-    // Trigger attention animation
-    if (fab) {
-      fab.classList.add('attention');
-      setTimeout(() => fab.classList.remove('attention'), 1500);
+  // Get page-specific or random greeting
+  function getEntranceGreeting() {
+    const path = window.location.pathname;
+    for (const [pagePath, greeting] of Object.entries(TRIGGERS.pageGreetings)) {
+      if (path.includes(pagePath)) return greeting;
     }
+    return TRIGGERS.entranceGreetings[Math.floor(Math.random() * TRIGGERS.entranceGreetings.length)];
   }
 
-  // Trigger pulse animation for engagement
-  function triggerPulse() {
-    if (fab && !engagementState.widgetOpened) {
-      fab.classList.add('pulse');
-      setTimeout(() => fab.classList.remove('pulse'), 6000);
-    }
+  function getExitGreeting() {
+    return TRIGGERS.exitGreetings[Math.floor(Math.random() * TRIGGERS.exitGreetings.length)];
   }
 
-  // Exit intent detection (mouse leaving viewport)
+  // Add AI greeting message to chat
+  function addGreetingMessage(message) {
+    if (!chat) return;
+    const div = document.createElement('div');
+    div.className = 'msg ai greeting';
+    div.textContent = message;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  // Open widget with greeting (for entrance)
+  function openWithGreeting(greeting, trigger) {
+    if (engagementState.widgetDismissed) return; // Respect user's choice to close
+
+    engagementState.widgetOpened = true;
+    document.body.classList.remove('savvy-closing');
+    document.body.classList.add('savvy-open');
+    if (fab) fab.classList.remove('pulse');
+
+    // Add greeting message if not already shown
+    if (!engagementState.entranceGreetingShown) {
+      engagementState.entranceGreetingShown = true;
+      addGreetingMessage(greeting);
+    }
+
+    trackEvent('widget_auto_opened', {
+      trigger: trigger,
+      timeOnPage: engagementState.timeOnPage,
+      scrollDepth: engagementState.scrollDepth,
+      page: window.location.pathname
+    });
+  }
+
+  // Entrance engagement - auto-open after delay
+  function triggerEntranceEngagement() {
+    setTimeout(() => {
+      if (!engagementState.widgetOpened && !engagementState.hasInteracted && !engagementState.widgetDismissed) {
+        const greeting = getEntranceGreeting();
+        openWithGreeting(greeting, 'entrance');
+
+        // Pulse the FAB to draw attention
+        if (fab) {
+          fab.classList.add('attention');
+          setTimeout(() => { if (fab) fab.classList.remove('attention'); }, 2000);
+        }
+      }
+    }, TRIGGERS.entranceDelay);
+  }
+
+  // Exit intent detection (mouse leaving viewport toward top)
   function handleExitIntent(e) {
-    if (e.clientY <= 0 && !engagementState.exitIntentTriggered && !engagementState.widgetOpened) {
-      engagementState.exitIntentTriggered = true;
-      showPromoMessage("Before you go - any questions?");
-      triggerPulse();
+    if (!TRIGGERS.exitIntentEnabled) return;
+    if (e.clientY > 10) return; // Only trigger when mouse goes to very top
+    if (engagementState.exitIntentTriggered) return;
+    if (engagementState.hasTakenAction) return; // Don't bother if they converted
+
+    engagementState.exitIntentTriggered = true;
+
+    // If widget was dismissed, just show attention animation on FAB
+    if (engagementState.widgetDismissed) {
+      if (fab) {
+        fab.classList.add('attention');
+        setTimeout(() => { if (fab) fab.classList.remove('attention'); }, 2000);
+      }
+      return;
     }
+
+    // Open widget with exit greeting
+    const greeting = getExitGreeting();
+    openWithGreeting(greeting, 'exit_intent');
+
+    trackEvent('exit_intent_triggered', {
+      timeOnPage: engagementState.timeOnPage,
+      scrollDepth: engagementState.scrollDepth,
+      hadInteraction: engagementState.hasInteracted
+    });
   }
 
-  // Scroll depth tracking
+  // Track scroll depth
   function handleScroll() {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const docHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -178,62 +251,61 @@ document.addEventListener('DOMContentLoaded', function(){
 
     if (scrollPercent > engagementState.scrollDepth) {
       engagementState.scrollDepth = scrollPercent;
-
-      // Trigger at scroll depth threshold
-      if (scrollPercent >= TRIGGERS.scrollDepth && !engagementState.promoShown) {
-        showPromoMessage("Scrolling for info? Just ask!");
-        triggerPulse();
-      }
     }
     engagementState.lastActivity = Date.now();
   }
 
-  // Track mouse activity for idle detection
+  // Track mouse activity
   function handleMouseMove() {
     engagementState.mouseMovements++;
     engagementState.lastActivity = Date.now();
   }
 
-  // Time-based triggers
-  function startEngagementTimers() {
-    // Initial attention after time delay
-    setTimeout(() => {
-      if (!engagementState.widgetOpened && !engagementState.hasInteracted) {
-        if (fab) fab.classList.add('attention');
-        setTimeout(() => { if (fab) fab.classList.remove('attention'); }, 1500);
-      }
-    }, TRIGGERS.timeDelay);
+  // Track conversion actions (links, form submits, etc.)
+  function trackConversionActions() {
+    // Track CTA button clicks
+    document.querySelectorAll('a[href*="demo"], a[href*="contact"], a[href*="signup"], .cta-btn, .btn-primary').forEach(el => {
+      el.addEventListener('click', () => {
+        engagementState.hasTakenAction = true;
+        trackEvent('conversion_action', { element: el.textContent || el.href });
+      });
+    });
 
-    // Idle detection - check every 5 seconds
-    setInterval(() => {
-      const idleTime = Date.now() - engagementState.lastActivity;
-      if (idleTime > TRIGGERS.idleTime && !engagementState.promoShown && !engagementState.widgetOpened) {
-        showPromoMessage();
-        triggerPulse();
-      }
-    }, 5000);
+    // Track form submissions
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', () => {
+        engagementState.hasTakenAction = true;
+        trackEvent('form_submitted', { formId: form.id || 'unknown' });
+      });
+    });
+  }
 
-    // Page time tracking
+  // Page time tracking
+  function startTimeTracking() {
     setInterval(() => {
       engagementState.timeOnPage = Date.now() - engagementState.pageLoadTime;
     }, 1000);
   }
 
-  // Initialize engagement tracking
+  // Initialize all engagement tracking
   function initEngagementTracking() {
     // Exit intent (desktop only)
     if (window.matchMedia('(min-width: 820px)').matches) {
       document.addEventListener('mouseout', handleExitIntent);
     }
 
-    // Scroll tracking
+    // Scroll and mouse tracking
     window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // Mouse movement tracking
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // Start timers
-    startEngagementTimers();
+    // Track conversion actions
+    trackConversionActions();
+
+    // Start time tracking
+    startTimeTracking();
+
+    // Trigger entrance engagement
+    triggerEntranceEngagement();
   }
 
   // Analytics tracking helper
@@ -244,16 +316,22 @@ document.addEventListener('DOMContentLoaded', function(){
     console.log('[SavvyAI]', eventName, data);
   }
 
-  // Open with animation
+  // Open with animation (manual open)
   function open() {
     engagementState.widgetOpened = true;
     engagementState.hasInteracted = true;
     document.body.classList.remove('savvy-closing');
     document.body.classList.add('savvy-open');
     if (fab) fab.classList.remove('pulse');
+
+    // Show greeting if first time opening manually
+    if (!engagementState.entranceGreetingShown) {
+      engagementState.entranceGreetingShown = true;
+      addGreetingMessage(getEntranceGreeting());
+    }
+
     trackEvent('widget_opened', {
-      trigger: engagementState.exitIntentTriggered ? 'exit_intent' :
-               engagementState.promoShown ? 'promo' : 'direct',
+      trigger: 'manual',
       timeOnPage: engagementState.timeOnPage,
       scrollDepth: engagementState.scrollDepth
     });
@@ -261,10 +339,16 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // Close with animation
   function shut() {
+    engagementState.widgetDismissed = true; // Mark as user-dismissed
     document.body.classList.add('savvy-closing');
     setTimeout(() => {
       document.body.classList.remove('savvy-open', 'savvy-closing');
     }, 250);
+
+    trackEvent('widget_closed', {
+      timeOnPage: engagementState.timeOnPage,
+      messagesExchanged: conversationHistory.length
+    });
   }
 
   // Initialize engagement tracking
