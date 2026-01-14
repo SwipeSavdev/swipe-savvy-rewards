@@ -220,13 +220,21 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not include support routes: {e}")
 
-# Include AI Concierge routes
+# Include AI Concierge routes (employee/admin support)
 try:
     from app.routes.ai_concierge import router as ai_concierge_router
     app.include_router(ai_concierge_router)
     logger.info("✅ AI Concierge routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include AI Concierge routes: {e}")
+
+# Include Website Concierge routes (public website chatbot)
+try:
+    from app.routes.website_concierge import router as website_concierge_router
+    app.include_router(website_concierge_router)
+    logger.info("✅ Website Concierge routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include Website Concierge routes: {e}")
 
 # Include marketing routes
 try:
