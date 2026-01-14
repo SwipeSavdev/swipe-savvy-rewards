@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opt-in Mock-up 3: POS Customer Enrollment - Swipe Savvy</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; padding: 40px 20px; display: flex; justify-content: center; align-items: flex-start; gap: 30px; flex-wrap: wrap; }
+
+    .pos-terminal { width: 480px; background: #1e293b; border-radius: 20px; padding: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.4); }
+    .pos-screen { background: white; border-radius: 12px; overflow: hidden; }
+
+    .pos-header { background: linear-gradient(135deg, #1f4f91, #2563eb); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .pos-header h1 { color: white; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+    .pos-header h1::before { content: "🛒"; }
+    .pos-header span { color: rgba(255,255,255,0.8); font-size: 13px; }
+
+    .pos-content { padding: 24px; }
+
+    .enrollment-header { text-align: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+    .enrollment-header h2 { font-size: 22px; color: #1e293b; margin-bottom: 8px; }
+    .enrollment-header p { color: #64748b; font-size: 14px; }
+
+    .sms-consent-section { background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,163,74,0.08)); border: 2px solid #2563eb; border-radius: 16px; padding: 24px; margin: 20px 0; }
+    .sms-consent-section h3 { font-size: 18px; color: #1e293b; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .sms-consent-section h3::before { content: "📱"; font-size: 24px; }
+
+    .checkbox-option { display: flex; align-items: flex-start; gap: 14px; padding: 12px; background: white; border-radius: 10px; margin-bottom: 12px; }
+    .checkbox-option input { width: 24px; height: 24px; margin-top: 2px; accent-color: #2563eb; }
+    .checkbox-option label { font-size: 14px; line-height: 1.6; color: #374151; }
+    .checkbox-option label strong { color: #1e293b; display: block; margin-bottom: 4px; }
+
+    .consent-details { font-size: 12px; color: #64748b; line-height: 1.7; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.1); }
+    .consent-details strong { color: #475569; }
+
+    .button-row { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-pos { flex: 1; padding: 18px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-secondary { background: #f1f5f9; color: #475569; }
+
+    .annotation { max-width: 400px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #92400e; line-height: 1.6; }
+    .annotation strong { display: block; margin-bottom: 8px; font-size: 14px; }
+    .annotation ul { margin: 8px 0 0 20px; }
+    .annotation li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="pos-terminal">
+    <div class="pos-screen">
+      <div class="pos-header">
+        <h1>Shop Savvy POS</h1>
+        <span>Customer Display</span>
+      </div>
+
+      <div class="pos-content">
+        <div class="enrollment-header">
+          <h2>Join Swipe Savvy Rewards</h2>
+          <p>Earn points on every purchase and unlock exclusive offers!</p>
+        </div>
+
+        <!-- SMS CONSENT SECTION - KEY COMPLIANCE ELEMENT -->
+        <div class="sms-consent-section">
+          <h3>SMS Notifications</h3>
+
+          <div class="checkbox-option">
+            <input type="checkbox" id="sms-opt" checked />
+            <label for="sms-opt">
+              <strong>Send me SMS updates about my rewards, exclusive offers, and account activity.</strong>
+              Get notified about points earned, special promotions, and important account updates via text message.
+            </label>
+          </div>
+
+          <div class="consent-details">
+            By providing your phone number and checking this box, you consent to receive automated SMS messages from Swipe Savvy. Message frequency varies. <strong>Msg & data rates may apply.</strong><br><br>
+            Reply <strong>STOP</strong> to unsubscribe anytime. Reply <strong>HELP</strong> for help.<br><br>
+            <strong>This is optional.</strong> You can still earn rewards without SMS notifications.
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="btn-pos btn-secondary">Skip SMS</button>
+          <button class="btn-pos btn-primary">Continue ✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <strong>📋 10DLC POS Enrollment Compliance:</strong>
+    <ul>
+      <li>Customer-facing display shows clear opt-in checkbox</li>
+      <li>SMS described as "updates about rewards, offers, account activity"</li>
+      <li>Message frequency: "varies" disclosed</li>
+      <li>"Msg & data rates may apply" prominently shown</li>
+      <li>STOP/HELP instructions clearly visible</li>
+      <li><strong>"This is optional"</strong> explicitly stated</li>
+      <li>Two clear buttons: "Skip SMS" vs "Continue"</li>
+      <li>Customer has genuine choice - not pre-checked dark pattern</li>
+    </ul>
+  </div>
+</body>
+</html>

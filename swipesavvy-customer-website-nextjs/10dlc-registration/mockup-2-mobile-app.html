@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opt-in Mock-up 2: Mobile App Registration - Swipe Savvy</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1e293b; padding: 40px 20px; display: flex; justify-content: center; align-items: flex-start; gap: 30px; flex-wrap: wrap; }
+
+    .phone { width: 320px; background: #fff; border-radius: 40px; padding: 12px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
+    .phone-inner { background: #f8fafc; border-radius: 32px; overflow: hidden; min-height: 640px; }
+    .status-bar { background: #1f4f91; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: white; }
+    .screen { padding: 24px 20px; }
+
+    .app-header { text-align: center; margin-bottom: 24px; }
+    .app-logo { width: 60px; height: 60px; background: linear-gradient(135deg, #1f4f91, #6bc14a); border-radius: 16px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; }
+    .app-header h1 { font-size: 22px; color: #1e293b; }
+    .app-header p { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+    .consent-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .consent-card h3 { font-size: 16px; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .consent-card h3::before { content: "📱"; }
+
+    .benefit-list { margin: 12px 0; }
+    .benefit-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; color: #475569; }
+    .benefit-item::before { content: "✓"; color: #16a34a; font-weight: bold; }
+
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-top: 1px solid #e2e8f0; margin-top: 12px; }
+    .toggle-label { font-weight: 600; color: #1e293b; }
+    .toggle { width: 52px; height: 28px; background: #16a34a; border-radius: 14px; position: relative; }
+    .toggle::after { content: ""; position: absolute; width: 24px; height: 24px; background: white; border-radius: 12px; top: 2px; right: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+    .consent-text { font-size: 11px; color: #64748b; line-height: 1.6; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+    .consent-text a { color: #2563eb; }
+
+    .btn-app { width: 100%; padding: 16px; background: #2563eb; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; margin-top: 16px; }
+
+    .step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+    .step { width: 8px; height: 8px; border-radius: 4px; background: #cbd5e1; }
+    .step.active { width: 24px; background: #2563eb; }
+
+    .annotation { max-width: 400px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #92400e; line-height: 1.6; }
+    .annotation strong { display: block; margin-bottom: 8px; font-size: 14px; }
+    .annotation ul { margin: 8px 0 0 20px; }
+    .annotation li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="phone-inner">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span>📶 100%</span>
+      </div>
+
+      <div class="screen">
+        <div class="step-indicator">
+          <div class="step"></div>
+          <div class="step"></div>
+          <div class="step active"></div>
+          <div class="step"></div>
+        </div>
+
+        <div class="app-header">
+          <div class="app-logo">SS</div>
+          <h1>Swipe Savvy</h1>
+          <p>Rewards Wallet</p>
+        </div>
+
+        <div class="consent-card">
+          <h3>Stay Connected</h3>
+          <p style="font-size: 13px; color: #64748b;">Enable SMS notifications to receive:</p>
+
+          <div class="benefit-list">
+            <div class="benefit-item">Reward balance updates</div>
+            <div class="benefit-item">Exclusive offers & promotions</div>
+            <div class="benefit-item">Transaction confirmations</div>
+            <div class="benefit-item">Account security alerts</div>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-label">SMS Notifications</span>
+            <div class="toggle"></div>
+          </div>
+
+          <div class="consent-text">
+            I agree to receive SMS messages from Swipe Savvy at the number provided. Message frequency varies based on account activity. Message and data rates may apply.<br><br>
+            Reply <strong>STOP</strong> to cancel anytime. Reply <strong>HELP</strong> for assistance. Consent not required for purchase.<br><br>
+            By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+          </div>
+        </div>
+
+        <button class="btn-app">Continue</button>
+        <p style="text-align: center; margin-top: 12px; font-size: 12px; color: #94a3b8;">Skip for now</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <strong>📋 10DLC Mobile App Compliance:</strong>
+    <ul>
+      <li>Clear toggle for SMS opt-in (ON shown)</li>
+      <li>Benefits explained to encourage opt-in</li>
+      <li>Frequency disclosure: "varies based on account activity"</li>
+      <li>Data rates notice included</li>
+      <li>STOP/HELP instructions prominently displayed</li>
+      <li>"Consent not required for purchase" stated</li>
+      <li>Links to Terms & Privacy Policy</li>
+      <li>"Skip for now" option - consent is optional</li>
+    </ul>
+  </div>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opt-in Mock-up 1: Website Contact Form - Swipe Savvy</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; padding: 40px 20px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { color: #1f4f91; font-size: 28px; margin-bottom: 8px; }
+    .header p { color: #64748b; }
+    .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .badge { display: inline-block; background: #dcfce7; color: #16a34a; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
+    h2 { font-size: 20px; color: #1e293b; margin-bottom: 20px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-weight: 600; font-size: 14px; color: #374151; margin-bottom: 6px; }
+    input, select, textarea { width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+    /* SMS Consent Box - Highlighted */
+    .consent-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 24px 0; }
+    .consent-box.highlight { border-color: #2563eb; background: linear-gradient(135deg, rgba(37,99,235,0.05), rgba(139,92,246,0.05)); }
+    .consent-title { font-weight: 700; font-size: 15px; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .consent-title::before { content: "📱"; }
+    .checkbox-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .checkbox-row input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; accent-color: #2563eb; }
+    .checkbox-label { font-size: 13px; line-height: 1.6; color: #475569; }
+    .consent-note { font-size: 12px; color: #64748b; line-height: 1.6; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+    .consent-note a { color: #2563eb; }
+    .carrier-info { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+
+    .btn { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+    .btn:hover { background: #1d4ed8; }
+
+    .annotation { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; margin-top: 20px; font-size: 13px; color: #92400e; }
+    .annotation strong { display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Swipe Savvy</h1>
+      <p>Request a Demo - Contact Form</p>
+    </div>
+
+    <div class="card">
+      <span class="badge">Get Started</span>
+      <h2>Contact Form</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name *</label>
+          <input type="text" value="John" />
+        </div>
+        <div class="form-group">
+          <label>Last Name *</label>
+          <input type="text" value="Smith" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Business Email *</label>
+          <input type="email" value="john@acmeretail.com" />
+        </div>
+        <div class="form-group">
+          <label>Phone Number *</label>
+          <input type="tel" value="+1 (555) 123-4567" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Company Name *</label>
+        <input type="text" value="Acme Retail Inc." />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Industry *</label>
+          <select>
+            <option selected>Retail</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Number of Locations</label>
+          <select>
+            <option selected>6-20 locations</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SMS CONSENT SECTION - KEY COMPLIANCE ELEMENT -->
+      <div class="consent-box highlight">
+        <div class="consent-title">SMS Communications Consent</div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="sms" checked />
+          <label for="sms" class="checkbox-label">
+            <strong>I consent to receive SMS text messages from Swipe Savvy at the phone number provided.</strong> Message frequency varies. Message and data rates may apply. Reply STOP to opt out at any time. Reply HELP for assistance.
+          </label>
+        </div>
+
+        <div class="consent-note">
+          By checking this box, you agree to receive automated promotional and transactional messages. Consent is not a condition of purchase. View our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+        </div>
+
+        <div class="carrier-info">
+          <strong>Supported carriers:</strong> AT&T, Verizon, T-Mobile, Sprint, and most major US carriers.<br>
+          Swipe Savvy: 1-800-505-8769 | support@swipesavvy.com
+        </div>
+      </div>
+
+      <div class="checkbox-row" style="margin-top: 16px;">
+        <input type="checkbox" id="privacy" checked />
+        <label for="privacy" class="checkbox-label">
+          I have read and agree to the <a href="#" style="color: #2563eb;">Privacy Policy</a> and <a href="#" style="color: #2563eb;">Terms of Service</a>. *
+        </label>
+      </div>
+
+      <button class="btn">Submit Request</button>
+    </div>
+
+    <div class="annotation">
+      <strong>📋 10DLC Compliance Note:</strong>
+      This form includes required SMS consent language with: clear disclosure of message frequency, data rates notice, STOP/HELP instructions, carrier support info, and links to Terms/Privacy. Checkbox requires explicit user action.
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Homepage - Highest Priority -->
+  <url>
+    <loc>https://swipesavvy.com/</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://swipesavvy.com/assets/images/screenshots/hero-dashboard.png</image:loc>
+      <image:title>Swipe Savvy POS Dashboard</image:title>
+    </image:image>
+  </url>
+
+  <!-- Platform Overview -->
+  <url>
+    <loc>https://swipesavvy.com/platform</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Solutions - High Priority -->
+  <url>
+    <loc>https://swipesavvy.com/solutions/rewards-wallet</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://swipesavvy.com/assets/images/icons/digital-wallet.png</image:loc>
+      <image:title>Swipe Savvy Rewards Wallet</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/solutions/cdp</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://swipesavvy.com/assets/images/icons/analytics.png</image:loc>
+      <image:title>Customer Data Platform CDP</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/solutions/merchant-loyalty</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://swipesavvy.com/assets/images/icons/contactless-payments.png</image:loc>
+      <image:title>Merchant Loyalty Program</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/solutions/omnichannel-pos</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://swipesavvy.com/assets/images/screenshots/pos-terminal.png</image:loc>
+      <image:title>Omni-Channel Cloud POS System</image:title>
+    </image:image>
+  </url>
+
+  <!-- Industries - High Priority -->
+  <url>
+    <loc>https://swipesavvy.com/industries/retail</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/industries/qsr</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/industries/grocery</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/industries/healthcare</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/industries/jewelry</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/industries/warehouse</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Support & Contact -->
+  <url>
+    <loc>https://swipesavvy.com/support</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/contact</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Legal Pages -->
+  <url>
+    <loc>https://swipesavvy.com/legal/terms</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <url>
+    <loc>https://swipesavvy.com/legal/privacy</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+</urlset>
