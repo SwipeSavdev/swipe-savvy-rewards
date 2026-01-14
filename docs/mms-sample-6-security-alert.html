@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMS Sample 6 - Security Alert</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+        .phone-frame {
+            width: 375px;
+            background: #fff;
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 12px solid #1a1a1a;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .message-header {
+            text-align: center;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .message-header h3 {
+            font-size: 16px;
+            color: #333;
+        }
+        .message-header span {
+            font-size: 12px;
+            color: #888;
+        }
+        .message-bubble {
+            background: #e9e9eb;
+            border-radius: 18px;
+            padding: 4px;
+            max-width: 90%;
+            margin-bottom: 10px;
+        }
+        .mms-image {
+            width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%);
+            padding: 25px;
+            text-align: center;
+            color: white;
+        }
+        .mms-image .brand-logo {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        .mms-image .alert-icon {
+            font-size: 50px;
+            margin: 10px 0;
+        }
+        .mms-image .alert-badge {
+            background: #FFD700;
+            color: #1a1a1a;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 800;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .mms-image .alert-text {
+            font-size: 14px;
+            margin: 10px 0;
+            line-height: 1.4;
+        }
+        .mms-image .transaction-box {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .mms-image .transaction-box .label {
+            font-size: 11px;
+            opacity: 0.8;
+            text-transform: uppercase;
+        }
+        .mms-image .transaction-box .value {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .mms-image .action-box {
+            background: white;
+            color: #D32F2F;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 15px 0;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .mms-image .contact-info {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .mms-image .contact-info .phone {
+            font-size: 16px;
+            font-weight: 800;
+        }
+        .message-text {
+            padding: 12px 16px;
+            font-size: 15px;
+            line-height: 1.4;
+            color: #1a1a1a;
+        }
+        .timestamp {
+            text-align: right;
+            font-size: 11px;
+            color: #888;
+            padding: 5px 10px;
+        }
+        .label {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="phone-frame">
+            <div class="status-bar">
+                <span>3:45 PM</span>
+                <span>74297 (SAVVY)</span>
+            </div>
+            <div class="message-header">
+                <h3>SwipeSavvy</h3>
+                <span>Short Code: 74297</span>
+            </div>
+            <div class="message-bubble">
+                <div class="mms-image">
+                    <div class="brand-logo">SwipeSavvy Security</div>
+                    <div class="alert-icon">&#128274;</div>
+                    <div class="alert-badge">SECURITY ALERT</div>
+                    <div class="transaction-box">
+                        <div class="label">Blocked Transaction</div>
+                        <div class="value">$500.00</div>
+                        <div class="label">Location</div>
+                        <div class="value">Online Purchase</div>
+                        <div class="label">Date/Time</div>
+                        <div class="value">Jan 14, 2026 3:42 PM</div>
+                    </div>
+                    <div class="action-box">
+                        To verify: Open SwipeSavvy app<br>or call the number below
+                    </div>
+                    <div class="contact-info">
+                        <div>24/7 Fraud Support:</div>
+                        <div class="phone">1-888-555-0199</div>
+                        <div>support@swipesavvy.com</div>
+                    </div>
+                </div>
+                <div class="message-text">
+                    SwipeSavvy Security Alert: A $500 transaction was blocked on your account. To verify, open the SwipeSavvy app or call 1-888-555-0199. Reply STOP to opt out, HELP for help.
+                </div>
+            </div>
+            <div class="timestamp">Today 3:45 PM</div>
+        </div>
+        <div class="label">MMS Sample 6: Security Alert (Compliant)</div>
+    </div>
+</body>
+</html>

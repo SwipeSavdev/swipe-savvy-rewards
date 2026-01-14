@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwipeSavvy Contact Form Opt-In Flow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 40px;
+    }
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 40px;
+      font-size: 14px;
+    }
+    .flow-container {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    .browser {
+      width: 480px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    .browser-header {
+      background: #f1f3f4;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .browser-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .dot.red { background: #ff5f57; }
+    .dot.yellow { background: #febc2e; }
+    .dot.green { background: #28c840; }
+    .browser-url {
+      flex: 1;
+      background: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #666;
+    }
+    .browser-content {
+      padding: 0;
+      min-height: 580px;
+    }
+    .step-label {
+      background: #6bc14a;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 15px;
+    }
+    .browser-wrapper {
+      position: relative;
+      text-align: center;
+    }
+    .arrow {
+      display: flex;
+      align-items: center;
+      color: #1f4f91;
+      font-size: 32px;
+      margin-top: 300px;
+    }
+    /* Website styles */
+    .site-header {
+      background: linear-gradient(135deg, #1f4f91 0%, #2a6bc1 100%);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+    .nav-link {
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .hero-section {
+      background: linear-gradient(135deg, #1f4f91 0%, #6bc14a 100%);
+      padding: 24px;
+      color: white;
+      text-align: center;
+    }
+    .hero-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .hero-subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    .form-section {
+      padding: 20px 24px;
+    }
+    .form-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 14px;
+    }
+    .form-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .form-group {
+      flex: 1;
+    }
+    .form-label {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 4px;
+      display: block;
+      font-weight: 500;
+    }
+    .required {
+      color: #e53935;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      background: #fff;
+    }
+    .form-input:focus {
+      border-color: #1f4f91;
+      outline: none;
+    }
+    .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      background: #fff;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .consent-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 14px;
+      margin: 14px 0;
+      border: 1px solid #e8e8e8;
+    }
+    .consent-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 10px;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #1f4f91;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      cursor: pointer;
+    }
+    .checkbox.checked {
+      background: #1f4f91;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 11px;
+    }
+    .checkbox-label {
+      font-size: 11px;
+      color: #333;
+      line-height: 1.5;
+    }
+    .checkbox-label a {
+      color: #1f4f91;
+      text-decoration: underline;
+    }
+    .legal-text {
+      font-size: 9px;
+      color: #888;
+      line-height: 1.5;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #e0e0e0;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #1f4f91, #2a6bc1);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    /* Success page */
+    .success-container {
+      padding: 30px 24px;
+      text-align: center;
+    }
+    .success-icon {
+      width: 70px;
+      height: 70px;
+      background: #e8f5e9;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #4caf50;
+    }
+    .success-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+    .success-message {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .confirmation-box {
+      background: #f0f7ff;
+      border: 1px solid #1f4f91;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .confirmation-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f4f91;
+      margin-bottom: 8px;
+    }
+    .confirmation-text {
+      font-size: 12px;
+      color: #333;
+      line-height: 1.5;
+    }
+    .sms-preview {
+      background: #1a1a2e;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+      text-align: left;
+    }
+    .sms-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .sms-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #1f4f91, #6bc14a);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .sms-sender {
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .sms-bubble {
+      background: #3b3b4f;
+      border-radius: 12px;
+      padding: 12px;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .next-steps {
+      text-align: left;
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .next-steps-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 12px;
+    }
+    .next-step-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #333;
+    }
+    .step-number {
+      width: 24px;
+      height: 24px;
+      background: #1f4f91;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Contact Form Opt-In Flow</h1>
+    <p class="subtitle">User consent flow via swipesavvy.com contact/demo request form with business information</p>
+
+    <div class="flow-container">
+      <!-- Screen 1: Contact Form -->
+      <div class="browser-wrapper">
+        <span class="step-label">Step 1: Complete Contact Form</span>
+        <div class="browser">
+          <div class="browser-header">
+            <div class="browser-dots">
+              <div class="dot red"></div>
+              <div class="dot yellow"></div>
+              <div class="dot green"></div>
+            </div>
+            <div class="browser-url">🔒 swipesavvy.com/contact</div>
+          </div>
+          <div class="browser-content">
+            <div class="site-header">
+              <span class="logo">SwipeSavvy</span>
+              <div class="nav-links">
+                <a class="nav-link">Solutions</a>
+                <a class="nav-link">Pricing</a>
+                <a class="nav-link">Contact</a>
+              </div>
+            </div>
+            <div class="hero-section">
+              <h1 class="hero-title">Request a Demo</h1>
+              <p class="hero-subtitle">See how SwipeSavvy can transform your business</p>
+            </div>
+            <div class="form-section">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">First Name <span class="required">*</span></label>
+                  <input type="text" class="form-input" value="John">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Last Name <span class="required">*</span></label>
+                  <input type="text" class="form-input" value="Smith">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Business Email <span class="required">*</span></label>
+                  <input type="email" class="form-input" value="john@acmecoffee.com">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Phone Number <span class="required">*</span></label>
+                  <input type="tel" class="form-input" value="(555) 234-5678">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Company Name <span class="required">*</span></label>
+                  <input type="text" class="form-input" value="Acme Coffee Co.">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Industry <span class="required">*</span></label>
+                  <select class="form-select">
+                    <option>Quick Service Restaurant (QSR)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Number of Locations <span class="required">*</span></label>
+                  <select class="form-select">
+                    <option>6-10 locations</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="consent-section">
+                <div class="consent-title">📱 Communication Preferences</div>
+                <div class="checkbox-row">
+                  <div class="checkbox checked">✓</div>
+                  <span class="checkbox-label">I agree to receive recurring automated marketing text messages from SwipeSavvy at the phone number provided. Consent is not a condition of purchase. Msg & data rates may apply.</span>
+                </div>
+                <div class="checkbox-row">
+                  <div class="checkbox checked">✓</div>
+                  <span class="checkbox-label">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</span>
+                </div>
+                <p class="legal-text">Message frequency varies. Reply STOP to unsubscribe at any time. Reply HELP for help. Carriers are not liable for delayed or undelivered messages.</p>
+              </div>
+
+              <button class="submit-btn">Submit Request →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Screen 2: Confirmation Page -->
+      <div class="browser-wrapper">
+        <span class="step-label">Step 2: Confirmation & SMS Sent</span>
+        <div class="browser">
+          <div class="browser-header">
+            <div class="browser-dots">
+              <div class="dot red"></div>
+              <div class="dot yellow"></div>
+              <div class="dot green"></div>
+            </div>
+            <div class="browser-url">🔒 swipesavvy.com/thank-you</div>
+          </div>
+          <div class="browser-content">
+            <div class="site-header">
+              <span class="logo">SwipeSavvy</span>
+              <div class="nav-links">
+                <a class="nav-link">Solutions</a>
+                <a class="nav-link">Pricing</a>
+                <a class="nav-link">Contact</a>
+              </div>
+            </div>
+            <div class="success-container">
+              <div class="success-icon">✓</div>
+              <h2 class="success-title">Thank You, John!</h2>
+              <p class="success-message">Your demo request has been received. A member of our team will contact you within 24 hours.</p>
+
+              <div class="confirmation-box">
+                <div class="confirmation-title">✅ SMS Opt-In Confirmed</div>
+                <p class="confirmation-text">You will receive a confirmation text at <strong>(555) 234-5678</strong> shortly. This confirms your consent to receive SMS communications from SwipeSavvy.</p>
+              </div>
+
+              <div class="sms-preview">
+                <div class="sms-header">
+                  <div class="sms-icon">S</div>
+                  <span class="sms-sender">SwipeSavvy</span>
+                </div>
+                <div class="sms-bubble">
+                  Thanks for your interest in SwipeSavvy! You're now opted in to receive updates. Reply STOP to opt out, HELP for help. Msg&data rates may apply.
+                </div>
+              </div>
+
+              <div class="next-steps">
+                <div class="next-steps-title">What Happens Next:</div>
+                <div class="next-step-item">
+                  <span class="step-number">1</span>
+                  <span>You'll receive an SMS confirmation within minutes</span>
+                </div>
+                <div class="next-step-item">
+                  <span class="step-number">2</span>
+                  <span>Our team will review your business information</span>
+                </div>
+                <div class="next-step-item">
+                  <span class="step-number">3</span>
+                  <span>We'll reach out to schedule your personalized demo</span>
+                </div>
+              </div>
+
+              <p class="legal-text" style="text-align: center; margin-top: 16px;">To opt out of SMS messages at any time, simply reply STOP to any message</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HELP Response - AWS Compliance</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { text-align: center; color: #1a1a2e; margin-bottom: 6px; font-size: 24px; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 13px; }
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 2px solid #1976d2;
+    }
+    .section-number {
+      width: 36px; height: 36px;
+      background: #1976d2; color: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700;
+    }
+    .section-title { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+    .section-desc { font-size: 12px; color: #666; }
+    .flow-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .phone-wrapper { text-align: center; }
+    .step-label {
+      background: #2196f3; color: white;
+      padding: 5px 12px; border-radius: 16px;
+      font-size: 10px; font-weight: 600;
+      display: inline-block; margin-bottom: 10px;
+    }
+    .step-label.success { background: #4caf50; }
+    .arrow {
+      display: flex; align-items: center;
+      color: #1976d2; font-size: 24px; margin-top: 140px;
+    }
+    .phone {
+      width: 200px; height: 380px;
+      background: #1a1a2e;
+      border-radius: 32px; padding: 8px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+      display: inline-block;
+    }
+    .phone-screen {
+      width: 100%; height: 100%;
+      background: #fff;
+      border-radius: 26px;
+      overflow: hidden;
+      position: relative;
+    }
+    .notch {
+      width: 90px; height: 22px;
+      background: #1a1a2e;
+      border-radius: 0 0 14px 14px;
+      position: absolute; top: 0; left: 50%;
+      transform: translateX(-50%); z-index: 10;
+    }
+    .status-bar {
+      height: 36px; background: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 14px; font-size: 10px; font-weight: 600;
+    }
+    .messages-header {
+      background: #f8f8f8;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .back-arrow { color: #007aff; font-size: 16px; }
+    .contact-info { flex: 1; }
+    .contact-name { font-size: 12px; font-weight: 600; color: #1a1a2e; }
+    .contact-number { font-size: 9px; color: #666; }
+    .messages-body {
+      padding: 10px;
+      height: calc(100% - 120px);
+      overflow-y: auto;
+      background: #fff;
+    }
+    .message { margin-bottom: 8px; max-width: 88%; }
+    .message.sent { margin-left: auto; }
+    .message-bubble {
+      padding: 8px 12px;
+      border-radius: 16px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .message.sent .message-bubble {
+      background: #007aff; color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .message.received .message-bubble {
+      background: #e9e9eb; color: #1a1a2e;
+      border-bottom-left-radius: 4px;
+    }
+    .message-time {
+      font-size: 8px; color: #888; margin-top: 2px;
+    }
+    .message.sent .message-time { text-align: right; }
+    .message.received .message-time { text-align: left; }
+    .input-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 6px 10px;
+      background: #f8f8f8;
+      border-top: 1px solid #e0e0e0;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .input-field {
+      flex: 1; padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 16px; font-size: 11px; background: #fff;
+    }
+    .send-btn {
+      width: 28px; height: 28px;
+      background: #007aff; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 12px;
+    }
+    .compliance-card {
+      width: 300px;
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 20px;
+    }
+    .compliance-title {
+      font-size: 11px; font-weight: 600; color: #2e7d32;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .compliance-item {
+      font-size: 11px; color: #333; margin-bottom: 6px;
+      display: flex; align-items: flex-start; gap: 6px;
+    }
+    .check-icon { color: #4caf50; flex-shrink: 0; }
+    .char-count { text-align: right; font-size: 10px; color: #4caf50; margin-top: 8px; }
+    .message-box {
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      border-left: 4px solid #1976d2;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    .message-box-title {
+      font-size: 11px; font-weight: 600; color: #1565c0;
+      margin-bottom: 8px;
+    }
+    .message-box-text {
+      font-size: 12px; color: #333; line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>HELP Response: Specific Frequency Disclosure</h1>
+    <p class="subtitle">Includes campaign name, support contact, message frequency, within 160 characters</p>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">4</div>
+        <div>
+          <div class="section-title">Compliant HELP Response</div>
+          <div class="section-desc">All required elements within 160 characters</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="phone-wrapper">
+          <span class="step-label">User Sends HELP</span>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="notch"></div>
+              <div class="status-bar">
+                <span>9:41</span>
+                <span>📶 🔋</span>
+              </div>
+              <div class="messages-header">
+                <span class="back-arrow">‹</span>
+                <div class="contact-info">
+                  <div class="contact-name">SwipeSavvy</div>
+                  <div class="contact-number">12345</div>
+                </div>
+              </div>
+              <div class="messages-body">
+                <div class="message sent">
+                  <div class="message-bubble">HELP</div>
+                  <div class="message-time">9:41 AM</div>
+                </div>
+              </div>
+              <div class="input-bar">
+                <input type="text" class="input-field" value="HELP">
+                <div class="send-btn">↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">→</div>
+
+        <div class="phone-wrapper">
+          <span class="step-label success">HELP Response Sent</span>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="notch"></div>
+              <div class="status-bar">
+                <span>9:41</span>
+                <span>📶 🔋</span>
+              </div>
+              <div class="messages-header">
+                <span class="back-arrow">‹</span>
+                <div class="contact-info">
+                  <div class="contact-name">SwipeSavvy</div>
+                  <div class="contact-number">12345</div>
+                </div>
+              </div>
+              <div class="messages-body">
+                <div class="message sent">
+                  <div class="message-bubble">HELP</div>
+                  <div class="message-time">9:41 AM</div>
+                </div>
+                <div class="message received">
+                  <div class="message-bubble">SwipeSavvy Account Alerts: Help at support@swipesavvy.com. Msg&data rates may apply. 1 msg/day max. Text STOP to cancel.</div>
+                  <div class="message-time">9:41 AM</div>
+                </div>
+              </div>
+              <div class="input-bar">
+                <input type="text" class="input-field" placeholder="Text Message">
+                <div class="send-btn">↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="compliance-card">
+          <div class="compliance-title">✓ HELP Response Elements:</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> Campaign name (SwipeSavvy Account Alerts)</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> Support contact (email)</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> Msg & data rates disclosure</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> Specific frequency (1 msg/day max)</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> STOP instructions</div>
+          <div class="char-count">✓ 119 characters (within 160 limit)</div>
+        </div>
+      </div>
+
+      <div class="message-box">
+        <div class="message-box-title">📝 Full HELP Response Text:</div>
+        <div class="message-box-text">
+          SwipeSavvy Account Alerts: Help at support@swipesavvy.com. Msg&data rates may apply. 1 msg/day max. Text STOP to cancel.
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

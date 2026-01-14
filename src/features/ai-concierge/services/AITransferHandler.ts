@@ -137,7 +137,6 @@ export async function handleAIToHumanHandoff(
     const transferData = createAITransferData(conversationId, messages);
 
     // Check escalation rules
-    const rules = await supportTicketService.getEscalationRules();
     const lastMessage = messages[messages.length - 1]?.content || '';
     const escalationRule = await supportTicketService.checkEscalationTrigger(lastMessage);
 
@@ -411,7 +410,7 @@ export function generateAgentHandoffSummary(
   ];
 
   for (const [key, value] of Object.entries(context.keyDetails)) {
-    lines.push(`- **${key.replaceAll('_', ' ')}:** ${value}`);
+    lines.push(`- **${key.replace(/_/g, ' ')}:** ${value}`);
   }
 
   if (context.attemptedResolutions.length > 0) {

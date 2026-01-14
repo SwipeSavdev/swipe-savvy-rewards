@@ -147,6 +147,11 @@ export const TYPOGRAPHY = {
     h3: 15,
     body: 14,
     meta: 12,
+    xl: 20,
+    lg: 16,
+    md: 14,
+    sm: 12,
+    xs: 10,
   },
   fontWeight: {
     regular: 400,

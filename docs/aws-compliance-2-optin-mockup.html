@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opt-In Mockup - AWS Compliance</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h1 { text-align: center; color: #1a1a2e; margin-bottom: 8px; font-size: 28px; font-weight: 800; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 24px; font-size: 14px; }
+
+    .key-requirement {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .key-requirement-icon {
+      font-size: 28px;
+    }
+    .key-requirement-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: #856404;
+    }
+
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 3px solid #2e7d32;
+    }
+    .section-number {
+      width: 40px; height: 40px;
+      background: #2e7d32; color: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700;
+    }
+    .section-title { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+    .section-desc { font-size: 13px; color: #666; margin-top: 2px; }
+
+    .flow-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    .phone-wrapper { text-align: center; }
+    .step-label {
+      background: #ff9800; color: white;
+      padding: 8px 16px; border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+      display: inline-block; margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .step-label.success { background: #4caf50; }
+    .arrow {
+      display: flex; align-items: center;
+      color: #2e7d32; font-size: 32px; font-weight: bold;
+      margin-top: 200px;
+    }
+    .phone {
+      width: 260px; height: 520px;
+      background: #1a1a2e;
+      border-radius: 36px; padding: 10px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      display: inline-block;
+    }
+    .phone-screen {
+      width: 100%; height: 100%;
+      background: #fff;
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+    .notch {
+      width: 100px; height: 26px;
+      background: #1a1a2e;
+      border-radius: 0 0 16px 16px;
+      position: absolute; top: 0; left: 50%;
+      transform: translateX(-50%); z-index: 10;
+    }
+    .status-bar {
+      height: 40px; background: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 16px; font-size: 12px; font-weight: 600;
+    }
+    .form-header {
+      background: linear-gradient(135deg, #1f4f91 0%, #2a6bc1 100%);
+      padding: 16px; text-align: center; color: white;
+    }
+    .form-title { font-size: 16px; font-weight: 700; }
+    .form-subtitle { font-size: 11px; opacity: 0.9; }
+    .form-body { padding: 14px; }
+    .form-group { margin-bottom: 12px; }
+    .form-label {
+      font-size: 10px; color: #666;
+      margin-bottom: 4px; display: block; font-weight: 600;
+    }
+    .form-input {
+      width: 100%; padding: 10px 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px; font-size: 12px;
+    }
+    .consent-section {
+      background: #f8f9fa;
+      border-radius: 10px; padding: 12px;
+      margin: 12px 0; border: 2px solid #e0e0e0;
+    }
+    .consent-title {
+      font-size: 11px; font-weight: 700;
+      color: #1a1a2e; margin-bottom: 10px;
+    }
+    .checkbox-row {
+      display: flex; align-items: flex-start;
+      gap: 10px; margin-bottom: 10px;
+    }
+    .checkbox {
+      width: 20px; height: 20px;
+      border: 3px solid #999;
+      border-radius: 4px; flex-shrink: 0;
+      margin-top: 1px; background: #fff;
+    }
+    .checkbox.checked {
+      background: #1f4f91; border-color: #1f4f91;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 12px; font-weight: bold;
+    }
+    .checkbox-label {
+      font-size: 10px; color: #333; line-height: 1.5;
+    }
+    .unchecked-note {
+      background: #ffebee;
+      border: 2px solid #e53935;
+      border-radius: 6px; padding: 8px 10px;
+      font-size: 9px; color: #c62828;
+      margin-top: 10px;
+      display: flex; align-items: center; gap: 6px;
+      font-weight: 600;
+    }
+    .legal-text {
+      font-size: 8px; color: #666;
+      line-height: 1.5; margin-top: 8px;
+    }
+    .submit-btn {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #1f4f91, #2a6bc1);
+      color: white; border: none;
+      border-radius: 8px; font-size: 13px;
+      font-weight: 700; margin-top: 10px;
+    }
+    .submit-btn.disabled { background: #bbb; color: #666; }
+
+    /* Compliance verification box */
+    .compliance-section {
+      background: #e8f5e9;
+      border: 2px solid #4caf50;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .compliance-header {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2e7d32;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .compliance-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .compliance-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: #333;
+      background: white;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+    .compliance-item strong {
+      color: #1a1a2e;
+    }
+    .check-icon {
+      color: #4caf50;
+      font-size: 16px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Opt-In Mockup: Active User Consent</h1>
+    <p class="subtitle">AWS 10DLC Compliance - Users Must Actively Opt-In to SMS</p>
+
+    <div class="key-requirement">
+      <span class="key-requirement-icon">⚠️</span>
+      <span class="key-requirement-text">CRITICAL: SMS consent checkbox must be UNCHECKED by default. Users must actively check the box to opt-in.</span>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <div>
+          <div class="section-title">SMS Consent Workflow</div>
+          <div class="section-desc">Transactional Account Alerts Only - No Promotional Content</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="phone-wrapper">
+          <span class="step-label">Default: Checkbox UNCHECKED</span>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="notch"></div>
+              <div class="status-bar">
+                <span>9:41</span>
+                <span>📶 🔋</span>
+              </div>
+              <div class="form-header">
+                <div class="form-title">Create Account</div>
+                <div class="form-subtitle">Join SwipeSavvy</div>
+              </div>
+              <div class="form-body">
+                <div class="form-group">
+                  <label class="form-label">Full Name *</label>
+                  <input type="text" class="form-input" value="John Smith">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email *</label>
+                  <input type="text" class="form-input" value="john@email.com">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number *</label>
+                  <input type="text" class="form-input" value="(555) 234-5678">
+                </div>
+
+                <div class="consent-section">
+                  <div class="consent-title">SMS Account Alerts</div>
+                  <div class="checkbox-row">
+                    <div class="checkbox"></div>
+                    <span class="checkbox-label">I agree to receive account alert SMS messages from SwipeSavvy. Consent is not required for purchase. Msg & data rates apply.</span>
+                  </div>
+                  <div class="unchecked-note">
+                    <span>⚠️</span> UNCHECKED by default - user must actively consent
+                  </div>
+                  <p class="legal-text">1 msg/day max. Reply STOP to cancel, HELP for help.</p>
+                </div>
+
+                <button class="submit-btn disabled">Create Account</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">→</div>
+
+        <div class="phone-wrapper">
+          <span class="step-label success">User Actively Checks Box</span>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="notch"></div>
+              <div class="status-bar">
+                <span>9:41</span>
+                <span>📶 🔋</span>
+              </div>
+              <div class="form-header">
+                <div class="form-title">Create Account</div>
+                <div class="form-subtitle">Join SwipeSavvy</div>
+              </div>
+              <div class="form-body">
+                <div class="form-group">
+                  <label class="form-label">Full Name *</label>
+                  <input type="text" class="form-input" value="John Smith">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email *</label>
+                  <input type="text" class="form-input" value="john@email.com">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number *</label>
+                  <input type="text" class="form-input" value="(555) 234-5678">
+                </div>
+
+                <div class="consent-section" style="border-color: #4caf50; background: #f1f8e9;">
+                  <div class="consent-title">SMS Account Alerts</div>
+                  <div class="checkbox-row">
+                    <div class="checkbox checked">✓</div>
+                    <span class="checkbox-label">I agree to receive account alert SMS messages from SwipeSavvy. Consent is not required for purchase. Msg & data rates apply.</span>
+                  </div>
+                  <p class="legal-text">1 msg/day max. Reply STOP to cancel, HELP for help.</p>
+                </div>
+
+                <button class="submit-btn">Create Account →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="compliance-section">
+      <div class="compliance-header">
+        <span>✓</span> Opt-In Compliance Verification
+      </div>
+      <div class="compliance-grid">
+        <div class="compliance-item">
+          <span class="check-icon">✓</span>
+          <div><strong>Active Opt-In:</strong> Checkbox is UNCHECKED by default - user must actively check to consent</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">✓</span>
+          <div><strong>No Pre-Selection:</strong> SMS consent is never pre-selected or automatically enabled</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">✓</span>
+          <div><strong>Transactional Only:</strong> Messages are account alerts only - no promotions, rewards, or marketing</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">✓</span>
+          <div><strong>No High-Risk Content:</strong> No sexual, gambling, cannabis, or other prohibited content</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">✓</span>
+          <div><strong>Clear Disclosure:</strong> Message frequency (1 msg/day max), data rates, and opt-out disclosed</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">✓</span>
+          <div><strong>Not Required:</strong> "Consent is not required for purchase" clearly stated</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

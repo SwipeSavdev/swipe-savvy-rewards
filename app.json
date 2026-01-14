@@ -15,7 +15,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.swipesavvy.mobileapp",
-      "hermes": false,
       "infoPlist": {
         "NSFaceIDUsageDescription": "Allow SwipeSavvy to use Face ID for secure authentication",
         "NSLocationWhenInUseUsageDescription": "Allow SwipeSavvy to access your location for geo-based promotions",
@@ -29,7 +28,6 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.swipesavvy.mobileapp",
-      "hermes": false,
       "permissions": [
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",

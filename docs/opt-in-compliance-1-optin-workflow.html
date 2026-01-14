@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwipeSavvy Opt-In Workflow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+      font-size: 24px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 13px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #1f4f91;
+    }
+    .section-number {
+      width: 36px;
+      height: 36px;
+      background: #1f4f91;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    .section-desc {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .flow-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .step-wrapper {
+      text-align: center;
+    }
+    .step-label {
+      background: #6bc14a;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 10px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .step-label.warning {
+      background: #ff9800;
+    }
+    .step-label.success {
+      background: #4caf50;
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      color: #1f4f91;
+      font-size: 24px;
+      margin-top: 180px;
+    }
+
+    .phone {
+      width: 220px;
+      height: 480px;
+      background: #1a1a2e;
+      border-radius: 32px;
+      padding: 8px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    }
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border-radius: 26px;
+      overflow: hidden;
+      position: relative;
+    }
+    .notch {
+      width: 90px;
+      height: 22px;
+      background: #1a1a2e;
+      border-radius: 0 0 14px 14px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    .status-bar {
+      height: 36px;
+      background: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 14px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .form-header {
+      background: linear-gradient(135deg, #1f4f91 0%, #2a6bc1 100%);
+      padding: 14px;
+      text-align: center;
+      color: white;
+    }
+    .form-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .form-subtitle {
+      font-size: 10px;
+      opacity: 0.9;
+    }
+    .form-body {
+      padding: 12px;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    .form-label {
+      font-size: 9px;
+      color: #666;
+      margin-bottom: 3px;
+      display: block;
+      font-weight: 500;
+    }
+    .form-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .consent-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #e0e0e0;
+    }
+    .consent-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .checkbox {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #999;
+      border-radius: 3px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      background: #fff;
+    }
+    .checkbox.checked {
+      background: #1f4f91;
+      border-color: #1f4f91;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 10px;
+    }
+    .checkbox-label {
+      font-size: 9px;
+      color: #333;
+      line-height: 1.4;
+    }
+    .unchecked-note {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 8px;
+      color: #856404;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legal-text {
+      font-size: 7px;
+      color: #888;
+      line-height: 1.4;
+      margin-top: 6px;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #1f4f91, #2a6bc1);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .submit-btn.disabled {
+      background: #ccc;
+      color: #888;
+    }
+
+    .messages-header {
+      background: #f8f8f8;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .back-arrow {
+      color: #007aff;
+      font-size: 16px;
+    }
+    .contact-info {
+      flex: 1;
+    }
+    .contact-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+    .contact-number {
+      font-size: 9px;
+      color: #666;
+    }
+    .messages-body {
+      padding: 10px;
+      height: calc(100% - 120px);
+      overflow-y: auto;
+      background: #fff;
+    }
+    .message {
+      margin-bottom: 8px;
+      max-width: 88%;
+    }
+    .message.received .message-bubble {
+      background: #e9e9eb;
+      color: #1a1a2e;
+      border-bottom-left-radius: 4px;
+    }
+    .message-bubble {
+      padding: 8px 12px;
+      border-radius: 16px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .message-time {
+      font-size: 8px;
+      color: #888;
+      margin-top: 2px;
+      text-align: left;
+    }
+    .input-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 6px 10px;
+      background: #f8f8f8;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .input-field {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      font-size: 11px;
+      background: #fff;
+    }
+    .send-btn {
+      width: 28px;
+      height: 28px;
+      background: #007aff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SwipeSavvy SMS Opt-In Workflow</h1>
+    <p class="subtitle">Checkbox unchecked by default - users must actively consent</p>
+
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <div>
+        <div class="section-title">Opt-In Workflow (Checkbox Unchecked by Default)</div>
+        <div class="section-desc">Users must actively check the SMS consent box to opt-in</div>
+      </div>
+    </div>
+
+    <div class="flow-row">
+      <!-- Before: Unchecked -->
+      <div class="step-wrapper">
+        <span class="step-label warning">Before: Unchecked by Default</span>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <span>9:41</span>
+              <span>📶 🔋</span>
+            </div>
+            <div class="form-header">
+              <div class="form-title">Request a Demo</div>
+              <div class="form-subtitle">Join SwipeSavvy</div>
+            </div>
+            <div class="form-body">
+              <div class="form-group">
+                <label class="form-label">Name *</label>
+                <input type="text" class="form-input" value="John Smith">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="text" class="form-input" value="john@email.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone *</label>
+                <input type="text" class="form-input" value="(555) 234-5678">
+              </div>
+
+              <div class="consent-section">
+                <div class="consent-title">📱 SMS Notifications</div>
+                <div class="checkbox-row">
+                  <div class="checkbox"></div>
+                  <span class="checkbox-label">I agree to receive recurring automated marketing SMS from SwipeSavvy. Consent not required for purchase.</span>
+                </div>
+                <div class="unchecked-note">
+                  <span>⚠️</span> Checkbox unchecked by default - user must actively opt-in
+                </div>
+                <p class="legal-text">Msg & data rates apply. Msg freq varies. Reply STOP to cancel, HELP for help.</p>
+              </div>
+
+              <button class="submit-btn disabled">Submit (Check box to enable SMS)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- After: User Checks Box -->
+      <div class="step-wrapper">
+        <span class="step-label success">After: User Actively Consents</span>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <span>9:41</span>
+              <span>📶 🔋</span>
+            </div>
+            <div class="form-header">
+              <div class="form-title">Request a Demo</div>
+              <div class="form-subtitle">Join SwipeSavvy</div>
+            </div>
+            <div class="form-body">
+              <div class="form-group">
+                <label class="form-label">Name *</label>
+                <input type="text" class="form-input" value="John Smith">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="text" class="form-input" value="john@email.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone *</label>
+                <input type="text" class="form-input" value="(555) 234-5678">
+              </div>
+
+              <div class="consent-section" style="border-color: #4caf50; background: #f1f8e9;">
+                <div class="consent-title">📱 SMS Notifications</div>
+                <div class="checkbox-row">
+                  <div class="checkbox checked">✓</div>
+                  <span class="checkbox-label">I agree to receive recurring automated marketing SMS from SwipeSavvy. Consent not required for purchase.</span>
+                </div>
+                <p class="legal-text">Msg & data rates apply. Msg freq varies. Reply STOP to cancel, HELP for help.</p>
+              </div>
+
+              <button class="submit-btn">Submit Request →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Confirmation SMS -->
+      <div class="step-wrapper">
+        <span class="step-label success">Confirmation SMS Sent</span>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <span>9:42</span>
+              <span>📶 🔋</span>
+            </div>
+            <div class="messages-header">
+              <span class="back-arrow">‹</span>
+              <div class="contact-info">
+                <div class="contact-name">SwipeSavvy</div>
+                <div class="contact-number">12345</div>
+              </div>
+            </div>
+            <div class="messages-body">
+              <div class="message received">
+                <div class="message-bubble">SwipeSavvy Alerts: Welcome! You're subscribed to updates & offers. Msg freq: up to 4 msgs/month. Msg&data rates may apply. Reply STOP to opt out, HELP for help.</div>
+                <div class="message-time">9:42 AM</div>
+              </div>
+            </div>
+            <div class="input-bar">
+              <input type="text" class="input-field" placeholder="Text Message">
+              <div class="send-btn">↑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

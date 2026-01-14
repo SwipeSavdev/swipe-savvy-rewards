@@ -33,6 +33,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -83,8 +85,8 @@ export function usePushNotifications(
     useState<Notifications.PermissionStatus | null>(null);
 
   // Refs for listeners
-  const notificationListener = useRef<Notifications.Subscription | null>(null);
-  const responseListener = useRef<Notifications.Subscription | null>(null);
+  const notificationListener = useRef<Notifications.EventSubscription | null>(null);
+  const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   /**
    * Get the platform type for API
@@ -92,7 +94,7 @@ export function usePushNotifications(
   const getPlatform = useCallback((): Platform => {
     if (RNPlatform.OS === 'ios') {
       // Use sandbox for development builds
-      const isDev = __DEV__ || Constants.appOwnership === 'expo';
+      const isDev = __DEV__ || Constants.executionEnvironment === 'storeClient';
       return isDev ? 'ios_sandbox' : 'ios';
     }
     return 'android';
@@ -372,10 +374,10 @@ export function usePushNotifications(
 
     return () => {
       if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
+        notificationListener.current.remove();
       }
       if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
+        responseListener.current.remove();
       }
     };
   }, [enabled, handlers]);
