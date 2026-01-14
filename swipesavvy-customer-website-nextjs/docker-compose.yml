@@ -1,0 +1,59 @@
+# Docker Compose for SwipeSavvy Customer Website
+# Development and local testing
+
+version: '3.8'
+
+services:
+  website:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: swipesavvy-website
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    environment:
+      - NGINX_HOST=localhost
+    labels:
+      - "com.swipesavvy.service=customer-website"
+      - "com.swipesavvy.environment=development"
+
+  # Production configuration with SSL termination handled by ALB
+  website-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: swipesavvy-website-prod
+    ports:
+      - "8080:8080"
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.swipesavvy.service=customer-website"
+      - "com.swipesavvy.environment=production"
+    profiles:
+      - production

@@ -1,0 +1,30 @@
+# Docker ignore file for SwipeSavvy Customer Website
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archive
+Archive.zip
+
+# Documentation (optional - can include if needed)
+# README.md
+
+# Development files
+*.log
+npm-debug.log*
+
+# Docker files (avoid recursive copy)
+Dockerfile
+docker-compose.yml
+.dockerignore

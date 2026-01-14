@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Page Not Found — Swipe Savvy</title>
+  <link rel="stylesheet" href="/assets/styles.css"/>
+  <style>
+    .error-page {
+      min-height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .error-content h1 {
+      font-size: 120px;
+      margin: 0;
+      color: var(--blue);
+      line-height: 1;
+    }
+    .error-content h2 {
+      margin: 20px 0;
+      font-size: 24px;
+    }
+    .error-content p {
+      color: var(--muted);
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <div class="logo"><span class="fallback">S</span></div>
+        <span>Swipe Savvy</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/platform.html">Platform</a>
+        <a href="/solutions.html">Solutions</a>
+        <a href="/industries.html">Industries</a>
+        <a href="/support.html">Support</a>
+        <a href="/contact.html">Contact</a>
+      </nav>
+      <div class="cta">
+        <a class="btn primary" href="/contact.html">Request Demo</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="error-page">
+    <div class="error-content">
+      <h1>404</h1>
+      <h2>Page Not Found</h2>
+      <p>Sorry, the page you're looking for doesn't exist or has been moved.</p>
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <a class="btn primary" href="/">Go Home</a>
+        <a class="btn outline-blue" href="/support.html">Get Help</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-grid">
+        <div>
+          <div style="font-weight:900; letter-spacing:-.02em; font-size:18px;">Swipe Savvy</div>
+          <div class="small" style="margin-top:8px;">Rewards, CDP, loyalty, and omni-channel POS—powered by Savvy AI.</div>
+        </div>
+        <div>
+          <div style="font-weight:900; font-size:13px;">Company</div>
+          <div style="margin-top:10px; display:grid; gap:8px;">
+            <a href="/solutions.html">Solutions</a>
+            <a href="/industries.html">Industries</a>
+            <a href="/support.html">Support</a>
+            <a href="/contact.html">Contact</a>
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:900; font-size:13px;">Contact</div>
+          <div class="small" style="margin-top:10px;">
+            Email: <a href="mailto:support@swipesavvy.com">support@swipesavvy.com</a><br/>
+            Phone: <a href="tel:18005058769">1-800-505-8769</a><br/>
+            © <span id="yr"></span> Swipe Savvy. All rights reserved.
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

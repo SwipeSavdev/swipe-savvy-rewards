@@ -1,0 +1,15 @@
+index.html
+platform.html
+solutions.html
+solutions/rewards-wallet.html
+solutions/cdp.html
+solutions/merchant-loyalty.html
+solutions/omnichannel-pos.html
+industries.html
+industries/retail.html
+industries/qsr.html
+industries/grocery.html
+industries/healthcare.html
+industries/jewelry.html
+industries/warehouse.html
+contact.html
