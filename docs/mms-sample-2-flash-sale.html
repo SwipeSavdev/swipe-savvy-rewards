@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMS Sample 2 - Flash Sale</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+        .phone-frame {
+            width: 375px;
+            background: #fff;
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 12px solid #1a1a1a;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .message-header {
+            text-align: center;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .message-header h3 {
+            font-size: 16px;
+            color: #333;
+        }
+        .message-header span {
+            font-size: 12px;
+            color: #888;
+        }
+        .message-bubble {
+            background: #e9e9eb;
+            border-radius: 18px;
+            padding: 4px;
+            max-width: 85%;
+            margin-bottom: 10px;
+        }
+        .mms-image {
+            width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            padding: 25px;
+            text-align: center;
+            color: white;
+        }
+        .mms-image .brand-logo {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        .mms-image .flash-badge {
+            background: #FF0000;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: 700;
+            display: inline-block;
+            margin: 10px 0;
+            animation: pulse 1s infinite;
+        }
+        .mms-image .offer-badge {
+            background: #FFD700;
+            color: #1a1a1a;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 32px;
+            font-weight: 800;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .mms-image .offer-text {
+            font-size: 16px;
+            margin: 8px 0;
+        }
+        .mms-image .timer {
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .mms-image .timer-text {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        .mms-image .timer-value {
+            font-size: 24px;
+            font-weight: 800;
+        }
+        .mms-image .location-text {
+            font-size: 14px;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        .message-text {
+            padding: 12px 16px;
+            font-size: 15px;
+            line-height: 1.4;
+            color: #1a1a1a;
+        }
+        .timestamp {
+            text-align: right;
+            font-size: 11px;
+            color: #888;
+            padding: 5px 10px;
+        }
+        .label {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="phone-frame">
+            <div class="status-bar">
+                <span>6:00 PM</span>
+                <span>74297 (SAVVY)</span>
+            </div>
+            <div class="message-header">
+                <h3>SwipeSavvy</h3>
+                <span>Short Code: 74297</span>
+            </div>
+            <div class="message-bubble">
+                <div class="mms-image">
+                    <div class="brand-logo">SwipeSavvy</div>
+                    <div class="flash-badge">&#9889; FLASH DEAL &#9889;</div>
+                    <div class="offer-text">2-HOUR ONLY</div>
+                    <div class="offer-badge">2X POINTS</div>
+                    <div class="offer-text">at downtown restaurants</div>
+                    <div class="timer">
+                        <div class="timer-text">ENDS IN</div>
+                        <div class="timer-value">1:59:47</div>
+                    </div>
+                    <div class="location-text">&#128205; 12 locations near you</div>
+                </div>
+                <div class="message-text">
+                    SwipeSavvy Promo: 2-hour flash deal! Earn 2X points at downtown restaurants until 8PM. Tap to view locations. Reply STOP to unsubscribe, HELP for info.
+                </div>
+            </div>
+            <div class="timestamp">Today 6:00 PM</div>
+        </div>
+        <div class="label">MMS Sample 2: Flash Sale Promotion</div>
+    </div>
+</body>
+</html>

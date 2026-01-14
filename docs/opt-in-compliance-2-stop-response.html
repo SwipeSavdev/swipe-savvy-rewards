@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwipeSavvy STOP Response</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+      font-size: 24px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 13px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e53935;
+    }
+    .section-number {
+      width: 36px;
+      height: 36px;
+      background: #e53935;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    .section-desc {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .flow-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .step-wrapper {
+      text-align: center;
+    }
+    .step-label {
+      background: #ff9800;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 10px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .step-label.success {
+      background: #4caf50;
+    }
+    .step-label.stop {
+      background: #e53935;
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      color: #e53935;
+      font-size: 24px;
+      margin-top: 140px;
+    }
+
+    .phone {
+      width: 200px;
+      height: 400px;
+      background: #1a1a2e;
+      border-radius: 32px;
+      padding: 8px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    }
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border-radius: 26px;
+      overflow: hidden;
+      position: relative;
+    }
+    .notch {
+      width: 90px;
+      height: 22px;
+      background: #1a1a2e;
+      border-radius: 0 0 14px 14px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    .status-bar {
+      height: 36px;
+      background: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 14px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .messages-header {
+      background: #f8f8f8;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .back-arrow {
+      color: #007aff;
+      font-size: 16px;
+    }
+    .contact-info {
+      flex: 1;
+    }
+    .contact-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+    .contact-number {
+      font-size: 9px;
+      color: #666;
+    }
+    .messages-body {
+      padding: 10px;
+      height: calc(100% - 120px);
+      overflow-y: auto;
+      background: #fff;
+    }
+    .message {
+      margin-bottom: 8px;
+      max-width: 88%;
+    }
+    .message.sent {
+      margin-left: auto;
+    }
+    .message-bubble {
+      padding: 8px 12px;
+      border-radius: 16px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .message.sent .message-bubble {
+      background: #007aff;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .message.received .message-bubble {
+      background: #e9e9eb;
+      color: #1a1a2e;
+      border-bottom-left-radius: 4px;
+    }
+    .message-time {
+      font-size: 8px;
+      color: #888;
+      margin-top: 2px;
+      text-align: right;
+    }
+    .message.received .message-time {
+      text-align: left;
+    }
+    .input-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 6px 10px;
+      background: #f8f8f8;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .input-field {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      font-size: 11px;
+      background: #fff;
+    }
+    .send-btn {
+      width: 28px;
+      height: 28px;
+      background: #007aff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+    }
+
+    .response-card {
+      width: 340px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+    .response-header {
+      padding: 14px 16px;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #e53935, #c62828);
+    }
+    .response-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .response-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .response-subtitle {
+      font-size: 10px;
+      opacity: 0.9;
+    }
+    .response-body {
+      padding: 16px;
+    }
+    .response-label {
+      font-size: 10px;
+      color: #666;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .response-message {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #333;
+      border-left: 4px solid #e53935;
+      margin-bottom: 12px;
+    }
+    .response-message strong {
+      color: #1a1a2e;
+    }
+    .char-count {
+      text-align: right;
+      font-size: 10px;
+      color: #4caf50;
+      margin-top: 4px;
+    }
+    .requirements {
+      background: #e8f5e9;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .requirements-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #2e7d32;
+      margin-bottom: 8px;
+    }
+    .requirement-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 10px;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    .check-icon {
+      color: #4caf50;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SwipeSavvy STOP Response</h1>
+    <p class="subtitle">Includes campaign name, description, confirmation, and help info</p>
+
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <div>
+        <div class="section-title">STOP Response</div>
+        <div class="section-desc">Includes campaign name, description, confirmation, and help info</div>
+      </div>
+    </div>
+
+    <div class="flow-row">
+      <!-- User sends STOP -->
+      <div class="step-wrapper">
+        <span class="step-label">User Sends STOP</span>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <span>9:41</span>
+              <span>📶 🔋</span>
+            </div>
+            <div class="messages-header">
+              <span class="back-arrow">‹</span>
+              <div class="contact-info">
+                <div class="contact-name">SwipeSavvy</div>
+                <div class="contact-number">12345</div>
+              </div>
+            </div>
+            <div class="messages-body">
+              <div class="message sent">
+                <div class="message-bubble">STOP</div>
+                <div class="message-time">9:41 AM</div>
+              </div>
+            </div>
+            <div class="input-bar">
+              <input type="text" class="input-field" value="STOP">
+              <div class="send-btn">↑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- STOP Response Card -->
+      <div class="step-wrapper">
+        <span class="step-label stop">STOP Response Message</span>
+        <div class="response-card">
+          <div class="response-header">
+            <div class="response-icon">🛑</div>
+            <div>
+              <div class="response-title">STOP Response</div>
+              <div class="response-subtitle">Unsubscribe confirmation</div>
+            </div>
+          </div>
+          <div class="response-body">
+            <div class="response-label">Auto-Reply Message:</div>
+            <div class="response-message">
+              You are unsubscribed from <strong>SwipeSavvy Rewards & Promotions</strong> Alerts. No more messages will be sent. Reply HELP for help or call <strong>1-888-555-0123</strong>.
+            </div>
+            <div class="char-count">✓ 156 characters (within 160 limit)</div>
+
+            <div class="requirements">
+              <div class="requirements-title">✓ Required Elements Included:</div>
+              <div class="requirement-item"><span class="check-icon">✓</span> Campaign name (SwipeSavvy Rewards & Promotions)</div>
+              <div class="requirement-item"><span class="check-icon">✓</span> Brief description (Alerts)</div>
+              <div class="requirement-item"><span class="check-icon">✓</span> Confirmation (No more messages will be sent)</div>
+              <div class="requirement-item"><span class="check-icon">✓</span> Help/support info (HELP + toll-free number)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Result on phone -->
+      <div class="step-wrapper">
+        <span class="step-label success">User Receives Confirmation</span>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <span>9:41</span>
+              <span>📶 🔋</span>
+            </div>
+            <div class="messages-header">
+              <span class="back-arrow">‹</span>
+              <div class="contact-info">
+                <div class="contact-name">SwipeSavvy</div>
+                <div class="contact-number">12345</div>
+              </div>
+            </div>
+            <div class="messages-body">
+              <div class="message sent">
+                <div class="message-bubble">STOP</div>
+                <div class="message-time">9:41 AM</div>
+              </div>
+              <div class="message received">
+                <div class="message-bubble">You are unsubscribed from SwipeSavvy Rewards & Promotions Alerts. No more messages will be sent. Reply HELP for help or call 1-888-555-0123.</div>
+                <div class="message-time">9:41 AM</div>
+              </div>
+            </div>
+            <div class="input-bar">
+              <input type="text" class="input-field" placeholder="Text Message">
+              <div class="send-btn">↑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

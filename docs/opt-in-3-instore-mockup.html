@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwipeSavvy In-Store POS Opt-In Flow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 40px;
+    }
+    .container {
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 40px;
+      font-size: 14px;
+    }
+    .flow-container {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .device-wrapper {
+      text-align: center;
+    }
+    .step-label {
+      background: #6bc14a;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 15px;
+    }
+    .arrow {
+      display: flex;
+      align-items: center;
+      color: #1f4f91;
+      font-size: 28px;
+      margin-top: 200px;
+    }
+    /* POS Terminal */
+    .pos-terminal {
+      width: 320px;
+      background: #1a1a2e;
+      border-radius: 20px;
+      padding: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .pos-screen {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 420px;
+    }
+    .pos-header {
+      background: linear-gradient(135deg, #1f4f91 0%, #2a6bc1 100%);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+    .pos-logo {
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .pos-time {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    .pos-content {
+      padding: 16px;
+    }
+    .pos-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a2e;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .pos-subtitle {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .reward-badge {
+      background: linear-gradient(135deg, #ffd700, #ffb800);
+      color: #1a1a2e;
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .reward-points {
+      font-size: 24px;
+      font-weight: 800;
+    }
+    .reward-label {
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .input-group {
+      margin-bottom: 12px;
+    }
+    .input-label {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .pos-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+    .consent-box {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #1f4f91;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .checkbox.checked {
+      background: #1f4f91;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 11px;
+    }
+    .consent-text {
+      font-size: 10px;
+      color: #333;
+      line-height: 1.4;
+    }
+    .legal-micro {
+      font-size: 8px;
+      color: #888;
+      line-height: 1.3;
+      margin-top: 8px;
+    }
+    .pos-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .pos-btn-primary {
+      background: linear-gradient(135deg, #4caf50, #45a049);
+      color: white;
+    }
+    .pos-btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+    /* Customer Display */
+    .customer-display {
+      width: 280px;
+      background: #2a2a3e;
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+    }
+    .cd-screen {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      min-height: 380px;
+    }
+    .cd-header {
+      background: linear-gradient(135deg, #1f4f91 0%, #6bc14a 100%);
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+    .cd-logo {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .cd-tagline {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+    .cd-content {
+      padding: 20px;
+      text-align: center;
+    }
+    .cd-icon {
+      width: 60px;
+      height: 60px;
+      background: #e8f5e9;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    .cd-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+    .cd-message {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .cd-confirm-box {
+      background: #f0f7ff;
+      border: 1px solid #1f4f91;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .cd-confirm-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #1f4f91;
+      margin-bottom: 6px;
+    }
+    .cd-confirm-text {
+      font-size: 10px;
+      color: #333;
+      line-height: 1.4;
+    }
+    .cd-points-earned {
+      background: linear-gradient(135deg, #ffd700, #ffb800);
+      color: #1a1a2e;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .cd-points-number {
+      font-size: 28px;
+      font-weight: 800;
+    }
+    .cd-points-label {
+      font-size: 10px;
+      font-weight: 600;
+    }
+    /* Receipt */
+    .receipt {
+      width: 240px;
+      background: #fffef8;
+      border-radius: 4px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      padding: 20px 16px;
+      font-family: 'Courier New', monospace;
+    }
+    .receipt-header {
+      text-align: center;
+      border-bottom: 1px dashed #ccc;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+    .receipt-logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    .receipt-store {
+      font-size: 10px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .receipt-body {
+      font-size: 10px;
+      color: #333;
+      line-height: 1.6;
+    }
+    .receipt-line {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .receipt-divider {
+      border-top: 1px dashed #ccc;
+      margin: 10px 0;
+    }
+    .receipt-total {
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .receipt-rewards {
+      background: #f8f8f0;
+      padding: 10px;
+      margin: 12px -16px;
+      text-align: center;
+    }
+    .receipt-rewards-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    .receipt-rewards-points {
+      font-size: 18px;
+      font-weight: 800;
+      color: #4caf50;
+    }
+    .receipt-consent {
+      font-size: 8px;
+      color: #666;
+      text-align: center;
+      margin-top: 12px;
+      line-height: 1.4;
+      border-top: 1px dashed #ccc;
+      padding-top: 12px;
+    }
+    .receipt-footer {
+      text-align: center;
+      font-size: 9px;
+      color: #888;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Opt-In Method 3: In-Store POS Enrollment</h1>
+    <p class="subtitle">Customer opt-in during checkout at participating merchant locations</p>
+
+    <div class="flow-container">
+      <!-- Step 1: POS Terminal - Cashier View -->
+      <div class="device-wrapper">
+        <span class="step-label">Step 1: POS Entry</span>
+        <div class="pos-terminal">
+          <div class="pos-screen">
+            <div class="pos-header">
+              <span class="pos-logo">Shop Savvy POS</span>
+              <span class="pos-time">2:34 PM</span>
+            </div>
+            <div class="pos-content">
+              <h2 class="pos-title">Join Rewards Program</h2>
+              <p class="pos-subtitle">Customer enrollment at checkout</p>
+
+              <div class="reward-badge">
+                <div class="reward-points">50 pts</div>
+                <div class="reward-label">SIGNUP BONUS</div>
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">Customer Phone Number</label>
+                <input type="text" class="pos-input" value="(555) 345-6789">
+              </div>
+
+              <div class="consent-box">
+                <div class="consent-row">
+                  <div class="checkbox checked">✓</div>
+                  <span class="consent-text">Customer agrees to receive recurring automated marketing texts at this number. Consent not required for purchase.</span>
+                </div>
+                <div class="consent-row">
+                  <div class="checkbox checked">✓</div>
+                  <span class="consent-text">Customer agrees to Terms & Privacy Policy (shown on customer display)</span>
+                </div>
+                <p class="legal-micro">Msg & data rates may apply. Msg frequency varies. Reply STOP to cancel, HELP for help.</p>
+              </div>
+
+              <button class="pos-btn pos-btn-primary">✓ Enroll & Apply Points</button>
+              <button class="pos-btn pos-btn-secondary">Skip Enrollment</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Step 2: Customer-Facing Display -->
+      <div class="device-wrapper">
+        <span class="step-label">Step 2: Customer Confirms</span>
+        <div class="customer-display">
+          <div class="cd-screen">
+            <div class="cd-header">
+              <div class="cd-logo">SwipeSavvy</div>
+              <div class="cd-tagline">Rewards Program</div>
+            </div>
+            <div class="cd-content">
+              <div class="cd-icon">📱</div>
+              <h2 class="cd-title">Confirm Your Enrollment</h2>
+              <p class="cd-message">By tapping "I Agree" you consent to receive SMS messages from this store about rewards, offers, and updates.</p>
+
+              <div class="cd-confirm-box">
+                <div class="cd-confirm-title">SMS Consent Agreement</div>
+                <p class="cd-confirm-text">I agree to receive recurring automated marketing text messages at (555) 345-6789. Consent is not a condition of purchase. Msg & data rates may apply. Reply STOP to opt out.</p>
+              </div>
+
+              <button class="pos-btn pos-btn-primary" style="margin-bottom: 8px;">✓ I Agree - Enroll Me</button>
+              <button class="pos-btn pos-btn-secondary">No Thanks</button>
+
+              <p class="legal-micro" style="margin-top: 12px; text-align: center;">View full Terms at swipesavvy.com/terms</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Step 3: Confirmation + Receipt -->
+      <div class="device-wrapper">
+        <span class="step-label">Step 3: Confirmation</span>
+        <div class="customer-display">
+          <div class="cd-screen">
+            <div class="cd-header">
+              <div class="cd-logo">SwipeSavvy</div>
+              <div class="cd-tagline">Rewards Program</div>
+            </div>
+            <div class="cd-content">
+              <div class="cd-icon" style="background: #e8f5e9;">✓</div>
+              <h2 class="cd-title">You're Enrolled!</h2>
+              <p class="cd-message">Welcome to the rewards program. Check your phone for a confirmation text.</p>
+
+              <div class="cd-points-earned">
+                <div class="cd-points-number">+50</div>
+                <div class="cd-points-label">BONUS POINTS EARNED</div>
+              </div>
+
+              <div class="cd-confirm-box">
+                <div class="cd-confirm-title">📱 SMS Sent To:</div>
+                <p class="cd-confirm-text" style="font-size: 14px; font-weight: 600;">(555) 345-6789</p>
+              </div>
+
+              <p class="legal-micro" style="text-align: center;">Reply STOP anytime to opt out of messages</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Receipt -->
+      <div class="device-wrapper">
+        <span class="step-label">Receipt Proof</span>
+        <div class="receipt">
+          <div class="receipt-header">
+            <div class="receipt-logo">ACME COFFEE</div>
+            <div class="receipt-store">123 Main St, Anytown<br>Store #4521</div>
+          </div>
+          <div class="receipt-body">
+            <div class="receipt-line">
+              <span>Date:</span>
+              <span>01/14/2026</span>
+            </div>
+            <div class="receipt-line">
+              <span>Time:</span>
+              <span>2:34 PM</span>
+            </div>
+            <div class="receipt-divider"></div>
+            <div class="receipt-line">
+              <span>Latte (Large)</span>
+              <span>$5.50</span>
+            </div>
+            <div class="receipt-line">
+              <span>Blueberry Muffin</span>
+              <span>$3.25</span>
+            </div>
+            <div class="receipt-divider"></div>
+            <div class="receipt-line receipt-total">
+              <span>TOTAL</span>
+              <span>$8.75</span>
+            </div>
+          </div>
+
+          <div class="receipt-rewards">
+            <div class="receipt-rewards-title">🎉 REWARDS ENROLLED</div>
+            <div class="receipt-rewards-points">+50 pts</div>
+            <div style="font-size: 9px; color: #666;">Signup Bonus Applied!</div>
+          </div>
+
+          <div class="receipt-consent">
+            <strong>SMS OPT-IN CONFIRMED</strong><br>
+            Phone: (555) 345-6789<br>
+            You agreed to receive marketing texts. Reply STOP to opt out anytime.<br>
+            Terms: swipesavvy.com/terms
+          </div>
+
+          <div class="receipt-footer">
+            Thank you for shopping!<br>
+            Powered by SwipeSavvy
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

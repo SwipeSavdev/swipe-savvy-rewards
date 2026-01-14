@@ -21,6 +21,8 @@ pgvector>=0.2.0  # If using pgvector
 fastapi>=0.104.0
 uvicorn>=0.24.0
 pydantic>=2.5.0
+email-validator>=2.0.0  # Required for Pydantic email validation
+python-multipart>=0.0.6  # Required for form data handling
 
 # PII detection and security
 presidio-analyzer>=2.2.0

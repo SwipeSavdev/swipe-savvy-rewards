@@ -119,6 +119,9 @@ export interface AITransferData {
     accountStatus: string;
     recentTransactions: number;
     accountAge: string;
+    sentiment?: string;
+    keyDetails?: Record<string, string>;
+    [key: string]: string | number | Record<string, string> | undefined;
   };
 }
 

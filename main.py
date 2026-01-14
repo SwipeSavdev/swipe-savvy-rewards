@@ -255,6 +255,106 @@ async def admin_login(request: LoginRequest):
         }
     }
 
+@app.post("/api/v1/auth/login")
+async def mobile_login(request: LoginRequest):
+    """
+    Mobile app authentication endpoint
+    For development: accepts any credentials and returns mock token with OTP verification required
+    """
+    # Generate mock user ID
+    user_id = "user_" + str(int(__import__('datetime').datetime.now().timestamp()))
+    
+    # Simple mock authentication for development
+    # Returns a response that requires OTP verification
+    return {
+        "verification_required": True,
+        "otp_required": True,
+        "user": {
+            "id": user_id,
+            "email": request.email,
+            "name": request.email.split('@')[0].capitalize(),
+            "phone": "+1234567890",
+            "kyc_tier": "tier1",
+            "kyc_status": "verified",
+            "created_at": __import__('datetime').datetime.now().isoformat()
+        },
+        "message": "OTP sent to your phone. Please verify to continue."
+    }
+
+@app.post("/api/v1/auth/signup")
+async def mobile_signup(request: dict):
+    """
+    Mobile app signup endpoint
+    For development: accepts signup data and returns mock response
+    """
+    # Generate mock user ID
+    user_id = "user_" + str(int(__import__('datetime').datetime.now().timestamp()))
+    
+    return {
+        "verification_required": True,
+        "otp_required": True,
+        "user": {
+            "id": user_id,
+            "email": request.get("email"),
+            "name": request.get("name", request.get("email", "").split('@')[0].capitalize()),
+            "phone": request.get("phone", "+1234567890"),
+            "kyc_tier": "tier1",
+            "kyc_status": "pending",
+            "created_at": __import__('datetime').datetime.now().isoformat()
+        },
+        "message": "Account created. OTP sent to your phone for verification."
+    }
+
+@app.post("/api/v1/auth/verify-login-otp")
+async def verify_login_otp(request: dict):
+    """
+    Verify OTP code and complete authentication
+    For development: accepts any 6-digit code
+    """
+    user_id = request.get("user_id", "")
+    code = request.get("code", "")
+    
+    # In development, accept any 6-digit code
+    if len(code) == 6 and code.isdigit():
+        # Generate tokens
+        access_token = "mock-jwt-token-" + str(int(__import__('datetime').datetime.now().timestamp()))
+        refresh_token = "mock-refresh-token-" + str(int(__import__('datetime').datetime.now().timestamp()))
+        
+        return {
+            "success": True,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": {
+                "id": user_id,
+                "email": f"user_{user_id}@swipesavvy.com",
+                "name": f"User {user_id[-4:]}",
+                "phone": "+1234567890",
+                "kyc_tier": "tier1",
+                "kyc_status": "verified",
+            },
+            "message": "Verification successful"
+        }
+    else:
+        return {
+            "success": False,
+            "message": "Invalid verification code",
+            "detail": "Please enter a valid 6-digit code"
+        }
+
+@app.post("/api/v1/auth/resend-login-otp")
+async def resend_login_otp(request: dict):
+    """
+    Resend OTP code
+    For development: always returns success
+    """
+    user_id = request.get("user_id", "")
+    
+    return {
+        "success": True,
+        "message": f"OTP code resent to phone number ending in 7890",
+        "user_id": user_id
+    }
+
 # ═════════════════════════════════════════════════════════════════════════════
 # IMPORT AND REGISTER PHASE 4 ROUTES
 # ═════════════════════════════════════════════════════════════════════════════

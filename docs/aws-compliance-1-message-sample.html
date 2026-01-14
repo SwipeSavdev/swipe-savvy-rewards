@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Message Sample 3 - AWS Compliance</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { text-align: center; color: #1a1a2e; margin-bottom: 6px; font-size: 24px; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 13px; }
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #1f4f91;
+    }
+    .section-number {
+      width: 36px; height: 36px;
+      background: #1f4f91; color: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700;
+    }
+    .section-title { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+    .section-desc { font-size: 12px; color: #666; }
+    .content-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    .message-card { flex: 1; min-width: 300px; }
+    .card-label {
+      font-size: 11px; color: #666; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+    }
+    .old-message {
+      background: #ffebee;
+      border: 1px solid #ef9a9a;
+      border-left: 4px solid #e53935;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #333;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .old-message::before {
+      content: "❌ NON-COMPLIANT";
+      position: absolute; top: -10px; right: 10px;
+      background: #e53935; color: white;
+      font-size: 9px; padding: 2px 8px;
+      border-radius: 4px; font-weight: 600;
+    }
+    .new-message {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-left: 4px solid #4caf50;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #333;
+      position: relative;
+    }
+    .new-message::before {
+      content: "✓ COMPLIANT";
+      position: absolute; top: -10px; right: 10px;
+      background: #4caf50; color: white;
+      font-size: 9px; padding: 2px 8px;
+      border-radius: 4px; font-weight: 600;
+    }
+    .char-count { text-align: right; font-size: 10px; color: #4caf50; margin-top: 6px; }
+    .issues-card {
+      width: 280px;
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .issues-title {
+      font-size: 11px; font-weight: 600; color: #f57c00;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .issue-item {
+      font-size: 11px; color: #333; margin-bottom: 6px;
+      padding-left: 16px; position: relative;
+    }
+    .issue-item::before { content: "•"; position: absolute; left: 4px; color: #f57c00; }
+    .compliance-card {
+      width: 280px;
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .compliance-title {
+      font-size: 11px; font-weight: 600; color: #2e7d32;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .compliance-item {
+      font-size: 11px; color: #333; margin-bottom: 6px;
+      display: flex; align-items: flex-start; gap: 6px;
+    }
+    .check-icon { color: #4caf50; flex-shrink: 0; }
+    .use-case-box {
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+    }
+    .use-case-title { font-size: 11px; font-weight: 600; color: #1565c0; margin-bottom: 6px; }
+    .use-case-text { font-size: 11px; color: #333; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Message Sample 3: Non-Promotional Transactional Message</h1>
+    <p class="subtitle">Revised to be transactional (not promotional), with clear opt-out and compliant language</p>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <div>
+          <div class="section-title">Compliant Message Sample</div>
+          <div class="section-desc">No promotional language, cashback offers, or urgency tactics</div>
+        </div>
+      </div>
+
+      <div class="content-row">
+        <div class="message-card">
+          <div class="card-label">Original (Non-Compliant):</div>
+          <div class="old-message">
+            SwipeSavvy: You've earned $5 cashback! 💰 Shop now at participating stores to earn more rewards. Limited time offer - double points this weekend! Reply STOP to opt out.
+          </div>
+
+          <div class="card-label">Revised (Compliant):</div>
+          <div class="new-message">
+            SwipeSavvy Account Alert: Your account activity summary is ready to view in the app. Log in to review your recent transactions. Reply STOP to unsubscribe, HELP for help.
+          </div>
+          <div class="char-count">✓ 158 characters (within 160 limit)</div>
+        </div>
+
+        <div class="issues-card">
+          <div class="issues-title">⚠️ Original Issues:</div>
+          <div class="issue-item">Promotional language ("Shop now", "Limited time")</div>
+          <div class="issue-item">Cashback/rewards promotion</div>
+          <div class="issue-item">Urgency tactics ("this weekend")</div>
+          <div class="issue-item">Emoji usage (unprofessional)</div>
+          <div class="issue-item">Missing HELP instructions</div>
+        </div>
+
+        <div class="compliance-card">
+          <div class="compliance-title">✓ Revised Compliance:</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> Transactional message (account alert)</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> No promotional language</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> No cashback/reward offers</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> Clear opt-out (STOP)</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> Help instructions (HELP)</div>
+          <div class="compliance-item"><span class="check-icon">✓</span> Brand identified (SwipeSavvy)</div>
+        </div>
+      </div>
+
+      <div class="use-case-box">
+        <div class="use-case-title">📋 Defined Use Case:</div>
+        <div class="use-case-text">
+          <strong>Category:</strong> Account Notifications / Transactional Alerts<br>
+          <strong>Purpose:</strong> Notify users of account activity and transaction summaries<br>
+          <strong>Frequency:</strong> Up to 1 message per day based on account activity<br>
+          <strong>Not Used For:</strong> Promotional offers, cashback announcements, sales, or marketing campaigns
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

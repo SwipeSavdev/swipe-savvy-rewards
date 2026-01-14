@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwipeSavvy Keyword/Short Code Opt-In Flow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+      font-size: 26px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 40px;
+      font-size: 14px;
+    }
+    .flow-container {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .step-wrapper {
+      text-align: center;
+    }
+    .step-label {
+      background: #6bc14a;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .arrow {
+      display: flex;
+      align-items: center;
+      color: #1f4f91;
+      font-size: 28px;
+      margin-top: 180px;
+    }
+    /* Phone device */
+    .phone {
+      width: 240px;
+      height: 480px;
+      background: #1a1a2e;
+      border-radius: 36px;
+      padding: 10px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+    .notch {
+      width: 100px;
+      height: 24px;
+      background: #1a1a2e;
+      border-radius: 0 0 16px 16px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    .status-bar {
+      height: 40px;
+      background: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .messages-header {
+      background: #f8f8f8;
+      padding: 10px 16px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .back-arrow {
+      color: #007aff;
+      font-size: 18px;
+    }
+    .contact-info {
+      flex: 1;
+    }
+    .contact-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+    .contact-number {
+      font-size: 10px;
+      color: #666;
+    }
+    .messages-body {
+      padding: 12px;
+      height: calc(100% - 140px);
+      overflow-y: auto;
+      background: #fff;
+    }
+    .message {
+      margin-bottom: 10px;
+      max-width: 85%;
+    }
+    .message.sent {
+      margin-left: auto;
+    }
+    .message-bubble {
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .message.sent .message-bubble {
+      background: #007aff;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .message.received .message-bubble {
+      background: #e9e9eb;
+      color: #1a1a2e;
+      border-bottom-left-radius: 4px;
+    }
+    .message-time {
+      font-size: 9px;
+      color: #888;
+      margin-top: 3px;
+      text-align: right;
+    }
+    .message.received .message-time {
+      text-align: left;
+    }
+    .input-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 8px 12px;
+      background: #f8f8f8;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .input-field {
+      flex: 1;
+      padding: 8px 14px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      font-size: 13px;
+      background: #fff;
+    }
+    .send-btn {
+      width: 32px;
+      height: 32px;
+      background: #007aff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+    }
+    /* Signage card */
+    .signage {
+      width: 260px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    .signage-header {
+      background: linear-gradient(135deg, #1f4f91 0%, #6bc14a 100%);
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+    .signage-logo {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .signage-tagline {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+    .signage-body {
+      padding: 24px 20px;
+      text-align: center;
+    }
+    .signage-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+    .signage-subtitle {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .keyword-box {
+      background: #f0f7ff;
+      border: 2px dashed #1f4f91;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .keyword-label {
+      font-size: 10px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .keyword-text {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1f4f91;
+      letter-spacing: 2px;
+    }
+    .shortcode-box {
+      background: #1a1a2e;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .shortcode-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .shortcode-number {
+      font-size: 26px;
+      font-weight: 800;
+      color: #6bc14a;
+      letter-spacing: 3px;
+    }
+    .benefits-list {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #333;
+      margin-bottom: 6px;
+    }
+    .benefit-icon {
+      color: #6bc14a;
+      font-size: 12px;
+    }
+    .legal-text {
+      font-size: 8px;
+      color: #888;
+      line-height: 1.4;
+      border-top: 1px solid #eee;
+      padding-top: 12px;
+    }
+    /* Script card */
+    .script-card {
+      width: 280px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    .script-header {
+      background: #1a1a2e;
+      padding: 16px 20px;
+      color: white;
+    }
+    .script-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .script-subtitle {
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    .script-body {
+      padding: 20px;
+    }
+    .script-section {
+      margin-bottom: 16px;
+    }
+    .script-label {
+      font-size: 10px;
+      color: #1f4f91;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .script-text {
+      font-size: 12px;
+      color: #333;
+      line-height: 1.6;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid #1f4f91;
+    }
+    .script-text em {
+      color: #1f4f91;
+      font-style: normal;
+      font-weight: 600;
+    }
+    .disclosure-box {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 10px;
+      color: #856404;
+      line-height: 1.4;
+    }
+    .disclosure-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Keyword/Short Code Opt-In Flow</h1>
+    <p class="subtitle">Over the phone / In-person opt-in via SMS keyword to short code</p>
+
+    <div class="flow-container">
+      <!-- Step 1: In-Store Signage / Verbal Prompt -->
+      <div class="step-wrapper">
+        <span class="step-label">Step 1: Signage / Verbal Prompt</span>
+        <div class="signage">
+          <div class="signage-header">
+            <div class="signage-logo">SwipeSavvy</div>
+            <div class="signage-tagline">Rewards Program</div>
+          </div>
+          <div class="signage-body">
+            <h2 class="signage-title">Join Our Rewards!</h2>
+            <p class="signage-subtitle">Get exclusive deals & earn points</p>
+
+            <div class="keyword-box">
+              <div class="keyword-label">Text This Keyword</div>
+              <div class="keyword-text">JOIN</div>
+            </div>
+
+            <div class="shortcode-box">
+              <div class="shortcode-label">To This Number</div>
+              <div class="shortcode-number">12345</div>
+            </div>
+
+            <div class="benefits-list">
+              <div class="benefit-item"><span class="benefit-icon">✓</span> Exclusive member discounts</div>
+              <div class="benefit-item"><span class="benefit-icon">✓</span> Early access to sales</div>
+              <div class="benefit-item"><span class="benefit-icon">✓</span> Birthday rewards</div>
+            </div>
+
+            <p class="legal-text">By texting JOIN to 12345, you consent to receive recurring automated marketing messages from SwipeSavvy. Msg & data rates may apply. Msg frequency varies. Reply STOP to cancel, HELP for help.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Step 1B: Employee Script -->
+      <div class="step-wrapper">
+        <span class="step-label">Employee Script (In-Person)</span>
+        <div class="script-card">
+          <div class="script-header">
+            <div class="script-title">📋 Employee Verbal Script</div>
+            <div class="script-subtitle">For in-person / phone opt-in</div>
+          </div>
+          <div class="script-body">
+            <div class="script-section">
+              <div class="script-label">Say to Customer:</div>
+              <div class="script-text">
+                "Would you like to join our rewards program and receive exclusive deals via text message? Just text <em>JOIN</em> to <em>12345</em> from your phone. You'll get a signup bonus and exclusive member discounts!"
+              </div>
+            </div>
+
+            <div class="script-section">
+              <div class="script-label">Required Disclosure:</div>
+              <div class="script-text">
+                "By texting JOIN, you're agreeing to receive recurring marketing texts. Message and data rates may apply. You can text STOP anytime to opt out."
+              </div>
+            </div>
+
+            <div class="disclosure-box">
+              <div class="disclosure-title">⚠️ Important:</div>
+              Do NOT enter customer's phone number for them. Customer must text the keyword themselves to provide consent.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Step 2: Customer Sends Keyword -->
+      <div class="step-wrapper">
+        <span class="step-label">Step 2: Customer Texts Keyword</span>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <span>9:41</span>
+              <span>📶 🔋</span>
+            </div>
+            <div class="messages-header">
+              <span class="back-arrow">‹</span>
+              <div class="contact-info">
+                <div class="contact-name">12345</div>
+                <div class="contact-number">Short Code</div>
+              </div>
+            </div>
+            <div class="messages-body">
+              <div class="message sent">
+                <div class="message-bubble">JOIN</div>
+                <div class="message-time">9:41 AM</div>
+              </div>
+            </div>
+            <div class="input-bar">
+              <input type="text" class="input-field" placeholder="Text Message" value="JOIN">
+              <div class="send-btn">↑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Step 3: Auto-Response -->
+      <div class="step-wrapper">
+        <span class="step-label">Step 3: Confirmation Response</span>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <span>9:41</span>
+              <span>📶 🔋</span>
+            </div>
+            <div class="messages-header">
+              <span class="back-arrow">‹</span>
+              <div class="contact-info">
+                <div class="contact-name">12345</div>
+                <div class="contact-number">Short Code</div>
+              </div>
+            </div>
+            <div class="messages-body">
+              <div class="message sent">
+                <div class="message-bubble">JOIN</div>
+                <div class="message-time">9:41 AM</div>
+              </div>
+              <div class="message received">
+                <div class="message-bubble">SwipeSavvy: Welcome! You're now enrolled in our rewards program. Reply STOP to opt out, HELP for help. Msg&data rates may apply. Msg frequency varies.</div>
+                <div class="message-time">9:41 AM</div>
+              </div>
+            </div>
+            <div class="input-bar">
+              <input type="text" class="input-field" placeholder="Text Message">
+              <div class="send-btn">↑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
