@@ -1,8 +1,8 @@
 """
-Website AI Concierge - Public-facing chatbot for SwipeSavvy website visitors
+Website AI Concierge - Public-facing chatbot for Swipe Savvy website visitors
 
 This endpoint provides AI-powered support for potential customers visiting swipesavvy.com.
-It has comprehensive knowledge about SwipeSavvy products, pricing, features, and can help
+It has comprehensive knowledge about Swipe Savvy products, pricing, features, and can help
 visitors understand the platform and guide them toward demos/signups.
 """
 
@@ -22,19 +22,19 @@ router = APIRouter(prefix="/api/v1/website-concierge", tags=["website-concierge"
 
 SSE_DONE = "data: [DONE]\n\n"
 
-# Comprehensive SwipeSavvy knowledge base
+# Comprehensive Swipe Savvy knowledge base
 SWIPESAVVY_KNOWLEDGE = """
-# SWIPESAVVY PLATFORM KNOWLEDGE BASE
+# SWIPE SAVVY PLATFORM KNOWLEDGE BASE
 
 ## COMPANY OVERVIEW
-SwipeSavvy is an all-in-one retail technology platform that combines:
+Swipe Savvy is an all-in-one retail technology platform that combines:
 - Cloud POS (Point of Sale) system
 - Customer Rewards Wallet
 - Loyalty Programs
 - Customer Data Platform (CDP)
 - AI-Powered Analytics (Savvy AI)
 
-Founded in 2024, SwipeSavvy serves 10,000+ merchants worldwide and has processed over $2B in transactions.
+Founded in 2024, Swipe Savvy serves 10,000+ merchants worldwide and has processed over $2B in transactions.
 Headquarters: Wilmington, Delaware, USA
 
 ## CORE PRODUCTS
@@ -247,7 +247,7 @@ AI capabilities built into the platform.
 **No long-term contracts required. Month-to-month available.**
 
 ## PAYMENT PROCESSING
-SwipeSavvy offers integrated payment processing with competitive rates:
+Swipe Savvy offers integrated payment processing with competitive rates:
 - Card-present: 2.6% + $0.10
 - Card-not-present: 2.9% + $0.30
 - ACH/bank transfer: 0.8% (min $0.25)
@@ -261,7 +261,7 @@ Or bring your own processor - we integrate with:
 - First Data
 
 ## INTEGRATIONS
-SwipeSavvy integrates with 100+ platforms:
+Swipe Savvy integrates with 100+ platforms:
 
 **Accounting:**
 - QuickBooks
@@ -322,11 +322,11 @@ SwipeSavvy integrates with 100+ platforms:
 
 ## FREQUENTLY ASKED QUESTIONS
 
-Q: Does SwipeSavvy work offline?
+Q: Does Swipe Savvy work offline?
 A: Yes! Our offline-first architecture ensures you never miss a sale. Transactions are stored locally and sync automatically when internet is restored.
 
 Q: Can I use my existing hardware?
-A: Yes, SwipeSavvy works with most standard POS hardware including receipt printers, cash drawers, barcode scanners, and payment terminals.
+A: Yes, Swipe Savvy works with most standard POS hardware including receipt printers, cash drawers, barcode scanners, and payment terminals.
 
 Q: How long does setup take?
 A: Self-service onboarding takes about 30 minutes. Our team can also provide white-glove setup for larger deployments.
@@ -354,17 +354,17 @@ class WebsiteConciergeRequest(BaseModel):
 
 
 # Build the system prompt for website visitors
-WEBSITE_SYSTEM_PROMPT = f"""You are Savvy AI, the helpful and friendly AI assistant on the SwipeSavvy website.
-You help website visitors learn about SwipeSavvy products, answer their questions, and guide them toward scheduling a demo or starting a free trial.
+WEBSITE_SYSTEM_PROMPT = f"""You are Savvy AI, the helpful and friendly AI assistant on the Swipe Savvy website.
+You help website visitors learn about Swipe Savvy products, answer their questions, and guide them toward scheduling a demo or starting a free trial.
 
 YOUR PERSONALITY:
 - Friendly, professional, and helpful
-- Enthusiastic about SwipeSavvy without being pushy
+- Enthusiastic about Swipe Savvy without being pushy
 - Clear and concise in explanations
 - Proactive in suggesting relevant information
 
 YOUR KNOWLEDGE:
-You have comprehensive knowledge about SwipeSavvy's products, pricing, features, and capabilities.
+You have comprehensive knowledge about Swipe Savvy's products, pricing, features, and capabilities.
 Use the following knowledge base to answer questions accurately:
 
 {SWIPESAVVY_KNOWLEDGE}
@@ -379,7 +379,7 @@ GUIDELINES:
    - Call sales: 1-800-505-8769
 5. Keep responses concise but informative
 6. Use bullet points and formatting for clarity when appropriate
-7. If asked about competitors, focus on SwipeSavvy's strengths without disparaging others
+7. If asked about competitors, focus on Swipe Savvy's strengths without disparaging others
 
 COMMON TASKS:
 - Explain product features and capabilities
@@ -398,7 +398,7 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
     """
     Website AI Concierge chat endpoint for public website visitors.
 
-    Provides streaming AI responses about SwipeSavvy products and services.
+    Provides streaming AI responses about Swipe Savvy products and services.
     Uses Together.AI with comprehensive product knowledge.
     """
 

@@ -151,8 +151,72 @@ height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe
         <a class="btn outline-blue" href="/platform">Explore</a>
         <a class="btn primary" href="/contact">Request Demo</a>
       </div>
+
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
     </div>
   </header>
+
+  <!-- Mobile Navigation Overlay -->
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+  <!-- Mobile Navigation Slide-out Menu -->
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile Navigation">
+    <div class="mobile-nav-links">
+      <a href="/">Home</a>
+      <a href="/platform">Platform</a>
+
+      <!-- Solutions Submenu -->
+      <button class="submenu-toggle" data-submenu="solutions">
+        Solutions <span class="chev"></span>
+      </button>
+      <div class="mobile-submenu" id="submenu-solutions">
+        <a href="/solutions/rewards-wallet">
+          Rewards Wallet
+          <span class="submenu-desc">Customer mobile wallet</span>
+        </a>
+        <a href="/solutions/cdp">
+          Customer Data Platform
+          <span class="submenu-desc">Unified profiles & activation</span>
+        </a>
+        <a href="/solutions/merchant-loyalty">
+          Merchant Loyalty
+          <span class="submenu-desc">Open-loop loyalty</span>
+        </a>
+        <a href="/solutions/omnichannel-pos" class="active">
+          Omni-Channel POS
+          <span class="submenu-desc">Offline-first checkout</span>
+        </a>
+      </div>
+
+      <!-- Industries Submenu -->
+      <button class="submenu-toggle" data-submenu="industries">
+        Industries <span class="chev"></span>
+      </button>
+      <div class="mobile-submenu" id="submenu-industries">
+        <a href="/industries/retail">Retail</a>
+        <a href="/industries/qsr">QSR & Restaurants</a>
+        <a href="/industries/grocery">Grocery & Convenience</a>
+        <a href="/industries/healthcare">Healthcare</a>
+        <a href="/industries/jewelry">Jewelry & Luxury</a>
+        <a href="/industries/warehouse">Warehouse & Distribution</a>
+      </div>
+
+      <a href="/support">Support</a>
+      <a href="/contact">Contact</a>
+    </div>
+
+    <div class="mobile-nav-cta">
+      <a class="btn outline-blue" href="/platform">Explore Platform</a>
+      <a class="btn primary" href="/contact">Request Demo</a>
+    </div>
+  </nav>
   
 <main>
   <section class="hero">

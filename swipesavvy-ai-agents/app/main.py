@@ -236,6 +236,14 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not include Website Concierge routes: {e}")
 
+# Include Website Forms routes (contact, demo request, sales inquiry)
+try:
+    from app.routes.website_forms import router as website_forms_router
+    app.include_router(website_forms_router)
+    logger.info("✅ Website Forms routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include Website Forms routes: {e}")
+
 # Include marketing routes
 try:
     from app.routes.marketing import router as marketing_router
