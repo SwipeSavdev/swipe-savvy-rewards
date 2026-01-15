@@ -168,11 +168,21 @@ class TokenRefreshResponse(BaseModel):
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hashed password."""
-    return pwd_context.verify(plain_password, hashed_password)
+    import bcrypt
+    # Truncate password to 72 bytes for bcrypt compatibility
+    truncated_password = plain_password.encode('utf-8')[:72]
+    try:
+        return bcrypt.checkpw(truncated_password, hashed_password.encode('utf-8'))
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
+        return False
 
 def get_password_hash(password: str) -> str:
     """Hash a plain password."""
-    return pwd_context.hash(password)
+    import bcrypt
+    # Truncate password to 72 bytes for bcrypt compatibility
+    truncated_password = password.encode('utf-8')[:72]
+    return bcrypt.hashpw(truncated_password, bcrypt.gensalt()).decode('utf-8')
 
 # ============================================================================
 # Token Management
@@ -522,4 +532,117 @@ async def get_demo_credentials():
                 "role": "admin"
             }
         ]
+    }
+
+
+# ============================================================================
+# Initial Setup Endpoint (One-time use)
+# ============================================================================
+
+class SetupRequest(BaseModel):
+    setup_key: str
+    email: EmailStr
+    password: str
+    full_name: str
+
+@router.post("/setup-admin")
+async def setup_initial_admin(req: SetupRequest, db: Session = Depends(get_db)):
+    """
+    Create initial admin user. One-time setup endpoint.
+
+    Requires a setup key that matches the JWT_SECRET_KEY first 16 chars.
+    Can only be used if no admin users exist in the database.
+    """
+    # Verify setup key (first 16 chars of JWT secret)
+    expected_key = (SECRET_KEY or "")[:16]
+    if req.setup_key != expected_key:
+        logger.warning("Invalid setup key attempted")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid setup key"
+        )
+
+    # Check if admin users already exist
+    existing_count = db.query(AdminUser).filter(AdminUser.role.in_(['admin', 'super_admin'])).count()
+    if existing_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Admin users already exist. This endpoint can only be used for initial setup."
+        )
+
+    # Validate password length
+    if len(req.password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters"
+        )
+
+    # Create admin user
+    from uuid import uuid4
+    password_hash = get_password_hash(req.password)
+
+    admin_user = AdminUser(
+        id=uuid4(),
+        email=req.email.lower(),
+        password_hash=password_hash,
+        full_name=req.full_name,
+        role="super_admin",
+        status="active"
+    )
+
+    db.add(admin_user)
+    db.commit()
+
+    logger.info(f"Initial admin user created: {req.email}")
+
+    return {
+        "success": True,
+        "message": "Admin user created successfully",
+        "email": req.email
+    }
+
+
+class ResetPasswordRequest(BaseModel):
+    setup_key: str
+    email: EmailStr
+    new_password: str
+
+@router.post("/reset-password")
+async def reset_admin_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """
+    Reset admin password. Requires setup key for security.
+    """
+    # Verify setup key (first 16 chars of JWT secret)
+    expected_key = (SECRET_KEY or "")[:16]
+    if req.setup_key != expected_key:
+        logger.warning("Invalid setup key for password reset")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid setup key"
+        )
+
+    # Find user
+    user = db.query(AdminUser).filter(AdminUser.email == req.email.lower()).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Validate password
+    if len(req.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters"
+        )
+
+    # Update password
+    user.password_hash = get_password_hash(req.new_password)
+    db.commit()
+
+    logger.info(f"Password reset for user: {req.email}")
+
+    return {
+        "success": True,
+        "message": "Password reset successfully"
     }
