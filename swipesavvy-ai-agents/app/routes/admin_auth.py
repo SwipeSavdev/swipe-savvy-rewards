@@ -124,7 +124,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class LoginRequest(BaseModel):
     email: EmailStr  # Validates email format
     password: str
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -132,7 +132,7 @@ class LoginRequest(BaseModel):
                 "password": "Admin123!"
             }
         }
-    
+
     def __init__(self, **data):
         super().__init__(**data)
         # Additional validation
@@ -140,6 +140,9 @@ class LoginRequest(BaseModel):
             raise ValueError('Password cannot be empty')
         if len(self.password) < 6:
             raise ValueError('Password must be at least 6 characters')
+        # bcrypt has a 72-byte limit, truncate if necessary
+        if len(self.password.encode('utf-8')) > 72:
+            raise ValueError('Password exceeds maximum length')
 
 class UserInfo(BaseModel):
     id: str

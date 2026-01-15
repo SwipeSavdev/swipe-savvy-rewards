@@ -4,6 +4,113 @@
 
   const isMobile = () => window.matchMedia && window.matchMedia('(max-width: 819px)').matches;
 
+  // ============================================
+  // MOBILE NAVIGATION
+  // ============================================
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  const mobileNav = document.getElementById('mobile-nav');
+  const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+  const submenuToggles = document.querySelectorAll('.submenu-toggle');
+
+  // Track scroll position for body lock
+  let scrollPosition = 0;
+
+  function openMobileMenu() {
+    scrollPosition = window.pageYOffset;
+    document.body.classList.add('menu-open');
+    document.body.style.top = `-${scrollPosition}px`;
+    mobileMenuToggle.classList.add('active');
+    mobileMenuToggle.setAttribute('aria-expanded', 'true');
+    mobileNav.classList.add('open');
+    mobileNavOverlay.classList.add('open');
+  }
+
+  function closeMobileMenu() {
+    document.body.classList.remove('menu-open');
+    document.body.style.top = '';
+    window.scrollTo(0, scrollPosition);
+    mobileMenuToggle.classList.remove('active');
+    mobileMenuToggle.setAttribute('aria-expanded', 'false');
+    mobileNav.classList.remove('open');
+    mobileNavOverlay.classList.remove('open');
+  }
+
+  function toggleMobileMenu() {
+    if (mobileNav.classList.contains('open')) {
+      closeMobileMenu();
+    } else {
+      openMobileMenu();
+    }
+  }
+
+  // Toggle mobile menu
+  if (mobileMenuToggle) {
+    mobileMenuToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMobileMenu();
+    });
+  }
+
+  // Close menu when overlay is clicked
+  if (mobileNavOverlay) {
+    mobileNavOverlay.addEventListener('click', closeMobileMenu);
+  }
+
+  // Handle submenu toggles
+  submenuToggles.forEach(toggle => {
+    toggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      const submenuId = toggle.getAttribute('data-submenu');
+      const submenu = document.getElementById('submenu-' + submenuId);
+
+      if (submenu) {
+        const isExpanded = submenu.classList.contains('open');
+
+        // Close all other submenus
+        document.querySelectorAll('.mobile-submenu.open').forEach(m => m.classList.remove('open'));
+        document.querySelectorAll('.submenu-toggle.expanded').forEach(t => t.classList.remove('expanded'));
+
+        // Toggle this submenu
+        if (!isExpanded) {
+          submenu.classList.add('open');
+          toggle.classList.add('expanded');
+        }
+      }
+    });
+  });
+
+  // Close mobile menu on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mobileNav && mobileNav.classList.contains('open')) {
+      closeMobileMenu();
+    }
+  });
+
+  // Close mobile menu when window resizes to desktop
+  window.addEventListener('resize', () => {
+    if (!isMobile() && mobileNav && mobileNav.classList.contains('open')) {
+      closeMobileMenu();
+    }
+  });
+
+  // Handle swipe to close (swipe right to close)
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  if (mobileNav) {
+    mobileNav.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    mobileNav.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      if (touchEndX - touchStartX > 50) { // Swipe right threshold
+        closeMobileMenu();
+      }
+    }, { passive: true });
+  }
+
   function closeAll(){
     document.querySelectorAll('.mega-wrap.mega-open').forEach(el=>{
       el.classList.remove('mega-open');
@@ -308,12 +415,44 @@ document.addEventListener('DOMContentLoaded', function(){
     triggerEntranceEngagement();
   }
 
-  // Analytics tracking helper
+  // Analytics tracking helper - pushes to dataLayer for GTM and gtag for GA4
   function trackEvent(eventName, data) {
+    // Push to dataLayer for GTM
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: eventName,
+      ...data,
+      sessionId: sessionId,
+      timestamp: Date.now()
+    });
+
+    // Also send directly to GA4 via gtag
     if (window.gtag) {
       window.gtag('event', eventName, data);
     }
-    console.log('[SavvyAI]', eventName, data);
+
+    // Debug logging
+    if (window.location.hostname === 'localhost' || window.location.search.includes('debug=true')) {
+      console.log('[SavvyAI Analytics]', eventName, data);
+    }
+  }
+
+  // Enhanced analytics for specific conversion events
+  function trackConversion(conversionName, value, data) {
+    trackEvent(conversionName, {
+      ...data,
+      conversion_value: value,
+      currency: 'USD'
+    });
+
+    // Push conversion to dataLayer for GTM conversion tracking
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'conversion',
+      conversionName: conversionName,
+      conversionValue: value,
+      ...data
+    });
   }
 
   // Open with animation (manual open)
@@ -476,6 +615,13 @@ document.addEventListener('DOMContentLoaded', function(){
     if (escalationOffered) return;
     escalationOffered = true;
 
+    // Track escalation offered
+    trackEvent('escalation_offered', {
+      messagesExchanged: conversationHistory.length,
+      negativeMessageCount: negativeMessageCount,
+      page: window.location.pathname
+    });
+
     const transferHtml = `
       <div style="margin-top: 8px;">
         <p style="margin-bottom: 10px;">I understand this is important. Would you like to speak with a customer service agent?</p>
@@ -504,6 +650,10 @@ document.addEventListener('DOMContentLoaded', function(){
       if (chatBtn) chatBtn.addEventListener('click', () => initiateTransfer('chat'));
       if (phoneBtn) phoneBtn.addEventListener('click', () => initiateTransfer('phone'));
       if (continueBtn) continueBtn.addEventListener('click', () => {
+        trackEvent('escalation_declined', {
+          messagesExchanged: conversationHistory.length,
+          page: window.location.pathname
+        });
         addMsg('ai', "No problem! I'm here to help. What else can I assist you with?");
         escalationOffered = false; // Allow future escalation if needed
       });
@@ -512,6 +662,13 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // Initiate transfer to human agent
   function initiateTransfer(type){
+    // Track escalation accepted
+    trackEvent('escalation_accepted', {
+      transferType: type,
+      messagesExchanged: conversationHistory.length,
+      page: window.location.pathname
+    });
+
     if (type === 'chat') {
       showChatTransferForm();
     } else if (type === 'phone') {
@@ -648,6 +805,14 @@ document.addEventListener('DOMContentLoaded', function(){
         body: JSON.stringify(transferData)
       });
 
+      // Track successful escalation submission
+      trackConversion('escalation_submitted', type === 'chat' ? 25 : 50, {
+        transferType: type,
+        hasIssueDescription: issue.length > 0,
+        messagesExchanged: conversationHistory.length,
+        page: window.location.pathname
+      });
+
       if (type === 'chat') {
         addMsg('ai', `Thank you, ${name}! A customer service agent will join this chat shortly. You'll receive an email at ${email} with the chat link. Average wait time is under 2 minutes.`);
       } else {
@@ -655,6 +820,15 @@ document.addEventListener('DOMContentLoaded', function(){
       }
 
     } catch (err) {
+      // Track escalation submission (fallback - still counts as lead)
+      trackConversion('escalation_submitted', type === 'chat' ? 25 : 50, {
+        transferType: type,
+        hasIssueDescription: issue.length > 0,
+        messagesExchanged: conversationHistory.length,
+        page: window.location.pathname,
+        apiStatus: 'fallback'
+      });
+
       // Even if API fails, show success (fallback)
       if (type === 'chat') {
         addMsg('ai', `Thank you, ${name}! Your request has been submitted. An agent will reach out to you at ${email} shortly. You can also email us directly at support@swipesavvy.com`);
@@ -805,6 +979,14 @@ document.addEventListener('DOMContentLoaded', function(){
       // Store AI response
       conversationHistory.push({ role: 'assistant', content: fullText });
 
+      // Track AI response received
+      trackEvent('ai_response_received', {
+        responseLength: fullText.length,
+        responseType: 'api',
+        messagesExchanged: conversationHistory.length,
+        page: window.location.pathname
+      });
+
       // Check if we should offer escalation based on sentiment
       if (shouldOfferEscalation(sentiment, conversationHistory.length)) {
         setTimeout(() => showTransferOptions(), 1000);
@@ -817,6 +999,14 @@ document.addEventListener('DOMContentLoaded', function(){
       msgDiv.classList.remove('streaming');
       conversationHistory.push({ role: 'assistant', content: fallbackText });
 
+      // Track AI response received (fallback)
+      trackEvent('ai_response_received', {
+        responseLength: fallbackText.length,
+        responseType: 'fallback',
+        messagesExchanged: conversationHistory.length,
+        page: window.location.pathname
+      });
+
       // Still check for escalation even with fallback
       if (shouldOfferEscalation(sentiment, conversationHistory.length)) {
         setTimeout(() => showTransferOptions(), 1000);
@@ -827,6 +1017,15 @@ document.addEventListener('DOMContentLoaded', function(){
   async function handleSend(){
     const q = (input && input.value) ? input.value.trim() : "";
     if (!q) return;
+
+    // Track user message sent
+    trackEvent('ai_message_sent', {
+      userQuery: q.substring(0, 100), // Truncate for privacy
+      queryLength: q.length,
+      messagesExchanged: conversationHistory.length + 1,
+      page: window.location.pathname
+    });
+
     addMsg('you', q);
     if (input) input.value = "";
     const msgDiv = addStreamingMsg();
