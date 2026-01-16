@@ -21,7 +21,7 @@ Repository: https://github.com/SwipeSavdev/swipe-savvy-rewards
 
 | Secret Name | Description | Value |
 |-------------|-------------|-------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://swipesavvy_admin:YOUR_PASSWORD@swipesavvy-prod-postgres.c8x2qqc8o3ow.us-east-1.rds.amazonaws.com:5432/swipesavvy` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://swipesavvy_admin:PASSWORD@swipesavvy-prod-postgres.c8x2qqc8o3ow.us-east-1.rds.amazonaws.com:5432/swipesavvy` |
 | `REDIS_URL` | Redis connection string | `redis://master.swipesavvy-prod-redis.aytnt0.use1.cache.amazonaws.com:6379` |
 
 ---
@@ -50,13 +50,35 @@ Repository: https://github.com/SwipeSavdev/swipe-savvy-rewards
 These are output from Terraform and used in the CI/CD pipeline:
 
 ```
+# Load Balancer
 ALB_DNS_NAME=swipesavvy-prod-alb-651707566.us-east-1.elb.amazonaws.com
+
+# VPC
 VPC_ID=vpc-092d31710a754d78b
 PUBLIC_SUBNETS=subnet-0fd74f7b546026c9a,subnet-0ead5c2d3b8543234
 PRIVATE_SUBNETS=subnet-046ac91d6a97e39c7,subnet-04b3f240f15cb2233
+
+# Notifications
 SNS_TOPIC_ARN=arn:aws:sns:us-east-1:858955002750:swipesavvy-prod-alerts
+
+# Auto Scaling
 ASG_NAME=swipesavvy-prod-asg
+
+# SSL Certificate
+ACM_CERTIFICATE_ARN=arn:aws:acm:us-east-1:858955002750:certificate/8924078e-db8a-4bf1-a6ea-8a1f4fe814be
 ```
+
+---
+
+## Production Endpoints
+
+| Service | Endpoint |
+|---------|----------|
+| RDS PostgreSQL | `swipesavvy-prod-postgres.c8x2qqc8o3ow.us-east-1.rds.amazonaws.com:5432` |
+| ElastiCache Redis | `master.swipesavvy-prod-redis.aytnt0.use1.cache.amazonaws.com:6379` |
+| API | `https://api.swipesavvy.com` |
+| Admin Portal | `https://admin.swipesavvy.com` |
+| Wallet Web | `https://wallet.swipesavvy.com` |
 
 ---
 
@@ -95,6 +117,7 @@ The AWS user needs the following permissions:
   "Version": "2012-10-17",
   "Statement": [
     {
+      "Sid": "ECRAccess",
       "Effect": "Allow",
       "Action": [
         "ecr:GetAuthorizationToken",
@@ -109,6 +132,7 @@ The AWS user needs the following permissions:
       "Resource": "*"
     },
     {
+      "Sid": "ECSAccess",
       "Effect": "Allow",
       "Action": [
         "ecs:UpdateService",
@@ -118,13 +142,52 @@ The AWS user needs the following permissions:
       "Resource": "*"
     },
     {
+      "Sid": "AutoScalingAccess",
       "Effect": "Allow",
       "Action": [
         "autoscaling:UpdateAutoScalingGroup",
-        "autoscaling:StartInstanceRefresh"
+        "autoscaling:StartInstanceRefresh",
+        "autoscaling:DescribeAutoScalingGroups"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "S3Access",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::swipesavvy-*",
+        "arn:aws:s3:::swipesavvy-*/*"
+      ]
+    },
+    {
+      "Sid": "CloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogGroups"
+      ],
+      "Resource": "arn:aws:logs:us-east-1:858955002750:log-group:/aws/swipesavvy/*"
     }
   ]
 }
 ```
+
+---
+
+## Related Documentation
+
+- [../PLATFORM_DOCUMENTATION.md](../PLATFORM_DOCUMENTATION.md) - Full platform architecture
+- [../AWS_DEPLOYMENT_QUICKSTART.md](../AWS_DEPLOYMENT_QUICKSTART.md) - Deployment guide
+- [terraform/](./terraform/) - Terraform infrastructure code
+
+---
+
+*Last Updated: January 16, 2026*
