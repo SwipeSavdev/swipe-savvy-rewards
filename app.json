@@ -9,6 +9,11 @@
     "userInterfaceStyle": "automatic",
     "scheme": "swipesavvy",
     "jsEngine": "jsc",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
