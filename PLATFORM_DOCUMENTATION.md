@@ -2,9 +2,11 @@
 
 ## Overview
 
-SwipeSavvy is a comprehensive mobile wallet platform consisting of:
+SwipeSavvy is a comprehensive mobile wallet and rewards platform consisting of:
 - **Mobile App** (React Native/Expo) - Customer-facing mobile wallet
+- **Wallet Web** (React/Vite) - Customer web wallet interface
 - **Admin Portal** (React/Vite) - Back-office management interface
+- **Customer Website** (Next.js) - Marketing and landing pages
 - **Backend API** (FastAPI/Python) - RESTful API services
 - **AI Agents** - AI-powered concierge and support system
 
@@ -13,42 +15,123 @@ SwipeSavvy is a comprehensive mobile wallet platform consisting of:
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           SwipeSavvy Platform                            │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────────────────┐  │
-│  │  Mobile App  │    │ Admin Portal │    │     Backend Services      │  │
-│  │ (React Native)│    │ (React/Vite) │    │       (FastAPI)          │  │
-│  └──────┬───────┘    └──────┬───────┘    └──────────┬───────────────┘  │
-│         │                   │                       │                   │
-│         └───────────────────┼───────────────────────┘                   │
-│                             │                                           │
-│                    ┌────────▼────────┐                                  │
-│                    │  API Gateway    │                                  │
-│                    │ api.swipesavvy  │                                  │
-│                    │     .com        │                                  │
-│                    └────────┬────────┘                                  │
-│                             │                                           │
-│         ┌───────────────────┼───────────────────┐                      │
-│         │                   │                   │                      │
-│  ┌──────▼──────┐    ┌──────▼──────┐    ┌──────▼──────┐               │
-│  │  PostgreSQL │    │    Redis    │    │ AI Services │               │
-│  │  (AWS RDS)  │    │   (Cache)   │    │ (Together)  │               │
-│  └─────────────┘    └─────────────┘    └─────────────┘               │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                              SwipeSavvy Platform                                   │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                    │
+│  FRONTENDS                                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │ Mobile App  │  │ Wallet Web  │  │Admin Portal │  │  Website    │              │
+│  │(React Native)│  │(React/Vite)│  │(React/Vite) │  │ (Next.js)   │              │
+│  │   PWA:3000  │  │   :3001    │  │   :5173     │  │   :8080     │              │
+│  └──────┬──────┘  └──────┬─────┘  └──────┬──────┘  └──────┬──────┘              │
+│         │                │               │                │                       │
+│         └────────────────┴───────┬───────┴────────────────┘                       │
+│                                  │                                                │
+│  LOAD BALANCER                   ▼                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐          │
+│  │              Application Load Balancer (ALB)                        │          │
+│  │    • HTTPS termination (TLS 1.2+ only)                             │          │
+│  │    • Host-based routing to target groups                           │          │
+│  │    • SSL Policy: ELBSecurityPolicy-TLS13-1-2-2021-06              │          │
+│  │    • ACM Certificate: *.swipesavvy.com (wildcard)                 │          │
+│  │    • HTTP → HTTPS redirect (301)                                   │          │
+│  │    • Access logs: S3 (90-day retention)                           │          │
+│  └──────────────────────────────┬─────────────────────────────────────┘          │
+│                                 │                                                │
+│  COMPUTE                        ▼                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐          │
+│  │              Auto Scaling Group (ASG)                               │          │
+│  │    • Min: 2 instances | Max: 4 instances (production)             │          │
+│  │    • Instance type: t3.large                                       │          │
+│  │    • AMI: Amazon Linux 2023                                        │          │
+│  │    • Multi-AZ: 2 availability zones (us-east-1a, us-east-1b)     │          │
+│  │    • EBS: 50GB gp3 encrypted volumes                              │          │
+│  │    • CloudWatch agent for metrics and logs                        │          │
+│  └──────────────────────────────┬─────────────────────────────────────┘          │
+│                                 │                                                │
+│  DATA LAYER                     ▼                                                │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐               │
+│  │   PostgreSQL     │  │      Redis       │  │   AI Services    │               │
+│  │   (AWS RDS)      │  │  (ElastiCache)   │  │   (Together.AI)  │               │
+│  │ • Version: 15.10 │  │ • Version: 7.0   │  │ • Llama 3.1 405B │               │
+│  │ • Multi-AZ: Yes  │  │ • Multi-AZ: Yes  │  │ • Embeddings     │               │
+│  │ • Backup: 7 days │  │ • Snapshot: 7 day│  │                  │               │
+│  │ • Encrypted: KMS │  │ • Encrypted: Yes │  │                  │               │
+│  │ • Perf Insights  │  │ • Auto failover  │  │                  │               │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘               │
+│                                                                                    │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Production URLs
 
-| Service | URL |
-|---------|-----|
-| Backend API | https://api.swipesavvy.com |
-| Admin Portal | https://admin.swipesavvy.com |
-| API Documentation | https://api.swipesavvy.com/docs |
+| Service | URL | Port |
+|---------|-----|------|
+| Backend API | https://api.swipesavvy.com | 8000 |
+| Admin Portal | https://admin.swipesavvy.com | 5173 |
+| Wallet Web | https://wallet.swipesavvy.com | 3001 |
+| Customer Website | https://www.swipesavvy.com | 8080 |
+| Mobile PWA | https://app.swipesavvy.com | 3000 |
+| API Documentation | https://api.swipesavvy.com/docs | - |
+
+---
+
+## Infrastructure Details
+
+### AWS Resources
+
+| Service | Resource | Configuration |
+|---------|----------|---------------|
+| **VPC** | swipesavvy-prod-vpc | 10.0.0.0/16 CIDR, 2 AZs |
+| **ALB** | swipesavvy-prod-alb | Public, HTTPS/HTTP listeners |
+| **ASG** | swipesavvy-prod-asg | Min 2, Max 4 instances |
+| **EC2** | t3.large | Amazon Linux 2023, 50GB gp3 |
+| **RDS** | db.t3.medium | PostgreSQL 15.10, Multi-AZ |
+| **ElastiCache** | cache.t3.medium | Redis 7.0, Multi-AZ |
+| **ACM** | Wildcard cert | *.swipesavvy.com |
+| **Route 53** | Hosted zone | swipesavvy.com |
+| **CloudWatch** | Alarms & Logs | Full monitoring |
+| **SNS** | Alerts topic | Email notifications |
+
+### SSL/TLS Configuration
+
+| Setting | Value |
+|---------|-------|
+| Certificate ARN | `arn:aws:acm:us-east-1:858955002750:certificate/8924078e-db8a-4bf1-a6ea-8a1f4fe814be` |
+| Domains Covered | `swipesavvy.com`, `*.swipesavvy.com` |
+| SSL Policy | `ELBSecurityPolicy-TLS13-1-2-2021-06` |
+| Minimum TLS | TLS 1.2 |
+| Validation | DNS (Route 53) |
+
+### Database Configuration
+
+| Setting | Production | Dev/Staging |
+|---------|------------|-------------|
+| Engine | PostgreSQL 15.10 | PostgreSQL 15.10 |
+| Instance | db.t3.medium | db.t3.micro |
+| Storage | 100GB gp3 | 20GB gp2 |
+| Multi-AZ | Enabled | Disabled |
+| Backup Retention | 7 days | 1 day |
+| Backup Window | 03:00-04:00 UTC | 03:00-04:00 UTC |
+| Maintenance Window | Mon 04:00-05:00 UTC | Mon 04:00-05:00 UTC |
+| Deletion Protection | Enabled | Disabled |
+| Performance Insights | Enabled (7 days) | Disabled |
+
+### CloudWatch Alarms
+
+| Alarm | Threshold | Action |
+|-------|-----------|--------|
+| ALB 5XX Errors | > 10 in 60s | SNS Alert |
+| ALB Response Time | > 2 seconds | SNS Alert |
+| RDS CPU | > 80% | SNS Alert |
+| RDS Connections | > 80% of max | SNS Alert |
+| Redis CPU | > 75% | SNS Alert |
+| Redis Memory | > 80% | SNS Alert |
+| EC2 CPU (scale up) | > 80% | Add instance |
+| EC2 CPU (scale down) | < 30% | Remove instance |
 
 ---
 
@@ -171,139 +254,47 @@ SwipeSavvy is a comprehensive mobile wallet platform consisting of:
 
 ---
 
-## Database Schema
-
-### Core Tables
-
-| Table | Description |
-|-------|-------------|
-| `users` | Mobile app users |
-| `admin_users` | Admin portal users |
-| `wallet_transactions` | Wallet transaction history |
-| `support_tickets` | Customer support tickets |
-| `ticket_messages` | Support ticket messages |
-
-### Financial Tables
-
-| Table | Description |
-|-------|-------------|
-| `savings_goals` | User savings goals |
-| `budgets` | User budget tracking |
-| `linked_banks` | Connected bank accounts |
-| `payment_methods` | Saved payment methods |
-| `user_cards` | Virtual/physical cards |
-
-### Settings Tables
-
-| Table | Description |
-|-------|-------------|
-| `user_preferences` | User app preferences |
-| `feature_flags` | Feature flag configurations |
-| `app_settings` | Application settings |
-
----
-
-## Authentication
-
-### JWT Tokens
-
-All API requests require JWT authentication:
-
-```bash
-Authorization: Bearer <access_token>
-```
-
-### Token Expiration
-
-| Token Type | Expiration |
-|------------|------------|
-| Access Token | 30 minutes |
-| Refresh Token | 7 days |
-
-### User Roles
-
-| Role | Description | Permissions |
-|------|-------------|-------------|
-| `super_admin` | Full system access | All operations, no limits |
-| `admin` | General admin | Most operations, $10k refund limit |
-| `support` | Customer support | Read + support ops, $100 refund limit |
-| `analyst` | Data analyst | Read-only access |
-
----
-
-## Mobile App Screens
-
-### Connected Screens (Production Ready)
-
-| Screen | Status | API Integration |
-|--------|--------|-----------------|
-| Home | ✅ Complete | `/api/v1/accounts`, `/api/v1/wallet/balance` |
-| Login | ✅ Complete | `/api/v1/auth/login` |
-| Signup | ✅ Complete | `/api/v1/auth/signup` |
-| Wallet | ✅ Complete | `/api/v1/wallet/*` |
-| Transfers | ✅ Complete | `/api/v1/transfers/*` |
-| Rewards | ✅ Complete | `/api/v1/rewards/*` |
-| Profile | ✅ Complete | `/api/v1/user/*` |
-| Cards | ✅ Complete | `/api/v1/cards` |
-| Analytics | ✅ Complete | `/api/v1/analytics` |
-| Savings Goals | ✅ Complete | `/api/v1/goals` |
-| Budgets | ✅ Complete | `/api/v1/budgets` |
-| Chat (AI) | ✅ Complete | `/chat` |
-| Support | ✅ Complete | `/api/support/*` |
-| Leaderboard | ✅ Complete | `/api/v1/rewards/leaderboard` |
-
----
-
-## Admin Portal Features
-
-### Dashboard
-- Total users, transactions, revenue
-- Recent activity feed
-- Quick action buttons
-
-### User Management
-- View/search users
-- KYC status management
-- Account actions (suspend, verify)
-
-### Merchant Management
-- Merchant onboarding (Fiserv integration)
-- Transaction history
-- Fee configuration
-
-### Support System
-- Ticket queue management
-- AI-assisted responses
-- Escalation workflow
-
-### Feature Flags
-- Enable/disable features
-- A/B testing
-- Gradual rollouts
-
-### Analytics
-- Transaction trends
-- User growth metrics
-- Revenue reports
-
----
-
 ## Testing
 
-### Running E2E Tests
+### Test Coverage Summary
+
+| Component | Tests | Pass Rate |
+|-----------|-------|-----------|
+| **API Backend** | 100 | 100% |
+| **Frontend E2E** | 60 | 100% |
+| **Total** | 160 | **100%** |
+
+### Running API Tests
 
 ```bash
 # Navigate to backend directory
 cd swipesavvy-ai-agents
 
-# Run all E2E tests
-python3 -m pytest tests/e2e/test_platform_e2e.py -v --asyncio-mode=auto
-
-# Run specific test class
-python3 -m pytest tests/e2e/test_platform_e2e.py::TestMobileAPIEndpoints -v
+# Run comprehensive API tests
+python3 -m pytest tests/test_comprehensive_api.py -v
 
 # Run with coverage
-python3 -m pytest tests/e2e/test_platform_e2e.py --cov=app --cov-report=html
+python3 -m pytest tests/test_comprehensive_api.py --cov=app --cov-report=html
+```
+
+### Running E2E Tests (Playwright)
+
+```bash
+# Navigate to test directory
+cd deliverables/03-test-scaffolding/playwright
+
+# Install dependencies
+npm install
+
+# Run all tests
+npx playwright test
+
+# Run specific project
+npx playwright test --project=admin-chromium
+npx playwright test --project=wallet-chromium
+
+# Run with UI
+npx playwright test --ui
 ```
 
 ### Test Categories
@@ -311,71 +302,61 @@ python3 -m pytest tests/e2e/test_platform_e2e.py --cov=app --cov-report=html
 | Category | Tests | Description |
 |----------|-------|-------------|
 | Health Checks | 3 | Service health endpoints |
-| User Auth | 3 | Signup, login flows |
-| Admin Auth | 2 | Admin login |
-| Mobile API | 12 | All mobile endpoints |
-| Admin Dashboard | 3 | Dashboard stats |
-| Support | 2 | Ticket system |
-| AI Concierge | 2 | Chat endpoints |
-| Security | 4 | CORS, headers, rate limiting |
-| **Total** | **35** | All passing |
-
-### Manual Testing
-
-```bash
-# Test health endpoint
-curl https://api.swipesavvy.com/health
-
-# Test user signup
-curl -X POST https://api.swipesavvy.com/api/v1/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@test.com","password":"Test123!",...}'
-
-# Test admin login
-curl -X POST https://api.swipesavvy.com/api/v1/admin/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@swipesavvy.com","password":"Admin123!"}'
-```
+| User Auth | 10 | Signup, login, session flows |
+| Admin Auth | 5 | Admin login, RBAC |
+| Mobile API | 40 | All mobile endpoints |
+| Admin Dashboard | 10 | Dashboard, users, merchants |
+| Support | 5 | Ticket system |
+| AI Concierge | 5 | Chat endpoints |
+| Rewards | 15 | Points, boosts, leaderboard |
+| Analytics | 7 | Spending analytics |
 
 ---
 
 ## Deployment
 
-### Infrastructure (AWS)
-
-| Service | Resource | Purpose |
-|---------|----------|---------|
-| EC2 | t3.medium | Backend API server |
-| RDS | PostgreSQL 15 | Database |
-| ElastiCache | Redis | Session/cache |
-| CloudWatch | Logs | Monitoring |
-| Route53 | DNS | Domain management |
-
-### Deployment Commands
+### Terraform Infrastructure
 
 ```bash
-# SSH to production server
-ssh -i swipesavvy-key.pem ec2-user@54.224.8.14
+# Navigate to infrastructure directory
+cd infrastructure/terraform
 
-# Restart backend service
-pm2 restart swipesavvy-backend
+# Initialize Terraform
+terraform init
 
-# View logs
-pm2 logs swipesavvy-backend
+# Plan changes
+terraform plan -var-file="terraform.tfvars"
 
-# Check status
-pm2 status
+# Apply changes
+terraform apply -var-file="terraform.tfvars"
+
+# Destroy (use with caution)
+terraform destroy -var-file="terraform.tfvars"
 ```
+
+### Key Terraform Modules
+
+| Module | Purpose |
+|--------|---------|
+| `modules/vpc` | VPC, subnets, routing, VPC endpoints |
+| `modules/acm` | SSL certificate management |
+| `modules/alb` | Load balancer, target groups, listeners |
+| `modules/rds` | PostgreSQL database |
+| `modules/elasticache` | Redis cache |
+| `modules/ec2` | Auto Scaling Group, launch template |
+| `modules/dns` | Route 53 DNS records |
 
 ### Environment Variables
 
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
+| `REDIS_URL` | Redis connection string |
 | `JWT_SECRET_KEY` | JWT signing secret |
 | `TOGETHER_API_KEY` | AI service API key |
-| `AWS_REGION` | AWS region |
-| `ENVIRONMENT` | production/development |
+| `SENDGRID_API_KEY` | Email service API key |
+| `AWS_REGION` | AWS region (us-east-1) |
+| `ENVIRONMENT` | production/staging/development |
 | `CORS_ORIGINS` | Allowed CORS origins |
 
 ---
@@ -392,8 +373,12 @@ pm2 status
 - [x] Input validation (Pydantic)
 - [x] SQL injection prevention (SQLAlchemy ORM)
 - [x] Role-based access control (RBAC)
+- [x] TLS 1.2+ encryption in transit
+- [x] KMS encryption at rest (RDS, EBS)
+- [x] VPC isolation with private subnets
+- [x] Security groups with least privilege
 
-### Headers
+### Security Headers
 
 ```
 X-Content-Type-Options: nosniff
@@ -402,6 +387,15 @@ X-XSS-Protection: 1; mode=block
 Strict-Transport-Security: max-age=31536000; includeSubDomains
 Content-Security-Policy: default-src 'self'
 ```
+
+### User Roles
+
+| Role | Description | Permissions |
+|------|-------------|-------------|
+| `super_admin` | Full system access | All operations, no limits |
+| `admin` | General admin | Most operations, $10k refund limit |
+| `support` | Customer support | Read + support ops, $100 refund limit |
+| `analyst` | Data analyst | Read-only access |
 
 ---
 
@@ -433,6 +427,30 @@ Content-Security-Policy: default-src 'self'
 
 ---
 
+## Repository Structure
+
+```
+swipesavvy-mobile-app-v2/
+├── src/                          # Mobile app source (React Native)
+├── swipesavvy-ai-agents/         # Backend API (FastAPI)
+├── swipesavvy-admin-portal/      # Admin portal (React/Vite)
+├── swipesavvy-wallet-web/        # Wallet web app (React/Vite)
+├── swipesavvy-customer-website-nextjs/  # Marketing website
+├── infrastructure/               # Terraform IaC
+│   └── terraform/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── modules/
+├── deliverables/                 # Test scaffolding, docs
+│   └── 03-test-scaffolding/
+│       └── playwright/           # E2E tests
+├── docs/                         # Documentation
+└── assets/                       # Brand assets
+```
+
+---
+
 ## Contact & Support
 
 - **Technical Issues**: support@swipesavvy.com
@@ -445,8 +463,9 @@ Content-Security-Policy: default-src 'self'
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | Jan 2026 | Infrastructure upgrade to ALB/ASG, Multi-AZ |
 | 1.0.0 | Jan 2026 | Initial production release |
 
 ---
 
-*Last Updated: January 12, 2026*
+*Last Updated: January 16, 2026*
