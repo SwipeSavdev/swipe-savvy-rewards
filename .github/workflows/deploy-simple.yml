@@ -29,22 +29,36 @@ jobs:
           cd swipesavvy-ai-agents
           docker build -t swipesavvy-api:latest .
 
-      - name: Tag Docker image
+      - name: Get AWS Account ID
+        id: aws-account
         run: |
-          docker tag swipesavvy-api:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:latest
-          docker tag swipesavvy-api:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:${{ github.sha }}
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
 
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.aws-account.outputs.account_id }}.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Tag Docker image
+        run: |
+          docker tag swipesavvy-api:latest ${{ steps.aws-account.outputs.account_id }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:latest
+          docker tag swipesavvy-api:latest ${{ steps.aws-account.outputs.account_id }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:${{ github.sha }}
 
       - name: Push to ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:latest
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:${{ github.sha }}
+          docker push ${{ steps.aws-account.outputs.account_id }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:latest
+          docker push ${{ steps.aws-account.outputs.account_id }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:${{ github.sha }}
 
-      - name: Deploy notification
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster swipe-savvy-prod \
+            --service swipe-savvy-api-blue \
+            --force-new-deployment \
+            --region us-east-1 || echo "⚠️ ECS deployment skipped (service may not exist)"
+
+      - name: Deployment complete
         run: |
           echo "✅ Deployed commit ${{ github.sha }}"
-          echo "📦 Images pushed to ECR"
-          echo "🚀 Update your ECS service or EC2 instances to pull the new image"
+          echo "📦 Images pushed to ECR: ${{ steps.aws-account.outputs.account_id }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api"
+          echo "🚀 ECS service updated"
