@@ -32,6 +32,38 @@ router = APIRouter(prefix="/api/v1", tags=["mobile-api"])
 
 
 # ============================================================================
+# Authentication Dependencies
+# ============================================================================
+
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Require authentication - raises 401 if no valid token"""
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    try:
+        token = authorization.replace("Bearer ", "")
+        user_id = verify_jwt_token(token)
+        if not user_id:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        return user_id
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+
+# ============================================================================
 # Pydantic Models
 # ============================================================================
 
@@ -284,25 +316,21 @@ def generate_spending_categories(user_id: str, db: Session) -> List[SpendingCate
 
 @router.get("/accounts", response_model=List[AccountResponse])
 async def get_accounts(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user's accounts with real balances"""
-    user_id = get_current_user_id(authorization)
+    """Get user's accounts with real balances (requires authentication)"""
 
     try:
         # Get wallet balance for checking
-        if user_id:
-            result = db.execute(text("""
-                SELECT
-                    COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'refund') THEN amount ELSE 0 END), 0) -
-                    COALESCE(SUM(CASE WHEN transaction_type IN ('withdrawal', 'payment', 'transfer') THEN amount ELSE 0 END), 0) as balance
-                FROM wallet_transactions
-                WHERE user_id = :user_id AND status = 'completed'
-            """), {"user_id": user_id}).fetchone()
-            checking_balance = float(result[0]) if result and result[0] else 0
-        else:
-            checking_balance = 4250.25
+        result = db.execute(text("""
+            SELECT
+                COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'refund') THEN amount ELSE 0 END), 0) -
+                COALESCE(SUM(CASE WHEN transaction_type IN ('withdrawal', 'payment', 'transfer') THEN amount ELSE 0 END), 0) as balance
+            FROM wallet_transactions
+            WHERE user_id = :user_id AND status = 'completed'
+        """), {"user_id": user_id}).fetchone()
+        checking_balance = float(result[0]) if result and result[0] else 0
 
         return [
             AccountResponse(
@@ -331,11 +359,10 @@ async def get_accounts(
 @router.get("/accounts/{account_id}/balance")
 async def get_account_balance(
     account_id: str,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get specific account balance"""
-    user_id = get_current_user_id(authorization)
+    """Get specific account balance (requires authentication)"""
 
     try:
         if user_id and "checking" in account_id:
@@ -363,36 +390,34 @@ async def get_account_balance(
 @router.get("/transactions", response_model=List[TransactionResponse])
 async def get_transactions(
     limit: int = Query(10, ge=1, le=100),
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user's transactions"""
-    user_id = get_current_user_id(authorization)
+    """Get user's transactions (requires authentication)"""
 
     try:
-        if user_id:
-            result = db.execute(text("""
-                SELECT id, transaction_type, description, amount, currency, status, created_at
-                FROM wallet_transactions
-                WHERE user_id = :user_id
-                ORDER BY created_at DESC
-                LIMIT :limit
-            """), {"user_id": user_id, "limit": limit}).fetchall()
+        result = db.execute(text("""
+            SELECT id, transaction_type, description, amount, currency, status, created_at
+            FROM wallet_transactions
+            WHERE user_id = :user_id
+            ORDER BY created_at DESC
+            LIMIT :limit
+        """), {"user_id": user_id, "limit": limit}).fetchall()
 
-            if result:
-                return [
-                    TransactionResponse(
-                        id=str(row[0]),
-                        type=row[1],
-                        title=row[2] or row[1].title(),
-                        amount=float(row[3]),
-                        currency=row[4] or "USD",
-                        status=row[5],
-                        timestamp=row[6].isoformat() if row[6] else datetime.now(timezone.utc).isoformat(),
-                        description=row[2]
-                    )
-                    for row in result
-                ]
+        if result:
+            return [
+                TransactionResponse(
+                    id=str(row[0]),
+                    type=row[1],
+                    title=row[2] or row[1].title(),
+                    amount=float(row[3]),
+                    currency=row[4] or "USD",
+                    status=row[5],
+                    timestamp=row[6].isoformat() if row[6] else datetime.now(timezone.utc).isoformat(),
+                    description=row[2]
+                )
+                for row in result
+            ]
     except Exception as e:
         logger.error(f"Error getting transactions: {e}")
 
@@ -416,32 +441,30 @@ async def get_transactions(
 
 @router.get("/banks/linked", response_model=List[LinkedBankResponse])
 async def get_linked_banks(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user's linked bank accounts"""
-    user_id = get_current_user_id(authorization)
+    """Get user's linked bank accounts (requires authentication)"""
 
     try:
-        if user_id:
-            result = db.execute(text("""
-                SELECT id, bank_name, account_number_last4, status, last_verified_at
-                FROM linked_banks
-                WHERE user_id = :user_id
-                ORDER BY created_at DESC
-            """), {"user_id": user_id}).fetchall()
+        result = db.execute(text("""
+            SELECT id, bank_name, account_number_last4, status, last_verified_at
+            FROM linked_banks
+            WHERE user_id = :user_id
+            ORDER BY created_at DESC
+        """), {"user_id": user_id}).fetchall()
 
-            if result:
-                return [
-                    LinkedBankResponse(
-                        id=str(row[0]),
-                        bankName=row[1],
-                        accountNumber=f"•••• {row[2]}",
-                        status=row[3],
-                        lastVerified=row[4].isoformat() if row[4] else None
-                    )
-                    for row in result
-                ]
+        if result:
+            return [
+                LinkedBankResponse(
+                    id=str(row[0]),
+                    bankName=row[1],
+                    accountNumber=f"•••• {row[2]}",
+                    status=row[3],
+                    lastVerified=row[4].isoformat() if row[4] else None
+                )
+                for row in result
+            ]
     except Exception as e:
         logger.debug(f"Linked banks table may not exist: {e}")
 
@@ -456,10 +479,10 @@ async def get_linked_banks(
 
 @router.post("/banks/plaid-link")
 async def initiate_plaid_link(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Generate Plaid Link token for bank connection"""
+    """Generate Plaid Link token for bank connection (requires authentication)"""
     # In production, this would call Plaid API to get a link token
     return {
         "plaidLink": f"plaid_link_token_{uuid4()}",
@@ -473,11 +496,10 @@ async def initiate_plaid_link(
 
 @router.get("/wallet/balance", response_model=WalletBalanceResponse)
 async def get_wallet_balance(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get wallet balance"""
-    user_id = get_current_user_id(authorization)
+    """Get wallet balance (requires authentication)"""
 
     try:
         if user_id:
@@ -505,11 +527,10 @@ async def get_wallet_balance(
 @router.get("/wallet/transactions", response_model=List[WalletTransactionResponse])
 async def get_wallet_transactions(
     limit: int = Query(10, ge=1, le=100),
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get wallet transactions"""
-    user_id = get_current_user_id(authorization)
+    """Get wallet transactions (requires authentication)"""
 
     try:
         if user_id:
@@ -551,11 +572,10 @@ async def get_wallet_transactions(
 
 @router.get("/wallet/payment-methods", response_model=List[PaymentMethodResponse])
 async def get_payment_methods(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user's payment methods"""
-    user_id = get_current_user_id(authorization)
+    """Get user's payment methods (requires authentication)"""
 
     try:
         if user_id:
@@ -592,13 +612,10 @@ async def get_payment_methods(
 async def add_money(
     amount: float,
     paymentMethodId: str,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Add money to wallet"""
-    user_id = get_current_user_id(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Add money to wallet (requires authentication)"""
 
     try:
         tx_id = str(uuid4())
@@ -619,13 +636,10 @@ async def add_money(
 async def withdraw_money(
     amount: float,
     paymentMethodId: str,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Withdraw money from wallet"""
-    user_id = get_current_user_id(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Withdraw money from wallet (requires authentication)"""
 
     try:
         tx_id = str(uuid4())
@@ -649,13 +663,10 @@ async def withdraw_money(
 @router.post("/transfers")
 async def submit_transfer(
     transfer: TransferRequest,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Submit a money transfer"""
-    user_id = get_current_user_id(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Submit a money transfer (requires authentication)"""
 
     try:
         tx_id = str(uuid4())
@@ -681,10 +692,10 @@ async def submit_transfer(
 
 @router.get("/transfers/recipients")
 async def get_recent_recipients(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get recent transfer recipients"""
+    """Get recent transfer recipients (requires authentication)"""
     return [
         {"id": "rec_1", "name": "Jordan", "handle": "@jordan", "avatar": "JO"},
         {"id": "rec_2", "name": "Emma", "handle": "@emma", "avatar": "EM"},
@@ -699,34 +710,32 @@ async def get_recent_recipients(
 
 @router.get("/rewards/points", response_model=RewardsPointsResponse)
 async def get_rewards_points(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user's rewards points"""
-    user_id = get_current_user_id(authorization)
+    """Get user's rewards points (requires authentication)"""
 
     try:
-        if user_id:
-            # Calculate points from transactions (e.g., 1 point per $1 spent)
-            result = db.execute(text("""
-                SELECT COALESCE(SUM(amount), 0) as total_spent
-                FROM wallet_transactions
-                WHERE user_id = :user_id
-                AND transaction_type IN ('payment', 'transfer')
-                AND status = 'completed'
-            """), {"user_id": user_id}).fetchone()
+        # Calculate points from transactions (e.g., 1 point per $1 spent)
+        result = db.execute(text("""
+            SELECT COALESCE(SUM(amount), 0) as total_spent
+            FROM wallet_transactions
+            WHERE user_id = :user_id
+            AND transaction_type IN ('payment', 'transfer')
+            AND status = 'completed'
+        """), {"user_id": user_id}).fetchone()
 
-            if result:
-                points = int(float(result[0]) * 2)  # 2 points per dollar
-                tier = "Gold" if points > 10000 else "Silver" if points > 5000 else "Bronze"
-                tier_progress = min((points % 5000) / 50, 100)
+        if result:
+            points = int(float(result[0]) * 2)  # 2 points per dollar
+            tier = "Gold" if points > 10000 else "Silver" if points > 5000 else "Bronze"
+            tier_progress = min((points % 5000) / 50, 100)
 
-                return RewardsPointsResponse(
-                    available=points,
-                    donated=int(points * 0.1),  # 10% donated
-                    tier=tier,
-                    tierProgress=int(tier_progress)
-                )
+            return RewardsPointsResponse(
+                available=points,
+                donated=int(points * 0.1),  # 10% donated
+                tier=tier,
+                tierProgress=int(tier_progress)
+            )
     except Exception as e:
         logger.error(f"Error getting rewards points: {e}")
 
@@ -735,10 +744,10 @@ async def get_rewards_points(
 
 @router.get("/rewards/boosts", response_model=List[BoostResponse])
 async def get_boosts(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get available reward boosts"""
+    """Get available reward boosts (requires authentication)"""
     return [
         BoostResponse(id="boost_1", title="2× points on Fuel", subtitle="Activate • valid this week",
                      icon="gas-cylinder", percent="+2%", active=True),
@@ -754,13 +763,10 @@ async def get_boosts(
 @router.post("/rewards/donate")
 async def donate_points(
     amount: int,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Donate reward points to charity"""
-    user_id = get_current_user_id(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Donate reward points to charity (requires authentication)"""
 
     # In production, would deduct from user's points balance
     return {
@@ -773,11 +779,10 @@ async def donate_points(
 
 @router.get("/rewards/leaderboard", response_model=List[LeaderboardEntryResponse])
 async def get_leaderboard(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get community leaderboard with real data"""
-    user_id = get_current_user_id(authorization)
+    """Get community leaderboard with real data (requires authentication)"""
 
     try:
         # Get top users by transaction volume
@@ -840,13 +845,12 @@ async def get_leaderboard(
 
 @router.get("/analytics", response_model=AnalyticsResponse)
 async def get_analytics(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user spending analytics"""
-    user_id = get_current_user_id(authorization)
+    """Get user spending analytics (requires authentication)"""
 
-    spending_categories = generate_spending_categories(user_id, db) if user_id else generate_spending_categories("", db)
+    spending_categories = generate_spending_categories(user_id, db)
     total_expenses = sum(cat.amount for cat in spending_categories)
 
     # Calculate income (deposits)
@@ -889,37 +893,35 @@ async def get_analytics(
 
 @router.get("/goals", response_model=List[SavingsGoalResponse])
 async def get_savings_goals(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user's savings goals"""
-    user_id = get_current_user_id(authorization)
+    """Get user's savings goals (requires authentication)"""
 
     try:
-        if user_id:
-            result = db.execute(text("""
-                SELECT id, name, target_amount, current_amount, deadline, category, icon, color, created_at
-                FROM savings_goals
-                WHERE user_id = :user_id
-                ORDER BY created_at DESC
-            """), {"user_id": user_id}).fetchall()
+        result = db.execute(text("""
+            SELECT id, name, target_amount, current_amount, deadline, category, icon, color, created_at
+            FROM savings_goals
+            WHERE user_id = :user_id
+            ORDER BY created_at DESC
+        """), {"user_id": user_id}).fetchall()
 
-            if result:
-                return [
-                    SavingsGoalResponse(
-                        id=str(row[0]),
-                        name=row[1],
-                        targetAmount=float(row[2]),
-                        currentAmount=float(row[3]),
-                        deadline=row[4].isoformat() if row[4] else None,
-                        category=row[5],
-                        icon=row[6] or "flag",
-                        color=row[7] or "#6366F1",
-                        progress=round((float(row[3]) / float(row[2])) * 100, 1) if row[2] else 0,
-                        createdAt=row[8].isoformat() if row[8] else datetime.now(timezone.utc).isoformat()
-                    )
-                    for row in result
-                ]
+        if result:
+            return [
+                SavingsGoalResponse(
+                    id=str(row[0]),
+                    name=row[1],
+                    targetAmount=float(row[2]),
+                    currentAmount=float(row[3]),
+                    deadline=row[4].isoformat() if row[4] else None,
+                    category=row[5],
+                    icon=row[6] or "flag",
+                    color=row[7] or "#6366F1",
+                    progress=round((float(row[3]) / float(row[2])) * 100, 1) if row[2] else 0,
+                    createdAt=row[8].isoformat() if row[8] else datetime.now(timezone.utc).isoformat()
+                )
+                for row in result
+            ]
     except Exception as e:
         logger.debug(f"Savings goals table may not exist: {e}")
 
@@ -943,13 +945,10 @@ async def get_savings_goals(
 @router.post("/goals", response_model=SavingsGoalResponse)
 async def create_savings_goal(
     goal: CreateGoalRequest,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Create a new savings goal"""
-    user_id = get_current_user_id(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Create a new savings goal (requires authentication)"""
 
     try:
         goal_id = str(uuid4())
@@ -1002,13 +1001,10 @@ async def create_savings_goal(
 async def update_savings_goal(
     goal_id: str,
     update: UpdateGoalRequest,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Update a savings goal"""
-    user_id = get_current_user_id(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Update a savings goal (requires authentication)"""
 
     try:
         if update.currentAmount is not None:
@@ -1034,13 +1030,10 @@ async def update_savings_goal(
 @router.delete("/goals/{goal_id}")
 async def delete_savings_goal(
     goal_id: str,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Delete a savings goal"""
-    user_id = get_current_user_id(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Delete a savings goal (requires authentication)"""
 
     try:
         db.execute(text("""
@@ -1060,36 +1053,34 @@ async def delete_savings_goal(
 
 @router.get("/budgets", response_model=List[BudgetResponse])
 async def get_budgets(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user's budgets"""
-    user_id = get_current_user_id(authorization)
+    """Get user's budgets (requires authentication)"""
 
     try:
-        if user_id:
-            result = db.execute(text("""
-                SELECT id, category, budget_amount, spent_amount, period, color, icon
-                FROM budgets
-                WHERE user_id = :user_id
-                ORDER BY budget_amount DESC
-            """), {"user_id": user_id}).fetchall()
+        result = db.execute(text("""
+            SELECT id, category, budget_amount, spent_amount, period, color, icon
+            FROM budgets
+            WHERE user_id = :user_id
+            ORDER BY budget_amount DESC
+        """), {"user_id": user_id}).fetchall()
 
-            if result:
-                return [
-                    BudgetResponse(
-                        id=str(row[0]),
-                        category=row[1],
-                        budgetAmount=float(row[2]),
-                        spentAmount=float(row[3]),
-                        remaining=float(row[2]) - float(row[3]),
-                        percentage=round((float(row[3]) / float(row[2])) * 100, 1) if row[2] else 0,
-                        period=row[4] or "monthly",
-                        color=row[5] or "#6366F1",
-                        icon=row[6] or "wallet"
-                    )
-                    for row in result
-                ]
+        if result:
+            return [
+                BudgetResponse(
+                    id=str(row[0]),
+                    category=row[1],
+                    budgetAmount=float(row[2]),
+                    spentAmount=float(row[3]),
+                    remaining=float(row[2]) - float(row[3]),
+                    percentage=round((float(row[3]) / float(row[2])) * 100, 1) if row[2] else 0,
+                    period=row[4] or "monthly",
+                    color=row[5] or "#6366F1",
+                    icon=row[6] or "wallet"
+                )
+                for row in result
+            ]
     except Exception as e:
         logger.debug(f"Budgets table may not exist: {e}")
 
@@ -1111,13 +1102,10 @@ async def get_budgets(
 @router.post("/budgets", response_model=BudgetResponse)
 async def create_budget(
     budget: CreateBudgetRequest,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Create a new budget"""
-    user_id = get_current_user_id(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Create a new budget (requires authentication)"""
 
     try:
         budget_id = str(uuid4())
@@ -1168,26 +1156,24 @@ async def create_budget(
 
 @router.get("/user/preferences", response_model=UserPreferencesResponse)
 async def get_preferences(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user preferences"""
-    user_id = get_current_user_id(authorization)
+    """Get user preferences (requires authentication)"""
 
     try:
-        if user_id:
-            result = db.execute(text("""
-                SELECT dark_mode, notifications_enabled, biometrics_enabled
-                FROM user_preferences
-                WHERE user_id = :user_id
-            """), {"user_id": user_id}).fetchone()
+        result = db.execute(text("""
+            SELECT dark_mode, notifications_enabled, biometrics_enabled
+            FROM user_preferences
+            WHERE user_id = :user_id
+        """), {"user_id": user_id}).fetchone()
 
-            if result:
-                return UserPreferencesResponse(
-                    darkMode=result[0] or False,
-                    notificationsEnabled=result[1] if result[1] is not None else True,
-                    biometricsEnabled=result[2] or False
-                )
+        if result:
+            return UserPreferencesResponse(
+                darkMode=result[0] or False,
+                notificationsEnabled=result[1] if result[1] is not None else True,
+                biometricsEnabled=result[2] or False
+            )
     except Exception as e:
         logger.debug(f"User preferences table may not exist: {e}")
 
@@ -1197,27 +1183,25 @@ async def get_preferences(
 @router.put("/user/preferences")
 async def update_preferences(
     prefs: UserPreferencesResponse,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Update user preferences"""
-    user_id = get_current_user_id(authorization)
+    """Update user preferences (requires authentication)"""
 
     try:
-        if user_id:
-            db.execute(text("""
-                INSERT INTO user_preferences (user_id, dark_mode, notifications_enabled, biometrics_enabled, updated_at)
-                VALUES (:user_id, :dark_mode, :notifications, :biometrics, NOW())
-                ON CONFLICT (user_id)
-                DO UPDATE SET dark_mode = :dark_mode, notifications_enabled = :notifications,
-                              biometrics_enabled = :biometrics, updated_at = NOW()
-            """), {
-                "user_id": user_id,
-                "dark_mode": prefs.darkMode,
-                "notifications": prefs.notificationsEnabled,
-                "biometrics": prefs.biometricsEnabled
-            })
-            db.commit()
+        db.execute(text("""
+            INSERT INTO user_preferences (user_id, dark_mode, notifications_enabled, biometrics_enabled, updated_at)
+            VALUES (:user_id, :dark_mode, :notifications, :biometrics, NOW())
+            ON CONFLICT (user_id)
+            DO UPDATE SET dark_mode = :dark_mode, notifications_enabled = :notifications,
+                          biometrics_enabled = :biometrics, updated_at = NOW()
+        """), {
+            "user_id": user_id,
+            "dark_mode": prefs.darkMode,
+            "notifications": prefs.notificationsEnabled,
+            "biometrics": prefs.biometricsEnabled
+        })
+        db.commit()
     except Exception as e:
         logger.debug(f"Could not save preferences: {e}")
         db.rollback()
@@ -1231,34 +1215,32 @@ async def update_preferences(
 
 @router.get("/cards")
 async def get_cards(
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Get user's cards"""
-    user_id = get_current_user_id(authorization)
+    """Get user's cards (requires authentication)"""
 
     try:
-        if user_id:
-            result = db.execute(text("""
-                SELECT id, card_number_last4, card_type, brand, expiry_date, holder_name, is_default
-                FROM user_cards
-                WHERE user_id = :user_id AND is_active = true
-                ORDER BY is_default DESC, created_at DESC
-            """), {"user_id": user_id}).fetchall()
+        result = db.execute(text("""
+            SELECT id, card_number_last4, card_type, brand, expiry_date, holder_name, is_default
+            FROM user_cards
+            WHERE user_id = :user_id AND is_active = true
+            ORDER BY is_default DESC, created_at DESC
+        """), {"user_id": user_id}).fetchall()
 
-            if result:
-                return [
-                    {
-                        "id": str(row[0]),
-                        "lastFour": row[1],
-                        "type": row[2],
-                        "brand": row[3],
-                        "expiryDate": row[4],
-                        "holderName": row[5],
-                        "isDefault": row[6]
-                    }
-                    for row in result
-                ]
+        if result:
+            return [
+                {
+                    "id": str(row[0]),
+                    "lastFour": row[1],
+                    "type": row[2],
+                    "brand": row[3],
+                    "expiryDate": row[4],
+                    "holderName": row[5],
+                    "isDefault": row[6]
+                }
+                for row in result
+            ]
     except Exception as e:
         logger.debug(f"Cards table may not exist: {e}")
 
@@ -1273,13 +1255,10 @@ async def get_cards(
 @router.post("/cards")
 async def add_card(
     cardData: dict,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Add a new card"""
-    user_id = get_current_user_id(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Add a new card (requires authentication)"""
 
     card_id = str(uuid4())
 

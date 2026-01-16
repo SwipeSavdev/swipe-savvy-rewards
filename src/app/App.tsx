@@ -10,14 +10,10 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 
 export default function App() {
   useEffect(() => {
-    // Hide splash screen after app is ready
-    const timer = setTimeout(() => {
-      SplashScreen.hideAsync().catch(() => {
-        // Ignore errors
-      });
-    }, 1000);
-
-    return () => clearTimeout(timer);
+    // Hide splash screen immediately - go straight to login
+    SplashScreen.hideAsync().catch(() => {
+      // Ignore errors
+    });
   }, []);
 
   return (

@@ -28,7 +28,6 @@ import jwt
 from app.database import get_db
 from app.models import User, UserKYCHistory, OFACScreeningResult
 from app.services.aws_ses_service import AWSSESService
-from app.services.aws_sns_service import AWSSNSService
 
 router = APIRouter(prefix="/api/v1/auth", tags=["User Authentication"])
 
@@ -380,11 +379,12 @@ async def signup(
         token=email_token
     )
 
-    # Send phone verification SMS in background
+    # Send phone verification OTP via email in background
     background_tasks.add_task(
-        send_verification_sms,
-        phone=request.phone,
-        code=phone_code
+        send_verification_otp,
+        email=request.email,
+        code=phone_code,
+        user_name=request.first_name
     )
 
     return {
@@ -460,18 +460,19 @@ async def login(
     user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
     db.commit()
 
-    # Send OTP via SMS in background
+    # Send OTP via email in background
     background_tasks.add_task(
-        send_verification_sms,
-        phone=user.phone,
-        code=otp_code
+        send_verification_otp,
+        email=user.email,
+        code=otp_code,
+        user_name=user.first_name or "User"
     )
 
     # Return response indicating OTP is required (no tokens yet)
     return {
         "otp_required": True,
         "verification_required": True,
-        "message": "Verification code sent to your phone",
+        "message": "Verification code sent to your email",
         "user_id": str(user.id),
         "user": {
             "id": str(user.id),
@@ -690,14 +691,15 @@ async def resend_login_otp(
     user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
     db.commit()
 
-    # Send OTP via SMS in background
+    # Send OTP via email in background
     background_tasks.add_task(
-        send_verification_sms,
-        phone=user.phone,
-        code=otp_code
+        send_verification_otp,
+        email=user.email,
+        code=otp_code,
+        user_name=user.first_name or "User"
     )
 
-    return {"success": True, "message": "Verification code sent"}
+    return {"success": True, "message": "Verification code sent to your email"}
 
 
 @router.post("/resend-verification")
@@ -741,14 +743,15 @@ async def resend_verification(
         current_user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
         db.commit()
 
-        # Send SMS
+        # Send OTP via email
         background_tasks.add_task(
-            send_verification_sms,
-            phone=current_user.phone,
-            code=code
+            send_verification_otp,
+            email=current_user.email,
+            code=code,
+            user_name=current_user.first_name or "User"
         )
 
-        return {"success": True, "message": "Verification code sent"}
+        return {"success": True, "message": "Verification code sent to your email"}
 
 
 @router.post("/forgot-password")
@@ -937,15 +940,19 @@ async def send_verification_email(email: str, first_name: str, token: str):
         print(f"Failed to send verification email: {e}")
 
 
-async def send_verification_sms(phone: str, code: str):
-    """Send phone verification code via SMS using AWS SNS"""
+async def send_verification_otp(email: str, code: str, user_name: str = "User"):
+    """Send login OTP verification code via email using AWS SES"""
     try:
-        sms_service = AWSSNSService()
-        result = await sms_service.send_verification_code(phone, code)
-        if not result.get("success"):
-            print(f"Failed to send verification SMS: {result.get('error')}")
+        email_service = AWSSESService()
+        result = await email_service.send_login_otp_email(
+            to_email=email,
+            otp_code=code,
+            user_name=user_name
+        )
+        if not result:
+            print(f"Failed to send verification OTP email to {email}")
     except Exception as e:
-        print(f"Failed to send verification SMS: {e}")
+        print(f"Failed to send verification OTP email: {e}")
 
 
 async def send_password_reset_email(email: str, first_name: str, token: str):

@@ -759,6 +759,71 @@ class AWSSESService:
             template["text_body"]
         )
 
+    async def send_login_otp_email(
+        self,
+        to_email: str,
+        otp_code: str,
+        user_name: str = "User"
+    ) -> bool:
+        """Send login OTP verification code via email"""
+        subject = "Your SwipeSavvy Login Code"
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: #6366f1; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+                .content {{ background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }}
+                .code-box {{ background: #ffffff; border: 2px solid #6366f1; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }}
+                .code {{ font-size: 32px; font-weight: bold; color: #6366f1; letter-spacing: 8px; }}
+                .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+                .warning {{ background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 6px; margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Login Verification</h1>
+                </div>
+                <div class="content">
+                    <p>Hi {user_name},</p>
+                    <p>Your SwipeSavvy login verification code is:</p>
+                    <div class="code-box">
+                        <span class="code">{otp_code}</span>
+                    </div>
+                    <p>This code will expire in 10 minutes.</p>
+                    <div class="warning">
+                        <strong>Security Notice:</strong>
+                        <p style="margin: 5px 0 0 0;">Never share this code with anyone. SwipeSavvy will never ask you for this code via phone or email.</p>
+                    </div>
+                    <p>If you didn't request this code, please ignore this email or contact support if you're concerned about your account security.</p>
+                </div>
+                <div class="footer">
+                    <p>&copy; {datetime.now().year} SwipeSavvy. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_body = f"""
+        Hi {user_name},
+
+        Your SwipeSavvy login verification code is: {otp_code}
+
+        This code will expire in 10 minutes.
+
+        Never share this code with anyone. SwipeSavvy will never ask you for this code via phone or email.
+
+        If you didn't request this code, please ignore this email.
+
+        - The SwipeSavvy Team
+        """
+
+        return await self.send_email(to_email, subject, html_body, text_body)
+
     def verify_email_identity(self, email: str) -> bool:
         """
         Verify an email identity with AWS SES.
