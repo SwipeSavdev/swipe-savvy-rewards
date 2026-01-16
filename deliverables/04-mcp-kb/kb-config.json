@@ -1,0 +1,82 @@
+{
+  "workspaceRoot": "../..",
+  "outputDir": "deliverables/04-mcp-kb/generated",
+  "projects": [
+    {
+      "name": "SWIPE_SAVVY",
+      "description": "Swipe Savvy Platform - Mobile-First Fintech Rewards",
+      "repoGlobs": [
+        "swipesavvy-*"
+      ],
+      "components": [
+        {
+          "name": "mobile-app",
+          "path": "swipesavvy-mobile-app-v2",
+          "type": "frontend",
+          "tech": ["react-native", "expo", "zustand"]
+        },
+        {
+          "name": "ai-agents",
+          "path": "swipesavvy-ai-agents",
+          "type": "backend",
+          "tech": ["fastapi", "python", "sqlalchemy"]
+        },
+        {
+          "name": "admin-portal",
+          "path": "swipesavvy-admin-portal",
+          "type": "frontend",
+          "tech": ["react", "vite", "tailwind"]
+        },
+        {
+          "name": "wallet-web",
+          "path": "swipesavvy-wallet-web",
+          "type": "frontend",
+          "tech": ["react", "vite", "tailwind"]
+        }
+      ]
+    }
+  ],
+  "includePatterns": [
+    "README.md",
+    "docs/**/*.md",
+    "**/*openapi*.y*ml",
+    "**/*openapi*.json",
+    "**/*schema*.json",
+    "**/*.proto",
+    "**/migrations/**/*",
+    "**/.github/workflows/**/*.yml",
+    "**/package.json",
+    "**/requirements.txt",
+    "**/pyproject.toml",
+    "**/tsconfig.json",
+    "**/app.json",
+    "**/eas.json"
+  ],
+  "excludePatterns": [
+    "node_modules/**",
+    ".expo/**",
+    "dist/**",
+    "build/**",
+    "__pycache__/**",
+    ".git/**",
+    "coverage/**",
+    "*.log"
+  ],
+  "artifacts": {
+    "required": [
+      "README.md"
+    ],
+    "recommended": [
+      "docs/architecture/system-map.md",
+      "docs/architecture/api-inventory.md",
+      "tests/README.md"
+    ]
+  },
+  "metadata": {
+    "server": "54.224.8.14",
+    "database": "PostgreSQL (RDS)",
+    "services": ["swipesavvy-backend", "swipesavvy-admin", "swipesavvy-wallet"],
+    "processManager": "PM2",
+    "cloud": "AWS (EC2, RDS, SES, CloudWatch)"
+  }
+}

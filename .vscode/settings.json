@@ -4,23 +4,28 @@
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
   },
-  "java.compile.nullAnalysis.mode": "automatic",
   "git.ignoreLimitWarning": true,
-  "java.configuration.updateBuildConfiguration": "interactive",
   "sonarlint.connectedMode.project": {
     "connectionId": "swipedevuser",
     "projectKey": "SwipeDevUser_swipesavvy-mobile-app"
   },
   "files.exclude": {
-    "**/android/.gradle": true
+    "**/android": true,
+    "**/ios": true
   },
-  "java.project.sourcePaths": [],
   "java.autobuild.enabled": false,
+  "java.import.gradle.enabled": false,
+  "java.import.maven.enabled": false,
+  "java.import.exclusions": ["**/android/**", "**/ios/**"],
+  "java.project.resourceFilters": ["**/android/**", "**/ios/**"],
+  "java.configuration.updateBuildConfiguration": "disabled",
   "kotlin.languageServer.enabled": false,
-  "sonarlint.pathToNodeExecutable": "",
+  "gradle.autoDetect": "off",
+  "gradle.nestedProjects": false,
+  "gradle.javaDebug.cleanOutput": false,
   "files.watcherExclude": {
-    "**/android/.gradle/**": true,
-    "**/android/build/**": true,
-    "**/android/app/build/**": true
+    "**/android/**": true,
+    "**/ios/**": true,
+    "**/node_modules/**": true
   }
 }

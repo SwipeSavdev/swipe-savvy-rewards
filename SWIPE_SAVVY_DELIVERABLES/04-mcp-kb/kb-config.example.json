@@ -1,0 +1,37 @@
+{
+  "workspaceRoot": "../",
+  "outputDir": "mcp-kb/generated",
+  "projects": [
+    {
+      "name": "SWIPE_SAVVY",
+      "repoGlobs": [
+        "swipesavvy-*"
+      ]
+    },
+    {
+      "name": "SHOP_SAVVY_POS",
+      "repoGlobs": [
+        "shopsavvy-*"
+      ]
+    },
+    {
+      "name": "CAMP_CARD",
+      "repoGlobs": [
+        "camp-card-*"
+      ]
+    }
+  ],
+  "includePatterns": [
+    "README.md",
+    "docs/**/*.md",
+    "**/*openapi*.y*ml",
+    "**/*openapi*.json",
+    "**/*schema*.json",
+    "**/*.proto",
+    "**/migrations/**/*",
+    "**/.github/workflows/**/*.yml",
+    "**/package.json",
+    "**/pom.xml",
+    "**/build.gradle*"
+  ]
+}

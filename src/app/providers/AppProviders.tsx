@@ -35,7 +35,8 @@ interface AppProvidersProps {
 }
 
 function AppProvidersContent({ children }: AppProvidersProps) {
-  const [splashVisible, setSplashVisible] = useState(true);
+  // Skip splash screen - go directly to login
+  const [splashVisible] = useState(false);
   const [dbInitialized, setDbInitialized] = useState(false);
   const { isLoading, loadingMessage } = useLoading();
 
@@ -56,12 +57,8 @@ function AppProvidersContent({ children }: AppProvidersProps) {
     initializeDatabase();
   }, []);
 
-  const handleSplashComplete = React.useCallback(() => {
-    setSplashVisible(false);
-  }, []);
-
-  // Show splash until both database and splash complete
-  const shouldShowSplash = splashVisible || !dbInitialized;
+  // Show splash only while database initializes (no splash animation)
+  const shouldShowSplash = splashVisible && !dbInitialized;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
