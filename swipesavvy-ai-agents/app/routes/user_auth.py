@@ -32,7 +32,16 @@ from app.services.aws_ses_service import AWSSESService
 router = APIRouter(prefix="/api/v1/auth", tags=["User Authentication"])
 
 # Configuration
-JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    raise ValueError(
+        "JWT_SECRET environment variable is required. "
+        "Generate a secure secret with: openssl rand -base64 32"
+    )
+if len(JWT_SECRET) < 32:
+    raise ValueError(
+        f"JWT_SECRET must be at least 32 characters. Current length: {len(JWT_SECRET)}"
+    )
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 REFRESH_TOKEN_EXPIRE_DAYS = 30

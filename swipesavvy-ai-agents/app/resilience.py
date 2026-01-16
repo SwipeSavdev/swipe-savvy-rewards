@@ -229,7 +229,7 @@ class Bulkhead:
                 self.waiting_count -= 1
                 result = await func(*args, **kwargs) if asyncio.iscoroutinefunction(func) else func(*args, **kwargs)
                 return result
-        except:
+        except Exception:
             self.waiting_count -= 1
             raise
     

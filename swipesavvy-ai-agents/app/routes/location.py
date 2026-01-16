@@ -20,6 +20,8 @@ from datetime import datetime, timezone, timedelta
 import logging
 
 from app.database import get_db
+from app.models import PreferredMerchant
+from sqlalchemy import and_
 
 logger = logging.getLogger(__name__)
 
@@ -362,20 +364,79 @@ async def get_nearby_merchants(
         if not result.get("success"):
             raise HTTPException(status_code=400, detail=result.get("error", "Search failed"))
 
-        # TODO: Join with merchant database to get actual cashback rates
-        # For now, return the places with mock cashback data
-        merchants = result.get("results", [])
+        # Join with merchant database to get actual cashback rates
+        places = result.get("results", [])
 
+        # Get merchants from database within the search radius
+        # Using Haversine formula to calculate distance:
+        # distance = 2 * R * asin(sqrt(sin²((lat2-lat1)/2) + cos(lat1) * cos(lat2) * sin²((lon2-lon1)/2)))
+        from math import radians, cos, sin, asin, sqrt
+
+        def haversine_distance(lon1, lat1, lon2, lat2):
+            """Calculate distance in km between two points"""
+            lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+            dlon = lon2 - lon1
+            dlat = lat2 - lat1
+            a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+            c = 2 * asin(sqrt(a))
+            km = 6371 * c  # Radius of earth in kilometers
+            return km
+
+        # Query merchants from database
+        db_merchants = db.query(PreferredMerchant).filter(
+            PreferredMerchant.status == 'active'
+        ).all()
+
+        # Helper function to match place with merchant
+        def find_matching_merchant(place, merchants, user_lon, user_lat, max_radius):
+            """Find matching merchant for a place"""
+            place_name = place.get('name', '').lower()
+            for merchant in merchants:
+                if (merchant.latitude and merchant.longitude and
+                    haversine_distance(user_lon, user_lat, merchant.longitude, merchant.latitude) <= max_radius):
+                    merchant_name = (merchant.display_name or '').lower()
+                    if place_name in merchant_name or merchant_name in place_name:
+                        return merchant
+            return None
+
+        # Helper function to enrich place with merchant data
+        def enrich_place_with_merchant(place, merchant):
+            """Add merchant data to place"""
+            if merchant:
+                place['merchant_id'] = str(merchant.merchant_id)
+                place['cashback_rate'] = float(merchant.cashback_percentage) if merchant.cashback_percentage else 0.0
+                place['bonus_points_multiplier'] = float(merchant.bonus_points_multiplier) if merchant.bonus_points_multiplier else 1.0
+                place['is_featured'] = merchant.is_featured
+                place['category'] = merchant.category
+                place['logo_url'] = merchant.logo_url
+            else:
+                place['cashback_rate'] = 0.0
+                place['bonus_points_multiplier'] = 1.0
+                place['is_featured'] = False
+            return place
+
+        # Filter merchants within radius and enrich with cashback data
+        enriched_merchants = []
+        for place in places:
+            matched_merchant = find_matching_merchant(place, db_merchants, longitude, latitude, radius_km)
+            enriched_place = enrich_place_with_merchant(place, matched_merchant)
+            enriched_merchants.append(enriched_place)
+
+        # Filter if cashback_only is requested
         if cashback_only:
-            merchants = [m for m in merchants if m.get("cashback_rate")]
+            enriched_merchants = [m for m in enriched_merchants if m.get('cashback_rate', 0) > 0]
+
+        # Sort by cashback rate (highest first)
+        enriched_merchants.sort(key=lambda x: x.get('cashback_rate', 0), reverse=True)
 
         return LocationResponse(
             success=True,
-            message=f"Found {len(merchants)} nearby merchant(s)",
+            message=f"Found {len(enriched_merchants)} nearby merchant(s)",
             data={
-                "merchants": merchants,
+                "merchants": enriched_merchants,
                 "center": {"longitude": longitude, "latitude": latitude},
-                "radius_km": radius_km
+                "radius_km": radius_km,
+                "total_with_cashback": sum(1 for m in enriched_merchants if m.get('cashback_rate', 0) > 0)
             }
         )
 
