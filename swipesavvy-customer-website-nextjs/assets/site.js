@@ -941,7 +941,27 @@ document.addEventListener('DOMContentLoaded', function(){
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullText = '';
+      let displayedText = '';
+      let textBuffer = '';
       msgDiv.innerHTML = '';
+
+      // Typing effect - display characters with delay
+      const TYPING_DELAY = 15; // milliseconds per character
+      let isTyping = false;
+
+      async function typeNextChars() {
+        if (isTyping) return;
+        isTyping = true;
+        while (textBuffer.length > 0) {
+          const char = textBuffer.charAt(0);
+          textBuffer = textBuffer.slice(1);
+          displayedText += char;
+          msgDiv.textContent = displayedText;
+          chat.scrollTop = chat.scrollHeight;
+          await new Promise(r => setTimeout(r, TYPING_DELAY));
+        }
+        isTyping = false;
+      }
 
       while (true) {
         const { done, value } = await reader.read();
@@ -958,8 +978,8 @@ document.addEventListener('DOMContentLoaded', function(){
               const parsed = JSON.parse(data);
               if (parsed.type === 'message' && parsed.content) {
                 fullText += parsed.content;
-                msgDiv.textContent = fullText;
-                chat.scrollTop = chat.scrollHeight;
+                textBuffer += parsed.content;
+                typeNextChars(); // Start typing if not already
               }
               // Handle escalation signal from API
               if (parsed.type === 'escalate' || parsed.should_escalate) {
@@ -968,6 +988,12 @@ document.addEventListener('DOMContentLoaded', function(){
             } catch (parseErr) { /* skip parse errors */ }
           }
         }
+      }
+
+      // Finish typing any remaining buffer
+      while (textBuffer.length > 0 || isTyping) {
+        await new Promise(r => setTimeout(r, 50));
+        if (!isTyping && textBuffer.length > 0) typeNextChars();
       }
 
       if (!fullText) {

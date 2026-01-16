@@ -1,4 +1,5 @@
 import { CreditCard, Plus, Lock, Eye } from 'lucide-react'
+import { Button, Card } from '../components/ui'
 
 export function CardsPage() {
   const cards = [
@@ -8,21 +9,25 @@ export function CardsPage() {
   ]
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Payment Cards</h1>
-          <p className="text-gray-600 mt-1">Manage your credit and debit cards</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">Payment Cards</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1 text-sm">
+            Manage your credit and debit cards
+          </p>
         </div>
-        <button className="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition">
-          <Plus className="w-5 h-5" />
-          <span>Add New Card</span>
-        </button>
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Card
+        </Button>
       </div>
 
+      {/* Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card) => (
-          <div key={card.id} className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+          <Card key={card.id} className="bg-gradient-to-br from-primary-600 to-primary-700 p-6 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
 
@@ -51,17 +56,17 @@ export function CardsPage() {
               </div>
 
               <div className="mt-4 pt-4 border-t border-white/20 flex items-center justify-between">
-                <button className="text-sm flex items-center space-x-1 hover:opacity-80 transition">
+                <button className="text-sm flex items-center gap-1 hover:opacity-80 transition">
                   <Eye className="w-4 h-4" />
                   <span>View Details</span>
                 </button>
-                <button className="text-sm flex items-center space-x-1 hover:opacity-80 transition">
+                <button className="text-sm flex items-center gap-1 hover:opacity-80 transition">
                   <Lock className="w-4 h-4" />
                   <span>Lock Card</span>
                 </button>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

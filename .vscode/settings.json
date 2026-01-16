@@ -10,5 +10,17 @@
   "sonarlint.connectedMode.project": {
     "connectionId": "swipedevuser",
     "projectKey": "SwipeDevUser_swipesavvy-mobile-app"
+  },
+  "files.exclude": {
+    "**/android/.gradle": true
+  },
+  "java.project.sourcePaths": [],
+  "java.autobuild.enabled": false,
+  "kotlin.languageServer.enabled": false,
+  "sonarlint.pathToNodeExecutable": "",
+  "files.watcherExclude": {
+    "**/android/.gradle/**": true,
+    "**/android/build/**": true,
+    "**/android/app/build/**": true
   }
 }

@@ -56,7 +56,19 @@
   }
   </script>
 
-  <link rel="icon" type="image/png" href="assets/images/logos/swipe_savvy_color.png"/>
+  <!-- Favicon - Cross-browser support -->
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png"/>
+  <link rel="icon" type="image/png" sizes="48x48" href="/assets/favicon-48.png"/>
+  <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon-96.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png"/>
+  <!-- Apple/Safari -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="Swipe Savvy"/>
+  <!-- Android/Chrome -->
+  <link rel="manifest" href="/site.webmanifest"/>
+  <meta name="theme-color" content="#2e6bb5"/>
   <link rel="stylesheet" href="assets/styles.css"/>
   <style>
     .contact-form { display: grid; gap: 16px; }
@@ -93,9 +105,8 @@ height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe
 
   <header class="header">
     <div class="container header-inner">
-      <a class="brand" href="/">
-        <div class="logo"><span class="fallback">S</span></div>
-        <span>Swipe Savvy</span>
+      <a class="brand" href="/" aria-label="Swipe Savvy Home">
+        <img src="/assets/images/logos/swipe_savvy_color.png" alt="Swipe Savvy"/>
       </a>
 
       <nav class="nav" aria-label="Primary">

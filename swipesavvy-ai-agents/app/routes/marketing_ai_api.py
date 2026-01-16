@@ -4,16 +4,14 @@ Marketing AI API Endpoints
 Provides REST API access to the enhanced Marketing AI behavioral learning system.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+from typing import List, Optional, Union, Dict
+from datetime import datetime, timezone
 import logging
 
 from ..services.marketing_ai_behavioral_learning import (
-    get_enhanced_marketing_service,
-    EnhancedMarketingAIService,
-    setup_behavioral_learning_tables
+    get_enhanced_marketing_service
 )
 from ..services.marketing_ai import get_marketing_ai_service
 
@@ -48,7 +46,7 @@ class SegmentInsightRequest(BaseModel):
 
 
 class BulkAnalysisRequest(BaseModel):
-    user_ids: List[str] = Field(..., min_items=1, max_items=100, description="List of user IDs")
+    user_ids: List[str] = Field(..., min_length=1, max_length=100, description="List of user IDs")
 
 
 class CampaignCreateRequest(BaseModel):
@@ -75,13 +73,14 @@ async def health_check():
         return {
             "status": "healthy",
             "service": "Enhanced Marketing AI",
-            "timestamp": datetime.utcnow().isoformat()
+            "service_initialized": service is not None,
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         return {
             "status": "unhealthy",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -106,7 +105,7 @@ async def analyze_user_behavior(request: UserAnalysisRequest):
             "success": True,
             "user_id": request.user_id,
             "analysis": analysis,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error analyzing user {request.user_id}: {str(e)}")
@@ -124,7 +123,7 @@ async def get_user_analysis(user_id: str):
             "success": True,
             "user_id": user_id,
             "analysis": analysis,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error analyzing user {user_id}: {str(e)}")
@@ -154,7 +153,7 @@ async def get_personalized_promotions(request: PromotionRequest):
             "user_id": request.user_id,
             "promotions": promotions,
             "count": len(promotions),
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error generating promotions for {request.user_id}: {str(e)}")
@@ -173,7 +172,7 @@ async def get_user_promotions(user_id: str, max_count: int = Query(default=5, ge
             "user_id": user_id,
             "promotions": promotions[:max_count],
             "count": len(promotions[:max_count]),
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error getting promotions for {user_id}: {str(e)}")
@@ -202,7 +201,7 @@ async def record_conversion_feedback(request: ConversionFeedbackRequest):
             "user_id": request.user_id,
             "campaign_id": request.campaign_id,
             "converted": request.converted,
-            "recorded_at": datetime.utcnow().isoformat()
+            "recorded_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error recording conversion feedback: {str(e)}")
@@ -230,7 +229,7 @@ async def get_segment_insights(segment_type: str):
             "success": True,
             "segment": segment_type,
             "insights": insights,
-            "queried_at": datetime.utcnow().isoformat()
+            "queried_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error getting segment insights for {segment_type}: {str(e)}")
@@ -266,7 +265,7 @@ async def bulk_analyze_users(request: BulkAnalysisRequest):
         successful = [r for r in results if r["success"]]
 
         # Calculate summary stats
-        summary = {
+        summary: Dict[str, Union[int, float]] = {
             "total_users": len(request.user_ids),
             "successful_analyses": len(successful),
             "failed_analyses": len(results) - len(successful)
@@ -281,7 +280,7 @@ async def bulk_analyze_users(request: BulkAnalysisRequest):
             "success": True,
             "summary": summary,
             "results": results,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error in bulk analysis: {str(e)}")
@@ -393,7 +392,10 @@ async def ai_generate_campaign(request: CampaignCreateRequest):
     - Set up conversion tracking
     """
     try:
+        # Validate service is available
         base_service = get_marketing_ai_service()
+        if not base_service:
+            raise HTTPException(status_code=503, detail="Marketing AI service unavailable")
 
         # Use the base marketing AI service to create and save campaign
         campaign_data = {
@@ -407,14 +409,14 @@ async def ai_generate_campaign(request: CampaignCreateRequest):
             "target_sic_codes": request.target_sic_codes,
             "duration_days": request.duration_days,
             "status": "active",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         return {
             "success": True,
             "message": "Campaign created successfully",
             "campaign": campaign_data,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error creating campaign: {str(e)}")
@@ -439,7 +441,7 @@ async def run_analysis_cycle():
         return {
             "success": True,
             "result": result,
-            "completed_at": datetime.utcnow().isoformat()
+            "completed_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error running analysis cycle: {str(e)}")
@@ -456,7 +458,7 @@ async def get_campaign_analytics(campaign_id: Optional[str] = Query(default=None
         return {
             "success": True,
             "analytics": analytics,
-            "queried_at": datetime.utcnow().isoformat()
+            "queried_at": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error getting campaign analytics: {str(e)}")
@@ -481,7 +483,7 @@ async def setup_database_tables():
         return {
             "success": True,
             "message": "Database tables created/updated successfully",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error setting up database: {str(e)}")
@@ -522,7 +524,7 @@ async def track_session_start(request: AppSessionStart):
     return {
         "success": True,
         "session_id": session_id,
-        "started_at": datetime.utcnow().isoformat()
+        "started_at": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -534,7 +536,7 @@ async def track_session_end(request: AppSessionEnd):
         "success": True,
         "session_id": request.session_id,
         "duration_seconds": request.duration_seconds,
-        "ended_at": datetime.utcnow().isoformat()
+        "ended_at": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -547,5 +549,5 @@ async def track_notification_event(request: NotificationEvent):
         "user_id": request.user_id,
         "notification_id": request.notification_id,
         "event_type": request.event_type,
-        "tracked_at": datetime.utcnow().isoformat()
+        "tracked_at": datetime.now(timezone.utc).isoformat()
     }

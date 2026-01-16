@@ -74,26 +74,20 @@ a:hover{opacity:.92}
 .brand{
   display:flex;
   align-items:center;
-  gap:8px;
-  font-weight:800;
-  font-size:14px;
-  letter-spacing:-.02em;
-  color:var(--slate-900);
   flex-shrink: 0;
+}
+.brand img{
+  height: 28px;
+  width: auto;
+  max-width: 140px;
+  display: block;
 }
 @media (min-width: 480px){
-  .brand{font-size:15px; gap:10px}
+  .brand img{height: 32px; max-width: 160px}
 }
-.logo{
-  width:32px; height:32px; border-radius:12px;
-  display:inline-flex; align-items:center; justify-content:center;
-  background: linear-gradient(135deg, var(--blue), #2b67b9);
-  box-shadow: 0 8px 20px rgba(31,79,145,.22);
-  overflow:hidden;
-  flex-shrink: 0;
+@media (min-width: 768px){
+  .brand img{height: 36px; max-width: 180px}
 }
-.logo img{width:100%; height:100%; object-fit:contain; background:#fff}
-.logo .fallback{color:#fff; font-weight:900}
 
 /* Desktop Navigation - Hidden on mobile */
 .nav{display:none !important; gap:14px}

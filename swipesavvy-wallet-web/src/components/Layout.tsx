@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { useRealTimeSync } from '../hooks'
 import {
   Home,
   CreditCard,
@@ -11,7 +12,13 @@ import {
   X,
   Bell,
   ChevronDown,
-  User
+  User,
+  BarChart3,
+  Target,
+  ArrowLeftRight,
+  Building2,
+  PiggyBank,
+  MoreHorizontal,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
@@ -19,27 +26,46 @@ export function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+
+  // Initialize WebSocket for real-time sync (runs as side effect)
+  useRealTimeSync()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
-  const navigation = [
+  const mainNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Transactions', href: '/transactions', icon: TrendingUp },
     { name: 'Cards', href: '/cards', icon: CreditCard },
     { name: 'Rewards', href: '/rewards', icon: Gift },
   ]
 
+  const moreNavigation = [
+    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'Goals', href: '/goals', icon: Target },
+    { name: 'Budgets', href: '/budgets', icon: PiggyBank },
+    { name: 'Transfer', href: '/transfer', icon: ArrowLeftRight },
+    { name: 'Banks', href: '/banks', icon: Building2 },
+  ]
+
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+
+  const allNavigation = [...mainNavigation, ...moreNavigation]
+
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
 
-  // Close user menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false)
+      }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setMoreMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -69,7 +95,7 @@ export function Layout() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center">
               <div className="flex items-center gap-1">
-                {navigation.map((item) => {
+                {mainNavigation.map((item) => {
                   const Icon = item.icon
                   const isActive = location.pathname === item.href
                   return (
@@ -90,6 +116,52 @@ export function Layout() {
                     </Link>
                   )
                 })}
+
+                {/* More dropdown */}
+                <div className="relative" ref={moreMenuRef}>
+                  <button
+                    onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                    className={`
+                      flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+                      transition-colors duration-normal
+                      ${moreMenuOpen || moreNavigation.some(item => location.pathname === item.href)
+                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700'
+                      }
+                    `}
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                    <span>More</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${moreMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {moreMenuOpen && (
+                    <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-1 animate-fade-in z-50">
+                      {moreNavigation.map((item) => {
+                        const Icon = item.icon
+                        const isActive = location.pathname === item.href
+                        return (
+                          <Link
+                            key={item.name}
+                            to={item.href}
+                            onClick={() => setMoreMenuOpen(false)}
+                            className={`
+                              flex items-center gap-3 px-4 py-2 text-sm
+                              transition-colors
+                              ${isActive
+                                ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                                : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700'
+                              }
+                            `}
+                          >
+                            <Icon className="w-4 h-4" />
+                            {item.name}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -172,9 +244,9 @@ export function Layout() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 animate-slide-down">
+          <div className="md:hidden border-t border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 animate-slide-down max-h-[70vh] overflow-y-auto">
             <div className="px-4 py-3 space-y-1">
-              {navigation.map((item) => {
+              {allNavigation.map((item) => {
                 const Icon = item.icon
                 const isActive = location.pathname === item.href
                 return (
