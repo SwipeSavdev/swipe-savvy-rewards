@@ -170,7 +170,8 @@ def _onboarding_to_response(onboarding: OnboardingModel) -> dict:
     if isinstance(owners_data, str):
         try:
             owners_data = json.loads(owners_data)
-        except:
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning(f"Failed to parse owners data for onboarding {onboarding.id}: {e}")
             owners_data = []
 
     return {
@@ -227,7 +228,8 @@ def _calculate_completion(onboarding: OnboardingModel) -> int:
     if isinstance(owners, str):
         try:
             owners = json.loads(owners)
-        except:
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning(f"Failed to parse owners data for completion calculation: {e}")
             owners = []
 
     if owners and len(owners) > 0:

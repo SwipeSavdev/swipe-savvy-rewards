@@ -891,3 +891,170 @@ async def send_kyc_status_email(
 ) -> bool:
     """Convenience function to send KYC status email"""
     return await aws_ses_service.send_kyc_status_email(to_email, status, name, rejection_reason)
+
+
+async def send_contact_form_notification(
+    to_email: str,
+    submission_data: Dict[str, Any]
+) -> bool:
+    """Send notification to support team about new contact form submission"""
+    subject = f"New Contact Form Submission from {submission_data.get('name')}"
+
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: #6366f1; color: white; padding: 20px; border-radius: 8px 8px 0 0; }}
+            .content {{ background: #f9fafb; padding: 30px; }}
+            .field {{ margin: 15px 0; }}
+            .label {{ font-weight: bold; color: #666; }}
+            .value {{ margin-top: 5px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>New Contact Form Submission</h2>
+            </div>
+            <div class="content">
+                <div class="field">
+                    <div class="label">Name:</div>
+                    <div class="value">{submission_data.get('name')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Email:</div>
+                    <div class="value">{submission_data.get('email')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Phone:</div>
+                    <div class="value">{submission_data.get('phone', 'Not provided')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Subject:</div>
+                    <div class="value">{submission_data.get('subject', 'No subject')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Message:</div>
+                    <div class="value">{submission_data.get('message')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Submission ID:</div>
+                    <div class="value">{submission_data.get('id')}</div>
+                </div>
+                <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    Please respond within 24 hours.
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    text_body = f"""
+    New Contact Form Submission
+
+    Name: {submission_data.get('name')}
+    Email: {submission_data.get('email')}
+    Phone: {submission_data.get('phone', 'Not provided')}
+    Subject: {submission_data.get('subject', 'No subject')}
+
+    Message:
+    {submission_data.get('message')}
+
+    Submission ID: {submission_data.get('id')}
+    """
+
+    return await aws_ses_service.send_email(to_email, subject, html_body, text_body)
+
+
+async def send_demo_request_notification(
+    to_email: str,
+    submission_data: Dict[str, Any]
+) -> bool:
+    """Send notification to sales team about new demo request"""
+    subject = f"New Demo Request from {submission_data.get('company')}"
+
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: #10b981; color: white; padding: 20px; border-radius: 8px 8px 0 0; }}
+            .content {{ background: #f9fafb; padding: 30px; }}
+            .field {{ margin: 15px 0; }}
+            .label {{ font-weight: bold; color: #666; }}
+            .value {{ margin-top: 5px; }}
+            .priority {{ background: #fef3c7; padding: 10px; border-left: 4px solid #f59e0b; margin: 20px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>🎯 New Demo Request</h2>
+            </div>
+            <div class="content">
+                <div class="priority">
+                    <strong>Action Required:</strong> Contact within 1 business day
+                </div>
+                <div class="field">
+                    <div class="label">Contact Name:</div>
+                    <div class="value">{submission_data.get('name')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Company:</div>
+                    <div class="value">{submission_data.get('company')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Email:</div>
+                    <div class="value">{submission_data.get('email')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Phone:</div>
+                    <div class="value">{submission_data.get('phone')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Company Size:</div>
+                    <div class="value">{submission_data.get('company_size', 'Not specified')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Industry:</div>
+                    <div class="value">{submission_data.get('industry', 'Not specified')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Message:</div>
+                    <div class="value">{submission_data.get('message', 'No additional message')}</div>
+                </div>
+                <div class="field">
+                    <div class="label">Submission ID:</div>
+                    <div class="value">{submission_data.get('id')}</div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    text_body = f"""
+    New Demo Request - Action Required
+
+    Contact Name: {submission_data.get('name')}
+    Company: {submission_data.get('company')}
+    Email: {submission_data.get('email')}
+    Phone: {submission_data.get('phone')}
+    Company Size: {submission_data.get('company_size', 'Not specified')}
+    Industry: {submission_data.get('industry', 'Not specified')}
+
+    Message:
+    {submission_data.get('message', 'No additional message')}
+
+    Submission ID: {submission_data.get('id')}
+
+    Please contact within 1 business day.
+    """
+
+    return await aws_ses_service.send_email(to_email, subject, html_body, text_body)

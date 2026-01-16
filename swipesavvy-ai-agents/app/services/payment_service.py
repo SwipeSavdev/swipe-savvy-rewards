@@ -93,9 +93,9 @@ class AuthorizeNetService:
             db.add(payment)
             db.commit()
             db.refresh(payment)
-            
+
             logger.info(f"Payment created: {payment.id} for user {user_id}")
-            
+
             return {
                 "id": payment.id,
                 "status": "pending",
@@ -104,8 +104,9 @@ class AuthorizeNetService:
                 "message": "Ready to process - provide card details to confirm",
                 "payment_method": "authorize_net",
             }
-        
+
         except Exception as e:
+            db.rollback()
             logger.error(f"Payment creation failed: {str(e)}")
             raise
     
@@ -182,7 +183,7 @@ class AuthorizeNetService:
             
             db.commit()
             db.refresh(payment)
-            
+
             return {
                 "id": payment.id,
                 "status": payment.status,
@@ -191,8 +192,9 @@ class AuthorizeNetService:
                 "transaction_id": payment.stripe_charge_id,
                 "completed_at": payment.completed_at.isoformat() if payment.completed_at else None,
             }
-        
+
         except Exception as e:
+            db.rollback()
             logger.error(f"Payment confirmation failed: {str(e)}")
             raise
     
@@ -258,9 +260,9 @@ class AuthorizeNetService:
             
             db.commit()
             db.refresh(payment)
-            
+
             logger.info(f"Payment {payment_id} refunded: {refund_amount}")
-            
+
             return {
                 "id": payment.id,
                 "status": payment.status,
@@ -268,8 +270,9 @@ class AuthorizeNetService:
                 "refund_amount": float(refund_decimal),
                 "refund_reason": reason,
             }
-        
+
         except Exception as e:
+            db.rollback()
             logger.error(f"Refund failed: {str(e)}")
             raise
     
@@ -423,9 +426,9 @@ class SubscriptionService:
             db.add(db_subscription)
             db.commit()
             db.refresh(db_subscription)
-            
+
             logger.info(f"Subscription created for user {user_id}: {plan}")
-            
+
             return {
                 "id": db_subscription.id,
                 "plan": plan,
@@ -435,8 +438,9 @@ class SubscriptionService:
                 "current_period_start": db_subscription.current_period_start.isoformat(),
                 "current_period_end": db_subscription.current_period_end.isoformat(),
             }
-        
+
         except Exception as e:
+            db.rollback()
             logger.error(f"Subscription creation failed: {str(e)}")
             raise
     
@@ -461,9 +465,9 @@ class SubscriptionService:
             subscription.cancel_reason = reason
             db.commit()
             db.refresh(subscription)
-            
+
             logger.info(f"Subscription {subscription_id} canceled")
-            
+
             return {
                 "id": subscription.id,
                 "plan": subscription.plan,
@@ -471,8 +475,9 @@ class SubscriptionService:
                 "canceled_at": subscription.canceled_at.isoformat(),
                 "cancel_reason": reason,
             }
-        
+
         except Exception as e:
+            db.rollback()
             logger.error(f"Subscription cancellation failed: {str(e)}")
             raise
 

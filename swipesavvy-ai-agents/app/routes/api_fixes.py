@@ -20,8 +20,17 @@ import re
 
 from app.database import get_db
 from app.models import User
+from app.models.notifications import NotificationHistory
+from app.models.forms import ContactFormSubmission, DemoRequestSubmission
+from sqlalchemy import func
+from app.services.aws_ses_service import send_contact_form_notification, send_demo_request_notification
+import os
 
 logger = logging.getLogger(__name__)
+
+# Support and sales team emails
+SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "support@swipesavvy.com")
+SALES_EMAIL = os.getenv("SALES_EMAIL", "sales@swipesavvy.com")
 
 router = APIRouter(tags=["api-fixes"])
 
@@ -116,21 +125,53 @@ class KYCSubmitRequest(BaseModel):
 # Authentication helpers
 # ============================================
 
+BEARER_PREFIX = "Bearer "
+INVALID_TOKEN_MSG = "Invalid or expired token"
+
+
 def require_auth(authorization: Optional[str] = Header(None)):
     """Require valid authorization header"""
     if not authorization:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    if not authorization.startswith("Bearer "):
+    if not authorization.startswith(BEARER_PREFIX):
         raise HTTPException(status_code=401, detail="Invalid authorization format")
 
     # In production, verify the JWT token here
     # For now, just check that a token is present
-    token = authorization.replace("Bearer ", "")
+    token = authorization.replace(BEARER_PREFIX, "")
     if len(token) < 10:
         raise HTTPException(status_code=401, detail="Invalid token")
 
     return token
+
+
+def get_user_from_token(authorization: str, db: Session) -> Optional[User]:
+    """Extract user from JWT token"""
+    import jwt
+    import os
+
+    if not authorization or not authorization.startswith(BEARER_PREFIX):
+        return None
+
+    token = authorization.replace(BEARER_PREFIX, "")
+
+    try:
+        # Use same JWT secret as auth routes
+        JWT_SECRET = os.getenv("JWT_SECRET")
+        if not JWT_SECRET:
+            return None
+
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        user_id = payload.get("sub")
+
+        if not user_id:
+            return None
+
+        user = db.query(User).filter(User.id == user_id).first()
+        return user
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
 
 
 # ============================================
@@ -171,6 +212,7 @@ async def check_phone_json(
 @router.post("/api/v1/forms/contact", response_model=FormSubmissionResponse, status_code=201)
 async def submit_contact_form(
     request: ContactFormRequest,
+    req: Request,
     db: Session = Depends(get_db)
 ):
     """
@@ -178,23 +220,51 @@ async def submit_contact_form(
 
     Used by the marketing website for general inquiries.
     """
-    import uuid
-    submission_id = str(uuid.uuid4())
+    # Create contact form submission record
+    submission = ContactFormSubmission(
+        name=request.name,
+        email=request.email,
+        phone=request.phone,
+        subject=request.subject,
+        message=request.message,
+        ip_address=req.client.host if req.client else None,
+        user_agent=req.headers.get("user-agent"),
+        referrer=req.headers.get("referer"),
+        status='pending'
+    )
 
-    logger.info(f"Contact form submitted: {request.email} - {request.name}")
+    db.add(submission)
+    db.commit()
+    db.refresh(submission)
 
-    # TODO: Store in database, send email notification
+    logger.info(f"Contact form submitted: {request.email} - {request.name} (ID: {submission.id})")
+
+    # Send email notification to support team (async, don't block response)
+    try:
+        submission_data = {
+            'id': str(submission.id),
+            'name': submission.name,
+            'email': submission.email,
+            'phone': submission.phone,
+            'subject': submission.subject,
+            'message': submission.message
+        }
+        await send_contact_form_notification(SUPPORT_EMAIL, submission_data)
+    except Exception as e:
+        logger.error(f"Failed to send contact form notification email: {e}")
+        # Don't fail the request if email fails
 
     return FormSubmissionResponse(
         success=True,
         message="Thank you for your message. We will respond within 24 hours.",
-        submission_id=submission_id
+        submission_id=str(submission.id)
     )
 
 
 @router.post("/api/v1/forms/demo-request", response_model=FormSubmissionResponse, status_code=201)
 async def submit_demo_request(
     request: DemoRequestForm,
+    req: Request,
     db: Session = Depends(get_db)
 ):
     """
@@ -202,17 +272,48 @@ async def submit_demo_request(
 
     Used by the marketing website for scheduling product demos.
     """
-    import uuid
-    submission_id = str(uuid.uuid4())
+    # Create demo request submission record
+    submission = DemoRequestSubmission(
+        name=request.name,
+        email=request.email,
+        company=request.company,
+        phone=request.phone,
+        message=request.message,
+        company_size=request.company_size,
+        industry=request.industry,
+        ip_address=req.client.host if req.client else None,
+        user_agent=req.headers.get("user-agent"),
+        referrer=req.headers.get("referer"),
+        status='pending'
+    )
 
-    logger.info(f"Demo request submitted: {request.email} - {request.company}")
+    db.add(submission)
+    db.commit()
+    db.refresh(submission)
 
-    # TODO: Store in database, notify sales team
+    logger.info(f"Demo request submitted: {request.email} - {request.company} (ID: {submission.id})")
+
+    # Send email notification to sales team (async, don't block response)
+    try:
+        submission_data = {
+            'id': str(submission.id),
+            'name': submission.name,
+            'email': submission.email,
+            'company': submission.company,
+            'phone': submission.phone,
+            'message': submission.message,
+            'company_size': submission.company_size,
+            'industry': submission.industry
+        }
+        await send_demo_request_notification(SALES_EMAIL, submission_data)
+    except Exception as e:
+        logger.error(f"Failed to send demo request notification email: {e}")
+        # Don't fail the request if email fails
 
     return FormSubmissionResponse(
         success=True,
         message="Thank you for your demo request. Our team will contact you within 1 business day.",
-        submission_id=submission_id
+        submission_id=str(submission.id)
     )
 
 
@@ -232,8 +333,32 @@ async def get_in_app_notifications(
     if not authorization:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    # TODO: Query actual notifications from database
-    notifications = []
+    # Get user from token
+    user = get_user_from_token(authorization, db)
+    if not user:
+        raise HTTPException(status_code=401, detail=INVALID_TOKEN_MSG)
+
+    # Query notifications from database
+    notifications_query = db.query(NotificationHistory).filter(
+        NotificationHistory.user_id == user.id
+    ).order_by(NotificationHistory.created_at.desc()).limit(50).all()
+
+    notifications = [
+        {
+            "id": str(notif.id),
+            "title": notif.title,
+            "body": notif.body,
+            "type": notif.notification_type,
+            "read": notif.is_read,
+            "created_at": notif.created_at.isoformat()
+        }
+        for notif in notifications_query
+    ]
+
+    unread_count = db.query(func.count(NotificationHistory.id)).filter(
+        NotificationHistory.user_id == user.id,
+        NotificationHistory.is_read == False
+    ).scalar()
 
     return InAppNotificationResponse(
         success=True,
@@ -241,7 +366,7 @@ async def get_in_app_notifications(
         data={
             "notifications": notifications,
             "total": len(notifications),
-            "unread": 0
+            "unread": unread_count or 0
         }
     )
 
@@ -257,13 +382,21 @@ async def get_unread_count(
     if not authorization:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    # TODO: Query actual count from database
-    unread_count = 0
+    # Get user from token
+    user = get_user_from_token(authorization, db)
+    if not user:
+        raise HTTPException(status_code=401, detail=INVALID_TOKEN_MSG)
+
+    # Query unread count from database
+    unread_count = db.query(func.count(NotificationHistory.id)).filter(
+        NotificationHistory.user_id == user.id,
+        NotificationHistory.is_read == False
+    ).scalar()
 
     return InAppNotificationResponse(
         success=True,
         message="Unread count retrieved",
-        data={"unread_count": unread_count}
+        data={"unread_count": unread_count or 0}
     )
 
 
@@ -278,12 +411,28 @@ async def mark_all_read(
     if not authorization:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    # TODO: Update all notifications to read in database
+    # Get user from token
+    user = get_user_from_token(authorization, db)
+    if not user:
+        raise HTTPException(status_code=401, detail=INVALID_TOKEN_MSG)
+
+    # Update all unread notifications to read
+    from datetime import datetime, timezone
+
+    updated_count = db.query(NotificationHistory).filter(
+        NotificationHistory.user_id == user.id,
+        NotificationHistory.is_read == False
+    ).update({
+        "is_read": True,
+        "read_at": datetime.now(timezone.utc)
+    }, synchronize_session=False)
+
+    db.commit()
 
     return InAppNotificationResponse(
         success=True,
         message="All notifications marked as read",
-        data={"marked_count": 0}
+        data={"marked_count": updated_count}
     )
 
 
@@ -300,9 +449,42 @@ async def send_broadcast(
     if not authorization:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    # TODO: Actually send broadcast via push notifications
+    # Get user from token (should be admin)
+    user = get_user_from_token(authorization, db)
+    if not user:
+        raise HTTPException(status_code=401, detail=INVALID_TOKEN_MSG)
 
-    logger.info(f"Broadcast sent: {request.title}")
+    # Check if user is admin
+    if user.role not in ['admin', 'super_admin']:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    # Get target users based on audience (all active users for now)
+    # Future: Could add audience segmentation by kyc_tier, role, etc.
+    target_users = db.query(User).filter(User.status == 'active').all()
+
+    # Create notification records for each user
+    from datetime import datetime, timezone
+    notifications_created = 0
+
+    for target_user in target_users:
+        notification = NotificationHistory(
+            user_id=target_user.id,
+            title=request.title,
+            body=request.body,
+            notification_type='campaign',
+            data=request.data,
+            status='pending',
+            is_read=False,
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(notification)
+        notifications_created += 1
+
+    db.commit()
+
+    logger.info(f"Broadcast sent by {user.email}: {request.title} to {notifications_created} users")
+
+    # NOTE: Actual push notification delivery would be handled by background task
 
     return InAppNotificationResponse(
         success=True,
@@ -310,7 +492,7 @@ async def send_broadcast(
         data={
             "title": request.title,
             "target_audience": request.target_audience,
-            "estimated_recipients": 0
+            "estimated_recipients": notifications_created
         }
     )
 

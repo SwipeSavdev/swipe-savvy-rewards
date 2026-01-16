@@ -28,6 +28,9 @@ import app.models.chat
 # Import notification models to register them with the database Base
 from app.models.notifications import DeviceToken, NotificationHistory, NotificationPreferences, NotificationTemplate
 
+# Import form models to register them with the database Base
+from app.models.forms import ContactFormSubmission, DemoRequestSubmission
+
 # ============================================
 # swipesavvy_dev Models (Admin Portal)
 # ============================================
@@ -942,4 +945,7 @@ __all__ = [
     "NotificationHistory",
     "NotificationPreferences",
     "NotificationTemplate",
+    # Form models
+    "ContactFormSubmission",
+    "DemoRequestSubmission",
 ]
