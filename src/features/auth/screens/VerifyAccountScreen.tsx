@@ -139,7 +139,7 @@ export function VerifyAccountScreen() {
 
       if (response.ok) {
         setResendCooldown(60); // 60 second cooldown
-        Alert.alert('Code Sent', 'A new verification code has been sent to your phone.');
+        Alert.alert('Code Sent', 'A new verification code has been sent to your email.');
       } else {
         const data = await response.json();
         Alert.alert('Error', data.detail || 'Failed to resend code. Please try again.');
@@ -160,12 +160,12 @@ export function VerifyAccountScreen() {
     >
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <MaterialCommunityIcons name="cellphone-message" size={64} color="#235393" />
+          <MaterialCommunityIcons name="email-check" size={64} color="#235393" />
         </View>
 
-        <Text style={styles.title}>Verify Your Phone</Text>
+        <Text style={styles.title}>Verify Your Email</Text>
         <Text style={styles.subtitle}>
-          We've sent a 6-digit code to {maskedPhone}
+          We've sent a 6-digit code to {email}
         </Text>
 
         <View style={styles.codeContainer}>
