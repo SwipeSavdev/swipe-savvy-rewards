@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LoadingModal } from '../../components/LoadingModal';
-import { SplashScreen } from '../../components/SplashScreen';
 import { LoadingProvider, useLoading } from '../../contexts/LoadingContext';
 import { ThemeProvider } from '../../contexts/ThemeContext';
 import { DatabaseInitializer } from '../../database/DatabaseInitializer';
@@ -36,7 +35,6 @@ interface AppProvidersProps {
 
 function AppProvidersContent({ children }: AppProvidersProps) {
   // Skip splash screen - go directly to login
-  const [splashVisible] = useState(false);
   const [dbInitialized, setDbInitialized] = useState(false);
   const { isLoading, loadingMessage } = useLoading();
 
@@ -57,23 +55,14 @@ function AppProvidersContent({ children }: AppProvidersProps) {
     initializeDatabase();
   }, []);
 
-  // Show splash only while database initializes (no splash animation)
-  const shouldShowSplash = splashVisible && !dbInitialized;
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AIProvider>
-            {shouldShowSplash ? (
-              <SplashScreen onComplete={handleSplashComplete} />
-            ) : (
-              <>
-                {children}
-                {/* Global Loading Modal */}
-                <LoadingModal visible={isLoading} message={loadingMessage} />
-              </>
-            )}
+            {children}
+            {/* Global Loading Modal */}
+            <LoadingModal visible={isLoading} message={loadingMessage} />
           </AIProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
