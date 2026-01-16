@@ -206,6 +206,7 @@ async def root():
         "services": {
             "ai_concierge": "/chat",
             "support": "/api/support",
+            "marketing_ai": "/api/v1/marketing-ai",
             "docs": "/docs",
             "health": "/health",
             "ready": "/ready"
@@ -427,6 +428,14 @@ try:
     logger.info("✅ Preferred merchants routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include preferred merchants routes: {e}")
+
+# Include Enhanced Marketing AI routes (Behavioral Learning, Personalized Promotions)
+try:
+    from app.routes.marketing_ai_api import router as marketing_ai_router
+    app.include_router(marketing_ai_router)
+    logger.info("✅ Marketing AI routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include marketing AI routes: {e}")
 
 # Include AI Concierge routes (existing)
 try:
