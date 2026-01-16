@@ -263,7 +263,7 @@ async def mobile_login(request: LoginRequest):
     """
     # Generate mock user ID
     user_id = "user_" + str(int(__import__('datetime').datetime.now().timestamp()))
-    
+
     # Simple mock authentication for development
     # Returns a response that requires OTP verification
     return {
@@ -279,6 +279,34 @@ async def mobile_login(request: LoginRequest):
             "created_at": __import__('datetime').datetime.now().isoformat()
         },
         "message": "OTP sent to your phone. Please verify to continue."
+    }
+
+@app.post("/api/v1/wallet/auth/login")
+async def wallet_login(request: LoginRequest):
+    """
+    Wallet web app authentication endpoint
+    For development: accepts any credentials and returns mock token directly (no OTP required)
+    """
+    import datetime
+
+    # Generate mock user ID and token
+    user_id = "wallet_user_" + str(int(datetime.datetime.now().timestamp()))
+    access_token = "wallet-jwt-token-" + str(int(datetime.datetime.now().timestamp()))
+    refresh_token = "wallet-refresh-token-" + str(int(datetime.datetime.now().timestamp()))
+
+    # Return format expected by wallet web app
+    return {
+        "user": {
+            "id": user_id,
+            "email": request.email,
+            "name": request.email.split('@')[0].capitalize(),
+            "phone": "+1234567890",
+            "accountNumber": "4532" + str(int(datetime.datetime.now().timestamp()))[-8:],
+            "tier": "silver",
+            "createdAt": datetime.datetime.now().isoformat()
+        },
+        "token": access_token,
+        "refreshToken": refresh_token
     }
 
 @app.post("/api/v1/auth/signup")

@@ -40,7 +40,19 @@
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="How to Build a Customer Loyalty Program That Actually Drives ROI"/>
 
-  <link rel="icon" type="image/png" href="../assets/images/logos/swipe_savvy_color.png"/>
+    <!-- Favicon - Cross-browser support -->
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png"/>
+  <link rel="icon" type="image/png" sizes="48x48" href="/assets/favicon-48.png"/>
+  <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon-96.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png"/>
+  <!-- Apple/Safari -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="Swipe Savvy"/>
+  <!-- Android/Chrome -->
+  <link rel="manifest" href="/site.webmanifest"/>
+  <meta name="theme-color" content="#2e6bb5"/>
   <link rel="stylesheet" href="../assets/styles.css"/>
 
   <script type="application/ld+json">
@@ -80,6 +92,14 @@
     .cta-box p { color: rgba(255,255,255,.9); margin: 0 0 20px; }
     .breadcrumb { font-size: 12px; color: #64748b; margin-bottom: 8px; }
     .breadcrumb a { color: #64748b; }
+    .breadcrumb a:hover { color: var(--blue); }
+    .hero-image {
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      margin: 24px 0;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body>
@@ -90,7 +110,7 @@ height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe
 
   <header class="header">
     <div class="container header-inner">
-      <a class="brand" href="/"><div class="logo"><span class="fallback">S</span></div><span>Swipe Savvy</span></a>
+      <a class="brand" href="/"><img src="/assets/images/logos/swipe_savvy_color.png" alt="Swipe Savvy"/></a>
       <nav class="nav" aria-label="Primary">
         <a href="/">Home</a>
         <a href="/platform">Platform</a>
@@ -183,6 +203,8 @@ height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe
         </div>
       </div>
     </header>
+
+      <img class="hero-image" src="https://images.unsplash.com/photo-1556740772-1a741367b93e?w=1200&h=600&fit=crop" alt="Customer holding loyalty card at retail checkout" loading="eager"/>
 
     <div class="container">
       <div class="article-content">
@@ -450,7 +472,7 @@ height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe
   <div class="container footer-inner">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="/"><div class="logo"><span class="fallback">S</span></div><span>Swipe Savvy</span></a>
+        <a class="brand" href="/"><img src="/assets/images/logos/swipe_savvy_color.png" alt="Swipe Savvy"/></a>
         <p class="small" style="margin-top:8px;">&copy; <span id="yr"></span> Swipe Savvy, Inc.</p>
       </div>
       <div>

@@ -351,46 +351,199 @@ class WebsiteConciergeRequest(BaseModel):
     user_id: str = Field(default="anonymous", description="Visitor ID (can be anonymous)")
     session_id: Optional[str] = Field(None, description="Session ID for conversation continuity")
     page_context: Optional[str] = Field(None, description="Which page the visitor is on")
+    conversation_history: Optional[list] = Field(None, description="Previous messages for context")
 
 
-# Build the system prompt for website visitors
-WEBSITE_SYSTEM_PROMPT = f"""You are Savvy AI, the helpful and friendly AI assistant on the Swipe Savvy website.
-You help website visitors learn about Swipe Savvy products, answer their questions, and guide them toward scheduling a demo or starting a free trial.
+class SentimentAnalyzer:
+    """Analyze customer sentiment for escalation and sales opportunity detection"""
 
-YOUR PERSONALITY:
-- Friendly, professional, and helpful
-- Enthusiastic about Swipe Savvy without being pushy
-- Clear and concise in explanations
-- Proactive in suggesting relevant information
+    NEGATIVE_INDICATORS = [
+        'frustrated', 'angry', 'upset', 'terrible', 'awful', 'horrible',
+        'worst', 'hate', 'ridiculous', 'unacceptable', 'disgusted', 'furious',
+        'disappointed', 'annoyed', 'fed up', 'sick of', 'waste', 'useless',
+        'broken', 'not working', "doesn't work", 'still not', 'never works',
+        'terrible experience', 'waste of time', 'giving up', 'cancel'
+    ]
 
-YOUR KNOWLEDGE:
-You have comprehensive knowledge about Swipe Savvy's products, pricing, features, and capabilities.
-Use the following knowledge base to answer questions accurately:
+    POSITIVE_INDICATORS = [
+        'great', 'excellent', 'amazing', 'love', 'perfect', 'awesome',
+        'fantastic', 'wonderful', 'impressed', 'excited', 'interested',
+        'looking forward', 'ready to', 'want to try', 'sounds good'
+    ]
 
-{SWIPESAVVY_KNOWLEDGE}
+    URGENCY_INDICATORS = [
+        'urgent', 'emergency', 'asap', 'immediately', 'right now',
+        'critical', 'down', 'outage', "can't process", 'stuck', 'blocked'
+    ]
 
-GUIDELINES:
-1. Answer questions accurately based on the knowledge base above
-2. If you don't know something specific, say so and suggest they contact sales or support
-3. For pricing questions, provide the information from the knowledge base but mention they should contact sales for custom quotes on Enterprise
-4. Encourage visitors to:
-   - Schedule a demo: swipesavvy.com/contact
-   - Start a free trial (14 days)
-   - Call sales: 1-800-505-8769
-5. Keep responses concise but informative
-6. Use bullet points and formatting for clarity when appropriate
-7. If asked about competitors, focus on Swipe Savvy's strengths without disparaging others
+    TRANSFER_REQUESTS = [
+        'speak to', 'talk to', 'human', 'agent', 'representative',
+        'real person', 'manager', 'supervisor', 'call me', 'phone call'
+    ]
 
-COMMON TASKS:
-- Explain product features and capabilities
-- Compare plans and pricing
-- Describe industry-specific solutions
-- Explain integrations and compatibility
-- Guide visitors to appropriate resources
-- Answer technical questions about the platform
+    BUYING_SIGNALS = [
+        'how much', 'pricing', 'cost', 'quote', 'buy', 'purchase',
+        'sign up', 'get started', 'trial', 'demo', 'implement',
+        'when can', 'how soon', 'contract', 'payment', 'discount',
+        'ready to move forward', 'next steps', 'onboarding'
+    ]
 
-Remember: Be helpful, accurate, and guide visitors toward becoming customers!
-"""
+    @classmethod
+    def analyze(cls, text: str) -> Dict[str, Any]:
+        """Analyze text for sentiment, intent, and escalation needs"""
+        lower_text = text.lower()
+
+        # Check for explicit transfer request
+        for phrase in cls.TRANSFER_REQUESTS:
+            if phrase in lower_text:
+                return {
+                    'sentiment': 'transfer_request',
+                    'score': 1.0,
+                    'should_escalate': True,
+                    'escalation_reason': 'customer_requested_human',
+                    'escalation_type': 'support',
+                    'is_sales_opportunity': False
+                }
+
+        # Calculate scores
+        negative_score = sum(0.25 for word in cls.NEGATIVE_INDICATORS if word in lower_text)
+        positive_score = sum(0.2 for word in cls.POSITIVE_INDICATORS if word in lower_text)
+        urgency_score = sum(0.3 for word in cls.URGENCY_INDICATORS if word in lower_text)
+        buying_score = sum(0.25 for word in cls.BUYING_SIGNALS if word in lower_text)
+
+        # Check for ALL CAPS (frustration indicator)
+        caps_words = [w for w in text.split() if len(w) > 3 and w.isupper()]
+        if len(caps_words) >= 2:
+            negative_score += 0.4
+
+        # Check for repeated punctuation (!!!, ???)
+        if any(p * 2 in text for p in ['!', '?']):
+            negative_score += 0.2
+
+        # Determine overall sentiment
+        total_negative = min(negative_score + urgency_score, 1.0)
+
+        result = {
+            'sentiment': 'neutral',
+            'negative_score': round(total_negative, 2),
+            'positive_score': round(min(positive_score, 1.0), 2),
+            'buying_score': round(min(buying_score, 1.0), 2),
+            'should_escalate': False,
+            'escalation_reason': None,
+            'escalation_type': None,
+            'is_sales_opportunity': buying_score >= 0.25 or positive_score >= 0.4
+        }
+
+        # Flight risk detection (negative sentiment = potential churn)
+        if total_negative >= 0.6:
+            result['sentiment'] = 'negative'
+            result['should_escalate'] = True
+            result['escalation_reason'] = 'high_frustration_flight_risk'
+            result['escalation_type'] = 'support'
+        elif total_negative >= 0.3:
+            result['sentiment'] = 'concerning'
+
+        # Sales opportunity detection (high buying intent)
+        if buying_score >= 0.5 or (positive_score >= 0.3 and buying_score >= 0.25):
+            result['sentiment'] = 'high_intent'
+            result['is_sales_opportunity'] = True
+            result['should_escalate'] = True
+            result['escalation_reason'] = 'sales_opportunity_hot_lead'
+            result['escalation_type'] = 'sales'
+
+        return result
+
+
+# Base knowledge for the AI - will be combined with dynamic context
+SWIPESAVVY_KNOWLEDGE_BASE = SWIPESAVVY_KNOWLEDGE
+
+
+def build_dynamic_system_prompt(
+    page_context: Optional[str] = None,
+    sentiment_data: Optional[Dict[str, Any]] = None,
+    conversation_length: int = 0
+) -> str:
+    """
+    Build a dynamic, context-aware system prompt based on visitor behavior.
+    Avoids boilerplate by adapting tone and focus to the situation.
+    """
+
+    # Base personality - adapt based on sentiment
+    if sentiment_data and sentiment_data.get('sentiment') == 'negative':
+        personality = """You are Savvy AI. The visitor seems frustrated - be extra empathetic, patient, and solution-focused.
+Acknowledge their frustration before addressing their concern. Focus on resolving their issue quickly.
+If they're very frustrated, proactively offer to connect them with a human support specialist."""
+    elif sentiment_data and sentiment_data.get('is_sales_opportunity'):
+        personality = """You are Savvy AI. This visitor shows strong buying intent - be helpful and informative without being pushy.
+Answer their questions directly and thoroughly. If they ask about pricing or getting started, give clear actionable next steps.
+This is a warm lead - provide excellent service to help them make a confident decision."""
+    elif conversation_length > 5:
+        personality = """You are Savvy AI. This is an ongoing conversation - be conversational and remember context.
+Don't repeat introductions or re-explain things already discussed. Build on the conversation naturally."""
+    else:
+        personality = """You are Savvy AI, the friendly assistant on Swipe Savvy's website.
+Be warm, helpful, and conversational - like a knowledgeable colleague, not a script-reading bot."""
+
+    # Page-specific context
+    page_focus = ""
+    if page_context:
+        page_map = {
+            "pricing": "They're on the pricing page - focus on value and ROI, not just features.",
+            "solutions": "They're exploring solutions - understand their specific needs before suggesting products.",
+            "industries": "They're looking at industry solutions - ask about their business to give relevant examples.",
+            "contact": "They're on the contact page - they may be ready to talk to sales or have a specific question.",
+            "support": "They may need help with an existing issue - prioritize problem-solving.",
+            "demo": "They're interested in a demo - make scheduling easy and answer pre-demo questions.",
+        }
+        for key, focus in page_map.items():
+            if key in page_context.lower():
+                page_focus = f"\n\nCONTEXT: {focus}"
+                break
+
+    # Sentiment-aware instructions
+    sentiment_instructions = ""
+    if sentiment_data:
+        if sentiment_data.get('sentiment') == 'negative':
+            sentiment_instructions = """
+
+PRIORITY: This visitor may be frustrated.
+- Lead with empathy: "I understand that's frustrating..."
+- Focus on solutions, not explanations
+- If you can't resolve it, offer human support immediately
+- Don't be defensive or make excuses"""
+        elif sentiment_data.get('sentiment') == 'high_intent':
+            sentiment_instructions = """
+
+PRIORITY: This visitor shows strong buying signals.
+- Answer questions thoroughly and confidently
+- Provide clear pricing when asked (refer to knowledge base)
+- Make next steps crystal clear: demo scheduling, free trial, or sales call
+- Don't oversell - let the product speak for itself"""
+
+    prompt = f"""{personality}
+
+KNOWLEDGE BASE:
+{SWIPESAVVY_KNOWLEDGE_BASE}
+{page_focus}
+{sentiment_instructions}
+
+COMMUNICATION STYLE:
+- Be direct and concise - respect their time
+- Use natural language, not marketing speak
+- Answer the actual question first, then offer relevant extras
+- Format with bullets or short paragraphs for readability
+- Don't over-explain or add unnecessary caveats
+- Match their energy - casual if they're casual, professional if they're formal
+
+ACTIONS YOU CAN SUGGEST:
+- Schedule a demo: swipesavvy.com/contact or call 1-800-505-8769
+- Start free 14-day trial
+- Talk to sales for custom pricing (Enterprise)
+- Contact support: support@swipesavvy.com
+
+Never fabricate information. If you don't know, say so and point them to the right resource."""
+
+    return prompt
 
 
 @router.post("")
@@ -400,6 +553,7 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
 
     Provides streaming AI responses about Swipe Savvy products and services.
     Uses Together.AI with comprehensive product knowledge.
+    Features dynamic sentiment analysis for escalation and sales opportunity detection.
     """
 
     session_id = request.session_id or f"web_{int(time.time())}_{request.user_id}"
@@ -414,24 +568,47 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
             detail="AI service not configured. Please contact support."
         )
 
+    # Analyze sentiment for tone detection and escalation needs
+    sentiment_data = SentimentAnalyzer.analyze(request.message)
+    logger.info(f"Sentiment analysis: {sentiment_data}")
+
+    # Calculate conversation length from history
+    conversation_length = len(request.conversation_history) if request.conversation_history else 0
+
     async def generate_response_stream():
         """Generator for streaming SSE responses"""
         try:
             client = Together(api_key=api_key)
 
-            # Build system prompt with page context if available
-            system_prompt = WEBSITE_SYSTEM_PROMPT
-            if request.page_context:
-                system_prompt += f"\n\nThe visitor is currently viewing: {request.page_context}"
+            # Build dynamic system prompt based on context and sentiment
+            system_prompt = build_dynamic_system_prompt(
+                page_context=request.page_context,
+                sentiment_data=sentiment_data,
+                conversation_length=conversation_length
+            )
 
-            logger.info("Calling Together.AI for website concierge")
+            # Build messages array with conversation history
+            messages = [{"role": "system", "content": system_prompt}]
+
+            # Add conversation history for context continuity
+            if request.conversation_history:
+                for msg in request.conversation_history[-10:]:  # Last 10 messages for context
+                    role = msg.get('role', 'user')
+                    content = msg.get('content', '')
+                    if role in ['user', 'assistant'] and content:
+                        messages.append({"role": role, "content": content})
+
+            # Add current message
+            messages.append({"role": "user", "content": request.message})
+
+            logger.info(f"Calling Together.AI with {len(messages)} messages")
+
+            # Send sentiment data at the start of stream for frontend to handle
+            yield f"data: {json.dumps({'type': 'sentiment', 'data': sentiment_data})}\n\n"
 
             response = client.chat.completions.create(
                 model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": request.message}
-                ],
+                messages=messages,
                 max_tokens=1024,
                 temperature=0.7,
                 stream=True,
@@ -453,12 +630,22 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
 
             logger.info(f"Website concierge response complete. Length: {len(full_response)}")
 
-            yield f"data: {json.dumps({'type': 'message_complete', 'full_response': full_response})}\n\n"
+            # Send completion event with sentiment summary for escalation handling
+            completion_data = {
+                'type': 'message_complete',
+                'full_response': full_response,
+                'sentiment': sentiment_data,
+                'should_escalate': sentiment_data.get('should_escalate', False),
+                'escalation_type': sentiment_data.get('escalation_type'),
+                'escalation_reason': sentiment_data.get('escalation_reason'),
+                'is_sales_opportunity': sentiment_data.get('is_sales_opportunity', False)
+            }
+            yield f"data: {json.dumps(completion_data)}\n\n"
             yield SSE_DONE
 
         except Exception as e:
             logger.error(f"Website concierge error: {str(e)}", exc_info=True)
-            yield f"data: {json.dumps({'type': 'error', 'content': f'Sorry, I encountered an error. Please try again or contact support at support@swipesavvy.com'})}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'content': 'Sorry, I encountered an error. Please try again or contact support at support@swipesavvy.com'})}\n\n"
             yield SSE_DONE
 
     return StreamingResponse(
