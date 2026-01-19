@@ -12,7 +12,7 @@ rm -rf android/app/build 2>/dev/null || true
 rm -rf .expo 2>/dev/null || true
 
 echo "📦 Installing dependencies..."
-npm install
+npm install --legacy-peer-deps
 
 echo "🔨 Rebuilding native projects..."
 npx expo prebuild --clean

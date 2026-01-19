@@ -1,41 +1,51 @@
 """
-Notification API Routes for SwipeSavvy
+Notification API Routes for SwipeSavvy (AWS SNS Edition)
 
 Endpoints for push notification management, device registration, preferences, and history.
-Integrates with Firebase Cloud Messaging for cross-platform notifications.
+Integrates with AWS SNS Platform Applications for cross-platform notifications.
+
+Architecture:
+- Device tokens come from Firebase/APNs (unchanged)
+- Tokens are registered with AWS SNS Platform Applications
+- SNS manages delivery to APNs (iOS) and FCM (Android)
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from app.database import get_db
 from app.core.auth import verify_jwt_token
 from app.core.config import settings
 from datetime import datetime
 import logging
 import json
+import os
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/notifications", tags=["notifications"])
 
-# Initialize Firebase service - can fail gracefully
-firebase_service = None
+# Initialize SNS service - replaces Firebase
+sns_service = None
 preferences_service = None
 
 try:
-    from app.services.firebase_service import FirebaseService, NotificationPreferencesService
-    if settings.FIREBASE_CREDENTIALS and settings.FIREBASE_DATABASE_URL:
-        firebase_service = FirebaseService(
-            credentials_json=settings.FIREBASE_CREDENTIALS,
-            database_url=settings.FIREBASE_DATABASE_URL
-        )
-        preferences_service = NotificationPreferencesService(firebase_service)
-        logger.info("Firebase service initialized successfully")
+    from app.services.sns_push_notification_service import (
+        SNSPushNotificationService,
+        NotificationPreferencesService
+    )
+    
+    sns_service = SNSPushNotificationService(
+        aws_region=os.getenv('AWS_REGION', 'us-east-1'),
+        ios_app_arn=os.getenv('SNS_IOS_APP_ARN'),
+        android_app_arn=os.getenv('SNS_ANDROID_APP_ARN')
+    )
+    preferences_service = NotificationPreferencesService()
+    logger.info("SNS Push Notification service initialized successfully")
 except Exception as e:
-    logger.warning(f"Firebase service initialization deferred: {str(e)}")
+    logger.warning(f"SNS service initialization failed: {str(e)}")
 
 
 # ============================================
@@ -493,3 +503,175 @@ async def send_event_notification(
         logger.error(f"Event notification error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
+
+# ============================================
+# SNS-BASED NOTIFICATION ENDPOINTS (NEW)
+# ============================================
+
+class SNSDeviceRegistrationRequest(BaseModel):
+    """Register device with SNS"""
+    device_token: str = Field(..., description="Firebase/APNs device token")
+    device_type: str = Field(..., description="Device type: ios or android")
+    device_name: Optional[str] = Field(None, description="Optional device name")
+
+
+class SNSPushNotificationRequest(BaseModel):
+    """Push notification payload"""
+    title: str = Field(..., description="Notification title")
+    body: str = Field(..., description="Notification body")
+    data: Optional[Dict[str, str]] = Field(None, description="Optional data payload")
+    badge: Optional[int] = Field(None, description="Badge number (iOS)")
+    sound: str = Field("default", description="Sound file")
+
+
+class SNSSendToEndpointRequest(SNSPushNotificationRequest):
+    """Send notification to specific endpoint"""
+    endpoint_arn: str = Field(..., description="SNS endpoint ARN")
+
+
+@router.post("/sns/register-device", status_code=status.HTTP_201_CREATED)
+async def sns_register_device(
+    request: SNSDeviceRegistrationRequest,
+    current_user: dict = Depends(verify_jwt_token)
+):
+    """
+    Register a device endpoint with SNS Platform Application.
+    
+    The device_token should be obtained from:
+    - iOS: Apple Push Notification service
+    - Android: Firebase Cloud Messaging (FCM)
+    
+    Returns the endpoint ARN for sending notifications.
+    """
+    if not sns_service:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SNS service not configured"
+        )
+    
+    try:
+        result = sns_service.register_device(
+            user_id=current_user.get('sub'),
+            device_token=request.device_token,
+            device_type=request.device_type,
+            device_name=request.device_name
+        )
+        
+        logger.info(f"Device registered for user {current_user.get('sub')}: {request.device_type}")
+        return result
+        
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"Device registration failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Device registration failed"
+        )
+
+
+@router.post("/sns/send")
+async def sns_send_notification(
+    request: SNSSendToEndpointRequest,
+    current_user: dict = Depends(verify_jwt_token)
+):
+    """
+    Send push notification to a specific SNS endpoint.
+    
+    The endpoint_arn is obtained from the device registration response.
+    """
+    if not sns_service:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SNS service not configured"
+        )
+    
+    try:
+        result = sns_service.send_notification(
+            endpoint_arn=request.endpoint_arn,
+            title=request.title,
+            body=request.body,
+            data=request.data,
+            badge=request.badge,
+            sound=request.sound
+        )
+        
+        logger.info(f"Notification sent to endpoint: {result['message_id']}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Send notification failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send notification"
+        )
+
+
+@router.delete("/sns/unregister/{endpoint_arn}")
+async def sns_unregister_device(
+    endpoint_arn: str,
+    current_user: dict = Depends(verify_jwt_token)
+):
+    """
+    Unregister a device endpoint from SNS.
+    
+    Args:
+        endpoint_arn: The SNS endpoint ARN (URL encoded)
+    """
+    if not sns_service:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SNS service not configured"
+        )
+    
+    try:
+        from urllib.parse import unquote
+        decoded_arn = unquote(endpoint_arn)
+        
+        result = sns_service.unregister_device(decoded_arn)
+        
+        logger.info(f"Device unregistered: {decoded_arn}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Device unregistration failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to unregister device"
+        )
+
+
+@router.get("/sns/status/{endpoint_arn}")
+async def sns_get_endpoint_status(
+    endpoint_arn: str,
+    current_user: dict = Depends(verify_jwt_token)
+):
+    """
+    Get SNS endpoint attributes and status.
+    
+    Args:
+        endpoint_arn: The SNS endpoint ARN (URL encoded)
+    """
+    if not sns_service:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SNS service not configured"
+        )
+    
+    try:
+        from urllib.parse import unquote
+        decoded_arn = unquote(endpoint_arn)
+        
+        attributes = sns_service.get_endpoint_attributes(decoded_arn)
+        
+        return {
+            "endpoint_arn": decoded_arn,
+            "attributes": attributes
+        }
+        
+    except Exception as e:
+        logger.error(f"Get status failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get endpoint status"
+        )

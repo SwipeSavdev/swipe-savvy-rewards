@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- General Configuration -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    
+    <key>CFBundleDisplayName</key>
+    <string>SwipeSavvy</string>
+    
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    
+    <key>CFBundleIdentifier</key>
+    <string>com.swipesavvy.mobileapp</string>
+    
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    
+    <!-- Supported Document Types -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Web Archive</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.apple.webarchive</string>
+            </array>
+        </dict>
+    </array>
+    
+    <!-- Permissions & Privacy -->
+    
+    <!-- Location -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>SwipeSavvy uses your location to show nearby partner merchants and exclusive local offers.</string>
+    
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>SwipeSavvy uses your location to show nearby partner merchants and exclusive local offers.</string>
+    
+    <!-- Camera -->
+    <key>NSCameraUsageDescription</key>
+    <string>Camera access is used to verify your identity during account setup and for capturing payment method information.</string>
+    
+    <!-- Microphone -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Microphone access is used for video verification during identity confirmation.</string>
+    
+    <!-- Photo Library -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Access to your photo library allows you to upload profile pictures and verify identity documents.</string>
+    
+    <!-- Face ID -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>SwipeSavvy uses Face ID for secure biometric authentication and transaction verification.</string>
+    
+    <!-- Health -->
+    <key>NSHealthShareUsageDescription</key>
+    <string>SwipeSavvy requests access to health data for wellness rewards program (optional).</string>
+    
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>SwipeSavvy uses health data for wellness rewards program (optional).</string>
+    
+    <!-- Contacts -->
+    <key>NSContactsUsageDescription</key>
+    <string>Access to contacts allows you to refer friends and earn rewards.</string>
+    
+    <!-- Calendar -->
+    <key>NSCalendarsUsageDescription</key>
+    <string>Calendar access is used to remind you about exclusive time-limited merchant offers.</string>
+    
+    <!-- Reminders -->
+    <key>NSRemindersUsageDescription</key>
+    <string>Reminder access allows you to create reminders for exclusive offers and redemption deadlines.</string>
+    
+    <!-- Local Network -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>SwipeSavvy uses local network discovery to connect with compatible devices for enhanced features.</string>
+    
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_http._tcp</string>
+    </array>
+    
+    <!-- Bluetooth -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Bluetooth is used to connect with compatible wearable devices for rewards tracking.</string>
+    
+    <!-- Tracking (ATT) -->
+    <key>NSUserTrackingUsageDescription</key>
+    <string>SwipeSavvy tracks your activity to provide personalized offers and measure ad effectiveness.</string>
+    
+    <!-- App Transport Security -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <!-- Allow specific domains if needed for development -->
+            <key>localhost</key>
+            <dict>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+                <key>NSTemporaryExceptionMinimumTLSVersion</key>
+                <string>TLSv1.2</string>
+            </dict>
+        </dict>
+        <!-- Require HTTPS for production -->
+        <key>NSRequiresCertificateTransparency</key>
+        <false/>
+    </dict>
+    
+    <!-- App Minimum OS Version -->
+    <key>MinimumOSVersion</key>
+    <string>14.0</string>
+    
+    <!-- Supported Interface Orientations -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    
+    <!-- Status Bar -->
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleDefault</string>
+    
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
+    
+    <!-- Launch Screen -->
+    <key>UILaunchScreen</key>
+    <dict>
+        <key>UIColorName</key>
+        <string>LaunchScreenBackgroundColor</string>
+        <key>UIImageName</key>
+        <string>LaunchImage</string>
+        <key>UIImageRespectsSafeAreaInsets</key>
+        <false/>
+    </dict>
+    
+    <!-- Background Modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>remote-notification</string>
+        <string>fetch</string>
+    </array>
+    
+    <!-- URL Types (for deep linking) -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>com.swipesavvy.mobileapp</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>swipesavvy</string>
+            </array>
+        </dict>
+    </array>
+    
+    <!-- Handoff -->
+    <key>NSUserActivityTypes</key>
+    <array>
+        <string>com.swipesavvy.mobileapp.card.details</string>
+        <string>com.swipesavvy.mobileapp.rewards.redeem</string>
+        <string>com.swipesavvy.mobileapp.merchant.view</string>
+    </array>
+    
+    <!-- Siri -->
+    <key>NSSiriUsageDescription</key>
+    <string>SwipeSavvy integrates with Siri to help you check rewards and find nearby merchants using voice commands.</string>
+    
+    <!-- Privacy Configuration -->
+    <key>NSPrivacyTracking</key>
+    <false/>
+    
+    <key>NSPrivacyTrackingDomains</key>
+    <array>
+        <!-- Third-party domains that track user behavior -->
+        <string>amplitude.com</string>
+        <string>mixpanel.com</string>
+        <string>segment.com</string>
+    </array>
+    
+    <!-- API Configuration -->
+    <key>API_BASE_URL</key>
+    <string>https://api.swipesavvy.com</string>
+    
+    <key>API_TIMEOUT</key>
+    <integer>30</integer>
+    
+    <key>WEBSOCKET_URL</key>
+    <string>wss://api.swipesavvy.com/ws</string>
+    
+    <!-- Push Notification Configuration -->
+    <key>PUSH_NOTIFICATION_PROVIDER</key>
+    <string>AWS_SNS</string>
+    
+    <key>SNS_REGION</key>
+    <string>us-east-1</string>
+    
+    <key>SNS_PLATFORM_APP_ARN</key>
+    <string>arn:aws:sns:us-east-1:858955002750:app/APNS/swipesavvy-sandbox-ios</string>
+    
+    <!-- Feature Flags -->
+    <key>FEATURE_BIOMETRIC_AUTH</key>
+    <true/>
+    
+    <key>FEATURE_SIGN_IN_WITH_APPLE</key>
+    <true/>
+    
+    <key>FEATURE_PUSH_NOTIFICATIONS</key>
+    <true/>
+    
+    <key>FEATURE_LOCATION_SERVICES</key>
+    <true/>
+    
+    <!-- Logging -->
+    <key>LOG_LEVEL</key>
+    <string>info</string>
+    
+    <!-- Crash Reporting -->
+    <key>CRASH_REPORTING_ENABLED</key>
+    <true/>
+    
+    <!-- Analytics -->
+    <key>ANALYTICS_ENABLED</key>
+    <true/>
+    
+    <key>ANALYTICS_ENDPOINT</key>
+    <string>https://api.swipesavvy.com/analytics</string>
+    
+</dict>
+</plist>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Push Notifications -->
+    <key>aps-environment</key>
+    <string>production</string>
+    
+    <!-- Keychain Access -->
+    <key>keychain-access-groups</key>
+    <array>
+        <string>$(AppIdentifierPrefix)com.swipesavvy.mobileapp</string>
+    </array>
+    
+    <!-- Associated Domains (for universal links) -->
+    <key>associated-domains</key>
+    <array>
+        <string>applinks:swipesavvy.com</string>
+        <string>webcredentials:swipesavvy.com</string>
+    </array>
+    
+    <!-- Sign in with Apple -->
+    <key>com.apple.developer.applesignin</key>
+    <array>
+        <string>Default</string>
+    </array>
+    
+    <!-- HomeKit (if applicable in future) -->
+    <!-- Disabled for now: HomeKit not needed for initial release -->
+    
+    <!-- Wallet/Apple Pay (if applicable in future) -->
+    <!-- Disabled for now: Not needed for initial release -->
+</dict>
+</plist>

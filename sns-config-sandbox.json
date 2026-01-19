@@ -1,0 +1,32 @@
+{
+  "app": "swipesavvy",
+  "environment": "sandbox",
+  "awsAccountId": "858955002750",
+  "region": "us-east-1",
+  "createdAt": "2026-01-19",
+  "resources": {
+    "snsTopicArn": "arn:aws:sns:us-east-1:858955002750:swipesavvy-sandbox-notifications",
+    "iamRoleName": "swipesavvy-sns-sandbox-role",
+    "cloudwatchLogGroup": "/aws/sns/swipesavvy-sandbox"
+  },
+  "platformApplications": {
+    "ios": {
+      "name": "swipesavvy-sandbox-ios",
+      "platform": "APNS_SANDBOX",
+      "status": "awaiting-credentials",
+      "requiresApnsCertificate": true
+    },
+    "android": {
+      "name": "swipesavvy-sandbox-android",
+      "platform": "GCM",
+      "status": "awaiting-credentials",
+      "requiresFirebaseKey": true
+    }
+  },
+  "nextSteps": [
+    "1. Do NOT commit credentials to version control",
+    "2. Use AWS Secrets Manager for sensitive data",
+    "3. Register devices after platform apps are created",
+    "4. Monitor CloudWatch logs for delivery status"
+  ]
+}

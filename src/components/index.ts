@@ -5,4 +5,3 @@
 
 export { BrandHeader } from './BrandHeader';
 export { LoadingModal, LoadingOverlay } from './LoadingModal';
-export { SplashScreen } from './SplashScreen';

@@ -1,6 +1,11 @@
-2025-12-28 21:29:43.165 xcodebuild[3254:4246747] Writing error result bundle to /var/folders/z3/sz0jz4d13y531_61286pldzw0000gn/T/ResultBundle_2025-28-12_21-29-0043.xcresult
-xcodebuild: error: Unable to find a destination matching the provided destination specifier:
-		{ id:C077429C-28F3-438C-B3DC-74BD394395E9 }
+** BUILD FAILED **
 
-	Ineligible destinations for the "swipesavvymobileappv2" scheme:
-		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device, error:iOS 26.2 is not installed. Please download and install the platform from Xcode > Settings > Components. }
+
+The following build commands failed:
+	CompileC /Users/papajr/Library/Developer/Xcode/DerivedData/SwipeSavvy-gxfnthptenqhopdjxcafquxnznxu/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/ReactCodegen.build/Objects-normal/arm64/safeareacontextJSI-generated.o /Users/papajr/Documents/Projects-2026/swipesavvy-mobile-app-v2/swipe-savvy-rewards/ios/build/generated/ios/safeareacontextJSI-generated.cpp normal arm64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'ReactCodegen' from project 'Pods')
+	CompileC /Users/papajr/Library/Developer/Xcode/DerivedData/SwipeSavvy-gxfnthptenqhopdjxcafquxnznxu/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/ReactCodegen.build/Objects-normal/arm64/rnsvgJSI-generated.o /Users/papajr/Documents/Projects-2026/swipesavvy-mobile-app-v2/swipe-savvy-rewards/ios/build/generated/ios/rnsvgJSI-generated.cpp normal arm64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'ReactCodegen' from project 'Pods')
+	CompileC /Users/papajr/Library/Developer/Xcode/DerivedData/SwipeSavvy-gxfnthptenqhopdjxcafquxnznxu/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/ReactCodegen.build/Objects-normal/arm64/rnscreensJSI-generated.o /Users/papajr/Documents/Projects-2026/swipesavvy-mobile-app-v2/swipe-savvy-rewards/ios/build/generated/ios/rnscreensJSI-generated.cpp normal arm64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'ReactCodegen' from project 'Pods')
+	CompileC /Users/papajr/Library/Developer/Xcode/DerivedData/SwipeSavvy-gxfnthptenqhopdjxcafquxnznxu/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/ReactCodegen.build/Objects-normal/arm64/rngesturehandler_codegenJSI-generated.o /Users/papajr/Documents/Projects-2026/swipesavvy-mobile-app-v2/swipe-savvy-rewards/ios/build/generated/ios/rngesturehandler_codegenJSI-generated.cpp normal arm64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'ReactCodegen' from project 'Pods')
+	CompileC /Users/papajr/Library/Developer/Xcode/DerivedData/SwipeSavvy-gxfnthptenqhopdjxcafquxnznxu/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/ReactCodegen.build/Objects-normal/arm64/rnasyncstorageJSI-generated.o /Users/papajr/Documents/Projects-2026/swipesavvy-mobile-app-v2/swipe-savvy-rewards/ios/build/generated/ios/rnasyncstorageJSI-generated.cpp normal arm64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'ReactCodegen' from project 'Pods')
+	Building workspace SwipeSavvy with scheme SwipeSavvy and configuration Debug
+(6 failures)

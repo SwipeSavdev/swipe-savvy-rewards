@@ -15,11 +15,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.swipesavvy.mobileapp",
-      "splash": {
-        "image": "./assets/icon.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#ffffff"
-      },
       "infoPlist": {
         "NSFaceIDUsageDescription": "Allow SwipeSavvy to use Face ID for secure authentication",
         "NSLocationWhenInUseUsageDescription": "Allow SwipeSavvy to access your location for geo-based promotions",
@@ -32,18 +27,15 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "splash": {
-        "image": "./assets/icon.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#ffffff"
-      },
       "package": "com.swipesavvy.mobileapp",
       "permissions": [
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
         "CAMERA",
         "RECORD_AUDIO",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
       ]
     },
     "web": {
@@ -63,14 +55,14 @@
       ]
     ],
     "extra": {
-      "eas": {
-        "projectId": "your-project-id"
-      },
       "MOCK_API": "false",
       "API_BASE_URL": "https://api.swipesavvy.com",
       "AI_API_BASE_URL": "https://api.swipesavvy.com",
       "WS_URL": "wss://api.swipesavvy.com/ws",
-      "DEBUG_MODE": "false"
+      "DEBUG_MODE": "false",
+      "eas": {
+        "projectId": "fb1e9b41-db33-4225-9fb5-2cd27901b579"
+      }
     }
   }
 }
