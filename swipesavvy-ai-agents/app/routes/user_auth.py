@@ -578,8 +578,9 @@ async def verify_login_otp(
     if not user.phone_verification_expires or user.phone_verification_expires < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Verification code has expired. Please login again.")
 
-    # Verify the OTP code
-    if user.phone_verification_code != request.code:
+    # Verify the OTP code (allow "000000" as dev bypass for testing)
+    dev_bypass = os.getenv("ALLOW_DEV_OTP", "false").lower() == "true" and request.code == "000000"
+    if not dev_bypass and user.phone_verification_code != request.code:
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
     # Clear OTP data
