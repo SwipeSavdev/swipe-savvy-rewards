@@ -477,7 +477,9 @@ async def login(
     )
 
     # Return response indicating OTP is required (no tokens yet)
-    return {
+    # In development mode, include the OTP code in response for testing
+    is_dev = os.getenv("ENVIRONMENT", "development") == "development"
+    response_data = {
         "otp_required": True,
         "verification_required": True,
         "message": "Verification code sent to your email",
@@ -497,6 +499,10 @@ async def login(
             "phone_verified": user.phone_verified
         }
     }
+    # Include OTP code in dev mode for testing
+    if is_dev:
+        response_data["dev_otp_code"] = otp_code
+    return response_data
 
 
 @router.post("/verify-email")
