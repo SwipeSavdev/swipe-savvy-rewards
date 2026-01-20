@@ -314,6 +314,39 @@ async def delete_admin_user(user_id: str, db: Session = Depends(get_db)):
 
 
 # ============================================================================
+# Development/Testing Endpoint for OTP
+# ============================================================================
+
+@router.get("/customer/{user_id}/otp")
+async def get_customer_otp(
+    user_id: str,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Get a customer user's current OTP code (development/admin use only).
+    Requires admin authentication.
+    """
+    # Verify admin token
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        verify_token(token)
+
+    # Find the customer user
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "user_id": str(user.id),
+        "email": user.email,
+        "phone_verification_code": user.phone_verification_code,
+        "phone_verification_expires": user.phone_verification_expires.isoformat() if user.phone_verification_expires else None,
+        "note": "This endpoint is for development/testing only"
+    }
+
+
+# ============================================================================
 # Statistics Endpoint
 # ============================================================================
 
