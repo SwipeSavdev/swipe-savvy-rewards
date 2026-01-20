@@ -227,6 +227,122 @@ async def create_user(req: CustomerUserCreateRequest, db: Session = Depends(get_
     )
 
 
+# ============================================================================
+# IMPORTANT: Specific routes MUST come before wildcard /{user_id} routes
+# ============================================================================
+
+@router.get("/stats/overview", response_model=dict)
+async def get_admin_users_stats(db: Session = Depends(get_db)):
+    """Get admin user statistics overview"""
+    total_users = db.query(AdminUser).count()
+    active_users = db.query(AdminUser).filter(AdminUser.status == "active").count()
+    inactive_users = db.query(AdminUser).filter(AdminUser.status == "inactive").count()
+
+    # Count by role
+    super_admin_count = db.query(AdminUser).filter(AdminUser.role == "super_admin").count()
+    admin_count = db.query(AdminUser).filter(AdminUser.role == "admin").count()
+    support_count = db.query(AdminUser).filter(AdminUser.role == "support").count()
+    analyst_count = db.query(AdminUser).filter(AdminUser.role == "analyst").count()
+
+    return {
+        "total_users": total_users,
+        "active_users": active_users,
+        "inactive_users": inactive_users,
+        "suspended_users": total_users - active_users - inactive_users,
+        "by_role": {
+            "super_admin": super_admin_count,
+            "admin": admin_count,
+            "support": support_count,
+            "analyst": analyst_count,
+        }
+    }
+
+
+@router.get("/customer/{user_id}/otp")
+async def get_customer_otp(
+    user_id: str,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Get a customer user's current OTP code (development/admin use only).
+    Requires admin authentication.
+    """
+    # Verify admin token
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        verify_token(token)
+
+    # Find the customer user
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "user_id": str(user.id),
+        "email": user.email,
+        "phone_verification_code": user.phone_verification_code,
+        "phone_verification_expires": user.phone_verification_expires.isoformat() if user.phone_verification_expires else None,
+        "note": "This endpoint is for development/testing only"
+    }
+
+
+@router.delete("/by-phone/{phone}", status_code=200)
+async def delete_user_by_phone(
+    phone: str,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete a customer user by phone number (hard delete).
+    Requires admin authentication.
+
+    Path Parameters:
+    - phone: The phone number to search for (will match partial)
+    """
+    # Verify admin token
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        verify_token(token)
+    else:
+        raise HTTPException(status_code=401, detail="Admin authentication required")
+
+    # Clean the phone number - keep only digits
+    phone_digits = ''.join(filter(str.isdigit, phone))
+
+    # Search for users with matching phone number
+    users = db.query(User).filter(User.phone.ilike(f"%{phone_digits}%")).all()
+
+    if not users:
+        # Also try with +1 prefix
+        users = db.query(User).filter(User.phone.ilike(f"%{phone_digits[-10:]}%")).all()
+
+    if not users:
+        raise HTTPException(status_code=404, detail=f"No users found with phone number containing {phone}")
+
+    deleted_users = []
+    for user in users:
+        deleted_users.append({
+            "id": str(user.id),
+            "email": user.email,
+            "phone": user.phone,
+            "name": user.name
+        })
+        db.delete(user)
+
+    db.commit()
+
+    return {
+        "success": True,
+        "deleted_count": len(deleted_users),
+        "deleted_users": deleted_users
+    }
+
+
+# ============================================================================
+# Wildcard routes - these MUST come AFTER specific routes
+# ============================================================================
+
 @router.get("/{user_id}", response_model=AdminUserResponse)
 async def get_admin_user(user_id: str, db: Session = Depends(get_db)):
     """
@@ -311,123 +427,3 @@ async def delete_admin_user(user_id: str, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return None
-
-
-# ============================================================================
-# Development/Testing Endpoint for OTP
-# ============================================================================
-
-@router.get("/customer/{user_id}/otp")
-async def get_customer_otp(
-    user_id: str,
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
-):
-    """
-    Get a customer user's current OTP code (development/admin use only).
-    Requires admin authentication.
-    """
-    # Verify admin token
-    if authorization:
-        token = authorization.replace("Bearer ", "")
-        verify_token(token)
-
-    # Find the customer user
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    return {
-        "user_id": str(user.id),
-        "email": user.email,
-        "phone_verification_code": user.phone_verification_code,
-        "phone_verification_expires": user.phone_verification_expires.isoformat() if user.phone_verification_expires else None,
-        "note": "This endpoint is for development/testing only"
-    }
-
-
-# ============================================================================
-# Delete User by Phone (Admin Tool)
-# ============================================================================
-
-@router.delete("/by-phone/{phone}", status_code=200)
-async def delete_user_by_phone(
-    phone: str,
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
-):
-    """
-    Delete a customer user by phone number (hard delete).
-    Requires admin authentication.
-
-    Path Parameters:
-    - phone: The phone number to search for (will match partial)
-    """
-    # Verify admin token
-    if authorization:
-        token = authorization.replace("Bearer ", "")
-        verify_token(token)
-    else:
-        raise HTTPException(status_code=401, detail="Admin authentication required")
-
-    # Clean the phone number - keep only digits
-    phone_digits = ''.join(filter(str.isdigit, phone))
-
-    # Search for users with matching phone number
-    users = db.query(User).filter(User.phone.ilike(f"%{phone_digits}%")).all()
-
-    if not users:
-        # Also try with +1 prefix
-        users = db.query(User).filter(User.phone.ilike(f"%{phone_digits[-10:]}%")).all()
-
-    if not users:
-        raise HTTPException(status_code=404, detail=f"No users found with phone number containing {phone}")
-
-    deleted_users = []
-    for user in users:
-        deleted_users.append({
-            "id": str(user.id),
-            "email": user.email,
-            "phone": user.phone,
-            "name": user.name
-        })
-        db.delete(user)
-
-    db.commit()
-
-    return {
-        "success": True,
-        "deleted_count": len(deleted_users),
-        "deleted_users": deleted_users
-    }
-
-
-# ============================================================================
-# Statistics Endpoint
-# ============================================================================
-
-@router.get("/stats/overview", response_model=dict)
-async def get_admin_users_stats(db: Session = Depends(get_db)):
-    """Get admin user statistics overview"""
-    total_users = db.query(AdminUser).count()
-    active_users = db.query(AdminUser).filter(AdminUser.status == "active").count()
-    inactive_users = db.query(AdminUser).filter(AdminUser.status == "inactive").count()
-
-    # Count by role
-    super_admin_count = db.query(AdminUser).filter(AdminUser.role == "super_admin").count()
-    admin_count = db.query(AdminUser).filter(AdminUser.role == "admin").count()
-    support_count = db.query(AdminUser).filter(AdminUser.role == "support").count()
-    analyst_count = db.query(AdminUser).filter(AdminUser.role == "analyst").count()
-
-    return {
-        "total_users": total_users,
-        "active_users": active_users,
-        "inactive_users": inactive_users,
-        "suspended_users": total_users - active_users - inactive_users,
-        "by_role": {
-            "super_admin": super_admin_count,
-            "admin": admin_count,
-            "support": support_count,
-            "analyst": analyst_count,
-        }
-    }
