@@ -347,6 +347,62 @@ async def get_customer_otp(
 
 
 # ============================================================================
+# Delete User by Phone (Admin Tool)
+# ============================================================================
+
+@router.delete("/by-phone/{phone}", status_code=200)
+async def delete_user_by_phone(
+    phone: str,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete a customer user by phone number (hard delete).
+    Requires admin authentication.
+
+    Path Parameters:
+    - phone: The phone number to search for (will match partial)
+    """
+    # Verify admin token
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        verify_token(token)
+    else:
+        raise HTTPException(status_code=401, detail="Admin authentication required")
+
+    # Clean the phone number - keep only digits
+    phone_digits = ''.join(filter(str.isdigit, phone))
+
+    # Search for users with matching phone number
+    users = db.query(User).filter(User.phone.ilike(f"%{phone_digits}%")).all()
+
+    if not users:
+        # Also try with +1 prefix
+        users = db.query(User).filter(User.phone.ilike(f"%{phone_digits[-10:]}%")).all()
+
+    if not users:
+        raise HTTPException(status_code=404, detail=f"No users found with phone number containing {phone}")
+
+    deleted_users = []
+    for user in users:
+        deleted_users.append({
+            "id": str(user.id),
+            "email": user.email,
+            "phone": user.phone,
+            "name": user.name
+        })
+        db.delete(user)
+
+    db.commit()
+
+    return {
+        "success": True,
+        "deleted_count": len(deleted_users),
+        "deleted_users": deleted_users
+    }
+
+
+# ============================================================================
 # Statistics Endpoint
 # ============================================================================
 
