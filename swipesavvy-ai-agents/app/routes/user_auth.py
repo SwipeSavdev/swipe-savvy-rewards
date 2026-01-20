@@ -398,15 +398,14 @@ async def signup(
 
     return {
         "success": True,
-        "message": "Account created successfully. Please verify your email and phone number.",
+        "message": "Account created successfully. Please verify your email.",
         "user_id": str(user.id),
         "next_steps": [
-            "Check your email for verification link",
-            "Enter the 6-digit code sent to your phone"
+            "Check your email for the 6-digit verification code"
         ],
         "verification_required": {
             "email": True,
-            "phone": True
+            "phone": False
         }
     }
 
