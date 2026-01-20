@@ -27,7 +27,7 @@ jobs:
       - name: Build Docker image
         run: |
           cd swipesavvy-ai-agents
-          docker build -t swipesavvy-api:latest .
+          docker build --no-cache -t swipesavvy-api:latest .
 
       - name: Get AWS Account ID
         id: aws-account
@@ -49,11 +49,33 @@ jobs:
           docker push ${{ steps.aws-account.outputs.account_id }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:latest
           docker push ${{ steps.aws-account.outputs.account_id }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:${{ github.sha }}
 
+      - name: Update ECS Task Definition
+        id: task-def
+        run: |
+          # Get current task definition
+          aws ecs describe-task-definition --task-definition swipe-savvy-api --region us-east-1 \
+            --query 'taskDefinition' > /tmp/task-def.json
+
+          # Update image to use the new commit SHA
+          NEW_IMAGE="${{ steps.aws-account.outputs.account_id }}.dkr.ecr.us-east-1.amazonaws.com/swipesavvy-api:${{ github.sha }}"
+
+          # Create new task definition with updated image
+          cat /tmp/task-def.json | jq --arg IMAGE "$NEW_IMAGE" \
+            'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) |
+             .containerDefinitions[0].image = $IMAGE' > /tmp/task-def-new.json
+
+          # Register new task definition
+          NEW_TASK_DEF=$(aws ecs register-task-definition --cli-input-json file:///tmp/task-def-new.json \
+            --region us-east-1 --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "task_def=$NEW_TASK_DEF" >> $GITHUB_OUTPUT
+          echo "📋 New task definition: $NEW_TASK_DEF"
+
       - name: Deploy to ECS
         run: |
           aws ecs update-service \
             --cluster swipe-savvy-prod \
             --service swipe-savvy-api-blue \
+            --task-definition ${{ steps.task-def.outputs.task_def }} \
             --force-new-deployment \
             --region us-east-1 || echo "⚠️ ECS deployment skipped (service may not exist)"
 
