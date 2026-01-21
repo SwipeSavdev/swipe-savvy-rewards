@@ -339,6 +339,98 @@ async def delete_user_by_phone(
     }
 
 
+@router.delete("/by-email/{email:path}", status_code=200)
+async def delete_user_by_email(
+    email: str,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete a customer user by email address (hard delete).
+    Requires admin authentication.
+
+    Path Parameters:
+    - email: The email address to delete
+    """
+    # Verify admin token
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        verify_token(token)
+    else:
+        raise HTTPException(status_code=401, detail="Admin authentication required")
+
+    # Search for user with matching email
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail=f"No user found with email {email}")
+
+    deleted_user = {
+        "id": str(user.id),
+        "email": user.email,
+        "phone": user.phone,
+        "name": user.name
+    }
+
+    db.delete(user)
+    db.commit()
+
+    logger.info(f"Deleted user with email {email}")
+
+    return {
+        "success": True,
+        "deleted_user": deleted_user
+    }
+
+
+@router.post("/delete-by-emails", status_code=200)
+async def delete_users_by_emails(
+    emails: List[str] = Body(..., embed=True),
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete multiple customer users by email addresses (hard delete).
+    Requires admin authentication.
+
+    Request Body:
+    - emails: List of email addresses to delete
+    """
+    # Verify admin token
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        verify_token(token)
+    else:
+        raise HTTPException(status_code=401, detail="Admin authentication required")
+
+    # Search for users with matching emails
+    users = db.query(User).filter(User.email.in_(emails)).all()
+
+    if not users:
+        raise HTTPException(status_code=404, detail=f"No users found with provided emails")
+
+    deleted_users = []
+    for user in users:
+        deleted_users.append({
+            "id": str(user.id),
+            "email": user.email,
+            "phone": user.phone,
+            "name": user.name
+        })
+        db.delete(user)
+
+    db.commit()
+
+    logger.info(f"Deleted {len(deleted_users)} users by email: {[u['email'] for u in deleted_users]}")
+
+    return {
+        "success": True,
+        "deleted_count": len(deleted_users),
+        "deleted_users": deleted_users,
+        "not_found": [e for e in emails if e not in [u['email'] for u in deleted_users]]
+    }
+
+
 # ============================================================================
 # Wildcard routes - these MUST come AFTER specific routes
 # ============================================================================

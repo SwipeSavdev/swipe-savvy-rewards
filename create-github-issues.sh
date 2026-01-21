@@ -413,9 +413,9 @@ Three Together.AI API keys committed to \`.env\` file in git repository.
 
 ## Exposed Keys
 \`\`\`bash
-TOGETHER_API_KEY=***REMOVED***
-TOGETHER_API_KEY_GENERAL=***REMOVED***
-TOGETHER_API_KEY_MARKETING=***REMOVED***
+TOGETHER_API_KEY=tgp_v1_CiR5vpdhsL3ldr9lCZ1G4hl0NI2KJ0y3zRuu09DV8dQ
+TOGETHER_API_KEY_GENERAL=tgp_v1_tQpBdcqfgcRh_35VBkzg9ACY3kafI7knXI5vjt1stlQ
+TOGETHER_API_KEY_MARKETING=tgp_v1_DJ_EOH64PwAZzmAnfIttzGr79A-PQZ3oN8P2h3EfhB8
 \`\`\`
 
 ## Immediate Actions Required
