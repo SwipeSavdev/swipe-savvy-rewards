@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
-import { LIGHT_THEME, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
+import { Text, View, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
+import { SPACING, RADIUS, TYPOGRAPHY } from '../theme';
 
 interface CardProps {
   children: React.ReactNode;
@@ -9,17 +10,24 @@ interface CardProps {
 }
 
 export const Card: React.FC<CardProps> = ({ children, padding = SPACING[4], style }) => {
-  const styles = StyleSheet.create({
-    card: {
-      backgroundColor: LIGHT_THEME.panel,
-      borderRadius: RADIUS.xl,
-      borderWidth: 1,
-      borderColor: LIGHT_THEME.stroke,
-      padding,
-    },
-  });
+  const { colors } = useTheme();
 
-  return <View style={[styles.card, style]}>{children}</View>;
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: colors.panel,
+          borderRadius: RADIUS.xl,
+          borderWidth: 1,
+          borderColor: colors.stroke,
+          padding,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
 };
 
 interface ButtonProps {
@@ -37,46 +45,46 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   disabled,
 }) => {
-  const styles = StyleSheet.create({
-    button: {
+  const { colors } = useTheme();
+
+  const getButtonStyle = (): ViewStyle => {
+    const base: ViewStyle = {
       borderRadius: RADIUS.pill,
       paddingVertical: SPACING[2],
       paddingHorizontal: SPACING[3],
       justifyContent: 'center',
       alignItems: 'center',
       opacity: disabled ? 0.5 : 1,
-    },
-    buttonPrimary: {
-      backgroundColor: LIGHT_THEME.brand,
-    },
-    buttonSecondary: {
-      backgroundColor: LIGHT_THEME.panel2,
-      borderWidth: 1,
-      borderColor: LIGHT_THEME.stroke,
-    },
-    buttonGhost: {
-      backgroundColor: 'transparent',
-    },
-    text: {
-      color: variant === 'primary' ? 'white' : LIGHT_THEME.text,
-      fontSize: TYPOGRAPHY.fontSize.body,
-      fontWeight: '600',
-    },
-  });
+    };
+
+    switch (variant) {
+      case 'primary':
+        return { ...base, backgroundColor: colors.brand };
+      case 'ghost':
+        return { ...base, backgroundColor: 'transparent' };
+      default:
+        return {
+          ...base,
+          backgroundColor: colors.panel2,
+          borderWidth: 1,
+          borderColor: colors.stroke,
+        };
+    }
+  };
+
+  const textStyle: TextStyle = {
+    color: variant === 'primary' ? '#FFFFFF' : colors.text,
+    fontSize: TYPOGRAPHY.fontSize.body,
+    fontWeight: '600',
+  };
 
   return (
     <TouchableOpacity
       disabled={disabled}
       onPress={onPress}
-      style={[
-        styles.button,
-        variant === 'primary' && styles.buttonPrimary,
-        variant === 'secondary' && styles.buttonSecondary,
-        variant === 'ghost' && styles.buttonGhost,
-        style,
-      ]}
+      style={[getButtonStyle(), style]}
     >
-      <Text style={styles.text}>{children}</Text>
+      <Text style={textStyle}>{children}</Text>
     </TouchableOpacity>
   );
 };
@@ -88,25 +96,31 @@ interface AvatarProps {
 }
 
 export const Avatar: React.FC<AvatarProps> = ({ initials, size = 40, style }) => {
-  const styles = StyleSheet.create({
-    avatar: {
-      width: size,
-      height: size,
-      borderRadius: RADIUS.md,
-      backgroundColor: LIGHT_THEME.brand,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    text: {
-      color: 'white',
-      fontSize: size * 0.4,
-      fontWeight: '800',
-    },
-  });
+  const { colors } = useTheme();
 
   return (
-    <View style={[styles.avatar, style]}>
-      <Text style={styles.text}>{initials}</Text>
+    <View
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius: RADIUS.md,
+          backgroundColor: colors.brand,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        style,
+      ]}
+    >
+      <Text
+        style={{
+          color: '#FFFFFF',
+          fontSize: size * 0.4,
+          fontWeight: '800',
+        }}
+      >
+        {initials}
+      </Text>
     </View>
   );
 };
@@ -118,51 +132,49 @@ interface BadgeProps {
 }
 
 export const Badge: React.FC<BadgeProps> = ({ label, variant = 'default', style }) => {
-  const styles = StyleSheet.create({
-    badge: {
+  const { colors } = useTheme();
+
+  const getBadgeStyle = (): ViewStyle => {
+    const base: ViewStyle = {
       borderRadius: RADIUS.pill,
       paddingVertical: SPACING[1],
       paddingHorizontal: SPACING[2],
       alignSelf: 'flex-start',
-    },
-    badgeDefault: {
-      backgroundColor: LIGHT_THEME.panel2,
       borderWidth: 1,
-      borderColor: LIGHT_THEME.stroke,
-    },
-    badgeSuccess: {
-      backgroundColor: LIGHT_THEME.successBg,
-      borderWidth: 1,
-      borderColor: LIGHT_THEME.success,
-    },
-    badgeWarning: {
-      backgroundColor: LIGHT_THEME.warningBg,
-      borderWidth: 1,
-      borderColor: LIGHT_THEME.warning,
-    },
-    text: {
-      fontSize: TYPOGRAPHY.fontSize.meta,
-      fontWeight: '600',
-      color:
-        variant === 'success'
-          ? LIGHT_THEME.success
-          : variant === 'warning'
-          ? LIGHT_THEME.warning
-          : LIGHT_THEME.muted,
-    },
-  });
+    };
+
+    switch (variant) {
+      case 'success':
+        return { ...base, backgroundColor: colors.successBg, borderColor: colors.success };
+      case 'warning':
+        return { ...base, backgroundColor: colors.warningBg, borderColor: colors.warning };
+      default:
+        return { ...base, backgroundColor: colors.panel2, borderColor: colors.stroke };
+    }
+  };
+
+  const getTextColor = () => {
+    switch (variant) {
+      case 'success':
+        return colors.success;
+      case 'warning':
+        return colors.warning;
+      default:
+        return colors.muted;
+    }
+  };
 
   return (
-    <View
-      style={[
-        styles.badge,
-        variant === 'default' && styles.badgeDefault,
-        variant === 'success' && styles.badgeSuccess,
-        variant === 'warning' && styles.badgeWarning,
-        style,
-      ]}
-    >
-      <Text style={styles.text}>{label}</Text>
+    <View style={[getBadgeStyle(), style]}>
+      <Text
+        style={{
+          fontSize: TYPOGRAPHY.fontSize.meta,
+          fontWeight: '600',
+          color: getTextColor(),
+        }}
+      >
+        {label}
+      </Text>
     </View>
   );
 };
@@ -180,6 +192,8 @@ export const IconBox: React.FC<IconBoxProps> = ({
   size = 44,
   style,
 }) => {
+  const { colors } = useTheme();
+
   const getBackgroundColor = () => {
     switch (variant) {
       case 'green':
@@ -193,20 +207,25 @@ export const IconBox: React.FC<IconBoxProps> = ({
     }
   };
 
-  const styles = StyleSheet.create({
-    iconBox: {
-      width: size,
-      height: size,
-      borderRadius: RADIUS.lg,
-      backgroundColor: getBackgroundColor(),
-      borderWidth: 1,
-      borderColor: LIGHT_THEME.stroke,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-  });
-
-  return <View style={[styles.iconBox, style]}>{icon}</View>;
+  return (
+    <View
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius: RADIUS.lg,
+          backgroundColor: getBackgroundColor(),
+          borderWidth: 1,
+          borderColor: colors.stroke,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        style,
+      ]}
+    >
+      {icon}
+    </View>
+  );
 };
 // Export all components from this file
 export { TierProgressBar } from './TierProgressBar';

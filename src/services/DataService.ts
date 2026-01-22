@@ -162,11 +162,15 @@ class DataService {
     this.token = token;
   }
 
+  getAuthToken(): string | null {
+    return this.token;
+  }
+
   setUserId(userId: string) {
     this.userId = userId;
   }
 
-  private getUserId(): string {
+  getUserId(): string {
     // Return actual user ID or default for demo
     return this.userId || 'demo_user';
   }

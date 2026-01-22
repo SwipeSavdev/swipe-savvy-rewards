@@ -1,4 +1,3 @@
-import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { StatusBar, View } from 'react-native';
@@ -25,15 +24,13 @@ function RootNavigatorComponent() {
         barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={colors.statusbar}
       />
-      <NavigationContainer>
-        <Stack.Navigator id="root-navigator" screenOptions={{ headerShown: false }}>
-          {isAuthenticated ? (
-            <Stack.Screen name="Main" component={MemoizedMainStack} />
-          ) : (
-            <Stack.Screen name="Auth" component={MemoizedAuthStack} />
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
+      <Stack.Navigator id="root-navigator" screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <Stack.Screen name="Main" component={MemoizedMainStack} />
+        ) : (
+          <Stack.Screen name="Auth" component={MemoizedAuthStack} />
+        )}
+      </Stack.Navigator>
       {isAuthenticated && <MemoizedFloatingAIButton />}
     </View>
   );

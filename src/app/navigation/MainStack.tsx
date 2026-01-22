@@ -8,7 +8,6 @@ import { AccountBalanceDetailScreen } from '../../features/accounts/screens/Acco
 import { AccountsScreen } from '../../features/accounts/screens/AccountsScreen';
 import { BudgetDetailScreen } from '../../features/accounts/screens/BudgetDetailScreen';
 import { BudgetScreen } from '../../features/accounts/screens/BudgetScreen';
-import { CardsScreen } from '../../features/accounts/screens/CardsScreen';
 import { LeaderboardScreen } from '../../features/ai-concierge/screens/LeaderboardScreen';
 import { RewardsDonateScreen } from '../../features/ai-concierge/screens/RewardsDonateScreen';
 import { RewardsScreen } from '../../features/ai-concierge/screens/RewardsScreen';
@@ -22,6 +21,10 @@ import { WalletScreen } from '../../features/wallet/screens/WalletScreen';
 import { SettingsScreen } from '../../features/settings/screens/SettingsScreen';
 import { PreferredMerchantsScreen } from '../../features/merchants/screens/PreferredMerchantsScreen';
 import { DealsScreen } from '../../features/merchants/screens/DealsScreen';
+// FIS Card Management Screens
+import { FISCardsScreen } from '../../features/wallet/screens/FISCardsScreen';
+import { FISCardDetailScreen } from '../../features/wallet/screens/FISCardDetailScreen';
+import { FISIssueCardScreen } from '../../features/wallet/screens/FISIssueCardScreen';
 
 export type MainTabParamList = {
   Home: undefined;
@@ -46,6 +49,17 @@ export type MainStackParamList = {
   Wallet: undefined;
   PreferredMerchants: undefined;
   Deals: undefined;
+  // FIS Card Management
+  FISCards: undefined;
+  FISCardDetail: { cardId: string };
+  FISIssueCard: undefined;
+  FISCardControls: { cardId: string };
+  FISCardTransactions: { cardId: string };
+  FISPinManagement: { cardId: string };
+  FISDigitalWallet: undefined;
+  FISTravelNotice: { cardId: string };
+  FISReportFraud: { cardId: string };
+  FISReplaceCard: { cardId: string; reason: string };
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -54,7 +68,7 @@ const Stack = createNativeStackNavigator<MainStackParamList>();
 const MemoizedHomeScreen = React.memo(HomeScreen);
 const MemoizedAccountsScreen = React.memo(AccountsScreen);
 const MemoizedTransfersScreen = React.memo(TransfersScreen);
-const MemoizedCardsScreen = React.memo(CardsScreen);
+const MemoizedFISCardsScreen = React.memo(FISCardsScreen);
 const MemoizedSettingsScreen = React.memo(SettingsScreen);
 
 // Bottom Tab Navigator - memoized to prevent unnecessary re-renders
@@ -102,7 +116,7 @@ const TabNavigatorComponent = React.memo(function TabNavigator() {
       />
       <Tab.Screen
         name="Cards"
-        component={MemoizedCardsScreen}
+        component={MemoizedFISCardsScreen}
         options={{ title: 'Cards' }}
       />
       <Tab.Screen
@@ -183,6 +197,22 @@ export const MainStack = React.memo(function MainStackComponent() {
             name="Deals"
             component={DealsScreen}
             options={{ title: 'Deals & Offers', headerShown: true }}
+          />
+          {/* FIS Card Management Screens */}
+          <Stack.Screen
+            name="FISCards"
+            component={FISCardsScreen}
+            options={{ title: 'My Cards', headerShown: true }}
+          />
+          <Stack.Screen
+            name="FISCardDetail"
+            component={FISCardDetailScreen}
+            options={{ title: 'Card Details', headerShown: true }}
+          />
+          <Stack.Screen
+            name="FISIssueCard"
+            component={FISIssueCardScreen}
+            options={{ title: 'Get New Card', headerShown: true }}
           />
         </Stack.Group>
 

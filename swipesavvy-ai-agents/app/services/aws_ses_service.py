@@ -201,8 +201,8 @@ class AWSSESService:
         user_name: str = "User"
     ) -> bool:
         """Send email verification link"""
-        base_url = os.getenv("APP_BASE_URL", "https://app.swipesavvy.com")
-        verification_link = f"{base_url}/verify-email?token={verification_token}"
+        base_url = os.getenv("APP_BASE_URL", "https://www.swipesavvy.com")
+        verification_link = f"{base_url}/verify-email/?token={verification_token}"
 
         subject = "Verify your SwipeSavvy account"
         html_body = f"""

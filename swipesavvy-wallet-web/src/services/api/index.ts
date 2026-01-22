@@ -30,6 +30,23 @@ export type { CreateBudgetPayload, UpdateBudgetPayload, BudgetSummary } from './
 export { cardsApi } from './cardsApi'
 export type { CardSettings, CardSpendingLimits } from './cardsApi'
 
+// FIS Cards API (FIS Global Payment One - Debit Card Management)
+export { fisCardsApi } from './fisCardsApi'
+export type {
+  FISCard,
+  FISCardControls,
+  FISTransaction,
+  FISAlert,
+  FISWalletToken,
+  TravelNotice,
+  FraudReport,
+  SpendingLimits,
+  MerchantControls,
+  GeoControls,
+  IssueVirtualCardRequest,
+  IssuePhysicalCardRequest,
+} from './fisCardsApi'
+
 // Banks API
 export { banksApi } from './banksApi'
 

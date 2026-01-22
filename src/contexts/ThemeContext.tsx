@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import React, { createContext, useContext, useState } from 'react';
 import { DARK_THEME, LIGHT_THEME } from '../design-system/theme';
 
 export type ThemeMode = 'light' | 'dark';
@@ -18,20 +17,9 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const systemColorScheme = useColorScheme();
+  // Always use light mode as the app was designed for light theme
+  // The app doesn't currently support dark mode - all screens use light colors
   const [mode, setMode] = useState<ThemeMode>('light');
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Initialize theme on mount
-  useEffect(() => {
-    // Default to system preference if available
-    if (systemColorScheme === 'dark') {
-      setMode('dark');
-    } else {
-      setMode('light');
-    }
-    setIsInitialized(true);
-  }, [systemColorScheme]);
 
   const colors = mode === 'dark' ? DARK_THEME : LIGHT_THEME;
 
@@ -45,11 +33,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setMode,
     toggleTheme,
   };
-
-  // Don't render children until theme is initialized
-  if (!isInitialized) {
-    return null;
-  }
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
