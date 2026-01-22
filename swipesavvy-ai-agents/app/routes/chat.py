@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, validator
 
 from app.database import get_db
-from app.core.auth import verify_token_string
+from app.core.auth import verify_token_string, verify_jwt_token
 from app.services.websocket_manager import manager, WebSocketMessage
 from app.services.chat_service import ChatService
 from app.models.chat import ChatMessageStatus, ChatSessionStatus, ChatParticipantRole

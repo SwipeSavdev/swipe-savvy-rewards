@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Set, Dict
 
 from app.database import get_db
-from app.core.auth import verify_token_string
+from app.core.auth import verify_token_string, verify_jwt_token
 from app.services.chat_dashboard_service import ChatDashboardService
 
 logger = logging.getLogger(__name__)
