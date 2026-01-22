@@ -207,6 +207,10 @@ async def root():
             "ai_concierge": "/chat",
             "support": "/api/support",
             "marketing_ai": "/api/v1/marketing-ai",
+            "fis_cards": "/api/v1/cards",
+            "fis_fraud": "/api/v1/fraud",
+            "fis_alerts": "/api/v1/alerts",
+            "fis_webhooks": "/api/v1/webhooks/fis",
             "docs": "/docs",
             "health": "/health",
             "ready": "/ready"
@@ -436,6 +440,50 @@ try:
     logger.info("✅ Marketing AI routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include marketing AI routes: {e}")
+
+# ============================================================================
+# FIS Global Payment One - Card Management Routes
+# ============================================================================
+
+# Include FIS Card Management routes (Card issuance, controls, PIN)
+try:
+    from app.routes.fis_cards import router as fis_cards_router
+    app.include_router(fis_cards_router)
+    logger.info("✅ FIS Card Management routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include FIS card routes: {e}")
+
+# Include FIS Transaction routes (History, analytics, disputes)
+try:
+    from app.routes.fis_transactions import router as fis_transactions_router
+    app.include_router(fis_transactions_router)
+    logger.info("✅ FIS Transaction routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include FIS transaction routes: {e}")
+
+# Include FIS Fraud & Security routes (Alerts, travel notices, risk)
+try:
+    from app.routes.fis_fraud import router as fis_fraud_router
+    app.include_router(fis_fraud_router)
+    logger.info("✅ FIS Fraud & Security routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include FIS fraud routes: {e}")
+
+# Include FIS Digital Wallet routes (Apple Pay, Google Pay, Samsung Pay)
+try:
+    from app.routes.fis_wallet import router as fis_wallet_router
+    app.include_router(fis_wallet_router)
+    logger.info("✅ FIS Digital Wallet routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include FIS wallet routes: {e}")
+
+# Include FIS Webhook handler routes
+try:
+    from app.routes.fis_webhooks import router as fis_webhooks_router
+    app.include_router(fis_webhooks_router)
+    logger.info("✅ FIS Webhook routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not include FIS webhook routes: {e}")
 
 # Include AI Concierge routes (existing)
 try:

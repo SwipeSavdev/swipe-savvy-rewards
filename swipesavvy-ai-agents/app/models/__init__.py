@@ -20,6 +20,8 @@ from datetime import datetime
 ADMIN_USERS_ID = 'admin_users.id'
 USERS_ID = 'users.id'
 CHAT_SESSIONS_ID = 'chat_sessions.id'
+FIS_CARDS_ID = 'fis_cards.id'
+FIS_TRANSACTIONS_ID = 'fis_transactions.id'
 
 # Import chat models to register them with the database Base
 # Note: Don't import specific chat classes here as they may conflict with our own definitions
@@ -902,6 +904,375 @@ class MerchantOnboarding(Base):
     )
 
 
+# ============================================
+# FIS Global Card Management Models
+# ============================================
+
+class FISCard(Base):
+    """
+    FIS Global Payment One - Card records
+    Stores card data for debit cards issued through FIS
+    """
+    __tablename__ = "fis_cards"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+
+    # FIS Reference IDs
+    fis_card_id = Column(String(100), unique=True, nullable=False, index=True)
+    fis_card_token = Column(String(255), nullable=False)  # Tokenized card reference
+    fis_program_id = Column(String(100), nullable=True)  # Card program identifier
+
+    # Card Details
+    card_type = Column(String(20), nullable=False, index=True)  # virtual, physical
+    status = Column(String(50), default='pending_activation', nullable=False, index=True)
+    last_four = Column(String(4), nullable=False)
+    expiry_month = Column(Integer, nullable=False)
+    expiry_year = Column(Integer, nullable=False)
+    cardholder_name = Column(String(255), nullable=False)
+
+    # Card Network
+    card_network = Column(String(20), default='visa')  # visa, mastercard
+    bin = Column(String(6), nullable=True)  # Bank Identification Number
+
+    # Physical Card Details
+    shipping_address_id = Column(UUID, nullable=True)  # Reference to user address
+    shipping_status = Column(String(50), nullable=True)  # ordered, shipped, delivered
+    shipping_tracking = Column(String(100), nullable=True)
+    shipped_at = Column(DateTime, nullable=True)
+    delivered_at = Column(DateTime, nullable=True)
+
+    # Activation
+    activated_at = Column(DateTime, nullable=True)
+    activation_code = Column(String(20), nullable=True)  # For physical card activation
+
+    # Lifecycle
+    locked_at = Column(DateTime, nullable=True)
+    locked_reason = Column(String(255), nullable=True)
+    frozen_at = Column(DateTime, nullable=True)
+    frozen_reason = Column(String(255), nullable=True)
+    closed_at = Column(DateTime, nullable=True)
+    closed_reason = Column(String(255), nullable=True)
+    replaced_by_id = Column(UUID, ForeignKey(FIS_CARDS_ID), nullable=True)
+
+    # Metadata
+    is_primary = Column(Boolean, default=False)
+    nickname = Column(String(100), nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", backref="fis_cards")
+    controls = relationship("FISCardControl", back_populates="card", uselist=False)
+    wallet_tokens = relationship("FISWalletToken", back_populates="card")
+
+    __table_args__ = (
+        CheckConstraint("card_type IN ('virtual', 'physical')"),
+        CheckConstraint("status IN ('pending_activation', 'active', 'inactive', 'locked', 'frozen', 'lost', 'stolen', 'expired', 'closed')"),
+        CheckConstraint("card_network IN ('visa', 'mastercard', 'discover', 'amex')"),
+    )
+
+
+class FISCardControl(Base):
+    """
+    FIS Global Payment One - Card Controls
+    Stores user-configurable card settings (spending limits, merchant controls, etc.)
+    """
+    __tablename__ = "fis_card_controls"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    card_id = Column(UUID, ForeignKey(FIS_CARDS_ID), unique=True, nullable=False, index=True)
+
+    # Spending Limits
+    daily_limit = Column(Numeric(10, 2), nullable=True)
+    weekly_limit = Column(Numeric(10, 2), nullable=True)
+    monthly_limit = Column(Numeric(10, 2), nullable=True)
+    per_transaction_limit = Column(Numeric(10, 2), nullable=True)
+
+    # Daily Spend Tracking
+    daily_spent = Column(Numeric(10, 2), default=0)
+    daily_spent_reset_at = Column(DateTime, nullable=True)
+
+    # Channel Controls
+    atm_enabled = Column(Boolean, default=True)
+    pos_enabled = Column(Boolean, default=True)
+    ecommerce_enabled = Column(Boolean, default=True)
+    contactless_enabled = Column(Boolean, default=True)
+    international_enabled = Column(Boolean, default=False)
+
+    # Merchant Category Controls (JSON array of blocked MCC codes)
+    blocked_mcc_codes = Column(JSONB, default=list)  # e.g., ["7995"] for gambling
+
+    # Geographic Controls
+    allowed_countries = Column(JSONB, default=lambda: ["US"])  # ISO country codes
+    blocked_countries = Column(JSONB, default=list)
+
+    # Time-based Controls
+    allowed_hours_start = Column(Integer, nullable=True)  # 0-23
+    allowed_hours_end = Column(Integer, nullable=True)  # 0-23
+    allowed_days = Column(JSONB, default=lambda: [0, 1, 2, 3, 4, 5, 6])  # 0=Monday
+
+    # Alert Preferences
+    alert_on_transaction = Column(Boolean, default=True)
+    alert_on_decline = Column(Boolean, default=True)
+    alert_on_international = Column(Boolean, default=True)
+    alert_threshold = Column(Numeric(10, 2), nullable=True)  # Alert on transactions above this
+
+    # FIS Sync
+    last_synced_to_fis = Column(DateTime, nullable=True)
+    fis_sync_status = Column(String(50), default='pending')
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    card = relationship("FISCard", back_populates="controls")
+
+
+class FISPinRequest(Base):
+    """
+    FIS Global Payment One - PIN Management Audit Trail
+    Tracks all PIN-related operations for security and compliance
+    """
+    __tablename__ = "fis_pin_requests"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    card_id = Column(UUID, ForeignKey(FIS_CARDS_ID), nullable=False, index=True)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+
+    # Operation Details
+    operation = Column(String(50), nullable=False)  # set, change, reset, validate
+    status = Column(String(50), default='pending', nullable=False)
+    fis_request_id = Column(String(100), nullable=True)
+
+    # Security
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    device_id = Column(String(255), nullable=True)
+
+    # Verification
+    verification_method = Column(String(50), nullable=True)  # otp, biometric, security_questions
+    verified_at = Column(DateTime, nullable=True)
+
+    # Error Tracking
+    error_code = Column(String(50), nullable=True)
+    error_message = Column(Text, nullable=True)
+    attempts = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    completed_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    card = relationship("FISCard", backref="pin_requests")
+    user = relationship("User", backref="fis_pin_requests")
+
+    __table_args__ = (
+        CheckConstraint("operation IN ('set', 'change', 'reset', 'validate')"),
+        CheckConstraint("status IN ('pending', 'processing', 'completed', 'failed', 'expired')"),
+    )
+
+
+class FISTransaction(Base):
+    """
+    FIS Global Payment One - Transaction Records
+    Stores card transactions received from FIS (via webhooks or API polling)
+    """
+    __tablename__ = "fis_transactions"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    card_id = Column(UUID, ForeignKey(FIS_CARDS_ID), nullable=False, index=True)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+
+    # FIS Transaction Reference
+    fis_transaction_id = Column(String(100), unique=True, nullable=False, index=True)
+    authorization_code = Column(String(50), nullable=True)
+
+    # Transaction Details
+    transaction_type = Column(String(50), nullable=False)  # purchase, atm_withdrawal, refund, etc.
+    status = Column(String(50), default='pending', nullable=False, index=True)
+    amount = Column(Numeric(12, 2), nullable=False)
+    currency = Column(String(3), default='USD')
+    local_amount = Column(Numeric(12, 2), nullable=True)  # For international
+    local_currency = Column(String(3), nullable=True)
+    exchange_rate = Column(Numeric(10, 6), nullable=True)
+
+    # Merchant Details
+    merchant_name = Column(String(255), nullable=True)
+    merchant_id = Column(String(100), nullable=True)
+    merchant_category_code = Column(String(10), nullable=True)
+    merchant_city = Column(String(100), nullable=True)
+    merchant_state = Column(String(50), nullable=True)
+    merchant_country = Column(String(3), nullable=True)
+    merchant_postal = Column(String(20), nullable=True)
+
+    # Transaction Metadata
+    is_international = Column(Boolean, default=False)
+    is_card_present = Column(Boolean, default=True)
+    is_recurring = Column(Boolean, default=False)
+    entry_mode = Column(String(50), nullable=True)  # chip, swipe, contactless, manual
+
+    # Rewards (calculated locally)
+    points_earned = Column(Integer, default=0)
+    cashback_amount = Column(Numeric(10, 2), default=0)
+
+    # Dispute Tracking
+    is_disputed = Column(Boolean, default=False)
+    dispute_id = Column(UUID, nullable=True)
+    dispute_status = Column(String(50), nullable=True)
+
+    # Timestamps
+    transaction_at = Column(DateTime, nullable=False, index=True)  # FIS timestamp
+    authorized_at = Column(DateTime, nullable=True)
+    settled_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    card = relationship("FISCard", backref="transactions")
+    user = relationship("User", backref="fis_transactions")
+
+    __table_args__ = (
+        CheckConstraint("transaction_type IN ('purchase', 'atm_withdrawal', 'refund', 'transfer', 'fee', 'adjustment', 'reversal')"),
+        CheckConstraint("status IN ('pending', 'authorized', 'completed', 'declined', 'reversed', 'disputed', 'settled')"),
+    )
+
+
+class FISWalletToken(Base):
+    """
+    FIS Global Payment One - Digital Wallet Tokens
+    Tracks Apple Pay, Google Pay, and other digital wallet provisioning
+    """
+    __tablename__ = "fis_wallet_tokens"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    card_id = Column(UUID, ForeignKey(FIS_CARDS_ID), nullable=False, index=True)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+
+    # Token Details
+    token_id = Column(String(100), unique=True, nullable=False, index=True)
+    dpan_last_four = Column(String(4), nullable=True)  # Device PAN last 4
+    wallet_type = Column(String(50), nullable=False)  # apple_pay, google_pay, samsung_pay
+    token_status = Column(String(50), default='active', nullable=False)
+
+    # Device Info
+    device_id = Column(String(255), nullable=True)
+    device_name = Column(String(255), nullable=True)
+    device_type = Column(String(100), nullable=True)  # iPhone, Android, Watch
+
+    # Lifecycle
+    provisioned_at = Column(DateTime, nullable=False)
+    suspended_at = Column(DateTime, nullable=True)
+    resumed_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    card = relationship("FISCard", back_populates="wallet_tokens")
+    user = relationship("User", backref="fis_wallet_tokens")
+
+    __table_args__ = (
+        CheckConstraint("wallet_type IN ('apple_pay', 'google_pay', 'samsung_pay', 'fitbit_pay', 'garmin_pay')"),
+        CheckConstraint("token_status IN ('active', 'suspended', 'deleted', 'inactive')"),
+    )
+
+
+class FISKYCVerification(Base):
+    """
+    FIS Global - KYC Verification Records
+    Tracks identity verification through FIS
+    """
+    __tablename__ = "fis_kyc_verifications"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+
+    # FIS Reference
+    fis_verification_id = Column(String(100), unique=True, nullable=False, index=True)
+
+    # Verification Details
+    verification_type = Column(String(50), nullable=False)  # identity, document, address, ofac
+    status = Column(String(50), default='pending', nullable=False, index=True)
+    risk_score = Column(Integer, nullable=True)  # 0-100
+
+    # Results
+    checks_passed = Column(JSONB, default=list)  # List of passed checks
+    checks_failed = Column(JSONB, default=list)  # List of failed checks
+    result_data = Column(JSONB, default=dict)  # Full verification result
+
+    # Error Tracking
+    error_code = Column(String(50), nullable=True)
+    error_message = Column(Text, nullable=True)
+
+    # Timestamps
+    submitted_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", backref="fis_kyc_verifications")
+
+    __table_args__ = (
+        CheckConstraint("verification_type IN ('identity', 'document', 'address', 'ofac', 'watchlist', 'credit')"),
+        CheckConstraint("status IN ('pending', 'processing', 'approved', 'rejected', 'review_required', 'expired')"),
+    )
+
+
+class FISFraudAlert(Base):
+    """
+    FIS Global Payment One - Fraud Alerts
+    Stores fraud alerts and suspicious activity notifications from FIS
+    """
+    __tablename__ = "fis_fraud_alerts"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    card_id = Column(UUID, ForeignKey(FIS_CARDS_ID), nullable=True, index=True)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+    transaction_id = Column(UUID, ForeignKey(FIS_TRANSACTIONS_ID), nullable=True)
+
+    # Alert Details
+    fis_alert_id = Column(String(100), unique=True, nullable=False, index=True)
+    alert_type = Column(String(50), nullable=False)
+    severity = Column(String(20), default='medium', nullable=False)
+    status = Column(String(50), default='open', nullable=False, index=True)
+
+    # Alert Data
+    description = Column(Text, nullable=True)
+    risk_score = Column(Integer, nullable=True)
+    risk_factors = Column(JSONB, default=list)
+
+    # Resolution
+    resolved_at = Column(DateTime, nullable=True)
+    resolved_by = Column(UUID, nullable=True)
+    resolution_action = Column(String(100), nullable=True)
+    resolution_notes = Column(Text, nullable=True)
+
+    # Timestamps
+    alerted_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    card = relationship("FISCard", backref="fraud_alerts")
+    user = relationship("User", backref="fis_fraud_alerts")
+    transaction = relationship("FISTransaction", backref="fraud_alerts")
+
+    __table_args__ = (
+        CheckConstraint("alert_type IN ('suspicious_transaction', 'velocity_breach', 'geo_anomaly', 'device_change', 'account_takeover', 'card_testing')"),
+        CheckConstraint("severity IN ('low', 'medium', 'high', 'critical')"),
+        CheckConstraint("status IN ('open', 'investigating', 'resolved', 'false_positive', 'escalated')"),
+    )
+
+
 # Export all models
 __all__ = [
     # Core models
@@ -948,4 +1319,12 @@ __all__ = [
     # Form models
     "ContactFormSubmission",
     "DemoRequestSubmission",
+    # FIS Global Card Management models
+    "FISCard",
+    "FISCardControl",
+    "FISPinRequest",
+    "FISTransaction",
+    "FISWalletToken",
+    "FISKYCVerification",
+    "FISFraudAlert",
 ]

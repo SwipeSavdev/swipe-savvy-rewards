@@ -13,8 +13,10 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuthStore } from '../stores/authStore';
+import { dataService } from '../../../services/DataService';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.swipesavvy.com/api/v1';
+const IS_DEV = __DEV__ || process.env.EXPO_PUBLIC_ENV === 'development';
 
 export function VerifyAccountScreen() {
   const navigation = useNavigation();
@@ -92,16 +94,26 @@ export function VerifyAccountScreen() {
       if (response.ok && data.success) {
         // Update auth store with tokens and mark as authenticated
         const { user } = useAuthStore.getState();
+        const verifiedUser = data.user ? {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          phone: data.user.phone,
+          kycTier: data.user.kyc_tier || 'tier1',
+          kycStatus: data.user.kyc_status || 'pending',
+          createdAt: new Date().toISOString(),
+        } : user;
+
+        // Set tokens in dataService for API calls
+        if (data.access_token) {
+          dataService.setAuthToken(data.access_token);
+        }
+        if (verifiedUser?.id) {
+          dataService.setUserId(verifiedUser.id);
+        }
+
         useAuthStore.setState({
-          user: data.user ? {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.name,
-            phone: data.user.phone,
-            kycTier: data.user.kyc_tier || 'tier1',
-            kycStatus: data.user.kyc_status || 'pending',
-            createdAt: new Date().toISOString(),
-          } : user,
+          user: verifiedUser,
           accessToken: data.access_token,
           refreshToken: data.refresh_token,
           isAuthenticated: true,
@@ -120,6 +132,28 @@ export function VerifyAccountScreen() {
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Development bypass - skip OTP verification
+  const handleDevBypass = () => {
+    const { user } = useAuthStore.getState();
+    if (user) {
+      // Set tokens in dataService for API calls
+      dataService.setAuthToken('dev-token-bypass');
+      dataService.setUserId(user.id);
+
+      // In dev mode, directly set as authenticated without OTP verification
+      useAuthStore.setState({
+        isAuthenticated: true,
+        accessToken: 'dev-token-bypass',
+        refreshToken: 'dev-refresh-bypass',
+      });
+      Alert.alert(
+        'Dev Mode',
+        'OTP verification bypassed for development.',
+        [{ text: 'Continue', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] }) }]
+      );
     }
   };
 
@@ -212,6 +246,13 @@ export function VerifyAccountScreen() {
         >
           <MaterialCommunityIcons name="arrow-left" size={20} color="#666" />
           <Text style={styles.backText}>Back to signup</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.devBypassButton}
+          onPress={handleDevBypass}
+        >
+          <Text style={styles.devBypassText}>Skip Verification (Dev Only)</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -309,5 +350,18 @@ const styles = StyleSheet.create({
   backText: {
     color: '#666',
     fontSize: 14,
+  },
+  devBypassButton: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#FFF3CD',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FAB915',
+  },
+  devBypassText: {
+    color: '#856404',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

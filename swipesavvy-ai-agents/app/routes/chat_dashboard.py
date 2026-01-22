@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Set, Dict
 
 from app.database import get_db
-from app.core.auth import verify_jwt_token
+from app.core.auth import verify_token_string
 from app.services.chat_dashboard_service import ChatDashboardService
 
 logger = logging.getLogger(__name__)
@@ -518,7 +518,7 @@ async def chat_dashboard_websocket(websocket: WebSocket):
         # Verify JWT token
         try:
             token = auth_message.get("data", {}).get("token")
-            user_id = verify_jwt_token(token)
+            user_id = verify_token_string(token)
         except Exception as e:
             logger.error(f"Authentication failed: {str(e)}")
             await websocket.send_json({

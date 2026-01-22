@@ -1,33 +1,39 @@
 {
   "expo": {
-    "owner": "swipesavvyapp",
+    "owner": "swipesavvy2026",
     "name": "SwipeSavvy",
     "slug": "swipesavvy-mobile-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "scheme": "swipesavvy",
-    "jsEngine": "jsc",
+    "jsEngine": "hermes",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.swipesavvy.mobileapp",
+      "buildNumber": "32",
       "infoPlist": {
         "NSFaceIDUsageDescription": "Allow SwipeSavvy to use Face ID for secure authentication",
         "NSLocationWhenInUseUsageDescription": "Allow SwipeSavvy to access your location for geo-based promotions",
         "NSMicrophoneUsageDescription": "Allow SwipeSavvy to use your microphone for voice commands",
-        "NSCameraUsageDescription": "Allow SwipeSavvy to use your camera to scan checks"
+        "NSCameraUsageDescription": "Allow SwipeSavvy to use your camera to scan checks",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FFF8DC"
       },
       "package": "com.swipesavvy.mobileapp",
+      "versionCode": 1,
       "permissions": [
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
@@ -52,17 +58,32 @@
           "icon": "./assets/notification-icon.png",
           "color": "#ffffff"
         }
+      ],
+      [
+        "expo-router",
+        {
+          "root": "./app"
+        }
       ]
     ],
     "extra": {
       "MOCK_API": "false",
-      "API_BASE_URL": "https://api.swipesavvy.com",
-      "AI_API_BASE_URL": "https://api.swipesavvy.com",
+      "API_BASE_URL": "https://api.swipesavvy.com/api/v1",
+      "AI_API_BASE_URL": "https://api.swipesavvy.com/api/v1",
       "WS_URL": "wss://api.swipesavvy.com/ws",
       "DEBUG_MODE": "false",
       "eas": {
-        "projectId": "fb1e9b41-db33-4225-9fb5-2cd27901b579"
+        "projectId": "df952ef6-f2ed-4931-a00c-1ee3d29f639b"
+      },
+      "router": {
+        "root": "./app"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/df952ef6-f2ed-4931-a00c-1ee3d29f639b"
     }
   }
 }

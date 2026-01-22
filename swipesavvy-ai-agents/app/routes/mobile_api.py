@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text, func
 
 from app.database import get_db
-from app.core.auth import verify_jwt_token
+from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
         )
     try:
         token = authorization.replace("Bearer ", "")
-        user_id = verify_jwt_token(token)
+        user_id = verify_token_string(token)
         if not user_id:
             raise HTTPException(
                 status_code=401,
@@ -239,7 +239,7 @@ def get_current_user_id(authorization: Optional[str] = Header(None)) -> Optional
         return None
     try:
         token = authorization.replace("Bearer ", "")
-        return verify_jwt_token(token)
+        return verify_token_string(token)
     except Exception:
         return None
 

@@ -97,7 +97,12 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
             });
             // Return data so caller can navigate to OTP screen
-            return { verification_required: true, user };
+            // Include dev_otp_code if available (for development testing)
+            return {
+              verification_required: true,
+              user,
+              dev_otp_code: data.dev_otp_code
+            };
           }
 
           // Set user context in DataService for API calls
@@ -277,6 +282,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        // Clear tokens from dataService
+        dataService.setAuthToken('');
+        dataService.setUserId('');
+
         set({
           user: null,
           accessToken: null,
@@ -312,6 +321,15 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      // Sync token to dataService when auth state is rehydrated from storage
+      onRehydrateStorage: () => (state) => {
+        if (state?.accessToken && state?.isAuthenticated) {
+          dataService.setAuthToken(state.accessToken);
+          if (state.user?.id) {
+            dataService.setUserId(state.user.id);
+          }
+        }
+      },
     }
   )
 );

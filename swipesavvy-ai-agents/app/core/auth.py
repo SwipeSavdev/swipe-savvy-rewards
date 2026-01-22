@@ -50,10 +50,19 @@ def create_access_token(user_id: str, expires_delta: Optional[timedelta] = None)
         raise HTTPException(status_code=500, detail="Failed to create token")
 
 
-def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
-    """Verify and decode JWT token"""
-    token = credentials.credentials
-    
+def verify_token_string(token: str) -> str:
+    """
+    Verify a JWT token string and return the user_id.
+
+    Args:
+        token: The JWT token string (without 'Bearer ' prefix)
+
+    Returns:
+        The user_id from the token payload
+
+    Raises:
+        HTTPException: If token is invalid or expired
+    """
     try:
         payload = jwt.decode(
             token,
@@ -64,9 +73,9 @@ def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(securit
         if user_id is None:
             raise TokenError("Token missing user_id claim", is_expired=False)
         return user_id
-    
+
     except jwt.ExpiredSignatureError:
-        logger.warning(f"Token has expired")
+        logger.warning("Token has expired")
         raise HTTPException(
             status_code=401,
             detail="Token expired. Please login again.",
@@ -84,3 +93,11 @@ def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(securit
     except Exception as e:
         logger.error(f"Token verification failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Token verification failed")
+
+
+def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    """
+    FastAPI dependency for verifying JWT tokens from Authorization header.
+    Use this with Depends() in route definitions.
+    """
+    return verify_token_string(credentials.credentials)

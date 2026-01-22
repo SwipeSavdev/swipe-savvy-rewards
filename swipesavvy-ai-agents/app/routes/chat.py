@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, validator
 
 from app.database import get_db
-from app.core.auth import verify_jwt_token
+from app.core.auth import verify_token_string
 from app.services.websocket_manager import manager, WebSocketMessage
 from app.services.chat_service import ChatService
 from app.models.chat import ChatMessageStatus, ChatSessionStatus, ChatParticipantRole
@@ -175,7 +175,7 @@ async def websocket_endpoint(
         
         # Verify token
         try:
-            user_id = verify_jwt_token(token)
+            user_id = verify_token_string(token)
         except Exception as e:
             logger.warning(f"WebSocket auth failed: {str(e)}")
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid token")
