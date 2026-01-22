@@ -27,7 +27,7 @@ from app.services.fis_wallet_service import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/cards", tags=["fis-wallet"])
+router = APIRouter(prefix="/api/v1/fis/cards", tags=["fis-wallet"])
 
 
 # =============================================================================

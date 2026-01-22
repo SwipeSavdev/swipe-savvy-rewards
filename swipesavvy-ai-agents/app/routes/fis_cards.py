@@ -42,7 +42,7 @@ from app.services.fis_pin_service import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/cards", tags=["fis-cards"])
+router = APIRouter(prefix="/api/v1/fis/cards", tags=["fis-cards"])
 
 
 # =============================================================================

@@ -31,7 +31,7 @@ from app.services.fis_fraud_service import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1", tags=["fis-fraud"])
+router = APIRouter(prefix="/api/v1/fis", tags=["fis-fraud"])
 
 
 # =============================================================================
