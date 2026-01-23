@@ -199,6 +199,7 @@ def create_access_token(user_id: str, email: str) -> str:
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     payload = {
         "sub": str(user_id),
+        "user_id": str(user_id),  # Required by core/auth.py verify_token_string
         "email": email,
         "type": "access",
         "exp": expire,

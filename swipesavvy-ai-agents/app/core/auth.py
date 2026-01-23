@@ -69,7 +69,7 @@ def verify_token_string(token: str) -> str:
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM]
         )
-        user_id: str = payload.get("user_id")
+        user_id: str = payload.get("user_id") or payload.get("sub")
         if user_id is None:
             raise TokenError("Token missing user_id claim", is_expired=False)
         return user_id
