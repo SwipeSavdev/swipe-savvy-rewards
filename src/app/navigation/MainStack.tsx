@@ -25,6 +25,15 @@ import { DealsScreen } from '../../features/merchants/screens/DealsScreen';
 import { FISCardsScreen } from '../../features/wallet/screens/FISCardsScreen';
 import { FISCardDetailScreen } from '../../features/wallet/screens/FISCardDetailScreen';
 import { FISIssueCardScreen } from '../../features/wallet/screens/FISIssueCardScreen';
+// Settings Sub-screens
+import { ChangePasswordScreen } from '../../features/settings/screens/ChangePasswordScreen';
+import { TransactionPinScreen } from '../../features/settings/screens/TransactionPinScreen';
+import { TrustedDevicesScreen } from '../../features/settings/screens/TrustedDevicesScreen';
+import { TransactionLimitsScreen } from '../../features/settings/screens/TransactionLimitsScreen';
+import { HelpCenterScreen } from '../../features/settings/screens/HelpCenterScreen';
+import { ContactSupportScreen } from '../../features/settings/screens/ContactSupportScreen';
+import { LicensesScreen } from '../../features/settings/screens/LicensesScreen';
+import { KYCVerificationScreen } from '../../features/settings/screens/KYCVerificationScreen';
 
 export type MainTabParamList = {
   Home: undefined;
@@ -60,6 +69,15 @@ export type MainStackParamList = {
   FISTravelNotice: { cardId: string };
   FISReportFraud: { cardId: string };
   FISReplaceCard: { cardId: string; reason: string };
+  // Settings Sub-screens
+  ChangePassword: undefined;
+  TransactionPin: undefined;
+  TrustedDevices: undefined;
+  TransactionLimits: undefined;
+  HelpCenter: undefined;
+  ContactSupport: undefined;
+  Licenses: undefined;
+  KYCVerification: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -213,6 +231,47 @@ export const MainStack = React.memo(function MainStackComponent() {
             name="FISIssueCard"
             component={FISIssueCardScreen}
             options={{ title: 'Get New Card', headerShown: true }}
+          />
+          {/* Settings Sub-screens */}
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePasswordScreen}
+            options={{ title: 'Change Password', headerShown: true }}
+          />
+          <Stack.Screen
+            name="TransactionPin"
+            component={TransactionPinScreen}
+            options={{ title: 'Transaction PIN', headerShown: true }}
+          />
+          <Stack.Screen
+            name="TrustedDevices"
+            component={TrustedDevicesScreen}
+            options={{ title: 'Trusted Devices', headerShown: true }}
+          />
+          <Stack.Screen
+            name="TransactionLimits"
+            component={TransactionLimitsScreen}
+            options={{ title: 'Transaction Limits', headerShown: true }}
+          />
+          <Stack.Screen
+            name="HelpCenter"
+            component={HelpCenterScreen}
+            options={{ title: 'Help Center', headerShown: true }}
+          />
+          <Stack.Screen
+            name="ContactSupport"
+            component={ContactSupportScreen}
+            options={{ title: 'Contact Support', headerShown: true }}
+          />
+          <Stack.Screen
+            name="Licenses"
+            component={LicensesScreen}
+            options={{ title: 'Licenses', headerShown: true }}
+          />
+          <Stack.Screen
+            name="KYCVerification"
+            component={KYCVerificationScreen}
+            options={{ title: 'Identity Verification', headerShown: true }}
           />
         </Stack.Group>
 
