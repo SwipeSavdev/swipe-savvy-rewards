@@ -40,14 +40,14 @@ jobs:
           safety check --json > safety-report.json || echo "Safety check completed with issues"
       
       - name: Upload Bandit results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: bandit-report
           path: swipesavvy-ai-agents/bandit-report.json
       
       - name: Upload Safety results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: safety-report
@@ -107,7 +107,7 @@ jobs:
         run: safety check --file requirements-lock.txt --json > dependency-report.json || true
       
       - name: Upload dependency report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: dependency-report
@@ -141,7 +141,7 @@ jobs:
             --output-format=json > pylint-report.json || true
       
       - name: Upload Pylint results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: pylint-report
