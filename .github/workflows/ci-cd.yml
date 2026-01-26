@@ -160,7 +160,7 @@ jobs:
         run: npm run build
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: admin-portal-build
           path: swipesavvy-admin-portal/dist
