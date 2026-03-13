@@ -6,6 +6,6 @@ psycopg2-binary==2.9.9
 pgvector==0.2.3
 numpy==1.24.3
 torch==2.1.2
-transformers==4.36.2
+transformers==4.53.0
 tiktoken==0.5.1
 httpx==0.25.1
