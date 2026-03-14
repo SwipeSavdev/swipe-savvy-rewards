@@ -20,6 +20,7 @@ from typing import Optional, Dict, Any
 # EMAIL TEMPLATES
 # ============================================================================
 
+
 class EmailTemplates:
     """All email templates for SwipeSavvy"""
 
@@ -212,7 +213,9 @@ class EmailTemplates:
     # ========================================================================
 
     @classmethod
-    def email_verification(cls, name: str, verification_code: str, verification_link: str) -> Dict[str, str]:
+    def email_verification(
+        cls, name: str, verification_code: str, verification_link: str
+    ) -> Dict[str, str]:
         """Email verification for new signups"""
         content = f"""
             <div class="header">
@@ -243,7 +246,7 @@ class EmailTemplates:
         return {
             "subject": "Verify your SwipeSavvy email",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, Your SwipeSavvy verification code is: {verification_code}. Or visit: {verification_link}. This code expires in 15 minutes."
+            "text_body": f"Hi {name}, Your SwipeSavvy verification code is: {verification_code}. Or visit: {verification_link}. This code expires in 15 minutes.",
         }
 
     @classmethod
@@ -278,7 +281,7 @@ class EmailTemplates:
         return {
             "subject": "Welcome to SwipeSavvy - Let's start earning! 🎉",
             "html_body": cls._base_template(content),
-            "text_body": f"Welcome to SwipeSavvy, {name}! You're all set to start earning cashback and rewards. Link your first card at https://app.swipesavvy.com/cards"
+            "text_body": f"Welcome to SwipeSavvy, {name}! You're all set to start earning cashback and rewards. Link your first card at https://app.swipesavvy.com/cards",
         }
 
     @classmethod
@@ -312,7 +315,7 @@ class EmailTemplates:
         return {
             "subject": "Reset your SwipeSavvy password",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, Your SwipeSavvy password reset code is: {reset_code}. Or visit: {reset_link}. This code expires in 1 hour."
+            "text_body": f"Hi {name}, Your SwipeSavvy password reset code is: {reset_code}. Or visit: {reset_link}. This code expires in 1 hour.",
         }
 
     @classmethod
@@ -343,11 +346,13 @@ class EmailTemplates:
         return {
             "subject": "Your SwipeSavvy password was changed",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, Your SwipeSavvy password was successfully changed on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}. If you didn't make this change, contact support immediately."
+            "text_body": f"Hi {name}, Your SwipeSavvy password was successfully changed on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}. If you didn't make this change, contact support immediately.",
         }
 
     @classmethod
-    def user_invitation(cls, name: str, invite_link: str, inviter_name: str = "SwipeSavvy") -> Dict[str, str]:
+    def user_invitation(
+        cls, name: str, invite_link: str, inviter_name: str = "SwipeSavvy"
+    ) -> Dict[str, str]:
         """User invitation email"""
         content = f"""
             <div class="header">
@@ -375,7 +380,7 @@ class EmailTemplates:
         return {
             "subject": "You're invited to join SwipeSavvy! 💳",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, You've been invited to join SwipeSavvy! Accept your invitation here: {invite_link}. This link expires in 7 days."
+            "text_body": f"Hi {name}, You've been invited to join SwipeSavvy! Accept your invitation here: {invite_link}. This link expires in 7 days.",
         }
 
     # ========================================================================
@@ -411,7 +416,7 @@ class EmailTemplates:
         return {
             "subject": "Verification documents received",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, We received your verification documents. Our team will review them within 1-2 business days. Check your status at https://app.swipesavvy.com/verification"
+            "text_body": f"Hi {name}, We received your verification documents. Our team will review them within 1-2 business days. Check your status at https://app.swipesavvy.com/verification",
         }
 
     @classmethod
@@ -444,17 +449,21 @@ class EmailTemplates:
         return {
             "subject": "Your verification is approved! ✅",
             "html_body": cls._base_template(content),
-            "text_body": f"Congratulations {name}! Your identity verification has been approved. You now have access to {tier} features including higher limits and premium rewards."
+            "text_body": f"Congratulations {name}! Your identity verification has been approved. You now have access to {tier} features including higher limits and premium rewards.",
         }
 
     @classmethod
     def kyc_rejected(cls, name: str, reason: str, can_retry: bool = True) -> Dict[str, str]:
         """KYC verification rejected"""
-        retry_content = """
+        retry_content = (
+            """
                 <p style="text-align: center;">
                     <a href="https://app.swipesavvy.com/verification" class="button">Submit New Documents</a>
                 </p>
-        """ if can_retry else ""
+        """
+            if can_retry
+            else ""
+        )
 
         content = f"""
             <div class="header" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
@@ -487,7 +496,7 @@ class EmailTemplates:
         return {
             "subject": "Action needed: Verification issue",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, We couldn't verify your identity. Reason: {reason}. Please submit new documents at https://app.swipesavvy.com/verification"
+            "text_body": f"Hi {name}, We couldn't verify your identity. Reason: {reason}. Please submit new documents at https://app.swipesavvy.com/verification",
         }
 
     # ========================================================================
@@ -495,8 +504,15 @@ class EmailTemplates:
     # ========================================================================
 
     @classmethod
-    def transaction_receipt(cls, name: str, merchant: str, amount: float,
-                           cashback: float, date: str, transaction_id: str) -> Dict[str, str]:
+    def transaction_receipt(
+        cls,
+        name: str,
+        merchant: str,
+        amount: float,
+        cashback: float,
+        date: str,
+        transaction_id: str,
+    ) -> Dict[str, str]:
         """Transaction receipt with cashback earned"""
         content = f"""
             <div class="header">
@@ -542,11 +558,13 @@ class EmailTemplates:
         return {
             "subject": f"Receipt: ${amount:.2f} at {merchant} (+${cashback:.2f} cashback)",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, Your purchase of ${amount:.2f} at {merchant} earned you ${cashback:.2f} cashback! Transaction ID: {transaction_id}"
+            "text_body": f"Hi {name}, Your purchase of ${amount:.2f} at {merchant} earned you ${cashback:.2f} cashback! Transaction ID: {transaction_id}",
         }
 
     @classmethod
-    def cashback_earned(cls, name: str, amount: float, merchant: str, total_balance: float) -> Dict[str, str]:
+    def cashback_earned(
+        cls, name: str, amount: float, merchant: str, total_balance: float
+    ) -> Dict[str, str]:
         """Cashback earned notification"""
         content = f"""
             <div class="header" style="background: linear-gradient(135deg, #10b981, #059669);">
@@ -572,12 +590,13 @@ class EmailTemplates:
         return {
             "subject": f"You earned ${amount:.2f} cashback! 💰",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, You earned ${amount:.2f} cashback at {merchant}! Your total balance is now ${total_balance:.2f}."
+            "text_body": f"Hi {name}, You earned ${amount:.2f} cashback at {merchant}! Your total balance is now ${total_balance:.2f}.",
         }
 
     @classmethod
-    def withdrawal_initiated(cls, name: str, amount: float, method: str,
-                            estimated_arrival: str) -> Dict[str, str]:
+    def withdrawal_initiated(
+        cls, name: str, amount: float, method: str, estimated_arrival: str
+    ) -> Dict[str, str]:
         """Withdrawal request initiated"""
         content = f"""
             <div class="header">
@@ -615,7 +634,7 @@ class EmailTemplates:
         return {
             "subject": f"Withdrawal of ${amount:.2f} initiated",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, Your withdrawal of ${amount:.2f} via {method} has been initiated. Estimated arrival: {estimated_arrival}"
+            "text_body": f"Hi {name}, Your withdrawal of ${amount:.2f} via {method} has been initiated. Estimated arrival: {estimated_arrival}",
         }
 
     @classmethod
@@ -645,7 +664,7 @@ class EmailTemplates:
         return {
             "subject": f"Withdrawal of ${amount:.2f} complete! ✅",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, Your withdrawal of ${amount:.2f} to your {method} has been completed. The funds should appear shortly."
+            "text_body": f"Hi {name}, Your withdrawal of ${amount:.2f} to your {method} has been completed. The funds should appear shortly.",
         }
 
     # ========================================================================
@@ -653,8 +672,9 @@ class EmailTemplates:
     # ========================================================================
 
     @classmethod
-    def new_device_login(cls, name: str, device: str, location: str,
-                        ip_address: str, timestamp: str) -> Dict[str, str]:
+    def new_device_login(
+        cls, name: str, device: str, location: str, ip_address: str, timestamp: str
+    ) -> Dict[str, str]:
         """New device login alert"""
         content = f"""
             <div class="header" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
@@ -697,7 +717,7 @@ class EmailTemplates:
         return {
             "subject": "New device login to your SwipeSavvy account",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, A new device ({device}) signed in to your account from {location} at {timestamp}. If this wasn't you, secure your account at https://app.swipesavvy.com/security"
+            "text_body": f"Hi {name}, A new device ({device}) signed in to your account from {location} at {timestamp}. If this wasn't you, secure your account at https://app.swipesavvy.com/security",
         }
 
     @classmethod
@@ -732,7 +752,7 @@ class EmailTemplates:
         return {
             "subject": "⚠️ Security Alert: Unusual activity detected",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, We detected unusual activity on your account: {activity}. Recommendation: {recommendation}. Secure your account at https://app.swipesavvy.com/security"
+            "text_body": f"Hi {name}, We detected unusual activity on your account: {activity}. Recommendation: {recommendation}. Secure your account at https://app.swipesavvy.com/security",
         }
 
     # ========================================================================
@@ -740,11 +760,22 @@ class EmailTemplates:
     # ========================================================================
 
     @classmethod
-    def promotional_offer(cls, name: str, headline: str, description: str,
-                         offer_value: str, cta_text: str, cta_link: str,
-                         expires: Optional[str] = None) -> Dict[str, str]:
+    def promotional_offer(
+        cls,
+        name: str,
+        headline: str,
+        description: str,
+        offer_value: str,
+        cta_text: str,
+        cta_link: str,
+        expires: Optional[str] = None,
+    ) -> Dict[str, str]:
         """Promotional marketing email"""
-        expiry_html = f'<p style="color: #ef4444; text-align: center;">Offer expires: {expires}</p>' if expires else ""
+        expiry_html = (
+            f'<p style="color: #ef4444; text-align: center;">Offer expires: {expires}</p>'
+            if expires
+            else ""
+        )
 
         content = f"""
             <div class="header">
@@ -772,12 +803,18 @@ class EmailTemplates:
         return {
             "subject": f"🎁 {headline}",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, {headline}! {description} {offer_value}. {cta_text}: {cta_link}"
+            "text_body": f"Hi {name}, {headline}! {description} {offer_value}. {cta_text}: {cta_link}",
         }
 
     @classmethod
-    def weekly_summary(cls, name: str, total_spent: float, cashback_earned: float,
-                      transactions_count: int, top_merchant: str) -> Dict[str, str]:
+    def weekly_summary(
+        cls,
+        name: str,
+        total_spent: float,
+        cashback_earned: float,
+        transactions_count: int,
+        top_merchant: str,
+    ) -> Dict[str, str]:
         """Weekly activity summary"""
         content = f"""
             <div class="header">
@@ -819,13 +856,14 @@ class EmailTemplates:
         return {
             "subject": f"Your week in review: ${cashback_earned:.2f} earned! 📊",
             "html_body": cls._base_template(content),
-            "text_body": f"Hi {name}, This week you spent ${total_spent:.2f} and earned ${cashback_earned:.2f} cashback across {transactions_count} transactions. Top merchant: {top_merchant}."
+            "text_body": f"Hi {name}, This week you spent ${total_spent:.2f} and earned ${cashback_earned:.2f} cashback across {transactions_count} transactions. Top merchant: {top_merchant}.",
         }
 
 
 # ============================================================================
 # SMS TEMPLATES
 # ============================================================================
+
 
 class SMSTemplates:
     """All SMS templates for SwipeSavvy (max 160 characters)"""
@@ -871,7 +909,9 @@ class SMSTemplates:
     @staticmethod
     def withdrawal_initiated(amount: float) -> str:
         """Withdrawal started"""
-        return f"SwipeSavvy: Withdrawal of ${amount:.2f} initiated. Expect funds in 1-3 business days."
+        return (
+            f"SwipeSavvy: Withdrawal of ${amount:.2f} initiated. Expect funds in 1-3 business days."
+        )
 
     @staticmethod
     def withdrawal_completed(amount: float) -> str:
@@ -909,7 +949,9 @@ class SMSTemplates:
     @staticmethod
     def kyc_action_required() -> str:
         """KYC needs attention"""
-        return "SwipeSavvy: Action needed on your verification. Please check your email for details."
+        return (
+            "SwipeSavvy: Action needed on your verification. Please check your email for details."
+        )
 
     # ========================================================================
     # PROMOTIONAL SMS
@@ -936,6 +978,7 @@ class SMSTemplates:
 # ============================================================================
 # NOTIFICATION SERVICE
 # ============================================================================
+
 
 class NotificationService:
     """Unified notification service using templates"""

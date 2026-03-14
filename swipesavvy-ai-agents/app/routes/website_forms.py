@@ -29,6 +29,7 @@ SES_CONFIGURATION_SET = os.getenv("SES_CONFIGURATION_SET", "swipesavvy-productio
 
 class InquiryType(str, Enum):
     """Type of inquiry from contact form"""
+
     DEMO = "demo"
     SALES = "sales"
     SUPPORT = "support"
@@ -38,18 +39,22 @@ class InquiryType(str, Enum):
 
 class ContactFormRequest(BaseModel):
     """Request model for contact form submission"""
+
     name: str = Field(..., min_length=2, max_length=100, description="Full name")
     email: EmailStr = Field(..., description="Email address")
     company: Optional[str] = Field(None, max_length=100, description="Company name")
     phone: Optional[str] = Field(None, max_length=20, description="Phone number")
     inquiry_type: Optional[InquiryType] = Field(InquiryType.DEMO, description="Type of inquiry")
-    message: Optional[str] = Field(None, max_length=2000, description="Message or additional details")
+    message: Optional[str] = Field(
+        None, max_length=2000, description="Message or additional details"
+    )
     locations: Optional[str] = Field(None, description="Number of locations")
     industry: Optional[str] = Field(None, description="Industry/business type")
 
 
 class SalesInquiryRequest(BaseModel):
     """Request model for sales inquiry"""
+
     name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     company: str = Field(..., min_length=2, max_length=100)
@@ -66,10 +71,7 @@ def get_ses_client():
 
 
 def send_templated_email(
-    template_name: str,
-    to_email: str,
-    template_data: dict,
-    reply_to: Optional[str] = None
+    template_name: str, to_email: str, template_data: dict, reply_to: Optional[str] = None
 ) -> bool:
     """
     Send email using SES template
@@ -88,16 +90,14 @@ def send_templated_email(
 
         email_params = {
             "FromEmailAddress": SES_SENDER_EMAIL,
-            "Destination": {
-                "ToAddresses": [to_email]
-            },
+            "Destination": {"ToAddresses": [to_email]},
             "Content": {
                 "Template": {
                     "TemplateName": template_name,
-                    "TemplateData": json.dumps(template_data)
+                    "TemplateData": json.dumps(template_data),
                 }
             },
-            "ConfigurationSetName": SES_CONFIGURATION_SET
+            "ConfigurationSetName": SES_CONFIGURATION_SET,
         }
 
         if reply_to:
@@ -115,31 +115,21 @@ def send_templated_email(
         return False
 
 
-def send_internal_notification(
-    subject: str,
-    to_email: str,
-    body_text: str,
-    body_html: str
-) -> bool:
+def send_internal_notification(subject: str, to_email: str, body_text: str, body_html: str) -> bool:
     """Send internal notification email to sales/support team"""
     try:
         ses = get_ses_client()
 
         response = ses.send_email(
             FromEmailAddress=SES_SENDER_EMAIL,
-            Destination={
-                "ToAddresses": [to_email]
-            },
+            Destination={"ToAddresses": [to_email]},
             Content={
                 "Simple": {
                     "Subject": {"Data": subject},
-                    "Body": {
-                        "Text": {"Data": body_text},
-                        "Html": {"Data": body_html}
-                    }
+                    "Body": {"Text": {"Data": body_text}, "Html": {"Data": body_html}},
                 }
             },
-            ConfigurationSetName=SES_CONFIGURATION_SET
+            ConfigurationSetName=SES_CONFIGURATION_SET,
         )
         logger.info(f"Internal notification sent: {response['MessageId']}")
         return True
@@ -166,7 +156,7 @@ async def process_contact_form(request: ContactFormRequest):
         "name": first_name,
         "full_name": request.name,
         "company": request.company or "your company",
-        "year": str(datetime.now().year)
+        "year": str(datetime.now().year),
     }
 
     # Send auto-response to the visitor
@@ -174,7 +164,7 @@ async def process_contact_form(request: ContactFormRequest):
         template_name=template_name,
         to_email=request.email,
         template_data=template_data,
-        reply_to=SES_SALES_EMAIL
+        reply_to=SES_SALES_EMAIL,
     )
 
     # Send internal notification to sales team
@@ -261,10 +251,7 @@ Submitted: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
 """
 
     send_internal_notification(
-        subject=subject,
-        to_email=SES_SALES_EMAIL,
-        body_text=body_text,
-        body_html=body_html
+        subject=subject, to_email=SES_SALES_EMAIL, body_text=body_text, body_html=body_html
     )
 
 
@@ -276,7 +263,7 @@ async def process_sales_inquiry(request: SalesInquiryRequest):
         "name": first_name,
         "full_name": request.name,
         "company": request.company,
-        "year": str(datetime.now().year)
+        "year": str(datetime.now().year),
     }
 
     # Send auto-response
@@ -284,7 +271,7 @@ async def process_sales_inquiry(request: SalesInquiryRequest):
         template_name="website-sales-inquiry-response",
         to_email=request.email,
         template_data=template_data,
-        reply_to=SES_SALES_EMAIL
+        reply_to=SES_SALES_EMAIL,
     )
 
     # Send internal notification
@@ -369,18 +356,12 @@ Submitted: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
 """
 
     send_internal_notification(
-        subject=subject,
-        to_email=SES_SALES_EMAIL,
-        body_text=body_text,
-        body_html=body_html
+        subject=subject, to_email=SES_SALES_EMAIL, body_text=body_text, body_html=body_html
     )
 
 
 @router.post("/contact")
-async def handle_contact_form(
-    request: ContactFormRequest,
-    background_tasks: BackgroundTasks
-):
+async def handle_contact_form(request: ContactFormRequest, background_tasks: BackgroundTasks):
     """
     Handle contact form submission from swipesavvy.com
 
@@ -400,15 +381,12 @@ async def handle_contact_form(
     return {
         "success": True,
         "message": "Thank you for your inquiry! We'll be in touch soon.",
-        "inquiry_type": request.inquiry_type.value if request.inquiry_type else "general"
+        "inquiry_type": request.inquiry_type.value if request.inquiry_type else "general",
     }
 
 
 @router.post("/demo-request")
-async def handle_demo_request(
-    request: ContactFormRequest,
-    background_tasks: BackgroundTasks
-):
+async def handle_demo_request(request: ContactFormRequest, background_tasks: BackgroundTasks):
     """
     Handle demo request form submission
 
@@ -426,15 +404,12 @@ async def handle_demo_request(
     return {
         "success": True,
         "message": "Thank you for requesting a demo! Our team will contact you within 24 hours.",
-        "inquiry_type": "demo"
+        "inquiry_type": "demo",
     }
 
 
 @router.post("/sales-inquiry")
-async def handle_sales_inquiry(
-    request: SalesInquiryRequest,
-    background_tasks: BackgroundTasks
-):
+async def handle_sales_inquiry(request: SalesInquiryRequest, background_tasks: BackgroundTasks):
     """
     Handle sales inquiry form submission
 
@@ -448,7 +423,7 @@ async def handle_sales_inquiry(
     return {
         "success": True,
         "message": "Thank you for your interest! A sales representative will contact you shortly.",
-        "company": request.company
+        "company": request.company,
     }
 
 
@@ -468,5 +443,5 @@ async def health_check():
         "status": ses_status,
         "service": "website-forms",
         "sender_email": SES_SENDER_EMAIL,
-        "configuration_set": SES_CONFIGURATION_SET
+        "configuration_set": SES_CONFIGURATION_SET,
     }

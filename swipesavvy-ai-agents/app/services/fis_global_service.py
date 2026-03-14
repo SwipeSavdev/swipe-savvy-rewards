@@ -33,14 +33,17 @@ logger = logging.getLogger(__name__)
 # ENUMS
 # =============================================================================
 
+
 class FISEnvironment(str, Enum):
     """FIS API environments"""
+
     SANDBOX = "sandbox"
     PRODUCTION = "production"
 
 
 class FISCardStatus(str, Enum):
     """Card status codes from FIS"""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     LOCKED = "locked"
@@ -54,12 +57,14 @@ class FISCardStatus(str, Enum):
 
 class FISCardType(str, Enum):
     """Card types"""
+
     VIRTUAL = "virtual"
     PHYSICAL = "physical"
 
 
 class FISTransactionType(str, Enum):
     """Transaction types"""
+
     PURCHASE = "purchase"
     ATM_WITHDRAWAL = "atm_withdrawal"
     REFUND = "refund"
@@ -70,6 +75,7 @@ class FISTransactionType(str, Enum):
 
 class FISTransactionStatus(str, Enum):
     """Transaction statuses"""
+
     PENDING = "pending"
     COMPLETED = "completed"
     DECLINED = "declined"
@@ -81,8 +87,10 @@ class FISTransactionStatus(str, Enum):
 # REQUEST/RESPONSE MODELS
 # =============================================================================
 
+
 class FISAuthToken(BaseModel):
     """OAuth2 token response from FIS"""
+
     access_token: str
     token_type: str = "Bearer"
     expires_in: int = 3600
@@ -98,6 +106,7 @@ class FISAuthToken(BaseModel):
 
 class FISAPIResponse(BaseModel):
     """Standard FIS API response wrapper"""
+
     success: bool
     data: Optional[Dict[str, Any]] = None
     error_code: Optional[str] = None
@@ -108,6 +117,7 @@ class FISAPIResponse(BaseModel):
 
 class FISCardData(BaseModel):
     """Card data from FIS"""
+
     card_id: str
     card_token: str
     card_type: FISCardType
@@ -123,6 +133,7 @@ class FISCardData(BaseModel):
 
 class FISTransactionData(BaseModel):
     """Transaction data from FIS"""
+
     transaction_id: str
     card_id: str
     type: FISTransactionType
@@ -142,6 +153,7 @@ class FISTransactionData(BaseModel):
 # FIS GLOBAL BASE SERVICE
 # =============================================================================
 
+
 class FISGlobalService:
     """
     Base service for FIS Global Payment One API.
@@ -159,7 +171,7 @@ class FISGlobalService:
         client_secret: Optional[str] = None,
         api_url: Optional[str] = None,
         environment: Optional[str] = None,
-        webhook_secret: Optional[str] = None
+        webhook_secret: Optional[str] = None,
     ):
         """
         Initialize FIS Global service.
@@ -181,18 +193,12 @@ class FISGlobalService:
 
         # Set API URL based on environment
         if api_url:
-            self.api_url = api_url.rstrip('/')
+            self.api_url = api_url.rstrip("/")
         elif self.environment == FISEnvironment.PRODUCTION:
-            self.api_url = os.getenv(
-                "FIS_API_URL",
-                "https://api-gw.fisglobal.com"
-            ).rstrip('/')
+            self.api_url = os.getenv("FIS_API_URL", "https://api-gw.fisglobal.com").rstrip("/")
         else:
             # UAT/Sandbox environment
-            self.api_url = os.getenv(
-                "FIS_API_URL",
-                "https://api-gw-uat.fisglobal.com"
-            ).rstrip('/')
+            self.api_url = os.getenv("FIS_API_URL", "https://api-gw-uat.fisglobal.com").rstrip("/")
 
         # Authentication token cache
         self._auth_token: Optional[FISAuthToken] = None
@@ -209,17 +215,12 @@ class FISGlobalService:
                 "FIS_CLIENT_ID and FIS_CLIENT_SECRET not configured"
             )
         else:
-            logger.info(
-                f"FIS Global service initialized - Environment: {self.environment.value}"
-            )
+            logger.info(f"FIS Global service initialized - Environment: {self.environment.value}")
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create async HTTP client"""
         if self._client is None or self._client.is_closed:
-            self._client = httpx.AsyncClient(
-                timeout=30.0,
-                follow_redirects=True
-            )
+            self._client = httpx.AsyncClient(timeout=30.0, follow_redirects=True)
         return self._client
 
     async def close(self):
@@ -255,13 +256,11 @@ class FISGlobalService:
         try:
             response = await client.post(
                 f"{self.api_url}/token",
-                data={
-                    "grant_type": "client_credentials"
-                },
+                data={"grant_type": "client_credentials"},
                 headers={
                     "Content-Type": "application/x-www-form-urlencoded",
-                    "Authorization": f"Basic {basic_auth}"
-                }
+                    "Authorization": f"Basic {basic_auth}",
+                },
             )
 
             if response.status_code == 200:
@@ -270,7 +269,7 @@ class FISGlobalService:
                     access_token=data["access_token"],
                     token_type=data.get("token_type", "Bearer"),
                     expires_in=data.get("expires_in", 3600),
-                    scope=data.get("scope")
+                    scope=data.get("scope"),
                 )
                 logger.info("FIS OAuth2 token obtained successfully")
                 return self._auth_token.access_token
@@ -283,11 +282,7 @@ class FISGlobalService:
             raise
 
     def _generate_request_signature(
-        self,
-        method: str,
-        path: str,
-        timestamp: str,
-        body: Optional[str] = None
+        self, method: str, path: str, timestamp: str, body: Optional[str] = None
     ) -> str:
         """
         Generate HMAC signature for request authentication.
@@ -306,9 +301,7 @@ class FISGlobalService:
             message += f"\n{body}"
 
         signature = hmac.new(
-            self.client_secret.encode('utf-8'),
-            message.encode('utf-8'),
-            hashlib.sha256
+            self.client_secret.encode("utf-8"), message.encode("utf-8"), hashlib.sha256
         ).hexdigest()
 
         return signature
@@ -324,7 +317,7 @@ class FISGlobalService:
         data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
-        retry_count: int = 3
+        retry_count: int = 3,
     ) -> FISAPIResponse:
         """
         Make authenticated HTTP request to FIS API.
@@ -355,7 +348,7 @@ class FISGlobalService:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "X-Request-Timestamp": timestamp,
-            "X-Request-ID": self._generate_request_id()
+            "X-Request-ID": self._generate_request_id(),
         }
 
         # Add signature if we have a secret
@@ -376,9 +369,13 @@ class FISGlobalService:
                 if method.upper() == "GET":
                     response = await client.get(url, params=params, headers=request_headers)
                 elif method.upper() == "POST":
-                    response = await client.post(url, json=data, params=params, headers=request_headers)
+                    response = await client.post(
+                        url, json=data, params=params, headers=request_headers
+                    )
                 elif method.upper() == "PUT":
-                    response = await client.put(url, json=data, params=params, headers=request_headers)
+                    response = await client.put(
+                        url, json=data, params=params, headers=request_headers
+                    )
                 elif method.upper() == "DELETE":
                     response = await client.delete(url, params=params, headers=request_headers)
                 else:
@@ -394,7 +391,9 @@ class FISGlobalService:
 
             except httpx.RequestError as e:
                 last_error = e
-                logger.warning(f"FIS API request error (attempt {attempt + 1}/{retry_count}): {str(e)}")
+                logger.warning(
+                    f"FIS API request error (attempt {attempt + 1}/{retry_count}): {str(e)}"
+                )
                 if attempt < retry_count - 1:
                     await self._exponential_backoff(attempt)
 
@@ -403,7 +402,7 @@ class FISGlobalService:
         return FISAPIResponse(
             success=False,
             error_code="REQUEST_FAILED",
-            error_message=f"Request failed after {retry_count} attempts: {str(last_error)}"
+            error_message=f"Request failed after {retry_count} attempts: {str(last_error)}",
         )
 
     def _parse_response(self, response: httpx.Response) -> FISAPIResponse:
@@ -415,9 +414,7 @@ class FISGlobalService:
 
         if response.status_code >= 200 and response.status_code < 300:
             return FISAPIResponse(
-                success=True,
-                data=data,
-                request_id=response.headers.get("X-Request-ID")
+                success=True, data=data, request_id=response.headers.get("X-Request-ID")
             )
         else:
             return FISAPIResponse(
@@ -425,30 +422,27 @@ class FISGlobalService:
                 data=data,
                 error_code=data.get("error_code", f"HTTP_{response.status_code}"),
                 error_message=data.get("error_message", data.get("message", response.text)),
-                request_id=response.headers.get("X-Request-ID")
+                request_id=response.headers.get("X-Request-ID"),
             )
 
     async def _exponential_backoff(self, attempt: int):
         """Exponential backoff delay between retries"""
         import asyncio
-        delay = min(2 ** attempt, 30)  # Max 30 seconds
+
+        delay = min(2**attempt, 30)  # Max 30 seconds
         await asyncio.sleep(delay)
 
     def _generate_request_id(self) -> str:
         """Generate unique request ID"""
         import uuid
+
         return f"ss-{uuid.uuid4().hex[:16]}"
 
     # =========================================================================
     # WEBHOOK VERIFICATION
     # =========================================================================
 
-    def verify_webhook_signature(
-        self,
-        payload: bytes,
-        signature: str,
-        timestamp: str
-    ) -> bool:
+    def verify_webhook_signature(self, payload: bytes, signature: str, timestamp: str) -> bool:
         """
         Verify webhook signature from FIS.
 
@@ -468,9 +462,7 @@ class FISGlobalService:
         message = f"{timestamp}.{payload.decode('utf-8')}"
 
         expected_signature = hmac.new(
-            self.webhook_secret.encode('utf-8'),
-            message.encode('utf-8'),
-            hashlib.sha256
+            self.webhook_secret.encode("utf-8"), message.encode("utf-8"), hashlib.sha256
         ).hexdigest()
 
         return hmac.compare_digest(expected_signature, signature)
@@ -480,10 +472,7 @@ class FISGlobalService:
     # =========================================================================
 
     def _mock_response(
-        self,
-        method: str,
-        endpoint: str,
-        data: Optional[Dict[str, Any]] = None
+        self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None
     ) -> FISAPIResponse:
         """Generate mock response for development mode"""
         logger.info(f"FIS MOCK: {method} {endpoint}")
@@ -515,12 +504,13 @@ class FISGlobalService:
         return FISAPIResponse(
             success=True,
             data={"message": "Mock response", "endpoint": endpoint},
-            request_id=self._generate_request_id()
+            request_id=self._generate_request_id(),
         )
 
     def _mock_card_issuance(self, data: Optional[Dict] = None) -> FISAPIResponse:
         """Mock card issuance response"""
         import uuid
+
         card_id = f"card_{uuid.uuid4().hex[:12]}"
         return FISAPIResponse(
             success=True,
@@ -533,9 +523,9 @@ class FISGlobalService:
                 "expiry_month": 12,
                 "expiry_year": 2028,
                 "cardholder_name": data.get("cardholder_name", "JOHN DOE") if data else "JOHN DOE",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.utcnow().isoformat(),
             },
-            request_id=self._generate_request_id()
+            request_id=self._generate_request_id(),
         )
 
     def _mock_card_activation(self, data: Optional[Dict] = None) -> FISAPIResponse:
@@ -545,9 +535,9 @@ class FISGlobalService:
             data={
                 "status": "active",
                 "activated_at": datetime.utcnow().isoformat(),
-                "message": "Card activated successfully"
+                "message": "Card activated successfully",
             },
-            request_id=self._generate_request_id()
+            request_id=self._generate_request_id(),
         )
 
     def _mock_card_lock(self, endpoint: str) -> FISAPIResponse:
@@ -558,9 +548,9 @@ class FISGlobalService:
             data={
                 "status": "locked" if is_lock else "active",
                 "updated_at": datetime.utcnow().isoformat(),
-                "message": f"Card {'locked' if is_lock else 'unlocked'} successfully"
+                "message": f"Card {'locked' if is_lock else 'unlocked'} successfully",
             },
-            request_id=self._generate_request_id()
+            request_id=self._generate_request_id(),
         )
 
     def _mock_card_details(self) -> FISAPIResponse:
@@ -577,9 +567,9 @@ class FISGlobalService:
                 "expiry_year": 2028,
                 "cardholder_name": "JOHN DOE",
                 "created_at": "2024-01-01T00:00:00Z",
-                "activated_at": "2024-01-01T00:01:00Z"
+                "activated_at": "2024-01-01T00:01:00Z",
             },
-            request_id=self._generate_request_id()
+            request_id=self._generate_request_id(),
         )
 
     def _mock_pin_operation(self, endpoint: str, data: Optional[Dict] = None) -> FISAPIResponse:
@@ -589,9 +579,9 @@ class FISGlobalService:
             data={
                 "message": "PIN operation completed successfully",
                 "operation": endpoint.split("/")[-1],
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             },
-            request_id=self._generate_request_id()
+            request_id=self._generate_request_id(),
         )
 
     def _mock_transactions(self) -> FISAPIResponse:
@@ -608,7 +598,7 @@ class FISGlobalService:
                         "currency": "USD",
                         "merchant_name": "AMAZON.COM",
                         "merchant_category_code": "5411",
-                        "created_at": "2024-01-15T10:30:00Z"
+                        "created_at": "2024-01-15T10:30:00Z",
                     },
                     {
                         "transaction_id": "tx_mock002",
@@ -618,19 +608,20 @@ class FISGlobalService:
                         "currency": "USD",
                         "merchant_name": "STARBUCKS",
                         "merchant_category_code": "5814",
-                        "created_at": "2024-01-14T08:15:00Z"
-                    }
+                        "created_at": "2024-01-14T08:15:00Z",
+                    },
                 ],
                 "total": 2,
                 "page": 1,
-                "per_page": 25
+                "per_page": 25,
             },
-            request_id=self._generate_request_id()
+            request_id=self._generate_request_id(),
         )
 
     def _mock_wallet_operation(self, endpoint: str, data: Optional[Dict] = None) -> FISAPIResponse:
         """Mock digital wallet operation response"""
         import uuid
+
         return FISAPIResponse(
             success=True,
             data={
@@ -638,9 +629,9 @@ class FISGlobalService:
                 "wallet_type": "apple_pay" if "apple" in endpoint else "google_pay",
                 "status": "active",
                 "provisioned_at": datetime.utcnow().isoformat(),
-                "device_name": "iPhone 15 Pro"
+                "device_name": "iPhone 15 Pro",
             },
-            request_id=self._generate_request_id()
+            request_id=self._generate_request_id(),
         )
 
     def _mock_kyc_operation(self, endpoint: str, data: Optional[Dict] = None) -> FISAPIResponse:
@@ -652,9 +643,9 @@ class FISGlobalService:
                 "status": "approved",
                 "risk_score": 15,
                 "checks_passed": ["identity", "address", "sanctions", "watchlist"],
-                "verified_at": datetime.utcnow().isoformat()
+                "verified_at": datetime.utcnow().isoformat(),
             },
-            request_id=self._generate_request_id()
+            request_id=self._generate_request_id(),
         )
 
 
@@ -674,16 +665,10 @@ def get_fis_service() -> FISGlobalService:
 
 
 def create_fis_service(
-    client_id: Optional[str] = None,
-    client_secret: Optional[str] = None,
-    **kwargs
+    client_id: Optional[str] = None, client_secret: Optional[str] = None, **kwargs
 ) -> FISGlobalService:
     """Create new FIS Global service instance with custom config"""
-    return FISGlobalService(
-        client_id=client_id,
-        client_secret=client_secret,
-        **kwargs
-    )
+    return FISGlobalService(client_id=client_id, client_secret=client_secret, **kwargs)
 
 
 # Export singleton

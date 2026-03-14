@@ -15,11 +15,7 @@ from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field
 
-from app.services.fis_global_service import (
-    FISGlobalService,
-    FISAPIResponse,
-    get_fis_service
-)
+from app.services.fis_global_service import FISGlobalService, FISAPIResponse, get_fis_service
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +24,10 @@ logger = logging.getLogger(__name__)
 # ENUMS
 # =============================================================================
 
+
 class WalletType(str, Enum):
     """Digital wallet types"""
+
     APPLE_PAY = "apple_pay"
     GOOGLE_PAY = "google_pay"
     SAMSUNG_PAY = "samsung_pay"
@@ -37,6 +35,7 @@ class WalletType(str, Enum):
 
 class TokenStatus(str, Enum):
     """Wallet token statuses"""
+
     REQUESTED = "requested"
     ACTIVE = "active"
     SUSPENDED = "suspended"
@@ -46,6 +45,7 @@ class TokenStatus(str, Enum):
 
 class DeviceType(str, Enum):
     """Device types"""
+
     PHONE = "phone"
     WATCH = "watch"
     TABLET = "tablet"
@@ -54,8 +54,9 @@ class DeviceType(str, Enum):
 
 class ProvisioningMethod(str, Enum):
     """Provisioning methods"""
-    IN_APP = "in_app"           # Push provisioning from app
-    MANUAL = "manual"           # Manual entry in wallet app
+
+    IN_APP = "in_app"  # Push provisioning from app
+    MANUAL = "manual"  # Manual entry in wallet app
     CARD_ON_FILE = "card_on_file"  # From stored credentials
 
 
@@ -63,8 +64,10 @@ class ProvisioningMethod(str, Enum):
 # REQUEST/RESPONSE MODELS
 # =============================================================================
 
+
 class ApplePayProvisionRequest(BaseModel):
     """Apple Pay provisioning request"""
+
     card_id: str
     device_id: str
     device_type: DeviceType = DeviceType.PHONE
@@ -75,6 +78,7 @@ class ApplePayProvisionRequest(BaseModel):
 
 class GooglePayProvisionRequest(BaseModel):
     """Google Pay provisioning request"""
+
     card_id: str
     device_id: str
     device_type: DeviceType = DeviceType.PHONE
@@ -84,6 +88,7 @@ class GooglePayProvisionRequest(BaseModel):
 
 class SamsungPayProvisionRequest(BaseModel):
     """Samsung Pay provisioning request"""
+
     card_id: str
     device_id: str
     device_type: DeviceType = DeviceType.PHONE
@@ -93,6 +98,7 @@ class SamsungPayProvisionRequest(BaseModel):
 
 class WalletToken(BaseModel):
     """Wallet token information"""
+
     token_id: str
     card_id: str
     wallet_type: WalletType
@@ -108,6 +114,7 @@ class WalletToken(BaseModel):
 
 class ProvisioningResponse(BaseModel):
     """Provisioning response"""
+
     token_id: str
     status: TokenStatus
     activation_data: Optional[Dict[str, Any]] = None
@@ -118,6 +125,7 @@ class ProvisioningResponse(BaseModel):
 # =============================================================================
 # FIS WALLET SERVICE
 # =============================================================================
+
 
 class FISWalletService:
     """
@@ -149,7 +157,7 @@ class FISWalletService:
         device_type: DeviceType,
         certificates: List[str],
         nonce: str,
-        nonce_signature: str
+        nonce_signature: str,
     ) -> FISAPIResponse:
         """
         Provision a card for Apple Pay.
@@ -176,14 +184,12 @@ class FISWalletService:
             "apple_pay": {
                 "certificates": certificates,
                 "nonce": nonce,
-                "nonce_signature": nonce_signature
-            }
+                "nonce_signature": nonce_signature,
+            },
         }
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/wallet/provision",
-            data=payload
+            method="POST", endpoint=f"/cards/{card_id}/wallet/provision", data=payload
         )
 
         if response.success:
@@ -204,8 +210,7 @@ class FISWalletService:
             FISAPIResponse with eligibility status
         """
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/wallet/apple-pay/eligibility"
+            method="GET", endpoint=f"/cards/{card_id}/wallet/apple-pay/eligibility"
         )
 
     # =========================================================================
@@ -218,7 +223,7 @@ class FISWalletService:
         device_id: str,
         device_type: DeviceType,
         wallet_account_id: str,
-        device_info: Dict[str, Any]
+        device_info: Dict[str, Any],
     ) -> FISAPIResponse:
         """
         Provision a card for Google Pay.
@@ -239,16 +244,11 @@ class FISWalletService:
             "wallet_type": WalletType.GOOGLE_PAY.value,
             "device_id": device_id,
             "device_type": device_type.value,
-            "google_pay": {
-                "wallet_account_id": wallet_account_id,
-                "device_info": device_info
-            }
+            "google_pay": {"wallet_account_id": wallet_account_id, "device_info": device_info},
         }
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/wallet/provision",
-            data=payload
+            method="POST", endpoint=f"/cards/{card_id}/wallet/provision", data=payload
         )
 
         if response.success:
@@ -269,14 +269,11 @@ class FISWalletService:
             FISAPIResponse with eligibility status
         """
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/wallet/google-pay/eligibility"
+            method="GET", endpoint=f"/cards/{card_id}/wallet/google-pay/eligibility"
         )
 
     async def get_google_pay_push_token(
-        self,
-        card_id: str,
-        wallet_account_id: str
+        self, card_id: str, wallet_account_id: str
     ) -> FISAPIResponse:
         """
         Get push provisioning token for Google Pay.
@@ -295,7 +292,7 @@ class FISWalletService:
         return await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/wallet/google-pay/push-token",
-            data={"wallet_account_id": wallet_account_id}
+            data={"wallet_account_id": wallet_account_id},
         )
 
     # =========================================================================
@@ -308,7 +305,7 @@ class FISWalletService:
         device_id: str,
         device_type: DeviceType,
         wallet_user_id: str,
-        device_info: Dict[str, Any]
+        device_info: Dict[str, Any],
     ) -> FISAPIResponse:
         """
         Provision a card for Samsung Pay.
@@ -329,16 +326,11 @@ class FISWalletService:
             "wallet_type": WalletType.SAMSUNG_PAY.value,
             "device_id": device_id,
             "device_type": device_type.value,
-            "samsung_pay": {
-                "wallet_user_id": wallet_user_id,
-                "device_info": device_info
-            }
+            "samsung_pay": {"wallet_user_id": wallet_user_id, "device_info": device_info},
         }
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/wallet/provision",
-            data=payload
+            method="POST", endpoint=f"/cards/{card_id}/wallet/provision", data=payload
         )
 
         if response.success:
@@ -356,7 +348,7 @@ class FISWalletService:
         self,
         card_id: str,
         wallet_type: Optional[WalletType] = None,
-        status: Optional[TokenStatus] = None
+        status: Optional[TokenStatus] = None,
     ) -> FISAPIResponse:
         """
         Get all wallet tokens for a card.
@@ -376,16 +368,10 @@ class FISWalletService:
             params["status"] = status.value
 
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/wallet/tokens",
-            params=params
+            method="GET", endpoint=f"/cards/{card_id}/wallet/tokens", params=params
         )
 
-    async def get_token(
-        self,
-        card_id: str,
-        token_id: str
-    ) -> FISAPIResponse:
+    async def get_token(self, card_id: str, token_id: str) -> FISAPIResponse:
         """
         Get details of a specific wallet token.
 
@@ -397,15 +383,11 @@ class FISWalletService:
             FISAPIResponse with token details
         """
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/wallet/tokens/{token_id}"
+            method="GET", endpoint=f"/cards/{card_id}/wallet/tokens/{token_id}"
         )
 
     async def suspend_token(
-        self,
-        card_id: str,
-        token_id: str,
-        reason: Optional[str] = None
+        self, card_id: str, token_id: str, reason: Optional[str] = None
     ) -> FISAPIResponse:
         """
         Suspend a wallet token.
@@ -429,7 +411,7 @@ class FISWalletService:
         response = await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/wallet/tokens/{token_id}/suspend",
-            data=payload if payload else None
+            data=payload if payload else None,
         )
 
         if response.success:
@@ -439,11 +421,7 @@ class FISWalletService:
 
         return response
 
-    async def resume_token(
-        self,
-        card_id: str,
-        token_id: str
-    ) -> FISAPIResponse:
+    async def resume_token(self, card_id: str, token_id: str) -> FISAPIResponse:
         """
         Resume a suspended wallet token.
 
@@ -457,8 +435,7 @@ class FISWalletService:
         logger.info(f"Resuming wallet token {token_id} for card {card_id}")
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/wallet/tokens/{token_id}/resume"
+            method="POST", endpoint=f"/cards/{card_id}/wallet/tokens/{token_id}/resume"
         )
 
         if response.success:
@@ -469,10 +446,7 @@ class FISWalletService:
         return response
 
     async def delete_token(
-        self,
-        card_id: str,
-        token_id: str,
-        reason: Optional[str] = None
+        self, card_id: str, token_id: str, reason: Optional[str] = None
     ) -> FISAPIResponse:
         """
         Delete a wallet token.
@@ -496,7 +470,7 @@ class FISWalletService:
         response = await self.fis._make_request(
             method="DELETE",
             endpoint=f"/cards/{card_id}/wallet/tokens/{token_id}",
-            data=payload if payload else None
+            data=payload if payload else None,
         )
 
         if response.success:
@@ -507,9 +481,7 @@ class FISWalletService:
         return response
 
     async def suspend_all_tokens(
-        self,
-        card_id: str,
-        reason: Optional[str] = None
+        self, card_id: str, reason: Optional[str] = None
     ) -> FISAPIResponse:
         """
         Suspend all wallet tokens for a card.
@@ -532,14 +504,10 @@ class FISWalletService:
         return await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/wallet/tokens/suspend-all",
-            data=payload if payload else None
+            data=payload if payload else None,
         )
 
-    async def delete_all_tokens(
-        self,
-        card_id: str,
-        reason: Optional[str] = None
-    ) -> FISAPIResponse:
+    async def delete_all_tokens(self, card_id: str, reason: Optional[str] = None) -> FISAPIResponse:
         """
         Delete all wallet tokens for a card.
 
@@ -561,18 +529,14 @@ class FISWalletService:
         return await self.fis._make_request(
             method="DELETE",
             endpoint=f"/cards/{card_id}/wallet/tokens",
-            data=payload if payload else None
+            data=payload if payload else None,
         )
 
     # =========================================================================
     # TOKEN LIFECYCLE EVENTS
     # =========================================================================
 
-    async def get_token_activity(
-        self,
-        card_id: str,
-        token_id: str
-    ) -> FISAPIResponse:
+    async def get_token_activity(self, card_id: str, token_id: str) -> FISAPIResponse:
         """
         Get activity history for a token.
 
@@ -584,8 +548,7 @@ class FISWalletService:
             FISAPIResponse with activity history
         """
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/wallet/tokens/{token_id}/activity"
+            method="GET", endpoint=f"/cards/{card_id}/wallet/tokens/{token_id}/activity"
         )
 
 

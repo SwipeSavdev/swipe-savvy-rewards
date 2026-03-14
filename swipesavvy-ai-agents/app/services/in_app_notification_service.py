@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class NotificationPriority(str, Enum):
     """Notification priority levels"""
+
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
@@ -38,6 +39,7 @@ class NotificationPriority(str, Enum):
 
 class NotificationCategory(str, Enum):
     """Notification categories for filtering and preferences"""
+
     TRANSACTION = "transaction"
     CASHBACK = "cashback"
     SECURITY = "security"
@@ -137,7 +139,7 @@ class InAppNotificationService:
         data: Optional[Dict] = None,
         expires_in_hours: Optional[int] = None,
         deliver_via_websocket: bool = True,
-        db: Optional[Session] = None
+        db: Optional[Session] = None,
     ) -> InAppNotification:
         """
         Create and store a new in-app notification.
@@ -175,7 +177,7 @@ class InAppNotificationService:
             action_url=action_url,
             action_type=action_type,
             data=data,
-            expires_at=expires_at
+            expires_at=expires_at,
         )
 
         # Store in memory (replace with database in production)
@@ -205,11 +207,7 @@ class InAppNotificationService:
         try:
             if self._websocket_manager:
                 await self._websocket_manager.send_to_user(
-                    user_id,
-                    {
-                        "type": "notification",
-                        "notification": notification.to_dict()
-                    }
+                    user_id, {"type": "notification", "notification": notification.to_dict()}
                 )
                 logger.debug(f"Delivered notification {notification.id} via WebSocket")
         except Exception as e:
@@ -226,7 +224,7 @@ class InAppNotificationService:
         unread_only: bool = False,
         limit: int = 50,
         offset: int = 0,
-        db: Optional[Session] = None
+        db: Optional[Session] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get notifications for a user.
@@ -254,16 +252,13 @@ class InAppNotificationService:
 
         # Filter expired
         now = datetime.now(timezone.utc)
-        notifications = [
-            n for n in notifications
-            if not n.expires_at or n.expires_at > now
-        ]
+        notifications = [n for n in notifications if not n.expires_at or n.expires_at > now]
 
         # Filter dismissed
         notifications = [n for n in notifications if not n.dismissed]
 
         # Apply pagination
-        paginated = notifications[offset:offset + limit]
+        paginated = notifications[offset : offset + limit]
 
         return [n.to_dict() for n in paginated]
 
@@ -271,7 +266,7 @@ class InAppNotificationService:
         self,
         user_id: str,
         category: Optional[NotificationCategory] = None,
-        db: Optional[Session] = None
+        db: Optional[Session] = None,
     ) -> int:
         """Get count of unread notifications for a user"""
         notifications = self._notifications.get(user_id, [])
@@ -281,17 +276,15 @@ class InAppNotificationService:
 
         now = datetime.now(timezone.utc)
         unread = [
-            n for n in notifications
+            n
+            for n in notifications
             if not n.read and not n.dismissed and (not n.expires_at or n.expires_at > now)
         ]
 
         return len(unread)
 
     async def get_notification_by_id(
-        self,
-        notification_id: str,
-        user_id: str,
-        db: Optional[Session] = None
+        self, notification_id: str, user_id: str, db: Optional[Session] = None
     ) -> Optional[Dict[str, Any]]:
         """Get a specific notification by ID"""
         notifications = self._notifications.get(user_id, [])
@@ -307,10 +300,7 @@ class InAppNotificationService:
     # ========================================================================
 
     async def mark_as_read(
-        self,
-        notification_id: str,
-        user_id: str,
-        db: Optional[Session] = None
+        self, notification_id: str, user_id: str, db: Optional[Session] = None
     ) -> bool:
         """Mark a notification as read"""
         notifications = self._notifications.get(user_id, [])
@@ -327,7 +317,7 @@ class InAppNotificationService:
         self,
         user_id: str,
         category: Optional[NotificationCategory] = None,
-        db: Optional[Session] = None
+        db: Optional[Session] = None,
     ) -> int:
         """Mark all notifications as read for a user"""
         notifications = self._notifications.get(user_id, [])
@@ -343,10 +333,7 @@ class InAppNotificationService:
         return count
 
     async def dismiss_notification(
-        self,
-        notification_id: str,
-        user_id: str,
-        db: Optional[Session] = None
+        self, notification_id: str, user_id: str, db: Optional[Session] = None
     ) -> bool:
         """Dismiss (hide) a notification"""
         notifications = self._notifications.get(user_id, [])
@@ -360,10 +347,7 @@ class InAppNotificationService:
         return False
 
     async def delete_notification(
-        self,
-        notification_id: str,
-        user_id: str,
-        db: Optional[Session] = None
+        self, notification_id: str, user_id: str, db: Optional[Session] = None
     ) -> bool:
         """Permanently delete a notification"""
         notifications = self._notifications.get(user_id, [])
@@ -380,7 +364,7 @@ class InAppNotificationService:
         self,
         user_id: str,
         category: Optional[NotificationCategory] = None,
-        db: Optional[Session] = None
+        db: Optional[Session] = None,
     ) -> int:
         """Clear all notifications for a user"""
         if user_id not in self._notifications:
@@ -389,8 +373,7 @@ class InAppNotificationService:
         if category:
             original_count = len(self._notifications[user_id])
             self._notifications[user_id] = [
-                n for n in self._notifications[user_id]
-                if n.category != category
+                n for n in self._notifications[user_id] if n.category != category
             ]
             count = original_count - len(self._notifications[user_id])
         else:
@@ -405,12 +388,7 @@ class InAppNotificationService:
     # ========================================================================
 
     async def send_transaction_notification(
-        self,
-        user_id: str,
-        merchant: str,
-        amount: float,
-        cashback: float,
-        transaction_id: str
+        self, user_id: str, merchant: str, amount: float, cashback: float, transaction_id: str
     ) -> InAppNotification:
         """Send transaction notification"""
         return await self.create_notification(
@@ -426,16 +404,12 @@ class InAppNotificationService:
                 "transaction_id": transaction_id,
                 "merchant": merchant,
                 "amount": amount,
-                "cashback": cashback
-            }
+                "cashback": cashback,
+            },
         )
 
     async def send_cashback_notification(
-        self,
-        user_id: str,
-        amount: float,
-        merchant: str,
-        total_balance: float
+        self, user_id: str, amount: float, merchant: str, total_balance: float
     ) -> InAppNotification:
         """Send cashback earned notification"""
         return await self.create_notification(
@@ -447,19 +421,11 @@ class InAppNotificationService:
             icon="cash",
             action_url="/rewards",
             action_type="navigate",
-            data={
-                "amount": amount,
-                "merchant": merchant,
-                "total_balance": total_balance
-            }
+            data={"amount": amount, "merchant": merchant, "total_balance": total_balance},
         )
 
     async def send_security_notification(
-        self,
-        user_id: str,
-        alert_type: str,
-        details: str,
-        action_url: str = "/security"
+        self, user_id: str, alert_type: str, details: str, action_url: str = "/security"
     ) -> InAppNotification:
         """Send security alert notification"""
         titles = {
@@ -467,7 +433,7 @@ class InAppNotificationService:
             "new_device": "New Device",
             "suspicious_activity": "Security Alert",
             "password_changed": "Password Changed",
-            "account_locked": "Account Locked"
+            "account_locked": "Account Locked",
         }
 
         return await self.create_notification(
@@ -479,28 +445,25 @@ class InAppNotificationService:
             icon="shield",
             action_url=action_url,
             action_type="navigate",
-            data={"alert_type": alert_type}
+            data={"alert_type": alert_type},
         )
 
     async def send_kyc_notification(
-        self,
-        user_id: str,
-        status: str,
-        message: str
+        self, user_id: str, status: str, message: str
     ) -> InAppNotification:
         """Send KYC status notification"""
         icons = {
             "submitted": "document",
             "approved": "checkmark-circle",
             "rejected": "close-circle",
-            "pending": "time"
+            "pending": "time",
         }
 
         priorities = {
             "approved": NotificationPriority.HIGH,
             "rejected": NotificationPriority.URGENT,
             "submitted": NotificationPriority.NORMAL,
-            "pending": NotificationPriority.LOW
+            "pending": NotificationPriority.LOW,
         }
 
         return await self.create_notification(
@@ -512,7 +475,7 @@ class InAppNotificationService:
             icon=icons.get(status, "document"),
             action_url="/verification",
             action_type="navigate",
-            data={"kyc_status": status}
+            data={"kyc_status": status},
         )
 
     async def send_promotional_notification(
@@ -522,7 +485,7 @@ class InAppNotificationService:
         body: str,
         offer_id: Optional[str] = None,
         image_url: Optional[str] = None,
-        expires_in_hours: int = 168  # 7 days
+        expires_in_hours: int = 168,  # 7 days
     ) -> InAppNotification:
         """Send promotional notification"""
         return await self.create_notification(
@@ -536,15 +499,11 @@ class InAppNotificationService:
             action_url=f"/offers/{offer_id}" if offer_id else "/offers",
             action_type="navigate",
             data={"offer_id": offer_id},
-            expires_in_hours=expires_in_hours
+            expires_in_hours=expires_in_hours,
         )
 
     async def send_support_notification(
-        self,
-        user_id: str,
-        title: str,
-        body: str,
-        ticket_id: Optional[str] = None
+        self, user_id: str, title: str, body: str, ticket_id: Optional[str] = None
     ) -> InAppNotification:
         """Send support-related notification"""
         return await self.create_notification(
@@ -556,15 +515,11 @@ class InAppNotificationService:
             icon="chatbubble",
             action_url=f"/support/tickets/{ticket_id}" if ticket_id else "/support",
             action_type="navigate",
-            data={"ticket_id": ticket_id}
+            data={"ticket_id": ticket_id},
         )
 
     async def send_system_notification(
-        self,
-        user_id: str,
-        title: str,
-        body: str,
-        action_url: Optional[str] = None
+        self, user_id: str, title: str, body: str, action_url: Optional[str] = None
     ) -> InAppNotification:
         """Send system notification"""
         return await self.create_notification(
@@ -575,7 +530,7 @@ class InAppNotificationService:
             priority=NotificationPriority.NORMAL,
             icon="information-circle",
             action_url=action_url,
-            action_type="navigate" if action_url else None
+            action_type="navigate" if action_url else None,
         )
 
 
@@ -585,20 +540,12 @@ in_app_notification_service = InAppNotificationService()
 
 # Convenience functions
 async def send_in_app_notification(
-    user_id: str,
-    title: str,
-    body: str,
-    category: str = "system",
-    data: Optional[Dict] = None
+    user_id: str, title: str, body: str, category: str = "system", data: Optional[Dict] = None
 ) -> Dict[str, Any]:
     """Send an in-app notification"""
     category_enum = NotificationCategory(category.lower())
     notification = await in_app_notification_service.create_notification(
-        user_id=user_id,
-        title=title,
-        body=body,
-        category=category_enum,
-        data=data
+        user_id=user_id, title=title, body=body, category=category_enum, data=data
     )
     return notification.to_dict()
 

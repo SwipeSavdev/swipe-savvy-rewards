@@ -38,6 +38,7 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 # Demo Users Loading (From Environment Only — PCI DSS 2.2.2)
 # ============================================================================
 
+
 def load_demo_users():
     """Load demo users from DEMO_USERS environment variable only.
 
@@ -78,6 +79,7 @@ DEMO_USERS = load_demo_users()
 # Pydantic Models
 # ============================================================================
 
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -85,11 +87,12 @@ class LoginRequest(BaseModel):
     def __init__(self, **data):
         super().__init__(**data)
         if not self.password or len(self.password.strip()) == 0:
-            raise ValueError('Password cannot be empty')
+            raise ValueError("Password cannot be empty")
         if len(self.password) < 6:
-            raise ValueError('Password must be at least 6 characters')
-        if len(self.password.encode('utf-8')) > 72:
-            raise ValueError('Password exceeds maximum length')
+            raise ValueError("Password must be at least 6 characters")
+        if len(self.password.encode("utf-8")) > 72:
+            raise ValueError("Password exceeds maximum length")
+
 
 class UserInfo(BaseModel):
     id: str
@@ -97,35 +100,42 @@ class UserInfo(BaseModel):
     email: str
     role: str
 
+
 class LoginResponse(BaseModel):
     session: dict
     token: str
     expires_at: str
 
+
 class RefreshTokenRequest(BaseModel):
     token: str
+
 
 class TokenRefreshResponse(BaseModel):
     token: str
     expires_at: str
 
+
 # ============================================================================
 # Password Utilities
 # ============================================================================
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a bcrypt hash."""
-    truncated_password = plain_password.encode('utf-8')[:72]
+    truncated_password = plain_password.encode("utf-8")[:72]
     try:
-        return bcrypt.checkpw(truncated_password, hashed_password.encode('utf-8'))
+        return bcrypt.checkpw(truncated_password, hashed_password.encode("utf-8"))
     except Exception as e:
         logger.error(f"Password verification error: {e}")
         return False
 
+
 def get_password_hash(password: str) -> str:
     """Hash a plain password with bcrypt."""
-    truncated_password = password.encode('utf-8')[:72]
-    return bcrypt.hashpw(truncated_password, bcrypt.gensalt()).decode('utf-8')
+    truncated_password = password.encode("utf-8")[:72]
+    return bcrypt.hashpw(truncated_password, bcrypt.gensalt()).decode("utf-8")
+
 
 # SECURITY: Admin token blacklist (mirrors user_auth.py pattern)
 _admin_token_blacklist: dict[str, float] = {}
@@ -134,7 +144,10 @@ _admin_token_blacklist: dict[str, float] = {}
 # Token Management
 # ============================================================================
 
-def create_access_token(user_id: str, user_email: str, role: str, expires_delta: Optional[timedelta] = None):
+
+def create_access_token(
+    user_id: str, user_email: str, role: str, expires_delta: Optional[timedelta] = None
+):
     """Create a JWT access token."""
     if expires_delta is None:
         expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -149,11 +162,12 @@ def create_access_token(user_id: str, user_email: str, role: str, expires_delta:
         "type": "access",
         "jti": secrets.token_hex(16),
         "iss": "swipesavvy",
-        "aud": "admin-api"
+        "aud": "admin-api",
     }
 
     encoded_jwt = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt, expire.isoformat()
+
 
 def is_admin_token_blacklisted(jti: str) -> bool:
     """Check if an admin token's JTI has been revoked."""
@@ -169,30 +183,24 @@ def verify_token(token: str) -> dict:
     """Verify and decode a JWT token."""
     try:
         payload = jwt.decode(
-            token, SECRET_KEY, algorithms=[ALGORITHM],
-            issuer="swipesavvy", audience="admin-api"
+            token, SECRET_KEY, algorithms=[ALGORITHM], issuer="swipesavvy", audience="admin-api"
         )
         jti = payload.get("jti")
         if jti and is_admin_token_blacklisted(jti):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token has been revoked"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked"
             )
         return payload
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
     except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
 
 # ============================================================================
 # Routes
 # ============================================================================
+
 
 @router.post("/login", response_model=LoginResponse)
 @limiter.limit("5/minute")
@@ -211,7 +219,9 @@ async def login(req: LoginRequest, request: Request, db: Session = Depends(get_d
     demo_user = DEMO_USERS.get(email_lower)
     if demo_user and demo_user.get("password_hash"):
         try:
-            if bcrypt.checkpw(req.password.encode("utf-8")[:72], demo_user["password_hash"].encode("utf-8")):
+            if bcrypt.checkpw(
+                req.password.encode("utf-8")[:72], demo_user["password_hash"].encode("utf-8")
+            ):
                 user_data = demo_user
                 logger.info(f"Demo user login: {req.email}")
         except Exception as e:
@@ -226,7 +236,7 @@ async def login(req: LoginRequest, request: Request, db: Session = Depends(get_d
                 "name": db_user.full_name,
                 "email": db_user.email,
                 "role": db_user.role,
-                "status": db_user.status
+                "status": db_user.status,
             }
             db_user.last_login = datetime.utcnow()
             db.commit()
@@ -235,21 +245,17 @@ async def login(req: LoginRequest, request: Request, db: Session = Depends(get_d
     if not user_data:
         logger.warning(f"Failed login attempt for email: {req.email}")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
         )
 
     if user_data.get("status") != "active":
         logger.warning(f"Login attempt for inactive user: {req.email}")
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is not active"
+            status_code=status.HTTP_403_FORBIDDEN, detail="User account is not active"
         )
 
     token, expires_at = create_access_token(
-        user_id=user_data["id"],
-        user_email=user_data["email"],
-        role=user_data["role"]
+        user_id=user_data["id"], user_email=user_data["email"], role=user_data["role"]
     )
 
     logger.info(f"Successful login for user: {req.email}")
@@ -261,12 +267,13 @@ async def login(req: LoginRequest, request: Request, db: Session = Depends(get_d
                 "id": user_data["id"],
                 "name": user_data["name"],
                 "email": user_data["email"],
-                "role": user_data["role"]
-            }
+                "role": user_data["role"],
+            },
         },
         token=token,
-        expires_at=expires_at
+        expires_at=expires_at,
     )
+
 
 @router.post("/refresh", response_model=TokenRefreshResponse)
 async def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db)):
@@ -283,15 +290,13 @@ async def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db))
     old_jti = payload.get("jti")
     if old_jti and is_admin_token_blacklisted(old_jti):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has already been used"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has already been used"
         )
 
     user = db.query(AdminUser).filter(AdminUser.id == payload["user_id"]).first()
     if not user or user.status != "active":
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or not active"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or not active"
         )
 
     # SECURITY: Blacklist old token JTI before issuing new one (replay prevention)
@@ -301,15 +306,11 @@ async def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db))
         _admin_token_blacklist[jti] = exp
 
     token, expires_at = create_access_token(
-        user_id=payload["user_id"],
-        user_email=payload["email"],
-        role=payload["role"]
+        user_id=payload["user_id"], user_email=payload["email"], role=payload["role"]
     )
 
-    return TokenRefreshResponse(
-        token=token,
-        expires_at=expires_at
-    )
+    return TokenRefreshResponse(token=token, expires_at=expires_at)
+
 
 @router.post("/logout")
 async def logout(authorization: Optional[str] = Header(None)):
@@ -324,8 +325,7 @@ async def logout(authorization: Optional[str] = Header(None)):
         token = authorization.replace(BEARER_PREFIX, "")
         try:
             payload = jwt.decode(
-                token, SECRET_KEY, algorithms=[ALGORITHM],
-                issuer="swipesavvy", audience="admin-api"
+                token, SECRET_KEY, algorithms=[ALGORITHM], issuer="swipesavvy", audience="admin-api"
             )
             jti = payload.get("jti")
             exp = payload.get("exp", 0)
@@ -339,51 +339,42 @@ async def logout(authorization: Optional[str] = Header(None)):
         except (jwt.InvalidTokenError, jwt.DecodeError):
             pass  # Token already invalid — logout succeeds anyway
 
-    return {
-        "success": True,
-        "message": "Logged out successfully"
-    }
+    return {"success": True, "message": "Logged out successfully"}
 
 
 @router.get("/me")
-async def get_current_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+async def get_current_user(
+    authorization: Optional[str] = Header(None), db: Session = Depends(get_db)
+):
     """
     Get current authenticated user info.
 
     Expects Authorization header: "Bearer {token}"
     """
     if not authorization or not authorization.startswith(BEARER_PREFIX):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No token provided"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No token provided")
 
     token = authorization.replace(BEARER_PREFIX, "")
     payload = verify_token(token)
 
     user = db.query(AdminUser).filter(AdminUser.id == payload["user_id"]).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return UserInfo(
-        id=str(user.id),
-        name=user.full_name,
-        email=user.email,
-        role=user.role
-    )
+    return UserInfo(id=str(user.id), name=user.full_name, email=user.email, role=user.role)
+
 
 # ============================================================================
 # Initial Setup Endpoint (One-time use)
 # ============================================================================
+
 
 class SetupRequest(BaseModel):
     setup_key: str
     email: EmailStr
     password: str
     full_name: str
+
 
 @router.post("/setup-admin")
 async def setup_initial_admin(req: SetupRequest, db: Session = Depends(get_db)):
@@ -397,28 +388,29 @@ async def setup_initial_admin(req: SetupRequest, db: Session = Depends(get_db)):
     setup_secret = os.getenv("ADMIN_SETUP_KEY", "")
     if not setup_secret:
         logger.error("ADMIN_SETUP_KEY not set — admin setup endpoint disabled")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Setup not configured")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Setup not configured"
+        )
     if req.setup_key != setup_secret:
         logger.warning("Invalid setup key attempted")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid setup key"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid setup key")
 
-    existing_count = db.query(AdminUser).filter(AdminUser.role.in_(['admin', 'super_admin'])).count()
+    existing_count = (
+        db.query(AdminUser).filter(AdminUser.role.in_(["admin", "super_admin"])).count()
+    )
     if existing_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Admin users already exist. This endpoint can only be used for initial setup."
+            detail="Admin users already exist. This endpoint can only be used for initial setup.",
         )
 
     if len(req.password) < 8:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at least 8 characters"
         )
 
     from uuid import uuid4
+
     password_hash = get_password_hash(req.password)
 
     admin_user = AdminUser(
@@ -427,7 +419,7 @@ async def setup_initial_admin(req: SetupRequest, db: Session = Depends(get_db)):
         password_hash=password_hash,
         full_name=req.full_name,
         role="super_admin",
-        status="active"
+        status="active",
     )
 
     db.add(admin_user)
@@ -435,17 +427,14 @@ async def setup_initial_admin(req: SetupRequest, db: Session = Depends(get_db)):
 
     logger.info(f"Initial admin user created: {req.email}")
 
-    return {
-        "success": True,
-        "message": "Admin user created successfully",
-        "email": req.email
-    }
+    return {"success": True, "message": "Admin user created successfully", "email": req.email}
 
 
 class ResetPasswordRequest(BaseModel):
     setup_key: str
     email: EmailStr
     new_password: str
+
 
 @router.post("/reset-password")
 async def reset_admin_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
@@ -456,25 +445,20 @@ async def reset_admin_password(req: ResetPasswordRequest, db: Session = Depends(
     setup_secret = os.getenv("ADMIN_SETUP_KEY", "")
     if not setup_secret:
         logger.error("ADMIN_SETUP_KEY not set — admin setup endpoint disabled")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Setup not configured")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Setup not configured"
+        )
     if req.setup_key != setup_secret:
         logger.warning("Invalid setup key for password reset")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid setup key"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid setup key")
 
     user = db.query(AdminUser).filter(AdminUser.email == req.email.lower()).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     if len(req.new_password) < 8:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at least 8 characters"
         )
 
     user.password_hash = get_password_hash(req.new_password)
@@ -482,7 +466,4 @@ async def reset_admin_password(req: ResetPasswordRequest, db: Session = Depends(
 
     logger.info(f"Password reset for user: {req.email}")
 
-    return {
-        "success": True,
-        "message": "Password reset successfully"
-    }
+    return {"success": True, "message": "Password reset successfully"}

@@ -23,8 +23,10 @@ logger = logging.getLogger(__name__)
 # TIER 1: INPUT MODELS (User-provided essential fields)
 # =============================================================================
 
+
 class BusinessAddress(BaseModel):
     """Parsed business address"""
+
     street: str
     city: str
     state: str
@@ -34,6 +36,7 @@ class BusinessAddress(BaseModel):
 
 class OwnerAddress(BaseModel):
     """Parsed owner address"""
+
     street: str
     city: str
     state: str
@@ -43,6 +46,7 @@ class OwnerAddress(BaseModel):
 
 class OwnerInfo(BaseModel):
     """Owner/Principal information"""
+
     first_name: str
     last_name: str
     middle_name: Optional[str] = ""
@@ -59,6 +63,7 @@ class OwnerInfo(BaseModel):
 
 class BankInfo(BaseModel):
     """Bank account information"""
+
     bank_name: str
     routing_number: str
     account_number: str
@@ -67,6 +72,7 @@ class BankInfo(BaseModel):
 
 class ProcessingInfo(BaseModel):
     """Processing configuration"""
+
     monthly_volume: float
     avg_ticket: float
     high_ticket: float
@@ -75,6 +81,7 @@ class ProcessingInfo(BaseModel):
 
 class EssentialFields(BaseModel):
     """Tier 1: Essential fields collected from user (26 fields)"""
+
     # Business (8 fields)
     legal_name: str
     dba_name: str
@@ -169,6 +176,7 @@ PROCESSING_TYPE_MAP = {
 # =============================================================================
 # TIER 3: SYSTEM DEFAULTS
 # =============================================================================
+
 
 class SystemDefaults:
     """Standard default values for initial merchant boarding"""
@@ -303,10 +311,8 @@ class SystemDefaults:
         "americanExpressMerchantId": "",
         "americanExpressOwnerCode": "",
         "americanExpressProcessingCenterCode": "",
-
         # Discover (enabled by default)
         "discoverNetworkIndicator": "Y",
-
         # Visa specific
         "visaTechnologyMigrationProgramRequestCode": "Y",
         "visaTechnologyMigrationProgramServiceLevelCode": "1",
@@ -314,13 +320,11 @@ class SystemDefaults:
         "visaTechnologyMigrationProgramPointofsaleCapabilityCode": "5",
         "visaTechnologyMigrationProgramCardholderIdCode": "S",
         "visaTechnologyMigrationProgramAuthSourceCode": "E",
-
         # Fraud & Security
         "efraudServiceCode": "0",
         "fraudFlexIndicator": "N",
         "trustkeeperIndicator": "N",
         "caseManagementIndicator": "Y",
-
         # Misc
         "recurringPaymentsIndicator": "N",
         "quasiCashIndicator": "N",
@@ -360,6 +364,7 @@ class SystemDefaults:
 # =============================================================================
 # FIELD DERIVATION SERVICE
 # =============================================================================
+
 
 class FieldDerivationService:
     """
@@ -410,18 +415,23 @@ class FieldDerivationService:
 
     def _derive_business_fields(self, essential: EssentialFields) -> Dict[str, Any]:
         """Derive business-related fields"""
-        entity_info = ENTITY_TYPE_MAP.get(essential.business_type, {"code": "3", "description": "Corporation"})
+        entity_info = ENTITY_TYPE_MAP.get(
+            essential.business_type, {"code": "3", "description": "Corporation"}
+        )
         sic_code = MCC_TO_SIC_MAP.get(essential.mcc_code, essential.mcc_code)
 
         return {
             "legalBusinessName": essential.legal_name.upper()[:40],
-            "dbaName": essential.dba_name.upper()[:40] if essential.dba_name else essential.legal_name.upper()[:40],
+            "dbaName": (
+                essential.dba_name.upper()[:40]
+                if essential.dba_name
+                else essential.legal_name.upper()[:40]
+            ),
             "entityTypeCode": entity_info["code"],
             "primaryMccCode": essential.mcc_code,
             "sicCode": sic_code,
             "websiteUrlText": essential.website or "",
             "customerServicePhoneNumber": self._clean_phone(essential.customer_service_phone),
-
             # Business address
             "businessStreet": essential.business_address.street.upper()[:40],
             "businessCity": essential.business_address.city.upper()[:25],
@@ -435,7 +445,9 @@ class FieldDerivationService:
         owners_data = []
 
         for owner in essential.owners:
-            full_name = f"{owner.first_name} {owner.middle_name} {owner.last_name}".replace("  ", " ").strip()
+            full_name = f"{owner.first_name} {owner.middle_name} {owner.last_name}".replace(
+                "  ", " "
+            ).strip()
 
             owner_data = {
                 "ownerSequenceNumber": owner.sequence_number,
@@ -454,7 +466,9 @@ class FieldDerivationService:
                 "ownerPostalCode": owner.address.zip[:10],
                 "ownerCountryCode": owner.address.country.upper(),
                 "ownerPercent": int(owner.ownership_percent),
-                "ownerGuarenteeIndicator": "Y" if owner.is_guarantor or owner.ownership_percent >= 25 else "N",
+                "ownerGuarenteeIndicator": (
+                    "Y" if owner.is_guarantor or owner.ownership_percent >= 25 else "N"
+                ),
                 "ownerSignerIndicator": "Y" if owner.sequence_number == 1 else "N",
             }
             owners_data.append(owner_data)
@@ -469,7 +483,9 @@ class FieldDerivationService:
 
         if primary_owner:
             # Legacy single-owner fields
-            result["legalContactName"] = f"{primary_owner.first_name} {primary_owner.last_name}".upper()[:40]
+            result["legalContactName"] = (
+                f"{primary_owner.first_name} {primary_owner.last_name}".upper()[:40]
+            )
             result["legalContactTitle"] = primary_owner.title.upper()[:20]
 
             # Sole proprietor specific
@@ -491,17 +507,17 @@ class FieldDerivationService:
             "bankAccountTypeCode": bank.account_type.upper(),
             "bankSequenceNumber": 1,
             "bankFundingFileCode": "1",
-
             # Merchant bank accounts structure
-            "merchantBankAccounts": [{
-                "bankSequenceNumber": 1,
-                "bankRoutingNumber": self._clean_routing(bank.routing_number),
-                "bankAccountNumber": bank.account_number,
-                "bankAccountTypeCode": bank.account_type.upper(),
-                "bankAccountEffectiveDate": datetime.now().strftime("%Y-%m-%d"),
-                "bankFundingFileCode": "1",
-            }],
-
+            "merchantBankAccounts": [
+                {
+                    "bankSequenceNumber": 1,
+                    "bankRoutingNumber": self._clean_routing(bank.routing_number),
+                    "bankAccountNumber": bank.account_number,
+                    "bankAccountTypeCode": bank.account_type.upper(),
+                    "bankAccountEffectiveDate": datetime.now().strftime("%Y-%m-%d"),
+                    "bankFundingFileCode": "1",
+                }
+            ],
             # Funding accounts for each category
             "merchantFundingAccounts": self._build_funding_accounts(),
         }
@@ -522,10 +538,11 @@ class FieldDerivationService:
             "motoEcommerceCode": proc_config["code"],
             "processingTypeCode": proc.processing_type,
             "pricingTypeCode": "IC+",  # Always Interchange Plus for new merchants
-
             # E-commerce specific
-            "internetSalesPercent": 100 if proc.processing_type == "ECOM" else (
-                50 if proc.processing_type == "MIXED" else 0
+            "internetSalesPercent": (
+                100
+                if proc.processing_type == "ECOM"
+                else (50 if proc.processing_type == "MIXED" else 0)
             ),
         }
 
@@ -552,7 +569,6 @@ class FieldDerivationService:
             "cardAlternateStateCode": essential.business_address.state.upper(),
             "cardAlternateUserDefinedText": "",
             "cardDescriptorCode": "2",  # Standard descriptor
-
             # MSIP fields
             "msipAlternateCityName": essential.business_address.city.upper()[:13],
             "msipAlternateMerchantName": dba.upper()[:25],
@@ -591,7 +607,9 @@ class FieldDerivationService:
             {
                 "levelCode": "010",
                 "merchantName": essential.legal_name.upper()[:40],
-                "addressAttentionText": essential.owners[0].first_name.upper() if essential.owners else "",
+                "addressAttentionText": (
+                    essential.owners[0].first_name.upper() if essential.owners else ""
+                ),
                 "address1Text": addr.street.upper()[:40],
                 "cityName": addr.city.upper()[:25],
                 "stateCode": addr.state.upper(),
@@ -622,7 +640,11 @@ class FieldDerivationService:
             {
                 "emailTypeCode": "001",  # Primary
                 "emailText": primary_email.lower(),
-                "emailContactName": f"{essential.owners[0].first_name} {essential.owners[0].last_name}" if essential.owners else "",
+                "emailContactName": (
+                    f"{essential.owners[0].first_name} {essential.owners[0].last_name}"
+                    if essential.owners
+                    else ""
+                ),
             },
             {
                 "emailTypeCode": "003",  # Statements
@@ -761,6 +783,7 @@ class FieldDerivationService:
 # VALIDATION SERVICE
 # =============================================================================
 
+
 class ValidationService:
     """Validates essential fields before derivation"""
 
@@ -817,12 +840,24 @@ class ValidationService:
                     errors.append(f"{prefix}Date of birth is required")
                 if not owner.email or "@" not in owner.email:
                     errors.append(f"{prefix}Valid email is required")
-                if not owner.phone or len(owner.phone.replace("-", "").replace(" ", "").replace("(", "").replace(")", "")) < 10:
+                if (
+                    not owner.phone
+                    or len(
+                        owner.phone.replace("-", "")
+                        .replace(" ", "")
+                        .replace("(", "")
+                        .replace(")", "")
+                    )
+                    < 10
+                ):
                     errors.append(f"{prefix}Valid phone number is required")
 
         # Bank validations
         bank = essential.bank_info
-        if not bank.routing_number or len(bank.routing_number.replace("-", "").replace(" ", "")) != 9:
+        if (
+            not bank.routing_number
+            or len(bank.routing_number.replace("-", "").replace(" ", "")) != 9
+        ):
             errors.append("Valid 9-digit routing number is required")
         if not bank.account_number:
             errors.append("Bank account number is required")
@@ -852,6 +887,7 @@ class ValidationService:
 # =============================================================================
 # FACTORY FUNCTION
 # =============================================================================
+
 
 def create_derivation_service() -> FieldDerivationService:
     """Factory function to create derivation service instance"""

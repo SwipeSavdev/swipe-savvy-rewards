@@ -8,7 +8,7 @@ from tools.account import (
     get_account_info,
     get_account_settings,
     AccountNotFoundError,
-    UnauthorizedAccessError
+    UnauthorizedAccessError,
 )
 
 
@@ -16,7 +16,7 @@ from tools.account import (
 async def test_get_account_balance_returns_dict():
     """Test that get_account_balance returns expected structure"""
     result = await get_account_balance("user_123")
-    
+
     assert isinstance(result, dict)
     assert "available_balance" in result
     assert "pending_balance" in result
@@ -30,7 +30,7 @@ async def test_get_account_balance_returns_dict():
 async def test_get_account_info_returns_dict():
     """Test that get_account_info returns expected structure"""
     result = await get_account_info("user_123")
-    
+
     assert isinstance(result, dict)
     assert "account_status" in result
     assert "account_type" in result
@@ -44,7 +44,7 @@ async def test_get_account_info_returns_dict():
 async def test_get_account_settings_returns_dict():
     """Test that get_account_settings returns expected structure"""
     result = await get_account_settings("user_123")
-    
+
     assert isinstance(result, dict)
     assert "notifications_enabled" in result
     assert "language" in result

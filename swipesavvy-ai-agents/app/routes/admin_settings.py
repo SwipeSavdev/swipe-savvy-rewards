@@ -35,7 +35,9 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
     return verify_token_string(token)
 
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-settings"], dependencies=[Depends(require_auth)])
+router = APIRouter(
+    prefix="/api/v1/admin", tags=["admin-settings"], dependencies=[Depends(require_auth)]
+)
 
 # Default Settings (used for initialization)
 DEFAULT_SETTINGS = {
@@ -45,7 +47,7 @@ DEFAULT_SETTINGS = {
         "supportEmail": "support@swipesavvy.com",
         "supportPhone": "+1-800-SWIPE-PAY",
         "timezone": "America/Los_Angeles",
-        "language": "en-US"
+        "language": "en-US",
     },
     "security": {
         "enableTwoFactor": True,
@@ -54,7 +56,7 @@ DEFAULT_SETTINGS = {
         "maxLoginAttempts": 5,
         "requireStrongPassword": True,
         "passwordMinLength": 12,
-        "enableIpWhitelist": False
+        "enableIpWhitelist": False,
     },
     "payments": {
         "minTransaction": 0.01,
@@ -63,7 +65,7 @@ DEFAULT_SETTINGS = {
         "transactionFee": 0.49,
         "platformFeePercentage": 2.5,
         "enableCrypto": False,
-        "supportedCurrencies": ["USD", "EUR", "GBP"]
+        "supportedCurrencies": ["USD", "EUR", "GBP"],
     },
     "notifications": {
         "enableEmailNotifications": True,
@@ -71,7 +73,7 @@ DEFAULT_SETTINGS = {
         "enablePushNotifications": True,
         "emailFrequency": "immediate",
         "smsFrequency": "critical_only",
-        "unsubscribeRate": 5.2
+        "unsubscribeRate": 5.2,
     },
     "compliance": {
         "enableKyc": True,
@@ -79,7 +81,7 @@ DEFAULT_SETTINGS = {
         "enableAml": True,
         "dataRetentionDays": 2555,
         "gdprCompliant": True,
-        "ccpaCompliant": True
+        "ccpaCompliant": True,
     },
     "branding": {
         "logoUrl": "https://cdn.swipesavvy.com/logo.png",
@@ -87,22 +89,22 @@ DEFAULT_SETTINGS = {
         "primaryColor": "#007AFF",
         "secondaryColor": "#5AC8FA",
         "accentColor": "#FF5252",
-        "fontFamily": "Segoe UI, Roboto"
-    }
+        "fontFamily": "Segoe UI, Roboto",
+    },
 }
 
 
 def get_data_type(value: Any) -> str:
     """Determine the data type of a value for storage"""
     if isinstance(value, bool):
-        return 'boolean'
+        return "boolean"
     elif isinstance(value, int):
-        return 'integer'
+        return "integer"
     elif isinstance(value, float):
-        return 'float'
+        return "float"
     elif isinstance(value, (list, dict)):
-        return 'json'
-    return 'string'
+        return "json"
+    return "string"
 
 
 def serialize_value(value: Any) -> str:
@@ -110,19 +112,19 @@ def serialize_value(value: Any) -> str:
     if isinstance(value, (list, dict)):
         return json.dumps(value)
     elif isinstance(value, bool):
-        return 'true' if value else 'false'
+        return "true" if value else "false"
     return str(value)
 
 
 def deserialize_value(value: str, data_type: str) -> Any:
     """Deserialize a value from database storage"""
-    if data_type == 'boolean':
-        return value.lower() == 'true'
-    elif data_type == 'integer':
+    if data_type == "boolean":
+        return value.lower() == "true"
+    elif data_type == "integer":
         return int(value)
-    elif data_type == 'float':
+    elif data_type == "float":
         return float(value)
-    elif data_type == 'json':
+    elif data_type == "json":
         return json.loads(value)
     return value
 
@@ -145,15 +147,14 @@ def get_settings_from_db(db: Session) -> Dict[str, Dict[str, Any]]:
     return settings
 
 
-def save_setting_to_db(db: Session, category: str, key: str, value: Any, description: Optional[str] = None):
+def save_setting_to_db(
+    db: Session, category: str, key: str, value: Any, description: Optional[str] = None
+):
     """Save or update a setting in the database"""
     data_type = get_data_type(value)
     serialized = serialize_value(value)
 
-    existing = db.query(Setting).filter(
-        Setting.category == category,
-        Setting.key == key
-    ).first()
+    existing = db.query(Setting).filter(Setting.category == category, Setting.key == key).first()
 
     if existing:
         existing.value = serialized
@@ -167,7 +168,7 @@ def save_setting_to_db(db: Session, category: str, key: str, value: Any, descrip
             key=key,
             value=serialized,
             data_type=data_type,
-            description=description or f"{category}.{key} setting"
+            description=description or f"{category}.{key} setting",
         )
         db.add(new_setting)
 
@@ -192,11 +193,7 @@ async def get_all_settings(db: Session = Depends(get_db)) -> Dict[str, Any]:
         latest = db.query(Setting).order_by(Setting.updated_at.desc()).first()
         last_updated = latest.updated_at.isoformat() if latest else datetime.now().isoformat()
 
-        return {
-            "success": True,
-            "settings": settings,
-            "lastUpdated": last_updated
-        }
+        return {"success": True, "settings": settings, "lastUpdated": last_updated}
     except Exception as e:
         logger.error(f"Error getting settings: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get settings")
@@ -206,15 +203,17 @@ async def get_all_settings(db: Session = Depends(get_db)) -> Dict[str, Any]:
 # Branding Image Management Endpoints (must be before generic {category}/{key} routes)
 # ============================================================================
 
+
 @router.get("/settings/branding/images")
 async def get_branding_images(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get all uploaded branding images"""
     try:
         # Query directly to handle case when no images exist yet
-        setting = db.query(Setting).filter(
-            Setting.category == "branding",
-            Setting.key == "images"
-        ).first()
+        setting = (
+            db.query(Setting)
+            .filter(Setting.category == "branding", Setting.key == "images")
+            .first()
+        )
 
         images = []
         if setting and setting.value:
@@ -223,17 +222,11 @@ async def get_branding_images(db: Session = Depends(get_db)) -> Dict[str, Any]:
             except json.JSONDecodeError:
                 images = []
 
-        return {
-            "success": True,
-            "images": images
-        }
+        return {"success": True, "images": images}
     except Exception as e:
         logger.error(f"Error getting branding images: {str(e)}")
         # Return empty images instead of error when none exist
-        return {
-            "success": True,
-            "images": []
-        }
+        return {"success": True, "images": []}
 
 
 @router.get("/settings/branding/images/file/{filename}")
@@ -259,7 +252,7 @@ async def get_branding_image_file(filename: str):
             ".svg": "image/svg+xml",
             ".ico": "image/x-icon",
             ".gif": "image/gif",
-            ".webp": "image/webp"
+            ".webp": "image/webp",
         }
         content_type = content_types.get(ext, "application/octet-stream")
 
@@ -273,9 +266,7 @@ async def get_branding_image_file(filename: str):
 
 @router.post("/settings/branding/upload")
 async def upload_branding_image(
-    file: UploadFile = File(...),
-    type: str = Form(...),
-    db: Session = Depends(get_db)
+    file: UploadFile = File(...), type: str = Form(...), db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Upload a branding image (logo, favicon, or banner)"""
     try:
@@ -283,8 +274,7 @@ async def upload_branding_image(
         allowed_types = ["image/png", "image/jpeg", "image/x-icon", "image/gif", "image/webp"]
         if file.content_type not in allowed_types:
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file type. Allowed: {', '.join(allowed_types)}"
+                status_code=400, detail=f"Invalid file type. Allowed: {', '.join(allowed_types)}"
             )
 
         # Read file content to check size
@@ -298,7 +288,7 @@ async def upload_branding_image(
         if type not in valid_image_types:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid image type. Must be one of: {', '.join(valid_image_types)}"
+                detail=f"Invalid image type. Must be one of: {', '.join(valid_image_types)}",
             )
 
         # Generate unique filename
@@ -312,10 +302,11 @@ async def upload_branding_image(
             shutil.copyfileobj(file.file, buffer)
 
         # Get current images and remove any existing image of the same type
-        setting = db.query(Setting).filter(
-            Setting.category == "branding",
-            Setting.key == "images"
-        ).first()
+        setting = (
+            db.query(Setting)
+            .filter(Setting.category == "branding", Setting.key == "images")
+            .first()
+        )
 
         images = []
         if setting and setting.value:
@@ -333,7 +324,7 @@ async def upload_branding_image(
             "url": f"/api/v1/admin/settings/branding/images/file/{new_filename}",
             "type": type,
             "uploadedAt": datetime.utcnow().isoformat(),
-            "filename": new_filename
+            "filename": new_filename,
         }
         images.append(new_image)
 
@@ -345,7 +336,7 @@ async def upload_branding_image(
         return {
             "success": True,
             "message": f"{type.capitalize()} uploaded successfully",
-            "image": new_image
+            "image": new_image,
         }
     except HTTPException:
         raise
@@ -359,10 +350,11 @@ async def delete_branding_image(image_id: str, db: Session = Depends(get_db)) ->
     """Delete a branding image"""
     try:
         # Get current images
-        setting = db.query(Setting).filter(
-            Setting.category == "branding",
-            Setting.key == "images"
-        ).first()
+        setting = (
+            db.query(Setting)
+            .filter(Setting.category == "branding", Setting.key == "images")
+            .first()
+        )
 
         images = []
         if setting and setting.value:
@@ -393,11 +385,7 @@ async def delete_branding_image(image_id: str, db: Session = Depends(get_db)) ->
 
         logger.info(f"Deleted branding image: {image_id}")
 
-        return {
-            "success": True,
-            "message": "Image deleted successfully",
-            "deletedId": image_id
-        }
+        return {"success": True, "message": "Image deleted successfully", "deletedId": image_id}
     except HTTPException:
         raise
     except Exception as e:
@@ -408,6 +396,7 @@ async def delete_branding_image(image_id: str, db: Session = Depends(get_db)) ->
 # ============================================================================
 # Generic Settings Routes (after specific routes)
 # ============================================================================
+
 
 @router.get("/settings/{category}")
 async def get_settings_by_category(category: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
@@ -422,7 +411,7 @@ async def get_settings_by_category(category: str, db: Session = Depends(get_db))
             "success": True,
             "category": category,
             "settings": settings[category],
-            "lastUpdated": datetime.now().isoformat()
+            "lastUpdated": datetime.now().isoformat(),
         }
     except HTTPException:
         raise
@@ -441,14 +430,16 @@ async def get_setting(category: str, key: str, db: Session = Depends(get_db)) ->
             raise HTTPException(status_code=404, detail=f"Settings category '{category}' not found")
 
         if key not in settings[category]:
-            raise HTTPException(status_code=404, detail=f"Setting key '{key}' not found in category '{category}'")
+            raise HTTPException(
+                status_code=404, detail=f"Setting key '{key}' not found in category '{category}'"
+            )
 
         return {
             "success": True,
             "category": category,
             "key": key,
             "value": settings[category][key],
-            "lastUpdated": datetime.now().isoformat()
+            "lastUpdated": datetime.now().isoformat(),
         }
     except HTTPException:
         raise
@@ -458,7 +449,9 @@ async def get_setting(category: str, key: str, db: Session = Depends(get_db)) ->
 
 
 @router.put("/settings/{category}/{key}")
-async def update_setting(category: str, key: str, setting: SettingValue, db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def update_setting(
+    category: str, key: str, setting: SettingValue, db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """Update a specific setting"""
     try:
         settings = get_settings_from_db(db)
@@ -478,7 +471,7 @@ async def update_setting(category: str, key: str, setting: SettingValue, db: Ses
             "key": key,
             "oldValue": old_value,
             "newValue": setting.value,
-            "updatedAt": datetime.now().isoformat()
+            "updatedAt": datetime.now().isoformat(),
         }
     except HTTPException:
         raise
@@ -489,7 +482,9 @@ async def update_setting(category: str, key: str, setting: SettingValue, db: Ses
 
 
 @router.put("/settings/{category}")
-async def update_category_settings(category: str, request: BulkUpdateRequest, db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def update_category_settings(
+    category: str, request: BulkUpdateRequest, db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """Update multiple settings in a category"""
     try:
         settings = get_settings_from_db(db)
@@ -512,7 +507,7 @@ async def update_category_settings(category: str, request: BulkUpdateRequest, db
             "message": f"Settings in category '{category}' updated successfully",
             "category": category,
             "changes": changes,
-            "updatedAt": datetime.now().isoformat()
+            "updatedAt": datetime.now().isoformat(),
         }
     except HTTPException:
         raise
@@ -523,29 +518,31 @@ async def update_category_settings(category: str, request: BulkUpdateRequest, db
 
 
 @router.put("/settings")
-async def update_all_settings(request: Dict[str, Any], db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def update_all_settings(
+    request: Dict[str, Any], db: Session = Depends(get_db)
+) -> Dict[str, Any]:
     """Update settings from the frontend Settings page"""
     try:
         # Map frontend fields to database settings
-        if 'name' in request:
-            save_setting_to_db(db, 'general', 'platformName', request['name'])
-        if 'description' in request:
-            save_setting_to_db(db, 'general', 'platformDescription', request['description'])
-        if 'timezone' in request:
-            save_setting_to_db(db, 'general', 'timezone', request['timezone'])
-        if 'locales' in request and len(request['locales']) > 0:
-            save_setting_to_db(db, 'general', 'language', request['locales'][0])
-        if 'alerts' in request:
-            save_setting_to_db(db, 'notifications', 'enableEmailNotifications', request['alerts'])
-        if 'digest' in request:
-            save_setting_to_db(db, 'notifications', 'enableDigest', request['digest'])
-        if 'branding_mode' in request:
-            save_setting_to_db(db, 'branding', 'brandingMode', request['branding_mode'])
+        if "name" in request:
+            save_setting_to_db(db, "general", "platformName", request["name"])
+        if "description" in request:
+            save_setting_to_db(db, "general", "platformDescription", request["description"])
+        if "timezone" in request:
+            save_setting_to_db(db, "general", "timezone", request["timezone"])
+        if "locales" in request and len(request["locales"]) > 0:
+            save_setting_to_db(db, "general", "language", request["locales"][0])
+        if "alerts" in request:
+            save_setting_to_db(db, "notifications", "enableEmailNotifications", request["alerts"])
+        if "digest" in request:
+            save_setting_to_db(db, "notifications", "enableDigest", request["digest"])
+        if "branding_mode" in request:
+            save_setting_to_db(db, "branding", "brandingMode", request["branding_mode"])
 
         return {
             "success": True,
             "message": "Settings updated successfully",
-            "updatedAt": datetime.now().isoformat()
+            "updatedAt": datetime.now().isoformat(),
         }
     except Exception as e:
         logger.error(f"Error updating settings: {str(e)}")
@@ -568,7 +565,7 @@ async def reset_category_settings(category: str, db: Session = Depends(get_db)) 
             "success": True,
             "message": f"Settings in category '{category}' have been reset to defaults",
             "category": category,
-            "resetAt": datetime.now().isoformat()
+            "resetAt": datetime.now().isoformat(),
         }
     except HTTPException:
         raise
@@ -586,17 +583,15 @@ async def list_categories(db: Session = Depends(get_db)) -> Dict[str, Any]:
 
         categories = []
         for cat_name, cat_settings in settings.items():
-            categories.append({
-                "name": cat_name,
-                "settingsCount": len(cat_settings),
-                "keys": list(cat_settings.keys())
-            })
+            categories.append(
+                {
+                    "name": cat_name,
+                    "settingsCount": len(cat_settings),
+                    "keys": list(cat_settings.keys()),
+                }
+            )
 
-        return {
-            "success": True,
-            "categories": categories,
-            "totalCategories": len(categories)
-        }
+        return {"success": True, "categories": categories, "totalCategories": len(categories)}
     except Exception as e:
         logger.error(f"Error listing categories: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list categories")
@@ -613,7 +608,7 @@ async def seed_default_settings(db: Session = Depends(get_db)) -> Dict[str, Any]
                 "success": True,
                 "message": "Settings already exist",
                 "seeded": False,
-                "existing_count": existing_count
+                "existing_count": existing_count,
             }
 
         # Seed defaults
@@ -627,7 +622,7 @@ async def seed_default_settings(db: Session = Depends(get_db)) -> Dict[str, Any]
             "success": True,
             "message": "Default settings seeded successfully",
             "seeded": True,
-            "settings_created": count
+            "settings_created": count,
         }
     except Exception as e:
         logger.error(f"Error seeding settings: {str(e)}")

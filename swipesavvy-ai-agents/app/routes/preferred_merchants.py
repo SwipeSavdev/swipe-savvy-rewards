@@ -22,64 +22,66 @@ from app.core.auth import verify_token_string
 
 # Subscription tier configuration
 SUBSCRIPTION_TIERS = {
-    'platinum': {
-        'placement_score': 100,
-        'max_active_deals': 999,  # Unlimited
-        'featured_placement': True,
-        'banner_enabled': True,
-        'priority_support': True,
-        'analytics_access': True,
-        'custom_branding': True,
-        'monthly_fee': 499.00,
-        'annual_fee': 4990.00,
+    "platinum": {
+        "placement_score": 100,
+        "max_active_deals": 999,  # Unlimited
+        "featured_placement": True,
+        "banner_enabled": True,
+        "priority_support": True,
+        "analytics_access": True,
+        "custom_branding": True,
+        "monthly_fee": 499.00,
+        "annual_fee": 4990.00,
     },
-    'gold': {
-        'placement_score': 75,
-        'max_active_deals': 10,
-        'featured_placement': True,
-        'banner_enabled': False,
-        'priority_support': True,
-        'analytics_access': True,
-        'custom_branding': True,
-        'monthly_fee': 199.00,
-        'annual_fee': 1990.00,
+    "gold": {
+        "placement_score": 75,
+        "max_active_deals": 10,
+        "featured_placement": True,
+        "banner_enabled": False,
+        "priority_support": True,
+        "analytics_access": True,
+        "custom_branding": True,
+        "monthly_fee": 199.00,
+        "annual_fee": 1990.00,
     },
-    'silver': {
-        'placement_score': 50,
-        'max_active_deals': 5,
-        'featured_placement': False,
-        'banner_enabled': False,
-        'priority_support': False,
-        'analytics_access': True,
-        'custom_branding': False,
-        'monthly_fee': 99.00,
-        'annual_fee': 990.00,
+    "silver": {
+        "placement_score": 50,
+        "max_active_deals": 5,
+        "featured_placement": False,
+        "banner_enabled": False,
+        "priority_support": False,
+        "analytics_access": True,
+        "custom_branding": False,
+        "monthly_fee": 99.00,
+        "annual_fee": 990.00,
     },
-    'bronze': {
-        'placement_score': 25,
-        'max_active_deals': 2,
-        'featured_placement': False,
-        'banner_enabled': False,
-        'priority_support': False,
-        'analytics_access': False,
-        'custom_branding': False,
-        'monthly_fee': 49.00,
-        'annual_fee': 490.00,
+    "bronze": {
+        "placement_score": 25,
+        "max_active_deals": 2,
+        "featured_placement": False,
+        "banner_enabled": False,
+        "priority_support": False,
+        "analytics_access": False,
+        "custom_branding": False,
+        "monthly_fee": 49.00,
+        "annual_fee": 490.00,
     },
-    'free': {
-        'placement_score': 0,
-        'max_active_deals': 1,
-        'featured_placement': False,
-        'banner_enabled': False,
-        'priority_support': False,
-        'analytics_access': False,
-        'custom_branding': False,
-        'monthly_fee': 0.00,
-        'annual_fee': 0.00,
-    }
+    "free": {
+        "placement_score": 0,
+        "max_active_deals": 1,
+        "featured_placement": False,
+        "banner_enabled": False,
+        "priority_support": False,
+        "analytics_access": False,
+        "custom_branding": False,
+        "monthly_fee": 0.00,
+        "annual_fee": 0.00,
+    },
 }
 
 logger = logging.getLogger(__name__)
+
+
 # SECURITY: Require authentication for all preferred merchant endpoints (OWASP A01)
 def require_auth(authorization: Optional[str] = Header(None)) -> str:
     """Verify JWT token and return user_id"""
@@ -95,6 +97,7 @@ router = APIRouter(tags=["preferred-merchants"], dependencies=[Depends(require_a
 # ============================================================================
 # REQUEST/RESPONSE MODELS
 # ============================================================================
+
 
 class LocationFilter(BaseModel):
     latitude: float = Field(..., ge=-90, le=90)
@@ -150,7 +153,9 @@ class UpdatePreferredMerchantRequest(BaseModel):
 class CreateDealRequest(BaseModel):
     title: str
     description: Optional[str] = None
-    deal_type: str  # percentage_off, fixed_amount, bogo, cashback_boost, points_multiplier, free_item
+    deal_type: (
+        str  # percentage_off, fixed_amount, bogo, cashback_boost, points_multiplier, free_item
+    )
     discount_value: Optional[float] = None
     min_purchase: Optional[float] = None
     max_discount: Optional[float] = None
@@ -264,6 +269,7 @@ class DealResponse(BaseModel):
 # UTILITY FUNCTIONS
 # ============================================================================
 
+
 def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate distance in km using Haversine formula"""
     R = 6371  # Earth's radius in km
@@ -273,35 +279,47 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     delta_lat = math.radians(lat2 - lat1)
     delta_lon = math.radians(lon2 - lon1)
 
-    a = math.sin(delta_lat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    a = (
+        math.sin(delta_lat / 2) ** 2
+        + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return R * c
 
 
 def get_subscription_for_merchant(merchant_id, db: Session) -> Optional[MerchantSubscription]:
     """Get active subscription for a merchant"""
-    return db.query(MerchantSubscription).filter(
-        MerchantSubscription.merchant_id == merchant_id,
-        MerchantSubscription.status.in_(['active', 'trialing'])
-    ).first()
+    return (
+        db.query(MerchantSubscription)
+        .filter(
+            MerchantSubscription.merchant_id == merchant_id,
+            MerchantSubscription.status.in_(["active", "trialing"]),
+        )
+        .first()
+    )
 
 
-def serialize_preferred_merchant(pm: PreferredMerchant, user_lat: float = None, user_lon: float = None, subscription: MerchantSubscription = None) -> dict:
+def serialize_preferred_merchant(
+    pm: PreferredMerchant,
+    user_lat: float = None,
+    user_lon: float = None,
+    subscription: MerchantSubscription = None,
+) -> dict:
     """Serialize a PreferredMerchant to response format with subscription info"""
     distance = None
     if user_lat and user_lon and pm.latitude and pm.longitude:
         distance = round(calculate_distance(user_lat, user_lon, pm.latitude, pm.longitude), 2)
 
     # Get subscription info
-    sub_tier = subscription.tier if subscription else 'free'
-    tier_config = SUBSCRIPTION_TIERS.get(sub_tier, SUBSCRIPTION_TIERS['free'])
+    sub_tier = subscription.tier if subscription else "free"
+    tier_config = SUBSCRIPTION_TIERS.get(sub_tier, SUBSCRIPTION_TIERS["free"])
     placement_score = subscription.placement_score if subscription else 0
     effective_priority = (pm.priority or 0) + placement_score
 
     # Check if features are allowed by subscription
-    can_feature = tier_config['featured_placement']
-    can_banner = tier_config['banner_enabled']
+    can_feature = tier_config["featured_placement"]
+    can_banner = tier_config["banner_enabled"]
 
     return PreferredMerchantResponse(
         id=str(pm.id),
@@ -323,16 +341,16 @@ def serialize_preferred_merchant(pm: PreferredMerchant, user_lat: float = None, 
         priority=pm.priority or 0,
         effective_priority=effective_priority,
         is_featured=pm.is_featured and can_feature,
-        show_banner=pm.show_banner and can_banner if hasattr(pm, 'show_banner') else False,
+        show_banner=pm.show_banner and can_banner if hasattr(pm, "show_banner") else False,
         subscription_tier=sub_tier,
         status=pm.status,
         start_date=pm.start_date.isoformat() if pm.start_date else None,
         end_date=pm.end_date.isoformat() if pm.end_date else None,
         tags=pm.tags or [],
-        active_deals_limit=tier_config['max_active_deals'],
+        active_deals_limit=tier_config["max_active_deals"],
         deals_count=pm.deals.count() if pm.deals else 0,
         distance_km=distance,
-        created_at=pm.created_at.isoformat() if pm.created_at else None
+        created_at=pm.created_at.isoformat() if pm.created_at else None,
     ).dict()
 
 
@@ -340,15 +358,17 @@ def serialize_deal(deal: MerchantDeal) -> dict:
     """Serialize a MerchantDeal to response format"""
     now = datetime.now(timezone.utc)
     is_valid = (
-        deal.status == 'active' and
-        deal.start_date <= now and
-        deal.end_date >= now and
-        (deal.redemption_limit is None or deal.redemption_count < deal.redemption_limit)
+        deal.status == "active"
+        and deal.start_date <= now
+        and deal.end_date >= now
+        and (deal.redemption_limit is None or deal.redemption_count < deal.redemption_limit)
     )
 
     merchant_name = "Unknown"
     if deal.preferred_merchant and deal.preferred_merchant.merchant:
-        merchant_name = deal.preferred_merchant.display_name or deal.preferred_merchant.merchant.name
+        merchant_name = (
+            deal.preferred_merchant.display_name or deal.preferred_merchant.merchant.name
+        )
 
     return DealResponse(
         id=str(deal.id),
@@ -373,7 +393,7 @@ def serialize_deal(deal: MerchantDeal) -> dict:
         redemption_count=deal.redemption_count or 0,
         view_count=deal.view_count or 0,
         is_valid=is_valid,
-        created_at=deal.created_at.isoformat() if deal.created_at else None
+        created_at=deal.created_at.isoformat() if deal.created_at else None,
     ).dict()
 
 
@@ -396,8 +416,12 @@ def serialize_subscription(sub: MerchantSubscription) -> dict:
         "stripe_subscription_id": sub.stripe_subscription_id,
         "stripe_customer_id": sub.stripe_customer_id,
         "status": sub.status,
-        "current_period_start": sub.current_period_start.isoformat() if sub.current_period_start else None,
-        "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None,
+        "current_period_start": (
+            sub.current_period_start.isoformat() if sub.current_period_start else None
+        ),
+        "current_period_end": (
+            sub.current_period_end.isoformat() if sub.current_period_end else None
+        ),
         "onboarding_id": str(sub.onboarding_id) if sub.onboarding_id else None,
         "created_at": sub.created_at.isoformat() if sub.created_at else None,
         "updated_at": sub.updated_at.isoformat() if sub.updated_at else None,
@@ -408,10 +432,10 @@ def serialize_subscription(sub: MerchantSubscription) -> dict:
 # ADMIN ENDPOINTS - PREFERRED MERCHANTS
 # ============================================================================
 
+
 @router.post("/api/v1/admin/preferred-merchants")
 async def create_preferred_merchant(
-    request: CreatePreferredMerchantRequest,
-    db: Session = Depends(get_db)
+    request: CreatePreferredMerchantRequest, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Create a new preferred merchant configuration"""
     try:
@@ -421,9 +445,11 @@ async def create_preferred_merchant(
             raise HTTPException(status_code=404, detail="Merchant not found")
 
         # Check if already a preferred merchant
-        existing = db.query(PreferredMerchant).filter(
-            PreferredMerchant.merchant_id == request.merchant_id
-        ).first()
+        existing = (
+            db.query(PreferredMerchant)
+            .filter(PreferredMerchant.merchant_id == request.merchant_id)
+            .first()
+        )
         if existing:
             raise HTTPException(status_code=400, detail="Merchant is already a preferred merchant")
 
@@ -449,7 +475,7 @@ async def create_preferred_merchant(
             end_date=request.end_date,
             tags=request.tags,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         db.add(pm)
@@ -459,7 +485,7 @@ async def create_preferred_merchant(
         return {
             "success": True,
             "message": "Preferred merchant created successfully",
-            "preferred_merchant": serialize_preferred_merchant(pm)
+            "preferred_merchant": serialize_preferred_merchant(pm),
         }
     except HTTPException:
         raise
@@ -478,7 +504,7 @@ async def list_preferred_merchants_admin(
     search: Optional[str] = Query(None),
     is_featured: Optional[bool] = Query(None),
     subscription_tier: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """List all preferred merchants (admin view) with subscription info"""
     try:
@@ -495,31 +521,37 @@ async def list_preferred_merchants_admin(
             query = query.join(Merchant).filter(
                 or_(
                     PreferredMerchant.display_name.ilike(search_pattern),
-                    Merchant.name.ilike(search_pattern)
+                    Merchant.name.ilike(search_pattern),
                 )
             )
 
         total = query.count()
         total_pages = (total + per_page - 1) // per_page
 
-        merchants = query.order_by(
-            PreferredMerchant.priority.desc(),
-            PreferredMerchant.created_at.desc()
-        ).offset((page - 1) * per_page).limit(per_page).all()
+        merchants = (
+            query.order_by(PreferredMerchant.priority.desc(), PreferredMerchant.created_at.desc())
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+            .all()
+        )
 
         # Fetch subscriptions for all merchants
         merchant_ids = [pm.merchant_id for pm in merchants]
-        subscriptions = db.query(MerchantSubscription).filter(
-            MerchantSubscription.merchant_id.in_(merchant_ids),
-            MerchantSubscription.status.in_(['active', 'trialing'])
-        ).all()
+        subscriptions = (
+            db.query(MerchantSubscription)
+            .filter(
+                MerchantSubscription.merchant_id.in_(merchant_ids),
+                MerchantSubscription.status.in_(["active", "trialing"]),
+            )
+            .all()
+        )
         sub_map = {str(s.merchant_id): s for s in subscriptions}
 
         # Filter by subscription tier if specified
         result_merchants = []
         for pm in merchants:
             sub = sub_map.get(str(pm.merchant_id))
-            effective_tier = sub.tier if sub else 'free'
+            effective_tier = sub.tier if sub else "free"
             if subscription_tier and effective_tier != subscription_tier:
                 continue
             result_merchants.append(serialize_preferred_merchant(pm, subscription=sub))
@@ -529,7 +561,7 @@ async def list_preferred_merchants_admin(
             "total": total if not subscription_tier else len(result_merchants),
             "page": page,
             "per_page": per_page,
-            "total_pages": total_pages
+            "total_pages": total_pages,
         }
     except Exception as e:
         logger.error(f"Error listing preferred merchants: {e}")
@@ -537,15 +569,15 @@ async def list_preferred_merchants_admin(
 
 
 @router.get("/api/v1/admin/preferred-merchants/{pm_id}")
-async def get_preferred_merchant_admin(
-    pm_id: str,
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+async def get_preferred_merchant_admin(pm_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get a specific preferred merchant with details and subscription info"""
     try:
-        pm = db.query(PreferredMerchant).options(
-            joinedload(PreferredMerchant.merchant)
-        ).filter(PreferredMerchant.id == pm_id).first()
+        pm = (
+            db.query(PreferredMerchant)
+            .options(joinedload(PreferredMerchant.merchant))
+            .filter(PreferredMerchant.id == pm_id)
+            .first()
+        )
 
         if not pm:
             raise HTTPException(status_code=404, detail="Preferred merchant not found")
@@ -557,9 +589,9 @@ async def get_preferred_merchant_admin(
         now = datetime.now(timezone.utc)
         active_deals = pm.deals.filter(
             and_(
-                MerchantDeal.status == 'active',
+                MerchantDeal.status == "active",
                 MerchantDeal.start_date <= now,
-                MerchantDeal.end_date >= now
+                MerchantDeal.end_date >= now,
             )
         ).all()
 
@@ -567,7 +599,7 @@ async def get_preferred_merchant_admin(
             "success": True,
             "preferred_merchant": serialize_preferred_merchant(pm, subscription=subscription),
             "subscription": serialize_subscription(subscription) if subscription else None,
-            "active_deals": [serialize_deal(d) for d in active_deals]
+            "active_deals": [serialize_deal(d) for d in active_deals],
         }
     except HTTPException:
         raise
@@ -578,9 +610,7 @@ async def get_preferred_merchant_admin(
 
 @router.put("/api/v1/admin/preferred-merchants/{pm_id}")
 async def update_preferred_merchant(
-    pm_id: str,
-    request: UpdatePreferredMerchantRequest,
-    db: Session = Depends(get_db)
+    pm_id: str, request: UpdatePreferredMerchantRequest, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Update a preferred merchant configuration"""
     try:
@@ -600,7 +630,7 @@ async def update_preferred_merchant(
         return {
             "success": True,
             "message": "Preferred merchant updated successfully",
-            "preferred_merchant": serialize_preferred_merchant(pm)
+            "preferred_merchant": serialize_preferred_merchant(pm),
         }
     except HTTPException:
         raise
@@ -611,10 +641,7 @@ async def update_preferred_merchant(
 
 
 @router.delete("/api/v1/admin/preferred-merchants/{pm_id}")
-async def delete_preferred_merchant(
-    pm_id: str,
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+async def delete_preferred_merchant(pm_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Delete a preferred merchant and all its deals"""
     try:
         pm = db.query(PreferredMerchant).filter(PreferredMerchant.id == pm_id).first()
@@ -626,10 +653,7 @@ async def delete_preferred_merchant(
         db.delete(pm)
         db.commit()
 
-        return {
-            "success": True,
-            "message": "Preferred merchant and deals deleted successfully"
-        }
+        return {"success": True, "message": "Preferred merchant and deals deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:
@@ -642,11 +666,10 @@ async def delete_preferred_merchant(
 # ADMIN ENDPOINTS - DEALS
 # ============================================================================
 
+
 @router.post("/api/v1/admin/preferred-merchants/{pm_id}/deals")
 async def create_deal(
-    pm_id: str,
-    request: CreateDealRequest,
-    db: Session = Depends(get_db)
+    pm_id: str, request: CreateDealRequest, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Create a new deal for a preferred merchant"""
     try:
@@ -675,7 +698,7 @@ async def create_deal(
             redemption_count=0,
             view_count=0,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         db.add(deal)
@@ -685,7 +708,7 @@ async def create_deal(
         return {
             "success": True,
             "message": "Deal created successfully",
-            "deal": serialize_deal(deal)
+            "deal": serialize_deal(deal),
         }
     except HTTPException:
         raise
@@ -702,7 +725,7 @@ async def list_all_deals_admin(
     status: Optional[str] = Query(None),
     deal_type: Optional[str] = Query(None),
     is_featured: Optional[bool] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """List all deals across all merchants (admin view)"""
     try:
@@ -720,17 +743,19 @@ async def list_all_deals_admin(
         total = query.count()
         total_pages = (total + per_page - 1) // per_page
 
-        deals = query.order_by(
-            MerchantDeal.priority.desc(),
-            MerchantDeal.created_at.desc()
-        ).offset((page - 1) * per_page).limit(per_page).all()
+        deals = (
+            query.order_by(MerchantDeal.priority.desc(), MerchantDeal.created_at.desc())
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+            .all()
+        )
 
         return {
             "deals": [serialize_deal(d) for d in deals],
             "total": total,
             "page": page,
             "per_page": per_page,
-            "total_pages": total_pages
+            "total_pages": total_pages,
         }
     except Exception as e:
         logger.error(f"Error listing deals: {e}")
@@ -739,9 +764,7 @@ async def list_all_deals_admin(
 
 @router.put("/api/v1/admin/deals/{deal_id}")
 async def update_deal(
-    deal_id: str,
-    request: UpdateDealRequest,
-    db: Session = Depends(get_db)
+    deal_id: str, request: UpdateDealRequest, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Update a deal"""
     try:
@@ -761,7 +784,7 @@ async def update_deal(
         return {
             "success": True,
             "message": "Deal updated successfully",
-            "deal": serialize_deal(deal)
+            "deal": serialize_deal(deal),
         }
     except HTTPException:
         raise
@@ -772,10 +795,7 @@ async def update_deal(
 
 
 @router.delete("/api/v1/admin/deals/{deal_id}")
-async def delete_deal(
-    deal_id: str,
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+async def delete_deal(deal_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Delete a deal"""
     try:
         deal = db.query(MerchantDeal).filter(MerchantDeal.id == deal_id).first()
@@ -785,10 +805,7 @@ async def delete_deal(
         db.delete(deal)
         db.commit()
 
-        return {
-            "success": True,
-            "message": "Deal deleted successfully"
-        }
+        return {"success": True, "message": "Deal deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:
@@ -801,6 +818,7 @@ async def delete_deal(
 # MOBILE/CONSUMER ENDPOINTS
 # ============================================================================
 
+
 @router.get("/api/v1/merchants/preferred")
 async def get_preferred_merchants_consumer(
     page: int = Query(1, ge=1),
@@ -810,7 +828,7 @@ async def get_preferred_merchants_consumer(
     longitude: Optional[float] = Query(None, ge=-180, le=180),
     radius_km: float = Query(50, ge=0.1, le=100),
     featured_only: bool = Query(False),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """
     Get preferred merchants for consumers.
@@ -820,17 +838,13 @@ async def get_preferred_merchants_consumer(
     try:
         now = datetime.now(timezone.utc)
 
-        query = db.query(PreferredMerchant).options(
-            joinedload(PreferredMerchant.merchant)
-        ).filter(
-            PreferredMerchant.status == 'active',
-            or_(
-                PreferredMerchant.start_date.is_(None),
-                PreferredMerchant.start_date <= now
-            ),
-            or_(
-                PreferredMerchant.end_date.is_(None),
-                PreferredMerchant.end_date >= now
+        query = (
+            db.query(PreferredMerchant)
+            .options(joinedload(PreferredMerchant.merchant))
+            .filter(
+                PreferredMerchant.status == "active",
+                or_(PreferredMerchant.start_date.is_(None), PreferredMerchant.start_date <= now),
+                or_(PreferredMerchant.end_date.is_(None), PreferredMerchant.end_date >= now),
             )
         )
 
@@ -845,10 +859,14 @@ async def get_preferred_merchants_consumer(
 
         # Fetch subscriptions for all merchants to calculate effective_priority
         merchant_ids = [pm.merchant_id for pm in all_merchants]
-        subscriptions = db.query(MerchantSubscription).filter(
-            MerchantSubscription.merchant_id.in_(merchant_ids),
-            MerchantSubscription.status.in_(['active', 'trialing'])
-        ).all()
+        subscriptions = (
+            db.query(MerchantSubscription)
+            .filter(
+                MerchantSubscription.merchant_id.in_(merchant_ids),
+                MerchantSubscription.status.in_(["active", "trialing"]),
+            )
+            .all()
+        )
         sub_map = {str(s.merchant_id): s for s in subscriptions}
 
         # Calculate effective priority and prepare for sorting
@@ -876,11 +894,13 @@ async def get_preferred_merchants_consumer(
                     filtered.append((pm, sub, eff_priority, is_feat, None))
 
             # Re-sort: featured first, then by distance (nearby), then by effective_priority
-            filtered.sort(key=lambda x: (
-                -int(x[3]),  # Featured first
-                x[4] if x[4] is not None else float('inf'),  # Distance
-                -x[2]  # Effective priority
-            ))
+            filtered.sort(
+                key=lambda x: (
+                    -int(x[3]),  # Featured first
+                    x[4] if x[4] is not None else float("inf"),  # Distance
+                    -x[2],  # Effective priority
+                )
+            )
             merchants_with_priority = [(pm, sub, ep, feat) for pm, sub, ep, feat, _ in filtered]
 
         # Paginate
@@ -898,7 +918,7 @@ async def get_preferred_merchants_consumer(
             "total": total,
             "page": page,
             "per_page": per_page,
-            "total_pages": total_pages
+            "total_pages": total_pages,
         }
     except Exception as e:
         logger.error(f"Error getting preferred merchants: {e}")
@@ -910,18 +930,18 @@ async def get_preferred_merchant_consumer(
     pm_id: str,
     latitude: Optional[float] = Query(None, ge=-90, le=90),
     longitude: Optional[float] = Query(None, ge=-180, le=180),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """Get a specific preferred merchant with active deals and subscription info"""
     try:
         now = datetime.now(timezone.utc)
 
-        pm = db.query(PreferredMerchant).options(
-            joinedload(PreferredMerchant.merchant)
-        ).filter(
-            PreferredMerchant.id == pm_id,
-            PreferredMerchant.status == 'active'
-        ).first()
+        pm = (
+            db.query(PreferredMerchant)
+            .options(joinedload(PreferredMerchant.merchant))
+            .filter(PreferredMerchant.id == pm_id, PreferredMerchant.status == "active")
+            .first()
+        )
 
         if not pm:
             raise HTTPException(status_code=404, detail="Merchant not found")
@@ -930,21 +950,24 @@ async def get_preferred_merchant_consumer(
         subscription = get_subscription_for_merchant(pm.merchant_id, db)
 
         # Get active deals
-        active_deals = pm.deals.filter(
-            and_(
-                MerchantDeal.status == 'active',
-                MerchantDeal.start_date <= now,
-                MerchantDeal.end_date >= now
+        active_deals = (
+            pm.deals.filter(
+                and_(
+                    MerchantDeal.status == "active",
+                    MerchantDeal.start_date <= now,
+                    MerchantDeal.end_date >= now,
+                )
             )
-        ).order_by(
-            MerchantDeal.is_featured.desc(),
-            MerchantDeal.priority.desc()
-        ).all()
+            .order_by(MerchantDeal.is_featured.desc(), MerchantDeal.priority.desc())
+            .all()
+        )
 
         return {
             "success": True,
-            "merchant": serialize_preferred_merchant(pm, latitude, longitude, subscription=subscription),
-            "deals": [serialize_deal(d) for d in active_deals]
+            "merchant": serialize_preferred_merchant(
+                pm, latitude, longitude, subscription=subscription
+            ),
+            "deals": [serialize_deal(d) for d in active_deals],
         }
     except HTTPException:
         raise
@@ -963,19 +986,24 @@ async def get_deals_consumer(
     latitude: Optional[float] = Query(None, ge=-90, le=90),
     longitude: Optional[float] = Query(None, ge=-180, le=180),
     radius_km: float = Query(50, ge=0.1, le=100),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """Get all active deals for consumers"""
     try:
         now = datetime.now(timezone.utc)
 
-        query = db.query(MerchantDeal).options(
-            joinedload(MerchantDeal.preferred_merchant).joinedload(PreferredMerchant.merchant)
-        ).join(PreferredMerchant).filter(
-            MerchantDeal.status == 'active',
-            MerchantDeal.start_date <= now,
-            MerchantDeal.end_date >= now,
-            PreferredMerchant.status == 'active'
+        query = (
+            db.query(MerchantDeal)
+            .options(
+                joinedload(MerchantDeal.preferred_merchant).joinedload(PreferredMerchant.merchant)
+            )
+            .join(PreferredMerchant)
+            .filter(
+                MerchantDeal.status == "active",
+                MerchantDeal.start_date <= now,
+                MerchantDeal.end_date >= now,
+                PreferredMerchant.status == "active",
+            )
         )
 
         if category:
@@ -991,7 +1019,7 @@ async def get_deals_consumer(
         all_deals = query.order_by(
             MerchantDeal.is_featured.desc(),
             MerchantDeal.priority.desc(),
-            MerchantDeal.end_date.asc()  # Expiring soon first
+            MerchantDeal.end_date.asc(),  # Expiring soon first
         ).all()
 
         # Filter by location if provided
@@ -1025,7 +1053,7 @@ async def get_deals_consumer(
             "total": total,
             "page": page,
             "per_page": per_page,
-            "total_pages": total_pages
+            "total_pages": total_pages,
         }
     except Exception as e:
         logger.error(f"Error getting deals: {e}")
@@ -1033,22 +1061,24 @@ async def get_deals_consumer(
 
 
 @router.get("/api/v1/deals/{deal_id}")
-async def get_deal_details(
-    deal_id: str,
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+async def get_deal_details(deal_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get details of a specific deal"""
     try:
         now = datetime.now(timezone.utc)
 
-        deal = db.query(MerchantDeal).options(
-            joinedload(MerchantDeal.preferred_merchant).joinedload(PreferredMerchant.merchant)
-        ).filter(
-            MerchantDeal.id == deal_id,
-            MerchantDeal.status == 'active',
-            MerchantDeal.start_date <= now,
-            MerchantDeal.end_date >= now
-        ).first()
+        deal = (
+            db.query(MerchantDeal)
+            .options(
+                joinedload(MerchantDeal.preferred_merchant).joinedload(PreferredMerchant.merchant)
+            )
+            .filter(
+                MerchantDeal.id == deal_id,
+                MerchantDeal.status == "active",
+                MerchantDeal.start_date <= now,
+                MerchantDeal.end_date >= now,
+            )
+            .first()
+        )
 
         if not deal:
             raise HTTPException(status_code=404, detail="Deal not found or expired")
@@ -1060,7 +1090,11 @@ async def get_deal_details(
         return {
             "success": True,
             "deal": serialize_deal(deal),
-            "merchant": serialize_preferred_merchant(deal.preferred_merchant) if deal.preferred_merchant else None
+            "merchant": (
+                serialize_preferred_merchant(deal.preferred_merchant)
+                if deal.preferred_merchant
+                else None
+            ),
         }
     except HTTPException:
         raise
@@ -1074,47 +1108,49 @@ async def get_featured_deals(
     limit: int = Query(10, ge=1, le=20),
     latitude: Optional[float] = Query(None, ge=-90, le=90),
     longitude: Optional[float] = Query(None, ge=-180, le=180),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """Get featured deals for homepage display"""
     try:
         now = datetime.now(timezone.utc)
 
-        query = db.query(MerchantDeal).options(
-            joinedload(MerchantDeal.preferred_merchant).joinedload(PreferredMerchant.merchant)
-        ).join(PreferredMerchant).filter(
-            MerchantDeal.status == 'active',
-            MerchantDeal.is_featured == True,
-            MerchantDeal.start_date <= now,
-            MerchantDeal.end_date >= now,
-            PreferredMerchant.status == 'active'
-        ).order_by(
-            MerchantDeal.priority.desc()
-        ).limit(limit)
+        query = (
+            db.query(MerchantDeal)
+            .options(
+                joinedload(MerchantDeal.preferred_merchant).joinedload(PreferredMerchant.merchant)
+            )
+            .join(PreferredMerchant)
+            .filter(
+                MerchantDeal.status == "active",
+                MerchantDeal.is_featured == True,
+                MerchantDeal.start_date <= now,
+                MerchantDeal.end_date >= now,
+                PreferredMerchant.status == "active",
+            )
+            .order_by(MerchantDeal.priority.desc())
+            .limit(limit)
+        )
 
         deals = query.all()
 
-        return {
-            "featured_deals": [serialize_deal(d) for d in deals]
-        }
+        return {"featured_deals": [serialize_deal(d) for d in deals]}
     except Exception as e:
         logger.error(f"Error getting featured deals: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/merchants/preferred/categories")
-async def get_merchant_categories(
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+async def get_merchant_categories(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get list of available merchant categories"""
     try:
-        categories = db.query(PreferredMerchant.category).filter(
-            PreferredMerchant.status == 'active'
-        ).distinct().all()
+        categories = (
+            db.query(PreferredMerchant.category)
+            .filter(PreferredMerchant.status == "active")
+            .distinct()
+            .all()
+        )
 
-        return {
-            "categories": [c[0] for c in categories if c[0]]
-        }
+        return {"categories": [c[0] for c in categories if c[0]]}
     except Exception as e:
         logger.error(f"Error getting categories: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -1124,8 +1160,10 @@ async def get_merchant_categories(
 # SUBSCRIPTION MANAGEMENT ENDPOINTS
 # ============================================================================
 
+
 class CreateSubscriptionRequest(BaseModel):
     """Request model for creating a merchant subscription"""
+
     merchant_id: str
     tier: str = Field(..., description="Subscription tier: platinum, gold, silver, bronze, free")
     billing_cycle: str = Field(default="monthly", description="monthly or annual")
@@ -1136,6 +1174,7 @@ class CreateSubscriptionRequest(BaseModel):
 
 class UpdateSubscriptionRequest(BaseModel):
     """Request model for updating a subscription"""
+
     tier: Optional[str] = None
     billing_cycle: Optional[str] = None
     stripe_subscription_id: Optional[str] = None
@@ -1151,33 +1190,32 @@ async def get_subscription_tiers() -> Dict[str, Any]:
     """
     tiers_info = []
     for tier_name, config in SUBSCRIPTION_TIERS.items():
-        tiers_info.append({
-            "name": tier_name,
-            "display_name": tier_name.capitalize(),
-            "placement_score": config["placement_score"],
-            "max_active_deals": config["max_active_deals"],
-            "featured_placement": config["featured_placement"],
-            "banner_enabled": config["banner_enabled"],
-            "priority_support": config["priority_support"],
-            "analytics_access": config["analytics_access"],
-            "custom_branding": config["custom_branding"],
-            "monthly_fee": config["monthly_fee"],
-            "annual_fee": config["annual_fee"],
-            "annual_savings": round(config["monthly_fee"] * 12 - config["annual_fee"], 2)
-        })
+        tiers_info.append(
+            {
+                "name": tier_name,
+                "display_name": tier_name.capitalize(),
+                "placement_score": config["placement_score"],
+                "max_active_deals": config["max_active_deals"],
+                "featured_placement": config["featured_placement"],
+                "banner_enabled": config["banner_enabled"],
+                "priority_support": config["priority_support"],
+                "analytics_access": config["analytics_access"],
+                "custom_branding": config["custom_branding"],
+                "monthly_fee": config["monthly_fee"],
+                "annual_fee": config["annual_fee"],
+                "annual_savings": round(config["monthly_fee"] * 12 - config["annual_fee"], 2),
+            }
+        )
 
     # Sort by placement_score descending (highest tier first)
     tiers_info.sort(key=lambda x: x["placement_score"], reverse=True)
 
-    return {
-        "tiers": tiers_info
-    }
+    return {"tiers": tiers_info}
 
 
 @router.post("/api/v1/admin/subscriptions")
 async def create_merchant_subscription(
-    request: CreateSubscriptionRequest,
-    db: Session = Depends(get_db)
+    request: CreateSubscriptionRequest, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Create a subscription for a merchant.
@@ -1190,20 +1228,21 @@ async def create_merchant_subscription(
             raise HTTPException(status_code=404, detail="Merchant not found")
 
         # Check if subscription already exists
-        existing = db.query(MerchantSubscription).filter(
-            MerchantSubscription.merchant_id == request.merchant_id
-        ).first()
+        existing = (
+            db.query(MerchantSubscription)
+            .filter(MerchantSubscription.merchant_id == request.merchant_id)
+            .first()
+        )
         if existing:
             raise HTTPException(
-                status_code=400,
-                detail="Merchant already has a subscription. Use PUT to update."
+                status_code=400, detail="Merchant already has a subscription. Use PUT to update."
             )
 
         # Validate tier
         if request.tier not in SUBSCRIPTION_TIERS:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid tier. Must be one of: {', '.join(SUBSCRIPTION_TIERS.keys())}"
+                detail=f"Invalid tier. Must be one of: {', '.join(SUBSCRIPTION_TIERS.keys())}",
             )
 
         tier_config = SUBSCRIPTION_TIERS[request.tier]
@@ -1212,9 +1251,11 @@ async def create_merchant_subscription(
         now = datetime.now(timezone.utc)
         if request.billing_cycle == "annual":
             from dateutil.relativedelta import relativedelta
+
             period_end = now + relativedelta(years=1)
         else:
             from dateutil.relativedelta import relativedelta
+
             period_end = now + relativedelta(months=1)
 
         subscription = MerchantSubscription(
@@ -1237,7 +1278,7 @@ async def create_merchant_subscription(
             current_period_end=period_end,
             onboarding_id=request.onboarding_id,
             created_at=now,
-            updated_at=now
+            updated_at=now,
         )
 
         db.add(subscription)
@@ -1249,7 +1290,7 @@ async def create_merchant_subscription(
         return {
             "success": True,
             "message": f"Subscription created successfully with {request.tier} tier",
-            "subscription": serialize_subscription(subscription)
+            "subscription": serialize_subscription(subscription),
         }
     except HTTPException:
         raise
@@ -1261,14 +1302,15 @@ async def create_merchant_subscription(
 
 @router.get("/api/v1/admin/subscriptions/{merchant_id}")
 async def get_merchant_subscription(
-    merchant_id: str,
-    db: Session = Depends(get_db)
+    merchant_id: str, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get subscription details for a merchant"""
     try:
-        subscription = db.query(MerchantSubscription).filter(
-            MerchantSubscription.merchant_id == merchant_id
-        ).first()
+        subscription = (
+            db.query(MerchantSubscription)
+            .filter(MerchantSubscription.merchant_id == merchant_id)
+            .first()
+        )
 
         if not subscription:
             # Return free tier info if no subscription
@@ -1276,13 +1318,13 @@ async def get_merchant_subscription(
                 "success": True,
                 "has_subscription": False,
                 "effective_tier": "free",
-                "tier_benefits": SUBSCRIPTION_TIERS["free"]
+                "tier_benefits": SUBSCRIPTION_TIERS["free"],
             }
 
         return {
             "success": True,
             "has_subscription": True,
-            "subscription": serialize_subscription(subscription)
+            "subscription": serialize_subscription(subscription),
         }
     except Exception as e:
         logger.error(f"Error getting subscription: {e}")
@@ -1291,18 +1333,18 @@ async def get_merchant_subscription(
 
 @router.put("/api/v1/admin/subscriptions/{merchant_id}")
 async def update_merchant_subscription(
-    merchant_id: str,
-    request: UpdateSubscriptionRequest,
-    db: Session = Depends(get_db)
+    merchant_id: str, request: UpdateSubscriptionRequest, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Update a merchant's subscription.
     Used for tier upgrades/downgrades or status changes.
     """
     try:
-        subscription = db.query(MerchantSubscription).filter(
-            MerchantSubscription.merchant_id == merchant_id
-        ).first()
+        subscription = (
+            db.query(MerchantSubscription)
+            .filter(MerchantSubscription.merchant_id == merchant_id)
+            .first()
+        )
 
         if not subscription:
             raise HTTPException(status_code=404, detail="Subscription not found")
@@ -1312,7 +1354,7 @@ async def update_merchant_subscription(
             if request.tier not in SUBSCRIPTION_TIERS:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid tier. Must be one of: {', '.join(SUBSCRIPTION_TIERS.keys())}"
+                    detail=f"Invalid tier. Must be one of: {', '.join(SUBSCRIPTION_TIERS.keys())}",
                 )
 
             tier_config = SUBSCRIPTION_TIERS[request.tier]
@@ -1346,7 +1388,7 @@ async def update_merchant_subscription(
         return {
             "success": True,
             "message": "Subscription updated successfully",
-            "subscription": serialize_subscription(subscription)
+            "subscription": serialize_subscription(subscription),
         }
     except HTTPException:
         raise
@@ -1358,17 +1400,18 @@ async def update_merchant_subscription(
 
 @router.delete("/api/v1/admin/subscriptions/{merchant_id}")
 async def cancel_merchant_subscription(
-    merchant_id: str,
-    db: Session = Depends(get_db)
+    merchant_id: str, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Cancel a merchant's subscription.
     Sets status to 'cancelled' but keeps the record for history.
     """
     try:
-        subscription = db.query(MerchantSubscription).filter(
-            MerchantSubscription.merchant_id == merchant_id
-        ).first()
+        subscription = (
+            db.query(MerchantSubscription)
+            .filter(MerchantSubscription.merchant_id == merchant_id)
+            .first()
+        )
 
         if not subscription:
             raise HTTPException(status_code=404, detail="Subscription not found")
@@ -1379,10 +1422,7 @@ async def cancel_merchant_subscription(
 
         logger.info(f"Cancelled subscription for merchant {merchant_id}")
 
-        return {
-            "success": True,
-            "message": "Subscription cancelled successfully"
-        }
+        return {"success": True, "message": "Subscription cancelled successfully"}
     except HTTPException:
         raise
     except Exception as e:
@@ -1397,7 +1437,7 @@ async def list_all_subscriptions(
     per_page: int = Query(20, ge=1, le=100),
     tier: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """List all merchant subscriptions (admin view)"""
     try:
@@ -1411,17 +1451,21 @@ async def list_all_subscriptions(
         total = query.count()
         total_pages = (total + per_page - 1) // per_page
 
-        subscriptions = query.order_by(
-            MerchantSubscription.placement_score.desc(),
-            MerchantSubscription.created_at.desc()
-        ).offset((page - 1) * per_page).limit(per_page).all()
+        subscriptions = (
+            query.order_by(
+                MerchantSubscription.placement_score.desc(), MerchantSubscription.created_at.desc()
+            )
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+            .all()
+        )
 
         return {
             "subscriptions": [serialize_subscription(s) for s in subscriptions],
             "total": total,
             "page": page,
             "per_page": per_page,
-            "total_pages": total_pages
+            "total_pages": total_pages,
         }
     except Exception as e:
         logger.error(f"Error listing subscriptions: {e}")

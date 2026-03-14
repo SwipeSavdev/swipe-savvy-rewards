@@ -40,7 +40,7 @@ class SecretsService:
 
         if self.enabled:
             try:
-                self.client = boto3.client('secretsmanager', region_name=AWS_REGION)
+                self.client = boto3.client("secretsmanager", region_name=AWS_REGION)
                 logger.info(f"Secrets Manager initialized in region: {AWS_REGION}")
             except Exception as e:
                 logger.warning(f"Failed to initialize Secrets Manager: {e}")
@@ -64,7 +64,7 @@ class SecretsService:
 
         try:
             response = self.client.get_secret_value(SecretId=secret_name)
-            secret_string = response.get('SecretString')
+            secret_string = response.get("SecretString")
 
             if secret_string:
                 return json.loads(secret_string)
@@ -73,10 +73,10 @@ class SecretsService:
             return {}
 
         except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == 'ResourceNotFoundException':
+            error_code = e.response["Error"]["Code"]
+            if error_code == "ResourceNotFoundException":
                 logger.warning(f"Secret not found: {secret_name}")
-            elif error_code == 'AccessDeniedException':
+            elif error_code == "AccessDeniedException":
                 logger.error(f"Access denied to secret: {secret_name}")
             else:
                 logger.error(f"Error fetching secret {secret_name}: {e}")
@@ -89,59 +89,66 @@ class SecretsService:
         """Get database connection credentials"""
         secret = self.get_secret(f"{SECRET_PREFIX}/database/credentials")
         return {
-            'host': secret.get('DB_HOST') or os.getenv('DB_HOST'),
-            'port': secret.get('DB_PORT') or os.getenv('DB_PORT', '5432'),
-            'database': secret.get('DB_NAME') or os.getenv('DB_NAME'),
-            'user': secret.get('DB_USER') or os.getenv('DB_USER'),
-            'password': secret.get('DB_PASSWORD') or os.getenv('DB_PASSWORD'),
+            "host": secret.get("DB_HOST") or os.getenv("DB_HOST"),
+            "port": secret.get("DB_PORT") or os.getenv("DB_PORT", "5432"),
+            "database": secret.get("DB_NAME") or os.getenv("DB_NAME"),
+            "user": secret.get("DB_USER") or os.getenv("DB_USER"),
+            "password": secret.get("DB_PASSWORD") or os.getenv("DB_PASSWORD"),
         }
 
     def get_jwt_secret(self) -> str:
         """Get JWT signing secret"""
         secret = self.get_secret(f"{SECRET_PREFIX}/auth/jwt")
-        return secret.get('JWT_SECRET') or os.getenv('JWT_SECRET', '')
+        return secret.get("JWT_SECRET") or os.getenv("JWT_SECRET", "")
 
     def get_together_api_keys(self) -> Dict[str, str]:
         """Get Together AI API keys"""
         secret = self.get_secret(f"{SECRET_PREFIX}/ai/together")
         return {
-            'primary': secret.get('TOGETHER_API_KEY') or os.getenv('TOGETHER_API_KEY'),
-            'general': secret.get('TOGETHER_API_KEY_GENERAL') or os.getenv('TOGETHER_API_KEY_GENERAL'),
-            'marketing': secret.get('TOGETHER_API_KEY_MARKETING') or os.getenv('TOGETHER_API_KEY_MARKETING'),
+            "primary": secret.get("TOGETHER_API_KEY") or os.getenv("TOGETHER_API_KEY"),
+            "general": secret.get("TOGETHER_API_KEY_GENERAL")
+            or os.getenv("TOGETHER_API_KEY_GENERAL"),
+            "marketing": secret.get("TOGETHER_API_KEY_MARKETING")
+            or os.getenv("TOGETHER_API_KEY_MARKETING"),
         }
 
     def get_stripe_credentials(self) -> Dict[str, str]:
         """Get Stripe payment credentials"""
         secret = self.get_secret(f"{SECRET_PREFIX}/payments/stripe")
         return {
-            'secret_key': secret.get('STRIPE_SECRET_KEY') or os.getenv('STRIPE_SECRET_KEY'),
-            'publishable_key': secret.get('STRIPE_PUBLISHABLE_KEY') or os.getenv('STRIPE_PUBLISHABLE_KEY'),
-            'webhook_secret': secret.get('STRIPE_WEBHOOK_SECRET') or os.getenv('STRIPE_WEBHOOK_SECRET'),
+            "secret_key": secret.get("STRIPE_SECRET_KEY") or os.getenv("STRIPE_SECRET_KEY"),
+            "publishable_key": secret.get("STRIPE_PUBLISHABLE_KEY")
+            or os.getenv("STRIPE_PUBLISHABLE_KEY"),
+            "webhook_secret": secret.get("STRIPE_WEBHOOK_SECRET")
+            or os.getenv("STRIPE_WEBHOOK_SECRET"),
         }
 
     def get_connect_financial_credentials(self) -> Dict[str, str]:
         """Get Connect Financial IDV/screening credentials (program manager)"""
         secret = self.get_secret(f"{SECRET_PREFIX}/kyc/connect_financial")
         return {
-            'api_url': secret.get('CONNECT_FINANCIAL_API_URL') or os.getenv('CONNECT_FINANCIAL_API_URL'),
-            'api_key': secret.get('CONNECT_FINANCIAL_API_KEY') or os.getenv('CONNECT_FINANCIAL_API_KEY'),
+            "api_url": secret.get("CONNECT_FINANCIAL_API_URL")
+            or os.getenv("CONNECT_FINANCIAL_API_URL"),
+            "api_key": secret.get("CONNECT_FINANCIAL_API_KEY")
+            or os.getenv("CONNECT_FINANCIAL_API_KEY"),
         }
 
     def get_fis_credentials(self) -> Dict[str, str]:
         """Get FIS Global Payment One credentials"""
         secret = self.get_secret(f"{SECRET_PREFIX}/cards/fis")
         return {
-            'client_id': secret.get('FIS_CLIENT_ID') or os.getenv('FIS_CLIENT_ID'),
-            'client_secret': secret.get('FIS_CLIENT_SECRET') or os.getenv('FIS_CLIENT_SECRET'),
-            'webhook_secret': secret.get('FIS_WEBHOOK_SECRET') or os.getenv('FIS_WEBHOOK_SECRET'),
+            "client_id": secret.get("FIS_CLIENT_ID") or os.getenv("FIS_CLIENT_ID"),
+            "client_secret": secret.get("FIS_CLIENT_SECRET") or os.getenv("FIS_CLIENT_SECRET"),
+            "webhook_secret": secret.get("FIS_WEBHOOK_SECRET") or os.getenv("FIS_WEBHOOK_SECRET"),
         }
 
     def get_aws_credentials(self) -> Dict[str, str]:
         """Get AWS credentials (for services that can't use IAM roles)"""
         secret = self.get_secret(f"{SECRET_PREFIX}/aws/credentials")
         return {
-            'access_key_id': secret.get('AWS_ACCESS_KEY_ID') or os.getenv('AWS_ACCESS_KEY_ID'),
-            'secret_access_key': secret.get('AWS_SECRET_ACCESS_KEY') or os.getenv('AWS_SECRET_ACCESS_KEY'),
+            "access_key_id": secret.get("AWS_ACCESS_KEY_ID") or os.getenv("AWS_ACCESS_KEY_ID"),
+            "secret_access_key": secret.get("AWS_SECRET_ACCESS_KEY")
+            or os.getenv("AWS_SECRET_ACCESS_KEY"),
         }
 
     def clear_cache(self):

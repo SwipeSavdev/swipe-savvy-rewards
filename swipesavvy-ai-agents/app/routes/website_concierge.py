@@ -347,6 +347,7 @@ A: The Rewards Wallet is our customer mobile app where shoppers track points, vi
 
 class WebsiteConciergeRequest(BaseModel):
     """Request model for website visitor chat"""
+
     message: str = Field(..., description="Visitor's message/question")
     user_id: str = Field(default="anonymous", description="Visitor ID (can be anonymous)")
     session_id: Optional[str] = Field(None, description="Session ID for conversation continuity")
@@ -358,34 +359,100 @@ class SentimentAnalyzer:
     """Analyze customer sentiment for escalation and sales opportunity detection"""
 
     NEGATIVE_INDICATORS = [
-        'frustrated', 'angry', 'upset', 'terrible', 'awful', 'horrible',
-        'worst', 'hate', 'ridiculous', 'unacceptable', 'disgusted', 'furious',
-        'disappointed', 'annoyed', 'fed up', 'sick of', 'waste', 'useless',
-        'broken', 'not working', "doesn't work", 'still not', 'never works',
-        'terrible experience', 'waste of time', 'giving up', 'cancel'
+        "frustrated",
+        "angry",
+        "upset",
+        "terrible",
+        "awful",
+        "horrible",
+        "worst",
+        "hate",
+        "ridiculous",
+        "unacceptable",
+        "disgusted",
+        "furious",
+        "disappointed",
+        "annoyed",
+        "fed up",
+        "sick of",
+        "waste",
+        "useless",
+        "broken",
+        "not working",
+        "doesn't work",
+        "still not",
+        "never works",
+        "terrible experience",
+        "waste of time",
+        "giving up",
+        "cancel",
     ]
 
     POSITIVE_INDICATORS = [
-        'great', 'excellent', 'amazing', 'love', 'perfect', 'awesome',
-        'fantastic', 'wonderful', 'impressed', 'excited', 'interested',
-        'looking forward', 'ready to', 'want to try', 'sounds good'
+        "great",
+        "excellent",
+        "amazing",
+        "love",
+        "perfect",
+        "awesome",
+        "fantastic",
+        "wonderful",
+        "impressed",
+        "excited",
+        "interested",
+        "looking forward",
+        "ready to",
+        "want to try",
+        "sounds good",
     ]
 
     URGENCY_INDICATORS = [
-        'urgent', 'emergency', 'asap', 'immediately', 'right now',
-        'critical', 'down', 'outage', "can't process", 'stuck', 'blocked'
+        "urgent",
+        "emergency",
+        "asap",
+        "immediately",
+        "right now",
+        "critical",
+        "down",
+        "outage",
+        "can't process",
+        "stuck",
+        "blocked",
     ]
 
     TRANSFER_REQUESTS = [
-        'speak to', 'talk to', 'human', 'agent', 'representative',
-        'real person', 'manager', 'supervisor', 'call me', 'phone call'
+        "speak to",
+        "talk to",
+        "human",
+        "agent",
+        "representative",
+        "real person",
+        "manager",
+        "supervisor",
+        "call me",
+        "phone call",
     ]
 
     BUYING_SIGNALS = [
-        'how much', 'pricing', 'cost', 'quote', 'buy', 'purchase',
-        'sign up', 'get started', 'trial', 'demo', 'implement',
-        'when can', 'how soon', 'contract', 'payment', 'discount',
-        'ready to move forward', 'next steps', 'onboarding'
+        "how much",
+        "pricing",
+        "cost",
+        "quote",
+        "buy",
+        "purchase",
+        "sign up",
+        "get started",
+        "trial",
+        "demo",
+        "implement",
+        "when can",
+        "how soon",
+        "contract",
+        "payment",
+        "discount",
+        "ready to move forward",
+        "next steps",
+        "onboarding",
     ]
 
     @classmethod
@@ -397,12 +464,12 @@ class SentimentAnalyzer:
         for phrase in cls.TRANSFER_REQUESTS:
             if phrase in lower_text:
                 return {
-                    'sentiment': 'transfer_request',
-                    'score': 1.0,
-                    'should_escalate': True,
-                    'escalation_reason': 'customer_requested_human',
-                    'escalation_type': 'support',
-                    'is_sales_opportunity': False
+                    "sentiment": "transfer_request",
+                    "score": 1.0,
+                    "should_escalate": True,
+                    "escalation_reason": "customer_requested_human",
+                    "escalation_type": "support",
+                    "is_sales_opportunity": False,
                 }
 
         # Calculate scores
@@ -417,39 +484,39 @@ class SentimentAnalyzer:
             negative_score += 0.4
 
         # Check for repeated punctuation (!!!, ???)
-        if any(p * 2 in text for p in ['!', '?']):
+        if any(p * 2 in text for p in ["!", "?"]):
             negative_score += 0.2
 
         # Determine overall sentiment
         total_negative = min(negative_score + urgency_score, 1.0)
 
         result = {
-            'sentiment': 'neutral',
-            'negative_score': round(total_negative, 2),
-            'positive_score': round(min(positive_score, 1.0), 2),
-            'buying_score': round(min(buying_score, 1.0), 2),
-            'should_escalate': False,
-            'escalation_reason': None,
-            'escalation_type': None,
-            'is_sales_opportunity': buying_score >= 0.25 or positive_score >= 0.4
+            "sentiment": "neutral",
+            "negative_score": round(total_negative, 2),
+            "positive_score": round(min(positive_score, 1.0), 2),
+            "buying_score": round(min(buying_score, 1.0), 2),
+            "should_escalate": False,
+            "escalation_reason": None,
+            "escalation_type": None,
+            "is_sales_opportunity": buying_score >= 0.25 or positive_score >= 0.4,
         }
 
         # Flight risk detection (negative sentiment = potential churn)
         if total_negative >= 0.6:
-            result['sentiment'] = 'negative'
-            result['should_escalate'] = True
-            result['escalation_reason'] = 'high_frustration_flight_risk'
-            result['escalation_type'] = 'support'
+            result["sentiment"] = "negative"
+            result["should_escalate"] = True
+            result["escalation_reason"] = "high_frustration_flight_risk"
+            result["escalation_type"] = "support"
         elif total_negative >= 0.3:
-            result['sentiment'] = 'concerning'
+            result["sentiment"] = "concerning"
 
         # Sales opportunity detection (high buying intent)
         if buying_score >= 0.5 or (positive_score >= 0.3 and buying_score >= 0.25):
-            result['sentiment'] = 'high_intent'
-            result['is_sales_opportunity'] = True
-            result['should_escalate'] = True
-            result['escalation_reason'] = 'sales_opportunity_hot_lead'
-            result['escalation_type'] = 'sales'
+            result["sentiment"] = "high_intent"
+            result["is_sales_opportunity"] = True
+            result["should_escalate"] = True
+            result["escalation_reason"] = "sales_opportunity_hot_lead"
+            result["escalation_type"] = "sales"
 
         return result
 
@@ -461,7 +528,7 @@ SWIPESAVVY_KNOWLEDGE_BASE = SWIPESAVVY_KNOWLEDGE
 def build_dynamic_system_prompt(
     page_context: Optional[str] = None,
     sentiment_data: Optional[Dict[str, Any]] = None,
-    conversation_length: int = 0
+    conversation_length: int = 0,
 ) -> str:
     """
     Build a dynamic, context-aware system prompt based on visitor behavior.
@@ -469,11 +536,11 @@ def build_dynamic_system_prompt(
     """
 
     # Base personality - adapt based on sentiment
-    if sentiment_data and sentiment_data.get('sentiment') == 'negative':
+    if sentiment_data and sentiment_data.get("sentiment") == "negative":
         personality = """You are Savvy AI. The visitor seems frustrated - be extra empathetic, patient, and solution-focused.
 Acknowledge their frustration before addressing their concern. Focus on resolving their issue quickly.
 If they're very frustrated, proactively offer to connect them with a human support specialist."""
-    elif sentiment_data and sentiment_data.get('is_sales_opportunity'):
+    elif sentiment_data and sentiment_data.get("is_sales_opportunity"):
         personality = """You are Savvy AI. This visitor shows strong buying intent - be helpful and informative without being pushy.
 Answer their questions directly and thoroughly. If they ask about pricing or getting started, give clear actionable next steps.
 This is a warm lead - provide excellent service to help them make a confident decision."""
@@ -503,7 +570,7 @@ Be warm, helpful, and conversational - like a knowledgeable colleague, not a scr
     # Sentiment-aware instructions
     sentiment_instructions = ""
     if sentiment_data:
-        if sentiment_data.get('sentiment') == 'negative':
+        if sentiment_data.get("sentiment") == "negative":
             sentiment_instructions = """
 
 PRIORITY: This visitor may be frustrated.
@@ -511,7 +578,7 @@ PRIORITY: This visitor may be frustrated.
 - Focus on solutions, not explanations
 - If you can't resolve it, offer human support immediately
 - Don't be defensive or make excuses"""
-        elif sentiment_data.get('sentiment') == 'high_intent':
+        elif sentiment_data.get("sentiment") == "high_intent":
             sentiment_instructions = """
 
 PRIORITY: This visitor shows strong buying signals.
@@ -564,8 +631,7 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
     if not api_key:
         logger.error("TOGETHER_API_KEY not configured")
         raise HTTPException(
-            status_code=500,
-            detail="AI service not configured. Please contact support."
+            status_code=500, detail="AI service not configured. Please contact support."
         )
 
     # Analyze sentiment for tone detection and escalation needs
@@ -584,7 +650,7 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
             system_prompt = build_dynamic_system_prompt(
                 page_context=request.page_context,
                 sentiment_data=sentiment_data,
-                conversation_length=conversation_length
+                conversation_length=conversation_length,
             )
 
             # Build messages array with conversation history
@@ -593,9 +659,9 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
             # Add conversation history for context continuity
             if request.conversation_history:
                 for msg in request.conversation_history[-10:]:  # Last 10 messages for context
-                    role = msg.get('role', 'user')
-                    content = msg.get('content', '')
-                    if role in ['user', 'assistant'] and content:
+                    role = msg.get("role", "user")
+                    content = msg.get("content", "")
+                    if role in ["user", "assistant"] and content:
                         messages.append({"role": role, "content": content})
 
             # Add current message
@@ -616,11 +682,13 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
 
             full_response = ""
             for chunk in response:
-                if (hasattr(chunk, 'choices') and
-                    chunk.choices and
-                    hasattr(chunk.choices[0], 'delta') and
-                    hasattr(chunk.choices[0].delta, 'content') and
-                    chunk.choices[0].delta.content):
+                if (
+                    hasattr(chunk, "choices")
+                    and chunk.choices
+                    and hasattr(chunk.choices[0], "delta")
+                    and hasattr(chunk.choices[0].delta, "content")
+                    and chunk.choices[0].delta.content
+                ):
 
                     content = chunk.choices[0].delta.content
                     full_response += content
@@ -632,13 +700,13 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
 
             # Send completion event with sentiment summary for escalation handling
             completion_data = {
-                'type': 'message_complete',
-                'full_response': full_response,
-                'sentiment': sentiment_data,
-                'should_escalate': sentiment_data.get('should_escalate', False),
-                'escalation_type': sentiment_data.get('escalation_type'),
-                'escalation_reason': sentiment_data.get('escalation_reason'),
-                'is_sales_opportunity': sentiment_data.get('is_sales_opportunity', False)
+                "type": "message_complete",
+                "full_response": full_response,
+                "sentiment": sentiment_data,
+                "should_escalate": sentiment_data.get("should_escalate", False),
+                "escalation_type": sentiment_data.get("escalation_type"),
+                "escalation_reason": sentiment_data.get("escalation_reason"),
+                "is_sales_opportunity": sentiment_data.get("is_sales_opportunity", False),
             }
             yield f"data: {json.dumps(completion_data)}\n\n"
             yield SSE_DONE
@@ -655,7 +723,7 @@ async def website_concierge_chat(request: WebsiteConciergeRequest):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
-        }
+        },
     )
 
 
@@ -666,5 +734,5 @@ async def health_check():
     return {
         "status": "healthy" if api_key else "degraded",
         "service": "website-concierge",
-        "ai_configured": bool(api_key)
+        "ai_configured": bool(api_key),
     }

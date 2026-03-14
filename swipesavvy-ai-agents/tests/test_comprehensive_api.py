@@ -16,6 +16,7 @@ from typing import Optional, Dict, Any
 
 # Configuration
 import os
+
 BASE_URL = os.environ.get("BASE_URL", "http://54.224.8.14:8000")
 API_V1 = f"{BASE_URL}/api/v1"
 
@@ -29,6 +30,7 @@ TEST_ADMIN_PASSWORD = "AdminPassword123!"
 
 class TestContext:
     """Shared test context for maintaining state across tests"""
+
     user_token: Optional[str] = None
     admin_token: Optional[str] = None
     user_id: Optional[str] = None
@@ -41,6 +43,7 @@ ctx = TestContext()
 # =============================================================================
 # SECTION 1: HEALTH & CONNECTIVITY TESTS (Tests 1-5)
 # =============================================================================
+
 
 class TestHealthAndConnectivity:
     """Test basic health endpoints and connectivity"""
@@ -76,8 +79,8 @@ class TestHealthAndConnectivity:
             headers={
                 "Origin": "https://admin.swipesavvy.com",
                 "Access-Control-Request-Method": "GET",
-                "Access-Control-Request-Headers": "Authorization"
-            }
+                "Access-Control-Request-Headers": "Authorization",
+            },
         )
         # Should allow the origin with 200 or 204
         assert response.status_code in [200, 204]
@@ -95,15 +98,13 @@ class TestHealthAndConnectivity:
 # SECTION 2: AUTHENTICATION TESTS (Tests 6-20)
 # =============================================================================
 
+
 class TestAuthentication:
     """Test user and admin authentication flows"""
 
     def test_06_check_email_availability(self):
         """Test 6: Check email availability endpoint"""
-        response = requests.post(
-            f"{API_V1}/auth/check-email",
-            json={"email": TEST_USER_EMAIL}
-        )
+        response = requests.post(f"{API_V1}/auth/check-email", json={"email": TEST_USER_EMAIL})
         assert response.status_code == 200
         data = response.json()
         assert data.get("available") == True
@@ -111,18 +112,14 @@ class TestAuthentication:
 
     def test_07_check_phone_availability(self):
         """Test 7: Check phone availability endpoint"""
-        response = requests.post(
-            f"{API_V1}/auth/check-phone",
-            json={"phone": TEST_USER_PHONE}
-        )
+        response = requests.post(f"{API_V1}/auth/check-phone", json={"phone": TEST_USER_PHONE})
         assert response.status_code == 200
         print("✓ Test 7: Phone availability check works")
 
     def test_08_signup_validation_missing_fields(self):
         """Test 8: Signup validates required fields"""
         response = requests.post(
-            f"{API_V1}/auth/signup",
-            json={"email": "test@test.com"}  # Missing required fields
+            f"{API_V1}/auth/signup", json={"email": "test@test.com"}  # Missing required fields
         )
         assert response.status_code == 422  # Validation error
         print("✓ Test 8: Signup validates required fields")
@@ -136,8 +133,8 @@ class TestAuthentication:
                 "password": TEST_USER_PASSWORD,
                 "first_name": "Test",
                 "last_name": "User",
-                "phone": TEST_USER_PHONE
-            }
+                "phone": TEST_USER_PHONE,
+            },
         )
         assert response.status_code == 422
         print("✓ Test 9: Signup validates email format")
@@ -146,10 +143,7 @@ class TestAuthentication:
         """Test 10: Login fails for non-existent user"""
         response = requests.post(
             f"{API_V1}/auth/login",
-            json={
-                "email": "nonexistent@test.com",
-                "password": "SomePassword123!"
-            }
+            json={"email": "nonexistent@test.com", "password": "SomePassword123!"},
         )
         assert response.status_code in [401, 404]
         print("✓ Test 10: Login fails for non-existent user")
@@ -158,10 +152,7 @@ class TestAuthentication:
         """Test 11: Login fails with wrong password"""
         response = requests.post(
             f"{API_V1}/auth/login",
-            json={
-                "email": TEST_ADMIN_EMAIL,
-                "password": "WrongPassword123!"
-            }
+            json={"email": TEST_ADMIN_EMAIL, "password": "WrongPassword123!"},
         )
         assert response.status_code in [401, 404]
         print("✓ Test 11: Login fails with wrong password")
@@ -170,10 +161,7 @@ class TestAuthentication:
         """Test 12: Admin login flow"""
         response = requests.post(
             f"{API_V1}/admin/auth/login",
-            json={
-                "email": TEST_ADMIN_EMAIL,
-                "password": TEST_ADMIN_PASSWORD
-            }
+            json={"email": TEST_ADMIN_EMAIL, "password": TEST_ADMIN_PASSWORD},
         )
         # May fail if admin doesn't exist, which is acceptable
         if response.status_code == 200:
@@ -192,8 +180,7 @@ class TestAuthentication:
     def test_14_protected_route_invalid_token(self):
         """Test 14: Invalid token is rejected"""
         response = requests.get(
-            f"{API_V1}/auth/me",
-            headers={"Authorization": "Bearer invalid_token_here"}
+            f"{API_V1}/auth/me", headers={"Authorization": "Bearer invalid_token_here"}
         )
         assert response.status_code in [401, 403]
         print("✓ Test 14: Invalid token rejected")
@@ -201,8 +188,7 @@ class TestAuthentication:
     def test_15_password_reset_request(self):
         """Test 15: Password reset request works"""
         response = requests.post(
-            f"{API_V1}/auth/forgot-password",
-            json={"email": "nonexistent@test.com"}
+            f"{API_V1}/auth/forgot-password", json={"email": "nonexistent@test.com"}
         )
         # Should return 200 even for non-existent email (security)
         assert response.status_code in [200, 404]
@@ -212,10 +198,7 @@ class TestAuthentication:
         """Test 16: Password reset with invalid token fails"""
         response = requests.post(
             f"{API_V1}/auth/reset-password",
-            json={
-                "token": "invalid_token",
-                "new_password": "NewPassword123!"
-            }
+            json={"token": "invalid_token", "new_password": "NewPassword123!"},
         )
         assert response.status_code in [400, 404]
         print("✓ Test 16: Invalid reset token rejected")
@@ -223,8 +206,7 @@ class TestAuthentication:
     def test_17_refresh_token_invalid(self):
         """Test 17: Invalid refresh token is rejected"""
         response = requests.post(
-            f"{API_V1}/auth/refresh",
-            json={"refresh_token": "invalid_refresh_token"}
+            f"{API_V1}/auth/refresh", json={"refresh_token": "invalid_refresh_token"}
         )
         assert response.status_code in [400, 401]
         print("✓ Test 17: Invalid refresh token rejected")
@@ -232,11 +214,7 @@ class TestAuthentication:
     def test_18_otp_verify_invalid(self):
         """Test 18: Invalid OTP is rejected"""
         response = requests.post(
-            f"{API_V1}/auth/verify-login-otp",
-            json={
-                "user_id": str(uuid.uuid4()),
-                "code": "000000"
-            }
+            f"{API_V1}/auth/verify-login-otp", json={"user_id": str(uuid.uuid4()), "code": "000000"}
         )
         assert response.status_code in [400, 404]
         print("✓ Test 18: Invalid OTP rejected")
@@ -244,8 +222,7 @@ class TestAuthentication:
     def test_19_resend_otp_invalid_user(self):
         """Test 19: Resend OTP for invalid user fails"""
         response = requests.post(
-            f"{API_V1}/auth/resend-login-otp",
-            json={"user_id": str(uuid.uuid4())}
+            f"{API_V1}/auth/resend-login-otp", json={"user_id": str(uuid.uuid4())}
         )
         assert response.status_code in [400, 404]
         print("✓ Test 19: Resend OTP invalid user handled")
@@ -253,8 +230,7 @@ class TestAuthentication:
     def test_20_email_verification_invalid_token(self):
         """Test 20: Email verification with invalid token fails"""
         response = requests.post(
-            f"{API_V1}/auth/verify-email",
-            json={"token": "invalid_verification_token"}
+            f"{API_V1}/auth/verify-email", json={"token": "invalid_verification_token"}
         )
         assert response.status_code in [400, 404]
         print("✓ Test 20: Invalid email verification token rejected")
@@ -263,6 +239,7 @@ class TestAuthentication:
 # =============================================================================
 # SECTION 3: USER MANAGEMENT TESTS (Tests 21-35)
 # =============================================================================
+
 
 class TestUserManagement:
     """Test user management endpoints"""
@@ -281,10 +258,7 @@ class TestUserManagement:
 
     def test_23_update_user_unauthorized(self):
         """Test 23: Update user requires auth"""
-        response = requests.put(
-            f"{API_V1}/admin/users/{uuid.uuid4()}",
-            json={"status": "active"}
-        )
+        response = requests.put(f"{API_V1}/admin/users/{uuid.uuid4()}", json={"status": "active"})
         assert response.status_code in [401, 403]
         print("✓ Test 23: Update user requires auth")
 
@@ -302,18 +276,14 @@ class TestUserManagement:
 
     def test_26_user_preferences_update_unauthorized(self):
         """Test 26: Update preferences requires auth"""
-        response = requests.put(
-            f"{API_V1}/user/preferences",
-            json={"notifications_enabled": True}
-        )
+        response = requests.put(f"{API_V1}/user/preferences", json={"notifications_enabled": True})
         assert response.status_code in [401, 403]
         print("✓ Test 26: Update preferences requires auth")
 
     def test_27_admin_create_user_endpoint(self):
         """Test 27: Admin create user endpoint exists"""
         response = requests.post(
-            f"{API_V1}/admin/users/create",
-            json={}  # Empty body to check endpoint exists
+            f"{API_V1}/admin/users/create", json={}  # Empty body to check endpoint exists
         )
         # Should be 401/422 not 404
         assert response.status_code in [401, 403, 422]
@@ -373,6 +343,7 @@ class TestUserManagement:
 # SECTION 4: WALLET & TRANSACTION TESTS (Tests 36-50)
 # =============================================================================
 
+
 class TestWalletAndTransactions:
     """Test wallet and transaction endpoints"""
 
@@ -397,8 +368,7 @@ class TestWalletAndTransactions:
     def test_39_wallet_add_money_unauthorized(self):
         """Test 39: Add money requires auth"""
         response = requests.post(
-            f"{API_V1}/wallet/add-money",
-            json={"amount": 100, "source": "card"}
+            f"{API_V1}/wallet/add-money", json={"amount": 100, "source": "card"}
         )
         assert response.status_code in [401, 403]
         print("✓ Test 39: Add money requires auth")
@@ -406,8 +376,7 @@ class TestWalletAndTransactions:
     def test_40_wallet_withdraw_unauthorized(self):
         """Test 40: Withdraw requires auth"""
         response = requests.post(
-            f"{API_V1}/wallet/withdraw",
-            json={"amount": 50, "destination": "bank"}
+            f"{API_V1}/wallet/withdraw", json={"amount": 50, "destination": "bank"}
         )
         assert response.status_code in [401, 403]
         print("✓ Test 40: Withdraw requires auth")
@@ -427,8 +396,7 @@ class TestWalletAndTransactions:
     def test_43_transfers_create_unauthorized(self):
         """Test 43: Create transfer requires auth"""
         response = requests.post(
-            f"{API_V1}/transfers",
-            json={"amount": 100, "recipient_id": str(uuid.uuid4())}
+            f"{API_V1}/transfers", json={"amount": 100, "recipient_id": str(uuid.uuid4())}
         )
         assert response.status_code in [401, 403]
         print("✓ Test 43: Create transfer requires auth")
@@ -459,10 +427,7 @@ class TestWalletAndTransactions:
 
     def test_48_cards_create_unauthorized(self):
         """Test 48: Create card requires auth"""
-        response = requests.post(
-            f"{API_V1}/cards",
-            json={"type": "virtual"}
-        )
+        response = requests.post(f"{API_V1}/cards", json={"type": "virtual"})
         assert response.status_code in [401, 403]
         print("✓ Test 48: Create card requires auth")
 
@@ -483,6 +448,7 @@ class TestWalletAndTransactions:
 # SECTION 5: REWARDS & POINTS TESTS (Tests 51-60)
 # =============================================================================
 
+
 class TestRewardsAndPoints:
     """Test rewards and points system endpoints"""
 
@@ -501,8 +467,7 @@ class TestRewardsAndPoints:
     def test_53_rewards_donate_unauthorized(self):
         """Test 53: Rewards donate requires auth"""
         response = requests.post(
-            f"{API_V1}/rewards/donate",
-            json={"points": 100, "charity_id": str(uuid.uuid4())}
+            f"{API_V1}/rewards/donate", json={"points": 100, "charity_id": str(uuid.uuid4())}
         )
         assert response.status_code in [401, 403]
         print("✓ Test 53: Rewards donate requires auth")
@@ -523,8 +488,7 @@ class TestRewardsAndPoints:
     def test_56_goals_create_unauthorized(self):
         """Test 56: Create goal requires auth"""
         response = requests.post(
-            f"{API_V1}/goals",
-            json={"name": "Test Goal", "target_amount": 1000}
+            f"{API_V1}/goals", json={"name": "Test Goal", "target_amount": 1000}
         )
         assert response.status_code in [401, 403]
         print("✓ Test 56: Create goal requires auth")
@@ -562,6 +526,7 @@ class TestRewardsAndPoints:
 # SECTION 6: MERCHANT TESTS (Tests 61-70)
 # =============================================================================
 
+
 class TestMerchants:
     """Test merchant management endpoints"""
 
@@ -573,10 +538,7 @@ class TestMerchants:
 
     def test_62_admin_merchants_create(self):
         """Test 62: Admin create merchant endpoint"""
-        response = requests.post(
-            f"{API_V1}/admin/merchants",
-            json={"name": "Test Merchant"}
-        )
+        response = requests.post(f"{API_V1}/admin/merchants", json={"name": "Test Merchant"})
         assert response.status_code in [401, 403, 422]
         print("✓ Test 62: Admin create merchant requires auth")
 
@@ -633,6 +595,7 @@ class TestMerchants:
 # SECTION 7: SUPPORT & TICKETS TESTS (Tests 71-80)
 # =============================================================================
 
+
 class TestSupportAndTickets:
     """Test support and ticket system endpoints"""
 
@@ -646,7 +609,7 @@ class TestSupportAndTickets:
         """Test 72: Create support ticket endpoint"""
         response = requests.post(
             f"{API_V1}/admin/support/tickets",
-            json={"subject": "Test", "description": "Test ticket"}
+            json={"subject": "Test", "description": "Test ticket"},
         )
         assert response.status_code in [201, 401, 403, 422]
         print("✓ Test 72: Create ticket endpoint exists")
@@ -666,10 +629,7 @@ class TestSupportAndTickets:
 
     def test_75_website_concierge(self):
         """Test 75: Website concierge endpoint"""
-        response = requests.post(
-            f"{API_V1}/website-concierge/chat",
-            json={"message": "Hello"}
-        )
+        response = requests.post(f"{API_V1}/website-concierge/chat", json={"message": "Hello"})
         assert response.status_code in [200, 401, 403, 404, 422]
         print("✓ Test 75: Website concierge endpoint checked")
 
@@ -695,11 +655,7 @@ class TestSupportAndTickets:
         """Test 79: Contact form endpoint"""
         response = requests.post(
             f"{API_V1}/forms/contact",
-            json={
-                "name": "Test User",
-                "email": "test@test.com",
-                "message": "Test message"
-            }
+            json={"name": "Test User", "email": "test@test.com", "message": "Test message"},
         )
         assert response.status_code in [200, 201, 422]
         print("✓ Test 79: Contact form endpoint works")
@@ -712,8 +668,8 @@ class TestSupportAndTickets:
                 "name": "Test User",
                 "email": "test@test.com",
                 "company": "Test Co",
-                "phone": "+15551234567"
-            }
+                "phone": "+15551234567",
+            },
         )
         assert response.status_code in [200, 201, 422]
         print("✓ Test 80: Demo request form endpoint works")
@@ -722,6 +678,7 @@ class TestSupportAndTickets:
 # =============================================================================
 # SECTION 8: FEATURE FLAGS & NOTIFICATIONS (Tests 81-90)
 # =============================================================================
+
 
 class TestFeatureFlagsAndNotifications:
     """Test feature flags and notification endpoints"""
@@ -735,8 +692,7 @@ class TestFeatureFlagsAndNotifications:
     def test_82_feature_flags_create(self):
         """Test 82: Create feature flag endpoint"""
         response = requests.post(
-            f"{API_V1}/admin/feature-flags",
-            json={"name": "test_flag", "enabled": False}
+            f"{API_V1}/admin/feature-flags", json={"name": "test_flag", "enabled": False}
         )
         assert response.status_code in [201, 401, 403, 422]
         print("✓ Test 82: Create feature flag requires auth")
@@ -757,7 +713,7 @@ class TestFeatureFlagsAndNotifications:
         """Test 85: Register device for push notifications"""
         response = requests.post(
             f"{API_V1}/notifications/register-device",
-            json={"token": "test_token", "platform": "ios"}
+            json={"token": "test_token", "platform": "ios"},
         )
         assert response.status_code in [200, 201, 401, 403, 422]
         print("✓ Test 85: Register device endpoint exists")
@@ -784,7 +740,7 @@ class TestFeatureFlagsAndNotifications:
         """Test 89: Send broadcast notification endpoint"""
         response = requests.post(
             f"{API_V1}/notifications/send-broadcast",
-            json={"title": "Test", "body": "Test broadcast"}
+            json={"title": "Test", "body": "Test broadcast"},
         )
         assert response.status_code in [200, 201, 401, 403, 422]
         print("✓ Test 89: Broadcast endpoint exists")
@@ -800,6 +756,7 @@ class TestFeatureFlagsAndNotifications:
 # SECTION 9: KYC & COMPLIANCE TESTS (Tests 91-95)
 # =============================================================================
 
+
 class TestKYCAndCompliance:
     """Test KYC and compliance endpoints"""
 
@@ -811,10 +768,7 @@ class TestKYCAndCompliance:
 
     def test_92_kyc_submit(self):
         """Test 92: KYC submit endpoint"""
-        response = requests.post(
-            f"{API_V1}/kyc/submit",
-            json={"document_type": "drivers_license"}
-        )
+        response = requests.post(f"{API_V1}/kyc/submit", json={"document_type": "drivers_license"})
         assert response.status_code in [200, 201, 401, 403, 422]
         print("✓ Test 92: KYC submit endpoint checked")
 
@@ -840,6 +794,7 @@ class TestKYCAndCompliance:
 # =============================================================================
 # SECTION 10: INTEGRATION TESTS (Tests 96-100)
 # =============================================================================
+
 
 class TestIntegration:
     """Integration tests for cross-system functionality"""
@@ -875,8 +830,7 @@ class TestIntegration:
         """Test 99: Notifications work across platforms"""
         in_app = requests.get(f"{API_V1}/notifications/in-app")
         push = requests.post(
-            f"{API_V1}/notifications/register-device",
-            json={"token": "test", "platform": "ios"}
+            f"{API_V1}/notifications/register-device", json={"token": "test", "platform": "ios"}
         )
         # Both should require auth
         assert in_app.status_code in [200, 401, 403]
@@ -896,13 +850,13 @@ class TestIntegration:
 # TEST SUMMARY
 # =============================================================================
 
+
 def run_all_tests():
     """Run all tests and generate summary"""
     import subprocess
+
     result = subprocess.run(
-        ["pytest", __file__, "-v", "--tb=short", "-q"],
-        capture_output=True,
-        text=True
+        ["pytest", __file__, "-v", "--tb=short", "-q"], capture_output=True, text=True
     )
     print(result.stdout)
     if result.returncode != 0:

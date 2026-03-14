@@ -31,14 +31,17 @@ concierge = SwipeSavvySupportConcierge(workspace_root=workspace_root)
 # PYDANTIC MODELS
 # ============================================================================
 
+
 class IssueRequest(BaseModel):
     """Request model for submitting an issue"""
+
     description: str
     user_id: Optional[str] = None
 
 
 class ResolutionRecordRequest(BaseModel):
     """Request model for recording a resolution"""
+
     issue_id: str
     severity: str
     description: str
@@ -50,12 +53,14 @@ class ResolutionRecordRequest(BaseModel):
 
 class DocumentationSearchRequest(BaseModel):
     """Request model for documentation search"""
+
     query: str
     limit: Optional[int] = 5
 
 
 class SimilarIssuesRequest(BaseModel):
     """Request model for finding similar issues"""
+
     description: str
     tags: Optional[List[str]] = None
     limit: Optional[int] = 5
@@ -65,24 +70,22 @@ class SimilarIssuesRequest(BaseModel):
 # API ROUTES
 # ============================================================================
 
+
 @router.post("/analyze-issue")
 async def analyze_issue(request: IssueRequest):
     """
     Analyze an issue and provide comprehensive support recommendations
-    
+
     Args:
         description: Detailed description of the issue
         user_id: Optional user ID for tracking
-        
+
     Returns:
         Issue analysis with classification, resolution steps, and recommendations
     """
     try:
         result = concierge.analyze_issue(request.description, request.user_id)
-        return {
-            "status": "success",
-            "data": result
-        }
+        return {"status": "success", "data": result}
     except Exception as e:
         logger.error(f"Error analyzing issue: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -92,11 +95,11 @@ async def analyze_issue(request: IssueRequest):
 async def search_documentation(request: DocumentationSearchRequest):
     """
     Search documentation by keyword
-    
+
     Args:
         query: Search query
         limit: Maximum number of results
-        
+
     Returns:
         List of relevant documentation files with previews
     """
@@ -106,7 +109,7 @@ async def search_documentation(request: DocumentationSearchRequest):
             "status": "success",
             "query": request.query,
             "results": results,
-            "count": len(results)
+            "count": len(results),
         }
     except Exception as e:
         logger.error(f"Error searching documentation: {str(e)}")
@@ -117,23 +120,21 @@ async def search_documentation(request: DocumentationSearchRequest):
 async def find_similar_issues(request: SimilarIssuesRequest):
     """
     Find similar issues from the knowledge base
-    
+
     Args:
         description: Issue description
         tags: Relevant tags/components
         limit: Maximum number of results
-        
+
     Returns:
         List of similar historical issues with solutions
     """
     try:
         tags = request.tags or []
-        results = concierge.kb.find_similar_issues(request.description, tags, request.limit)
-        return {
-            "status": "success",
-            "similar_count": len(results),
-            "issues": results
-        }
+        results = concierge.kb.find_similar_issues(
+            request.description, tags, request.limit
+        )
+        return {"status": "success", "similar_count": len(results), "issues": results}
     except Exception as e:
         logger.error(f"Error finding similar issues: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -143,7 +144,7 @@ async def find_similar_issues(request: SimilarIssuesRequest):
 async def record_resolution(request: ResolutionRecordRequest):
     """
     Record a resolution for ML learning
-    
+
     Args:
         issue_id: Issue identifier
         severity: Issue severity (CRITICAL, MODERATE, LOW)
@@ -152,7 +153,7 @@ async def record_resolution(request: ResolutionRecordRequest):
         resolution_time: Time taken to resolve in seconds
         tags: List of related tags
         success: Whether resolution was successful
-        
+
     Returns:
         Confirmation of recorded resolution
     """
@@ -164,12 +165,12 @@ async def record_resolution(request: ResolutionRecordRequest):
             request.solution,
             request.resolution_time,
             request.tags,
-            request.success
+            request.success,
         )
         return {
             "status": "success",
             "message": "Resolution recorded successfully",
-            "issue_id": request.issue_id
+            "issue_id": request.issue_id,
         }
     except Exception as e:
         logger.error(f"Error recording resolution: {str(e)}")
@@ -180,16 +181,13 @@ async def record_resolution(request: ResolutionRecordRequest):
 async def get_statistics():
     """
     Get support system statistics and learning metrics
-    
+
     Returns:
         Statistics including total issues, success rates, and top patterns
     """
     try:
         stats = concierge.get_statistics()
-        return {
-            "status": "success",
-            "data": stats
-        }
+        return {"status": "success", "data": stats}
     except Exception as e:
         logger.error(f"Error getting statistics: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -199,7 +197,7 @@ async def get_statistics():
 async def support_health():
     """
     Health check endpoint for the support concierge
-    
+
     Returns:
         Health status with documentation and KB stats
     """
@@ -209,7 +207,7 @@ async def support_health():
             "status": "healthy",
             "service": "AI Support Concierge",
             "documentation_indexed": stats["documentation_indexed"],
-            "total_issues_recorded": stats["statistics"]["total_issues_resolved"]
+            "total_issues_recorded": stats["statistics"]["total_issues_resolved"],
         }
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
@@ -220,10 +218,10 @@ async def support_health():
 async def batch_analyze_issues(issues: List[IssueRequest]):
     """
     Analyze multiple issues in batch
-    
+
     Args:
         issues: List of issue requests
-        
+
     Returns:
         List of analyses for each issue
     """
@@ -232,12 +230,8 @@ async def batch_analyze_issues(issues: List[IssueRequest]):
         for issue in issues:
             analysis = concierge.analyze_issue(issue.description, issue.user_id)
             results.append(analysis)
-        
-        return {
-            "status": "success",
-            "count": len(results),
-            "analyses": results
-        }
+
+        return {"status": "success", "count": len(results), "analyses": results}
     except Exception as e:
         logger.error(f"Error in batch analysis: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -247,7 +241,7 @@ async def batch_analyze_issues(issues: List[IssueRequest]):
 async def get_learning_patterns():
     """
     Get learning patterns discovered by the ML system
-    
+
     Returns:
         Patterns with statistics about issue resolution
     """
@@ -256,7 +250,7 @@ async def get_learning_patterns():
         return {
             "status": "success",
             "patterns": patterns,
-            "total_patterns": len(patterns)
+            "total_patterns": len(patterns),
         }
     except Exception as e:
         logger.error(f"Error getting patterns: {str(e)}")
@@ -267,10 +261,10 @@ async def get_learning_patterns():
 async def get_learning_logs(limit: Optional[int] = 20):
     """
     Get recent learning logs from the system
-    
+
     Args:
         limit: Maximum number of logs to return
-        
+
     Returns:
         Recent learning events
     """
@@ -279,7 +273,7 @@ async def get_learning_logs(limit: Optional[int] = 20):
         return {
             "status": "success",
             "logs": logs[-limit:] if limit else logs,
-            "total_logs": len(logs)
+            "total_logs": len(logs),
         }
     except Exception as e:
         logger.error(f"Error getting learning logs: {str(e)}")

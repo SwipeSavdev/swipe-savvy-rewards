@@ -12,9 +12,7 @@ import logging
 
 from app.core.auth import verify_token_string
 
-from ..services.marketing_ai_behavioral_learning import (
-    get_enhanced_marketing_service
-)
+from ..services.marketing_ai_behavioral_learning import get_enhanced_marketing_service
 from ..services.marketing_ai import get_marketing_ai_service
 
 logger = logging.getLogger(__name__)
@@ -28,16 +26,21 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
     return verify_token_string(token)
 
 
-router = APIRouter(prefix="/api/v1/marketing-ai", tags=["Marketing AI"], dependencies=[Depends(require_auth)])
+router = APIRouter(
+    prefix="/api/v1/marketing-ai", tags=["Marketing AI"], dependencies=[Depends(require_auth)]
+)
 
 
 # ============================================================================
 # REQUEST/RESPONSE MODELS
 # ============================================================================
 
+
 class UserAnalysisRequest(BaseModel):
     user_id: str = Field(..., description="User ID to analyze")
-    lookback_days: int = Field(default=90, ge=1, le=365, description="Days to look back for analysis")
+    lookback_days: int = Field(
+        default=90, ge=1, le=365, description="Days to look back for analysis"
+    )
 
 
 class PromotionRequest(BaseModel):
@@ -76,6 +79,7 @@ class CampaignCreateRequest(BaseModel):
 # API ENDPOINTS
 # ============================================================================
 
+
 @router.get("/health")
 async def health_check():
     """Check Marketing AI service health"""
@@ -85,14 +89,14 @@ async def health_check():
             "status": "healthy",
             "service": "Enhanced Marketing AI",
             "service_initialized": service is not None,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Marketing AI health check failed: {str(e)}")
         return {
             "status": "unhealthy",
             "error": "Service unavailable",
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -117,7 +121,7 @@ async def analyze_user_behavior(request: UserAnalysisRequest):
             "success": True,
             "user_id": request.user_id,
             "analysis": analysis,
-            "analyzed_at": datetime.now(timezone.utc).isoformat()
+            "analyzed_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error analyzing user {request.user_id}: {str(e)}")
@@ -135,7 +139,7 @@ async def get_user_analysis(user_id: str):
             "success": True,
             "user_id": user_id,
             "analysis": analysis,
-            "analyzed_at": datetime.now(timezone.utc).isoformat()
+            "analyzed_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error analyzing user {user_id}: {str(e)}")
@@ -158,14 +162,14 @@ async def get_personalized_promotions(request: PromotionRequest):
         promotions = service.get_personalized_promotions(request.user_id)
 
         # Limit to requested max
-        promotions = promotions[:request.max_promotions]
+        promotions = promotions[: request.max_promotions]
 
         return {
             "success": True,
             "user_id": request.user_id,
             "promotions": promotions,
             "count": len(promotions),
-            "generated_at": datetime.now(timezone.utc).isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error generating promotions for {request.user_id}: {str(e)}")
@@ -184,7 +188,7 @@ async def get_user_promotions(user_id: str, max_count: int = Query(default=5, ge
             "user_id": user_id,
             "promotions": promotions[:max_count],
             "count": len(promotions[:max_count]),
-            "generated_at": datetime.now(timezone.utc).isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error getting promotions for {user_id}: {str(e)}")
@@ -204,7 +208,7 @@ async def record_conversion_feedback(request: ConversionFeedbackRequest):
             user_id=request.user_id,
             campaign_id=request.campaign_id,
             converted=request.converted,
-            value=request.conversion_value
+            value=request.conversion_value,
         )
 
         return {
@@ -213,7 +217,7 @@ async def record_conversion_feedback(request: ConversionFeedbackRequest):
             "user_id": request.user_id,
             "campaign_id": request.campaign_id,
             "converted": request.converted,
-            "recorded_at": datetime.now(timezone.utc).isoformat()
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error recording conversion feedback: {str(e)}")
@@ -241,7 +245,7 @@ async def get_segment_insights(segment_type: str):
             "success": True,
             "segment": segment_type,
             "insights": insights,
-            "queried_at": datetime.now(timezone.utc).isoformat()
+            "queried_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error getting segment insights for {segment_type}: {str(e)}")
@@ -262,18 +266,10 @@ async def bulk_analyze_users(request: BulkAnalysisRequest):
         for user_id in request.user_ids:
             try:
                 analysis = service.analyze_user(user_id)
-                results.append({
-                    "user_id": user_id,
-                    "success": True,
-                    "analysis": analysis
-                })
+                results.append({"user_id": user_id, "success": True, "analysis": analysis})
             except Exception as e:
                 logger.error(f"Error analyzing user {user_id} in bulk: {str(e)}")
-                results.append({
-                    "user_id": user_id,
-                    "success": False,
-                    "error": "Analysis failed"
-                })
+                results.append({"user_id": user_id, "success": False, "error": "Analysis failed"})
 
         successful = [r for r in results if r["success"]]
 
@@ -281,19 +277,25 @@ async def bulk_analyze_users(request: BulkAnalysisRequest):
         summary: Dict[str, Union[int, float]] = {
             "total_users": len(request.user_ids),
             "successful_analyses": len(successful),
-            "failed_analyses": len(results) - len(successful)
+            "failed_analyses": len(results) - len(successful),
         }
 
         if successful:
-            summary["avg_total_spent"] = sum(r["analysis"]["total_spent"] for r in successful) / len(successful)
-            summary["avg_churn_risk"] = sum(r["analysis"]["predictions"]["churn_risk"] for r in successful) / len(successful)
-            summary["total_predicted_monthly_revenue"] = sum(r["analysis"]["predictions"]["monthly_spend"] for r in successful)
+            summary["avg_total_spent"] = sum(
+                r["analysis"]["total_spent"] for r in successful
+            ) / len(successful)
+            summary["avg_churn_risk"] = sum(
+                r["analysis"]["predictions"]["churn_risk"] for r in successful
+            ) / len(successful)
+            summary["total_predicted_monthly_revenue"] = sum(
+                r["analysis"]["predictions"]["monthly_spend"] for r in successful
+            )
 
         return {
             "success": True,
             "summary": summary,
             "results": results,
-            "analyzed_at": datetime.now(timezone.utc).isoformat()
+            "analyzed_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error in bulk analysis: {str(e)}")
@@ -309,60 +311,60 @@ async def get_available_patterns():
             {"name": "medium_spender", "description": "Users spending $1000-$5000"},
             {"name": "low_spender", "description": "Users spending <$1000"},
             {"name": "impulse_buyer", "description": "High variance in transaction amounts"},
-            {"name": "planned_shopper", "description": "Consistent transaction amounts"}
+            {"name": "planned_shopper", "description": "Consistent transaction amounts"},
         ],
         "frequency_patterns": [
             {"name": "daily_shopper", "description": "Transactions every 1-2 days"},
             {"name": "weekly_shopper", "description": "Transactions every 3-7 days"},
             {"name": "monthly_shopper", "description": "Transactions every 8-30 days"},
-            {"name": "sporadic_shopper", "description": "Infrequent, irregular transactions"}
+            {"name": "sporadic_shopper", "description": "Infrequent, irregular transactions"},
         ],
         "time_patterns": [
             {"name": "morning_shopper", "description": "Most transactions before noon"},
             {"name": "afternoon_shopper", "description": "Most transactions noon-5pm"},
             {"name": "evening_shopper", "description": "Most transactions after 5pm"},
             {"name": "weekend_shopper", "description": "Majority transactions on weekends"},
-            {"name": "weekday_shopper", "description": "Majority transactions on weekdays"}
+            {"name": "weekday_shopper", "description": "Majority transactions on weekdays"},
         ],
         "location_patterns": [
             {"name": "local_shopper", "description": "Shops within home area"},
             {"name": "commuter_shopper", "description": "Different morning/evening locations"},
             {"name": "traveler", "description": "Frequent transactions outside home city"},
-            {"name": "neighborhood_loyal", "description": "High location consistency score"}
+            {"name": "neighborhood_loyal", "description": "High location consistency score"},
         ],
         "business_affinity_patterns": [
             {"name": "restaurant_enthusiast", "description": "High spend at restaurants"},
             {"name": "retail_shopper", "description": "Frequent retail purchases"},
             {"name": "grocery_regular", "description": "Regular grocery shopping"},
             {"name": "gas_station_frequent", "description": "Frequent gas station visits"},
-            {"name": "entertainment_seeker", "description": "High entertainment spend"}
+            {"name": "entertainment_seeker", "description": "High entertainment spend"},
         ],
         "engagement_patterns": [
             {"name": "highly_engaged", "description": "Engagement score >80"},
             {"name": "moderately_engaged", "description": "Engagement score 50-80"},
             {"name": "low_engagement", "description": "Engagement score <50"},
             {"name": "app_power_user", "description": "High app session frequency"},
-            {"name": "notification_responsive", "description": "High notification open rate"}
+            {"name": "notification_responsive", "description": "High notification open rate"},
         ],
         "conversion_patterns": [
             {"name": "high_converter", "description": "Conversion rate >20%"},
             {"name": "promotion_hunter", "description": "Clicks but rarely converts"},
             {"name": "organic_buyer", "description": "Buys without promotions"},
-            {"name": "coupon_clipper", "description": "Only converts with discounts"}
+            {"name": "coupon_clipper", "description": "Only converts with discounts"},
         ],
         "lifecycle_patterns": [
             {"name": "new_user", "description": "Customer <30 days"},
             {"name": "established_user", "description": "Customer 30-180 days"},
             {"name": "loyal_user", "description": "Customer >180 days with consistent activity"},
             {"name": "churning_user", "description": "Declining activity, high churn risk"},
-            {"name": "reactivated_user", "description": "Recently returned after inactivity"}
-        ]
+            {"name": "reactivated_user", "description": "Recently returned after inactivity"},
+        ],
     }
 
     return {
         "success": True,
         "patterns": patterns,
-        "total_patterns": sum(len(v) for v in patterns.values())
+        "total_patterns": sum(len(v) for v in patterns.values()),
     }
 
 
@@ -384,14 +386,10 @@ async def get_sic_codes():
         {"code": "7538", "description": "Automotive Services", "category": "Automotive"},
         {"code": "4724", "description": "Travel Agencies", "category": "Travel"},
         {"code": "7011", "description": "Hotels/Lodging", "category": "Travel"},
-        {"code": "5999", "description": "Online Retail", "category": "E-commerce"}
+        {"code": "5999", "description": "Online Retail", "category": "E-commerce"},
     ]
 
-    return {
-        "success": True,
-        "sic_codes": sic_codes,
-        "count": len(sic_codes)
-    }
+    return {"success": True, "sic_codes": sic_codes, "count": len(sic_codes)}
 
 
 @router.post("/campaigns/ai-generate")
@@ -422,14 +420,14 @@ async def ai_generate_campaign(request: CampaignCreateRequest):
             "target_sic_codes": request.target_sic_codes,
             "duration_days": request.duration_days,
             "status": "active",
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
         return {
             "success": True,
             "message": "Campaign created successfully",
             "campaign": campaign_data,
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error creating campaign: {str(e)}")
@@ -454,7 +452,7 @@ async def run_analysis_cycle():
         return {
             "success": True,
             "result": result,
-            "completed_at": datetime.now(timezone.utc).isoformat()
+            "completed_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error running analysis cycle: {str(e)}")
@@ -471,7 +469,7 @@ async def get_campaign_analytics(campaign_id: Optional[str] = Query(default=None
         return {
             "success": True,
             "analytics": analytics,
-            "queried_at": datetime.now(timezone.utc).isoformat()
+            "queried_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error getting campaign analytics: {str(e)}")
@@ -487,7 +485,10 @@ async def setup_database_tables():
     """
     try:
         import psycopg2
-        from ..services.marketing_ai_behavioral_learning import DB_CONFIG, setup_behavioral_learning_tables
+        from ..services.marketing_ai_behavioral_learning import (
+            DB_CONFIG,
+            setup_behavioral_learning_tables,
+        )
 
         conn = psycopg2.connect(**DB_CONFIG)
         setup_behavioral_learning_tables(conn)
@@ -496,7 +497,7 @@ async def setup_database_tables():
         return {
             "success": True,
             "message": "Database tables created/updated successfully",
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.error(f"Error setting up database: {str(e)}")
@@ -506,6 +507,7 @@ async def setup_database_tables():
 # ============================================================================
 # TRACKING ENDPOINTS (for collecting behavioral data)
 # ============================================================================
+
 
 class AppSessionStart(BaseModel):
     user_id: str
@@ -531,13 +533,14 @@ class NotificationEvent(BaseModel):
 async def track_session_start(request: AppSessionStart):
     """Track app session start for engagement metrics"""
     import uuid
+
     session_id = str(uuid.uuid4())
 
     # In production, this would save to database
     return {
         "success": True,
         "session_id": session_id,
-        "started_at": datetime.now(timezone.utc).isoformat()
+        "started_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -549,7 +552,7 @@ async def track_session_end(request: AppSessionEnd):
         "success": True,
         "session_id": request.session_id,
         "duration_seconds": request.duration_seconds,
-        "ended_at": datetime.now(timezone.utc).isoformat()
+        "ended_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -562,5 +565,5 @@ async def track_notification_event(request: NotificationEvent):
         "user_id": request.user_id,
         "notification_id": request.notification_id,
         "event_type": request.event_type,
-        "tracked_at": datetime.now(timezone.utc).isoformat()
+        "tracked_at": datetime.now(timezone.utc).isoformat(),
     }

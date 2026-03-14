@@ -24,7 +24,10 @@ from app.core.auth import verify_token_string
 from app.models.notifications import NotificationHistory
 from app.models.forms import ContactFormSubmission, DemoRequestSubmission
 from sqlalchemy import func
-from app.services.aws_ses_service import send_contact_form_notification, send_demo_request_notification
+from app.services.aws_ses_service import (
+    send_contact_form_notification,
+    send_demo_request_notification,
+)
 import os
 
 logger = logging.getLogger(__name__)
@@ -40,23 +43,28 @@ router = APIRouter(tags=["api-fixes"])
 # Request/Response Models
 # ============================================
 
+
 class CheckEmailRequest(BaseModel):
     """Check email availability request"""
+
     email: EmailStr
 
 
 class CheckPhoneRequest(BaseModel):
     """Check phone availability request"""
+
     phone: str
 
 
 class AvailabilityResponse(BaseModel):
     """Response for availability checks"""
+
     available: bool
 
 
 class ContactFormRequest(BaseModel):
     """Contact form submission"""
+
     name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
     message: str = Field(..., min_length=1, max_length=5000)
@@ -66,6 +74,7 @@ class ContactFormRequest(BaseModel):
 
 class DemoRequestForm(BaseModel):
     """Demo request form submission"""
+
     name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
     company: str = Field(..., min_length=1, max_length=200)
@@ -77,6 +86,7 @@ class DemoRequestForm(BaseModel):
 
 class FormSubmissionResponse(BaseModel):
     """Response for form submissions"""
+
     success: bool
     message: str
     submission_id: str
@@ -85,6 +95,7 @@ class FormSubmissionResponse(BaseModel):
 
 class InAppNotification(BaseModel):
     """In-app notification model"""
+
     id: str
     title: str
     body: str
@@ -95,6 +106,7 @@ class InAppNotification(BaseModel):
 
 class InAppNotificationResponse(BaseModel):
     """Response for in-app notifications"""
+
     success: bool
     message: str
     data: Optional[Dict[str, Any]] = None
@@ -102,6 +114,7 @@ class InAppNotificationResponse(BaseModel):
 
 class BroadcastRequest(BaseModel):
     """Broadcast notification request"""
+
     title: str = Field(..., min_length=1, max_length=200)
     body: str = Field(..., min_length=1, max_length=1000)
     target_audience: Optional[str] = "all"
@@ -110,13 +123,17 @@ class BroadcastRequest(BaseModel):
 
 class WebsiteConciergeRequest(BaseModel):
     """Website concierge chat request"""
+
     message: str = Field(..., min_length=1)
     session_id: Optional[str] = None
 
 
 class KYCSubmitRequest(BaseModel):
     """KYC submission request"""
-    document_type: str = Field(..., description="Type of document: drivers_license, passport, id_card")
+
+    document_type: str = Field(
+        ..., description="Type of document: drivers_license, passport, id_card"
+    )
     document_front_url: Optional[str] = None
     document_back_url: Optional[str] = None
     selfie_url: Optional[str] = None
@@ -170,11 +187,9 @@ def get_user_from_token(authorization: str, db: Session) -> Optional[User]:
 # Check Email/Phone Endpoints (JSON body support)
 # ============================================
 
+
 @router.post("/api/v1/auth/check-email", response_model=AvailabilityResponse)
-async def check_email_json(
-    request: CheckEmailRequest,
-    db: Session = Depends(get_db)
-):
+async def check_email_json(request: CheckEmailRequest, db: Session = Depends(get_db)):
     """
     Check if email is available for registration.
     Accepts JSON body with email field.
@@ -184,15 +199,12 @@ async def check_email_json(
 
 
 @router.post("/api/v1/auth/check-phone", response_model=AvailabilityResponse)
-async def check_phone_json(
-    request: CheckPhoneRequest,
-    db: Session = Depends(get_db)
-):
+async def check_phone_json(request: CheckPhoneRequest, db: Session = Depends(get_db)):
     """
     Check if phone is available for registration.
     Accepts JSON body with phone field.
     """
-    digits = re.sub(r'\D', '', request.phone)
+    digits = re.sub(r"\D", "", request.phone)
     existing = db.query(User).filter(User.phone == digits).first()
     return AvailabilityResponse(available=existing is None)
 
@@ -201,11 +213,10 @@ async def check_phone_json(
 # Contact Form Endpoints
 # ============================================
 
+
 @router.post("/api/v1/forms/contact", response_model=FormSubmissionResponse, status_code=201)
 async def submit_contact_form(
-    request: ContactFormRequest,
-    req: Request,
-    db: Session = Depends(get_db)
+    request: ContactFormRequest, req: Request, db: Session = Depends(get_db)
 ):
     """
     Submit a contact form inquiry.
@@ -222,7 +233,7 @@ async def submit_contact_form(
         ip_address=req.client.host if req.client else None,
         user_agent=req.headers.get("user-agent"),
         referrer=req.headers.get("referer"),
-        status='pending'
+        status="pending",
     )
 
     db.add(submission)
@@ -234,12 +245,12 @@ async def submit_contact_form(
     # Send email notification to support team (async, don't block response)
     try:
         submission_data = {
-            'id': str(submission.id),
-            'name': submission.name,
-            'email': submission.email,
-            'phone': submission.phone,
-            'subject': submission.subject,
-            'message': submission.message
+            "id": str(submission.id),
+            "name": submission.name,
+            "email": submission.email,
+            "phone": submission.phone,
+            "subject": submission.subject,
+            "message": submission.message,
         }
         await send_contact_form_notification(SUPPORT_EMAIL, submission_data)
     except Exception as e:
@@ -249,15 +260,13 @@ async def submit_contact_form(
     return FormSubmissionResponse(
         success=True,
         message="Thank you for your message. We will respond within 24 hours.",
-        submission_id=str(submission.id)
+        submission_id=str(submission.id),
     )
 
 
 @router.post("/api/v1/forms/demo-request", response_model=FormSubmissionResponse, status_code=201)
 async def submit_demo_request(
-    request: DemoRequestForm,
-    req: Request,
-    db: Session = Depends(get_db)
+    request: DemoRequestForm, req: Request, db: Session = Depends(get_db)
 ):
     """
     Submit a demo request form.
@@ -276,26 +285,28 @@ async def submit_demo_request(
         ip_address=req.client.host if req.client else None,
         user_agent=req.headers.get("user-agent"),
         referrer=req.headers.get("referer"),
-        status='pending'
+        status="pending",
     )
 
     db.add(submission)
     db.commit()
     db.refresh(submission)
 
-    logger.info(f"Demo request submitted: {request.email} - {request.company} (ID: {submission.id})")
+    logger.info(
+        f"Demo request submitted: {request.email} - {request.company} (ID: {submission.id})"
+    )
 
     # Send email notification to sales team (async, don't block response)
     try:
         submission_data = {
-            'id': str(submission.id),
-            'name': submission.name,
-            'email': submission.email,
-            'company': submission.company,
-            'phone': submission.phone,
-            'message': submission.message,
-            'company_size': submission.company_size,
-            'industry': submission.industry
+            "id": str(submission.id),
+            "name": submission.name,
+            "email": submission.email,
+            "company": submission.company,
+            "phone": submission.phone,
+            "message": submission.message,
+            "company_size": submission.company_size,
+            "industry": submission.industry,
         }
         await send_demo_request_notification(SALES_EMAIL, submission_data)
     except Exception as e:
@@ -305,7 +316,7 @@ async def submit_demo_request(
     return FormSubmissionResponse(
         success=True,
         message="Thank you for your demo request. Our team will contact you within 1 business day.",
-        submission_id=str(submission.id)
+        submission_id=str(submission.id),
     )
 
 
@@ -313,10 +324,10 @@ async def submit_demo_request(
 # In-App Notification Endpoints
 # ============================================
 
+
 @router.get("/api/v1/notifications/in-app", response_model=InAppNotificationResponse)
 async def get_in_app_notifications(
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db)
+    authorization: Optional[str] = Header(None), db: Session = Depends(get_db)
 ):
     """
     Get user's in-app notifications.
@@ -331,9 +342,13 @@ async def get_in_app_notifications(
         raise HTTPException(status_code=401, detail=INVALID_TOKEN_MSG)
 
     # Query notifications from database
-    notifications_query = db.query(NotificationHistory).filter(
-        NotificationHistory.user_id == user.id
-    ).order_by(NotificationHistory.created_at.desc()).limit(50).all()
+    notifications_query = (
+        db.query(NotificationHistory)
+        .filter(NotificationHistory.user_id == user.id)
+        .order_by(NotificationHistory.created_at.desc())
+        .limit(50)
+        .all()
+    )
 
     notifications = [
         {
@@ -342,15 +357,16 @@ async def get_in_app_notifications(
             "body": notif.body,
             "type": notif.notification_type,
             "read": notif.is_read,
-            "created_at": notif.created_at.isoformat()
+            "created_at": notif.created_at.isoformat(),
         }
         for notif in notifications_query
     ]
 
-    unread_count = db.query(func.count(NotificationHistory.id)).filter(
-        NotificationHistory.user_id == user.id,
-        NotificationHistory.is_read == False
-    ).scalar()
+    unread_count = (
+        db.query(func.count(NotificationHistory.id))
+        .filter(NotificationHistory.user_id == user.id, NotificationHistory.is_read == False)
+        .scalar()
+    )
 
     return InAppNotificationResponse(
         success=True,
@@ -358,15 +374,14 @@ async def get_in_app_notifications(
         data={
             "notifications": notifications,
             "total": len(notifications),
-            "unread": unread_count or 0
-        }
+            "unread": unread_count or 0,
+        },
     )
 
 
 @router.get("/api/v1/notifications/in-app/unread-count", response_model=InAppNotificationResponse)
 async def get_unread_count(
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db)
+    authorization: Optional[str] = Header(None), db: Session = Depends(get_db)
 ):
     """
     Get count of unread in-app notifications.
@@ -380,23 +395,19 @@ async def get_unread_count(
         raise HTTPException(status_code=401, detail=INVALID_TOKEN_MSG)
 
     # Query unread count from database
-    unread_count = db.query(func.count(NotificationHistory.id)).filter(
-        NotificationHistory.user_id == user.id,
-        NotificationHistory.is_read == False
-    ).scalar()
+    unread_count = (
+        db.query(func.count(NotificationHistory.id))
+        .filter(NotificationHistory.user_id == user.id, NotificationHistory.is_read == False)
+        .scalar()
+    )
 
     return InAppNotificationResponse(
-        success=True,
-        message="Unread count retrieved",
-        data={"unread_count": unread_count or 0}
+        success=True, message="Unread count retrieved", data={"unread_count": unread_count or 0}
     )
 
 
 @router.post("/api/v1/notifications/in-app/read-all", response_model=InAppNotificationResponse)
-async def mark_all_read(
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db)
-):
+async def mark_all_read(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
     """
     Mark all in-app notifications as read.
     """
@@ -411,20 +422,18 @@ async def mark_all_read(
     # Update all unread notifications to read
     from datetime import datetime, timezone
 
-    updated_count = db.query(NotificationHistory).filter(
-        NotificationHistory.user_id == user.id,
-        NotificationHistory.is_read == False
-    ).update({
-        "is_read": True,
-        "read_at": datetime.now(timezone.utc)
-    }, synchronize_session=False)
+    updated_count = (
+        db.query(NotificationHistory)
+        .filter(NotificationHistory.user_id == user.id, NotificationHistory.is_read == False)
+        .update({"is_read": True, "read_at": datetime.now(timezone.utc)}, synchronize_session=False)
+    )
 
     db.commit()
 
     return InAppNotificationResponse(
         success=True,
         message="All notifications marked as read",
-        data={"marked_count": updated_count}
+        data={"marked_count": updated_count},
     )
 
 
@@ -432,7 +441,7 @@ async def mark_all_read(
 async def send_broadcast(
     request: BroadcastRequest,
     authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Send broadcast notification to all users or a target audience.
@@ -447,15 +456,16 @@ async def send_broadcast(
         raise HTTPException(status_code=401, detail=INVALID_TOKEN_MSG)
 
     # Check if user is admin
-    if user.role not in ['admin', 'super_admin']:
+    if user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
 
     # Get target users based on audience (all active users for now)
     # Future: Could add audience segmentation by kyc_tier, role, etc.
-    target_users = db.query(User).filter(User.status == 'active').all()
+    target_users = db.query(User).filter(User.status == "active").all()
 
     # Create notification records for each user
     from datetime import datetime, timezone
+
     notifications_created = 0
 
     for target_user in target_users:
@@ -463,11 +473,11 @@ async def send_broadcast(
             user_id=target_user.id,
             title=request.title,
             body=request.body,
-            notification_type='campaign',
+            notification_type="campaign",
             data=request.data,
-            status='pending',
+            status="pending",
             is_read=False,
-            created_at=datetime.now(timezone.utc)
+            created_at=datetime.now(timezone.utc),
         )
         db.add(notification)
         notifications_created += 1
@@ -484,8 +494,8 @@ async def send_broadcast(
         data={
             "title": request.title,
             "target_audience": request.target_audience,
-            "estimated_recipients": notifications_created
-        }
+            "estimated_recipients": notifications_created,
+        },
     )
 
 
@@ -493,11 +503,9 @@ async def send_broadcast(
 # Website Concierge Endpoint
 # ============================================
 
+
 @router.post("/api/v1/website-concierge/chat")
-async def website_concierge_chat(
-    request: WebsiteConciergeRequest,
-    db: Session = Depends(get_db)
-):
+async def website_concierge_chat(request: WebsiteConciergeRequest, db: Session = Depends(get_db)):
     """
     Website concierge chat endpoint.
 
@@ -511,11 +519,15 @@ async def website_concierge_chat(
     response_message = "Thank you for your message. Our team is here to help! "
 
     if "pricing" in request.message.lower() or "price" in request.message.lower():
-        response_message += "For pricing information, please visit our pricing page or contact our sales team."
+        response_message += (
+            "For pricing information, please visit our pricing page or contact our sales team."
+        )
     elif "demo" in request.message.lower():
         response_message += "To schedule a demo, please fill out our demo request form at /contact."
     elif "support" in request.message.lower() or "help" in request.message.lower():
-        response_message += "For technical support, please visit our support portal or submit a ticket."
+        response_message += (
+            "For technical support, please visit our support portal or submit a ticket."
+        )
     else:
         response_message += "How can I assist you today?"
 
@@ -523,7 +535,7 @@ async def website_concierge_chat(
         "success": True,
         "session_id": session_id,
         "response": response_message,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -531,11 +543,12 @@ async def website_concierge_chat(
 # KYC Submit Endpoint
 # ============================================
 
+
 @router.post("/api/v1/kyc/submit")
 async def kyc_submit(
     request: KYCSubmitRequest,
     authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Submit KYC verification documents.
@@ -546,13 +559,13 @@ async def kyc_submit(
         raise HTTPException(status_code=401, detail="Authentication required")
 
     import uuid
+
     submission_id = str(uuid.uuid4())
 
     valid_document_types = ["drivers_license", "passport", "id_card", "state_id"]
     if request.document_type not in valid_document_types:
         raise HTTPException(
-            status_code=422,
-            detail=f"Invalid document_type. Must be one of: {valid_document_types}"
+            status_code=422, detail=f"Invalid document_type. Must be one of: {valid_document_types}"
         )
 
     logger.info(f"KYC submission started: {submission_id}")
@@ -562,7 +575,7 @@ async def kyc_submit(
         "submission_id": submission_id,
         "status": "pending_review",
         "message": "Your documents have been submitted for verification. This process typically takes 1-2 business days.",
-        "estimated_completion": "48 hours"
+        "estimated_completion": "48 hours",
     }
 
 
@@ -570,11 +583,9 @@ async def kyc_submit(
 # Admin User Endpoints with Required Auth
 # ============================================
 
+
 @router.get("/api/v1/admin/users-secure")
-async def list_users_secure(
-    authorization: str = Header(...),
-    db: Session = Depends(get_db)
-):
+async def list_users_secure(authorization: str = Header(...), db: Session = Depends(get_db)):
     """
     List users with required authentication.
     This endpoint requires a valid Authorization header.
@@ -586,13 +597,7 @@ async def list_users_secure(
 
     return {
         "users": [
-            {
-                "id": str(u.id),
-                "email": u.email,
-                "name": u.name,
-                "status": u.status
-            }
-            for u in users
+            {"id": str(u.id), "email": u.email, "name": u.name, "status": u.status} for u in users
         ],
-        "total": len(users)
+        "total": len(users),
     }

@@ -34,8 +34,10 @@ DEFAULT_TXN_DESCRIPTION = "Card Transaction"
 # WEBHOOK EVENT TYPES
 # =============================================================================
 
+
 class WebhookEventType(str, Enum):
     """FIS webhook event types"""
+
     # Transaction events
     TRANSACTION_AUTHORIZED = "transaction.authorized"
     TRANSACTION_POSTED = "transaction.posted"
@@ -87,8 +89,10 @@ class WebhookEventType(str, Enum):
 # WEBHOOK MODELS
 # =============================================================================
 
+
 class WebhookPayload(BaseModel):
     """Base webhook payload"""
+
     event_id: str
     event_type: str
     timestamp: str
@@ -98,6 +102,7 @@ class WebhookPayload(BaseModel):
 
 class TransactionWebhookData(BaseModel):
     """Transaction webhook data"""
+
     transaction_id: str
     card_id: str
     amount: float
@@ -112,6 +117,7 @@ class TransactionWebhookData(BaseModel):
 
 class CardWebhookData(BaseModel):
     """Card webhook data"""
+
     card_id: str
     status: str
     reason: Optional[str] = None
@@ -120,6 +126,7 @@ class CardWebhookData(BaseModel):
 
 class PinWebhookData(BaseModel):
     """PIN webhook data"""
+
     card_id: str
     event: str
     failed_attempts: Optional[int] = None
@@ -127,6 +134,7 @@ class PinWebhookData(BaseModel):
 
 class FraudWebhookData(BaseModel):
     """Fraud webhook data"""
+
     alert_id: str
     card_id: str
     transaction_id: Optional[str] = None
@@ -137,6 +145,7 @@ class FraudWebhookData(BaseModel):
 
 class WalletWebhookData(BaseModel):
     """Wallet token webhook data"""
+
     token_id: str
     card_id: str
     wallet_type: str
@@ -146,6 +155,7 @@ class WalletWebhookData(BaseModel):
 
 class DisputeWebhookData(BaseModel):
     """Dispute webhook data"""
+
     dispute_id: str
     card_id: str
     transaction_id: str
@@ -158,11 +168,8 @@ class DisputeWebhookData(BaseModel):
 # WEBHOOK SIGNATURE VERIFICATION
 # =============================================================================
 
-def verify_webhook_signature(
-    payload: bytes,
-    signature: str,
-    timestamp: str
-) -> bool:
+
+def verify_webhook_signature(payload: bytes, signature: str, timestamp: str) -> bool:
     """
     Verify FIS webhook signature.
 
@@ -187,9 +194,7 @@ def verify_webhook_signature(
 
     # Calculate expected signature
     expected_signature = hmac.new(
-        fis_service.webhook_secret.encode('utf-8'),
-        signed_payload.encode('utf-8'),
-        hashlib.sha256
+        fis_service.webhook_secret.encode("utf-8"), signed_payload.encode("utf-8"), hashlib.sha256
     ).hexdigest()
 
     # Compare signatures
@@ -199,6 +204,7 @@ def verify_webhook_signature(
 # =============================================================================
 # WEBHOOK HANDLERS
 # =============================================================================
+
 
 async def handle_transaction_event(event_type: str, data: Dict[str, Any]):
     """Handle transaction webhook events — records transactions in wallet_transactions table."""
@@ -211,9 +217,12 @@ async def handle_transaction_event(event_type: str, data: Dict[str, Any]):
         from sqlalchemy import text
 
         # Look up user_id from card association
-        card_row = db.execute(text(
-            "SELECT user_id FROM user_cards WHERE id = :card_id OR card_number_last4 = :card_id LIMIT 1"
-        ), {"card_id": transaction_data.card_id}).fetchone()
+        card_row = db.execute(
+            text(
+                "SELECT user_id FROM user_cards WHERE id = :card_id OR card_number_last4 = :card_id LIMIT 1"
+            ),
+            {"card_id": transaction_data.card_id},
+        ).fetchone()
 
         if not card_row:
             logger.warning(f"No user found for card {transaction_data.card_id}")
@@ -224,89 +233,116 @@ async def handle_transaction_event(event_type: str, data: Dict[str, Any]):
         if event_type == WebhookEventType.TRANSACTION_AUTHORIZED.value:
             logger.info(f"Transaction authorized: {transaction_data.transaction_id}")
             # Insert as pending transaction (authorization hold)
-            db.execute(text("""
+            db.execute(
+                text(
+                    """
                 INSERT INTO wallet_transactions (id, user_id, transaction_type, amount, currency, status, description, reference_number, created_at)
                 VALUES (:id, :user_id, 'payment', :amount, :currency, 'pending', :description, :ref, NOW())
                 ON CONFLICT (id) DO NOTHING
-            """), {
-                "id": transaction_data.transaction_id,
-                "user_id": user_id,
-                "amount": transaction_data.amount,
-                "currency": transaction_data.currency,
-                "description": transaction_data.merchant_name or DEFAULT_TXN_DESCRIPTION,
-                "ref": transaction_data.authorization_code,
-            })
-            db.commit()
-
-        elif event_type == WebhookEventType.TRANSACTION_POSTED.value:
-            logger.info(f"Transaction posted: {transaction_data.transaction_id}")
-            # Update pending → completed, or insert if auth was missed
-            result = db.execute(text(
-                "UPDATE wallet_transactions SET status = 'completed' WHERE id = :id"
-            ), {"id": transaction_data.transaction_id})
-
-            if result.rowcount == 0:
-                # Authorization webhook was missed — insert as completed
-                db.execute(text("""
-                    INSERT INTO wallet_transactions (id, user_id, transaction_type, amount, currency, status, description, reference_number, created_at)
-                    VALUES (:id, :user_id, 'payment', :amount, :currency, 'completed', :description, :ref, NOW())
-                    ON CONFLICT (id) DO NOTHING
-                """), {
+            """
+                ),
+                {
                     "id": transaction_data.transaction_id,
                     "user_id": user_id,
                     "amount": transaction_data.amount,
                     "currency": transaction_data.currency,
                     "description": transaction_data.merchant_name or DEFAULT_TXN_DESCRIPTION,
                     "ref": transaction_data.authorization_code,
-                })
+                },
+            )
+            db.commit()
+
+        elif event_type == WebhookEventType.TRANSACTION_POSTED.value:
+            logger.info(f"Transaction posted: {transaction_data.transaction_id}")
+            # Update pending → completed, or insert if auth was missed
+            result = db.execute(
+                text("UPDATE wallet_transactions SET status = 'completed' WHERE id = :id"),
+                {"id": transaction_data.transaction_id},
+            )
+
+            if result.rowcount == 0:
+                # Authorization webhook was missed — insert as completed
+                db.execute(
+                    text(
+                        """
+                    INSERT INTO wallet_transactions (id, user_id, transaction_type, amount, currency, status, description, reference_number, created_at)
+                    VALUES (:id, :user_id, 'payment', :amount, :currency, 'completed', :description, :ref, NOW())
+                    ON CONFLICT (id) DO NOTHING
+                """
+                    ),
+                    {
+                        "id": transaction_data.transaction_id,
+                        "user_id": user_id,
+                        "amount": transaction_data.amount,
+                        "currency": transaction_data.currency,
+                        "description": transaction_data.merchant_name or DEFAULT_TXN_DESCRIPTION,
+                        "ref": transaction_data.authorization_code,
+                    },
+                )
             db.commit()
 
         elif event_type == WebhookEventType.TRANSACTION_DECLINED.value:
             logger.info(f"Transaction declined: {transaction_data.transaction_id}")
             merchant = transaction_data.merchant_name or DEFAULT_TXN_DESCRIPTION
-            decline_suffix = f" (Declined: {transaction_data.decline_reason})" if transaction_data.decline_reason else " (Declined)"
-            db.execute(text("""
+            decline_suffix = (
+                f" (Declined: {transaction_data.decline_reason})"
+                if transaction_data.decline_reason
+                else " (Declined)"
+            )
+            db.execute(
+                text(
+                    """
                 INSERT INTO wallet_transactions (id, user_id, transaction_type, amount, currency, status, description, reference_number, created_at)
                 VALUES (:id, :user_id, 'payment', :amount, :currency, 'declined', :description, :ref, NOW())
                 ON CONFLICT (id) DO UPDATE SET status = 'declined'
-            """), {
-                "id": transaction_data.transaction_id,
-                "user_id": user_id,
-                "amount": transaction_data.amount,
-                "currency": transaction_data.currency,
-                "description": merchant + decline_suffix,
-                "ref": transaction_data.authorization_code,
-            })
+            """
+                ),
+                {
+                    "id": transaction_data.transaction_id,
+                    "user_id": user_id,
+                    "amount": transaction_data.amount,
+                    "currency": transaction_data.currency,
+                    "description": merchant + decline_suffix,
+                    "ref": transaction_data.authorization_code,
+                },
+            )
             db.commit()
 
         elif event_type == WebhookEventType.TRANSACTION_REVERSED.value:
             logger.info(f"Transaction reversed: {transaction_data.transaction_id}")
             # Cancel the pending authorization
-            db.execute(text(
-                "UPDATE wallet_transactions SET status = 'reversed' WHERE id = :id"
-            ), {"id": transaction_data.transaction_id})
+            db.execute(
+                text("UPDATE wallet_transactions SET status = 'reversed' WHERE id = :id"),
+                {"id": transaction_data.transaction_id},
+            )
             db.commit()
 
         elif event_type == WebhookEventType.TRANSACTION_REFUNDED.value:
             logger.info(f"Transaction refunded: {transaction_data.transaction_id}")
             # Insert a refund credit
             refund_id = f"rfnd_{transaction_data.transaction_id}"
-            db.execute(text("""
+            db.execute(
+                text(
+                    """
                 INSERT INTO wallet_transactions (id, user_id, transaction_type, amount, currency, status, description, reference_number, created_at)
                 VALUES (:id, :user_id, 'refund', :amount, :currency, 'completed', :description, :ref, NOW())
                 ON CONFLICT (id) DO NOTHING
-            """), {
-                "id": refund_id,
-                "user_id": user_id,
-                "amount": transaction_data.amount,
-                "currency": transaction_data.currency,
-                "description": f"Refund: {transaction_data.merchant_name or DEFAULT_TXN_DESCRIPTION}",
-                "ref": transaction_data.transaction_id,
-            })
+            """
+                ),
+                {
+                    "id": refund_id,
+                    "user_id": user_id,
+                    "amount": transaction_data.amount,
+                    "currency": transaction_data.currency,
+                    "description": f"Refund: {transaction_data.merchant_name or DEFAULT_TXN_DESCRIPTION}",
+                    "ref": transaction_data.transaction_id,
+                },
+            )
             # Mark original as refunded
-            db.execute(text(
-                "UPDATE wallet_transactions SET status = 'refunded' WHERE id = :id"
-            ), {"id": transaction_data.transaction_id})
+            db.execute(
+                text("UPDATE wallet_transactions SET status = 'refunded' WHERE id = :id"),
+                {"id": transaction_data.transaction_id},
+            )
             db.commit()
 
     except Exception as e:
@@ -338,9 +374,10 @@ async def handle_card_event(event_type: str, data: Dict[str, Any]):
 
         new_status = status_map.get(event_type)
         if new_status:
-            db.execute(text(
-                "UPDATE user_cards SET card_type = :status WHERE id = :card_id"
-            ), {"status": new_status, "card_id": card_data.card_id})
+            db.execute(
+                text("UPDATE user_cards SET card_type = :status WHERE id = :card_id"),
+                {"status": new_status, "card_id": card_data.card_id},
+            )
             db.commit()
             logger.info(f"Card {card_data.card_id} status updated to {new_status}")
 
@@ -377,10 +414,13 @@ async def handle_pin_event(event_type: str, data: Dict[str, Any]):
             logger.warning(f"PIN locked for card: {pin_data.card_id}")
 
         elif event_type == WebhookEventType.PIN_ATTEMPTS_EXCEEDED.value:
-            logger.warning(f"PIN attempts exceeded for card: {pin_data.card_id} — auto-locking card")
-            db.execute(text(
-                "UPDATE user_cards SET is_active = false WHERE id = :card_id"
-            ), {"card_id": pin_data.card_id})
+            logger.warning(
+                f"PIN attempts exceeded for card: {pin_data.card_id} — auto-locking card"
+            )
+            db.execute(
+                text("UPDATE user_cards SET is_active = false WHERE id = :card_id"),
+                {"card_id": pin_data.card_id},
+            )
             db.commit()
 
     except Exception as e:
@@ -405,16 +445,18 @@ async def handle_fraud_event(event_type: str, data: Dict[str, Any]):
         if fraud_data.severity in ("high", "critical"):
             # Auto-lock card for high severity alerts
             logger.warning(f"High severity fraud — auto-locking card {fraud_data.card_id}")
-            db.execute(text(
-                "UPDATE user_cards SET is_active = false WHERE id = :card_id"
-            ), {"card_id": fraud_data.card_id})
+            db.execute(
+                text("UPDATE user_cards SET is_active = false WHERE id = :card_id"),
+                {"card_id": fraud_data.card_id},
+            )
             db.commit()
 
         if event_type == WebhookEventType.FRAUD_CONFIRMED.value and fraud_data.transaction_id:
             # Mark the fraudulent transaction
-            db.execute(text(
-                "UPDATE wallet_transactions SET status = 'fraudulent' WHERE id = :txn_id"
-            ), {"txn_id": fraud_data.transaction_id})
+            db.execute(
+                text("UPDATE wallet_transactions SET status = 'fraudulent' WHERE id = :txn_id"),
+                {"txn_id": fraud_data.transaction_id},
+            )
             db.commit()
 
     except Exception as e:
@@ -458,25 +500,33 @@ async def handle_dispute_event(event_type: str, data: Dict[str, Any]):
         from sqlalchemy import text
 
         if event_type == WebhookEventType.DISPUTE_RESOLVED.value and dispute_data.credit_amount:
-            logger.info(f"Dispute resolved: {dispute_data.dispute_id}, credit: ${dispute_data.credit_amount}")
+            logger.info(
+                f"Dispute resolved: {dispute_data.dispute_id}, credit: ${dispute_data.credit_amount}"
+            )
             # Look up user from original transaction
-            row = db.execute(text(
-                "SELECT user_id FROM wallet_transactions WHERE id = :txn_id LIMIT 1"
-            ), {"txn_id": dispute_data.transaction_id}).fetchone()
+            row = db.execute(
+                text("SELECT user_id FROM wallet_transactions WHERE id = :txn_id LIMIT 1"),
+                {"txn_id": dispute_data.transaction_id},
+            ).fetchone()
 
             if row:
                 credit_id = f"dispute_credit_{dispute_data.dispute_id}"
-                db.execute(text("""
+                db.execute(
+                    text(
+                        """
                     INSERT INTO wallet_transactions (id, user_id, transaction_type, amount, currency, status, description, reference_number, created_at)
                     VALUES (:id, :user_id, 'refund', :amount, 'USD', 'completed', :description, :ref, NOW())
                     ON CONFLICT (id) DO NOTHING
-                """), {
-                    "id": credit_id,
-                    "user_id": str(row[0]),
-                    "amount": dispute_data.credit_amount,
-                    "description": f"Dispute credit: {dispute_data.dispute_id}",
-                    "ref": dispute_data.transaction_id,
-                })
+                """
+                    ),
+                    {
+                        "id": credit_id,
+                        "user_id": str(row[0]),
+                        "amount": dispute_data.credit_amount,
+                        "description": f"Dispute credit: {dispute_data.dispute_id}",
+                        "ref": dispute_data.transaction_id,
+                    },
+                )
                 db.commit()
         else:
             logger.info(f"Dispute event: {event_type} for {dispute_data.dispute_id}")
@@ -492,12 +542,13 @@ async def handle_dispute_event(event_type: str, data: Dict[str, Any]):
 # WEBHOOK ENDPOINTS
 # =============================================================================
 
+
 @router.post("")
 async def receive_webhook(
     request: Request,
     background_tasks: BackgroundTasks,
     x_fis_signature: Optional[str] = Header(None),
-    x_fis_timestamp: Optional[str] = Header(None)
+    x_fis_timestamp: Optional[str] = Header(None),
 ):
     """
     Receive and process FIS webhooks.
@@ -519,6 +570,7 @@ async def receive_webhook(
     # Parse payload
     try:
         import json
+
         payload_dict = json.loads(body)
         payload = WebhookPayload(**payload_dict)
     except Exception as e:
@@ -532,60 +584,33 @@ async def receive_webhook(
 
     # Transaction events
     if event_type.startswith("transaction."):
-        background_tasks.add_task(
-            handle_transaction_event,
-            event_type,
-            payload.data
-        )
+        background_tasks.add_task(handle_transaction_event, event_type, payload.data)
 
     # Card events
     elif event_type.startswith("card."):
-        background_tasks.add_task(
-            handle_card_event,
-            event_type,
-            payload.data
-        )
+        background_tasks.add_task(handle_card_event, event_type, payload.data)
 
     # PIN events
     elif event_type.startswith("pin."):
-        background_tasks.add_task(
-            handle_pin_event,
-            event_type,
-            payload.data
-        )
+        background_tasks.add_task(handle_pin_event, event_type, payload.data)
 
     # Fraud events
     elif event_type.startswith("fraud."):
-        background_tasks.add_task(
-            handle_fraud_event,
-            event_type,
-            payload.data
-        )
+        background_tasks.add_task(handle_fraud_event, event_type, payload.data)
 
     # Wallet events
     elif event_type.startswith("wallet."):
-        background_tasks.add_task(
-            handle_wallet_event,
-            event_type,
-            payload.data
-        )
+        background_tasks.add_task(handle_wallet_event, event_type, payload.data)
 
     # Dispute events
     elif event_type.startswith("dispute."):
-        background_tasks.add_task(
-            handle_dispute_event,
-            event_type,
-            payload.data
-        )
+        background_tasks.add_task(handle_dispute_event, event_type, payload.data)
 
     else:
         logger.warning(f"Unknown webhook event type: {event_type}")
 
     # Always return 200 to acknowledge receipt
-    return {
-        "received": True,
-        "event_id": payload.event_id
-    }
+    return {"received": True, "event_id": payload.event_id}
 
 
 @router.get("/events")
@@ -593,10 +618,7 @@ async def list_webhook_events():
     """List all supported webhook event types."""
     return {
         "events": [
-            {
-                "type": event.value,
-                "category": event.value.split(".")[0]
-            }
+            {"type": event.value, "category": event.value.split(".")[0]}
             for event in WebhookEventType
         ]
     }

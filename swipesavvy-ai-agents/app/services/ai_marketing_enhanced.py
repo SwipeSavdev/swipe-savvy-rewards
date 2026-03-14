@@ -18,11 +18,11 @@ from together import Together
 import os
 
 from app.services.marketing_ai import (
-    BehaviorAnalyzer, 
-    UserBehavior, 
-    BehaviorPattern, 
+    BehaviorAnalyzer,
+    UserBehavior,
+    BehaviorPattern,
     CampaignType,
-    get_marketing_ai_service
+    get_marketing_ai_service,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,16 +53,16 @@ class AIMarketingEnhanced:
         return psycopg2.connect(**DB_CONFIG)
 
     async def generate_campaign_copy(
-        self, 
+        self,
         campaign_name: str,
         target_patterns: List[str],
         campaign_type: str,
         audience_size: int,
-        offer_value: Optional[str] = None
+        offer_value: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Generate AI-powered campaign copy using Together.AI
-        
+
         Args:
             campaign_name: Name of the campaign
             target_patterns: List of behavior patterns (e.g., ['high_spender', 'frequent_shopper'])
@@ -81,12 +81,10 @@ class AIMarketingEnhanced:
             "location_clustered": "customers with strong location preferences",
             "new_shopper": "recent customers still building shopping habits",
             "inactive": "customers showing reduced activity levels",
-            "seasonal_spender": "customers with seasonal spending patterns"
+            "seasonal_spender": "customers with seasonal spending patterns",
         }
 
-        patterns_text = ", ".join([
-            pattern_descriptions.get(p, p) for p in target_patterns
-        ])
+        patterns_text = ", ".join([pattern_descriptions.get(p, p) for p in target_patterns])
 
         prompt = f"""You are an expert marketing copywriter. Generate compelling, concise marketing content for this campaign:
 
@@ -113,12 +111,13 @@ Format as JSON with keys: headline, description, cta, selling_points"""
             )
 
             content = response.choices[0].message.content
-            
+
             # Parse JSON from response
             try:
                 # Extract JSON from response
                 import re
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+
+                json_match = re.search(r"\{.*\}", content, re.DOTALL)
                 if json_match:
                     campaign_copy = json.loads(json_match.group())
                 else:
@@ -126,29 +125,27 @@ Format as JSON with keys: headline, description, cta, selling_points"""
                         "headline": content[:100],
                         "description": content,
                         "cta": "Shop now",
-                        "selling_points": ["Great offers", "Tailored for you", "Limited time"]
+                        "selling_points": ["Great offers", "Tailored for you", "Limited time"],
                     }
             except json.JSONDecodeError:
                 campaign_copy = {
                     "headline": content[:100],
                     "description": content,
                     "cta": "Shop now",
-                    "selling_points": ["Great offers", "Tailored for you", "Limited time"]
+                    "selling_points": ["Great offers", "Tailored for you", "Limited time"],
                 }
 
             return {
                 "success": True,
                 "campaign_copy": campaign_copy,
-                "model": "meta-llama/Llama-3-70b-chat-hf"
+                "model": "meta-llama/Llama-3-70b-chat-hf",
             }
         except Exception as e:
             logger.error(f"Error generating campaign copy: {str(e)}")
             return {"error": "Analysis failed"}
 
     async def get_audience_insights(
-        self,
-        target_patterns: List[str],
-        lookback_days: int = 90
+        self, target_patterns: List[str], lookback_days: int = 90
     ) -> Dict[str, Any]:
         """
         Generate smart audience insights and segmentation recommendations
@@ -179,7 +176,7 @@ Format as JSON with keys: headline, description, cta, selling_points"""
                 GROUP BY user_id
             ) p ON u.id = p.user_id
             """
-            
+
             cursor.execute(query, (lookback_days,))
             stats = cursor.fetchone()
 
@@ -209,10 +206,11 @@ Format as JSON with keys: characteristics, opportunities, offer_recommendation, 
             )
 
             content = response.choices[0].message.content
-            
+
             try:
                 import re
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+
+                json_match = re.search(r"\{.*\}", content, re.DOTALL)
                 if json_match:
                     insights = json.loads(json_match.group())
                 else:
@@ -221,7 +219,7 @@ Format as JSON with keys: characteristics, opportunities, offer_recommendation, 
                         "opportunities": ["Build engagement", "Increase frequency", "Boost AOV"],
                         "offer_recommendation": "Personalized tiered rewards",
                         "channels": ["Email", "Push", "In-app"],
-                        "challenges": ["Retention", "Seasonality"]
+                        "challenges": ["Retention", "Seasonality"],
                     }
             except json.JSONDecodeError:
                 insights = {
@@ -229,27 +227,25 @@ Format as JSON with keys: characteristics, opportunities, offer_recommendation, 
                     "opportunities": ["Build engagement", "Increase frequency", "Boost AOV"],
                     "offer_recommendation": "Personalized tiered rewards",
                     "channels": ["Email", "Push", "In-app"],
-                    "challenges": ["Retention", "Seasonality"]
+                    "challenges": ["Retention", "Seasonality"],
                 }
 
             return {
                 "success": True,
                 "audience_stats": {
-                    "total_users": stats['total_users'] or 0,
-                    "avg_spend": float(stats['avg_spend'] or 0),
-                    "max_spend": float(stats['max_spend'] or 0),
-                    "avg_transactions": float(stats['avg_transactions'] or 0)
+                    "total_users": stats["total_users"] or 0,
+                    "avg_spend": float(stats["avg_spend"] or 0),
+                    "max_spend": float(stats["max_spend"] or 0),
+                    "avg_transactions": float(stats["avg_transactions"] or 0),
                 },
-                "insights": insights
+                "insights": insights,
             }
         finally:
             cursor.close()
             conn.close()
 
     async def optimize_campaign(
-        self,
-        campaign_id: str,
-        campaign_metrics: Dict[str, Any]
+        self, campaign_id: str, campaign_metrics: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Generate dynamic campaign optimization suggestions based on performance
@@ -285,42 +281,49 @@ Format as JSON with keys: assessment, recommendations, ab_tests, expected_uplift
             )
 
             content = response.choices[0].message.content
-            
+
             try:
                 import re
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+
+                json_match = re.search(r"\{.*\}", content, re.DOTALL)
                 if json_match:
                     suggestions = json.loads(json_match.group())
                 else:
                     suggestions = {
                         "assessment": content[:200],
-                        "recommendations": ["Increase frequency", "Target new segments", "Refine messaging"],
+                        "recommendations": [
+                            "Increase frequency",
+                            "Target new segments",
+                            "Refine messaging",
+                        ],
                         "ab_tests": ["Copy variation", "Timing optimization"],
                         "expected_uplift": "15-25%",
-                        "timeline": "2 weeks"
+                        "timeline": "2 weeks",
                     }
             except json.JSONDecodeError:
                 suggestions = {
                     "assessment": content[:200],
-                    "recommendations": ["Increase frequency", "Target new segments", "Refine messaging"],
+                    "recommendations": [
+                        "Increase frequency",
+                        "Target new segments",
+                        "Refine messaging",
+                    ],
                     "ab_tests": ["Copy variation", "Timing optimization"],
                     "expected_uplift": "15-25%",
-                    "timeline": "2 weeks"
+                    "timeline": "2 weeks",
                 }
 
             return {
                 "success": True,
                 "campaign_id": campaign_id,
-                "optimization_suggestions": suggestions
+                "optimization_suggestions": suggestions,
             }
         except Exception as e:
             logger.error(f"Error optimizing campaign: {str(e)}")
             return {"error": "Analysis failed"}
 
     async def analyze_performance(
-        self,
-        campaign_id: str,
-        performance_data: Dict[str, Any]
+        self, campaign_id: str, performance_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Generate natural language performance analysis and insights
@@ -328,10 +331,12 @@ Format as JSON with keys: assessment, recommendations, ab_tests, expected_uplift
         if not self.together:
             return {"error": "Together.AI not configured"}
 
-        metrics_text = "\n".join([
-            f"- {key.replace('_', ' ').title()}: {value}"
-            for key, value in performance_data.items()
-        ])
+        metrics_text = "\n".join(
+            [
+                f"- {key.replace('_', ' ').title()}: {value}"
+                for key, value in performance_data.items()
+            ]
+        )
 
         prompt = f"""You are a data analyst. Provide a comprehensive natural language analysis of this campaign's performance:
 
@@ -356,10 +361,11 @@ Format as JSON with keys: executive_summary, highlights, concerns, insights, nex
             )
 
             content = response.choices[0].message.content
-            
+
             try:
                 import re
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+
+                json_match = re.search(r"\{.*\}", content, re.DOTALL)
                 if json_match:
                     analysis = json.loads(json_match.group())
                 else:
@@ -369,7 +375,7 @@ Format as JSON with keys: executive_summary, highlights, concerns, insights, nex
                         "concerns": ["Low conversion", "High cost"],
                         "insights": "Campaign performed well overall",
                         "next_steps": ["Expand audience", "Optimize timing"],
-                        "success_factors": ["Clear messaging", "Right timing"]
+                        "success_factors": ["Clear messaging", "Right timing"],
                     }
             except json.JSONDecodeError:
                 analysis = {
@@ -378,14 +384,14 @@ Format as JSON with keys: executive_summary, highlights, concerns, insights, nex
                     "concerns": ["Low conversion", "High cost"],
                     "insights": "Campaign performed well overall",
                     "next_steps": ["Expand audience", "Optimize timing"],
-                    "success_factors": ["Clear messaging", "Right timing"]
+                    "success_factors": ["Clear messaging", "Right timing"],
                 }
 
             return {
                 "success": True,
                 "campaign_id": campaign_id,
                 "performance_analysis": analysis,
-                "analyzed_at": datetime.utcnow().isoformat()
+                "analyzed_at": datetime.utcnow().isoformat(),
             }
         except Exception as e:
             logger.error(f"Error analyzing performance: {str(e)}")

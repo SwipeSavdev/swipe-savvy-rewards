@@ -25,18 +25,22 @@ router = APIRouter(prefix="/api/v1/admin/users", tags=["admin-users"])
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt."""
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
 
 def generate_invite_token() -> str:
     """Generate a secure invitation token."""
     return secrets.token_urlsafe(32)
 
+
 # ============================================================================
 # Request/Response Models
 # ============================================================================
 
+
 class CustomerUserCreateRequest(BaseModel):
     """Request body for creating/inviting a customer user"""
+
     email: EmailStr
     name: str
     phone: Optional[str] = None
@@ -45,6 +49,7 @@ class CustomerUserCreateRequest(BaseModel):
 
 class AdminUserCreateRequest(BaseModel):
     """Request body for creating a new admin user"""
+
     email: EmailStr
     full_name: str
     password: str
@@ -54,6 +59,7 @@ class AdminUserCreateRequest(BaseModel):
 
 class AdminUserUpdateRequest(BaseModel):
     """Request body for updating an admin user"""
+
     full_name: Optional[str] = None
     role: Optional[str] = None
     department: Optional[str] = None
@@ -62,6 +68,7 @@ class AdminUserUpdateRequest(BaseModel):
 
 class AdminUserResponse(BaseModel):
     """Response model for admin user details"""
+
     id: str
     email: str
     name: str  # Mapped from full_name for frontend compatibility
@@ -74,6 +81,7 @@ class AdminUserResponse(BaseModel):
 
 class AdminUserListResponse(BaseModel):
     """Response model for admin user list"""
+
     users: List[AdminUserResponse]
     total: int
     page: int
@@ -84,6 +92,7 @@ class AdminUserListResponse(BaseModel):
 # ============================================================================
 # Customer User Endpoints (for UsersPage.tsx)
 # ============================================================================
+
 
 @router.get("", response_model=AdminUserListResponse)
 async def list_users(
@@ -109,24 +118,23 @@ async def list_users(
     # Search by email or name
     if search:
         search_pattern = f"%{search}%"
-        query = query.filter(
-            (User.email.ilike(search_pattern)) |
-            (User.name.ilike(search_pattern))
-        )
+        query = query.filter((User.email.ilike(search_pattern)) | (User.name.ilike(search_pattern)))
 
     # Get total count
     total = query.count()
     total_pages = (total + per_page - 1) // per_page
 
     # Apply pagination and order by created_at descending
-    users = query.order_by(User.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+    users = (
+        query.order_by(User.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+    )
 
     return AdminUserListResponse(
         users=[
             AdminUserResponse(
                 id=str(u.id),
                 email=u.email,
-                name=u.name or u.email.split('@')[0],  # Fallback to email prefix if no name
+                name=u.name or u.email.split("@")[0],  # Fallback to email prefix if no name
                 role="customer",  # All are customers
                 department=None,
                 status=u.status or "active",
@@ -143,7 +151,11 @@ async def list_users(
 
 
 @router.post("", response_model=AdminUserResponse, status_code=201)
-async def create_user(req: CustomerUserCreateRequest, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+async def create_user(
+    req: CustomerUserCreateRequest,
+    current_user: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
     """
     Create/invite a new customer user
 
@@ -178,15 +190,18 @@ async def create_user(req: CustomerUserCreateRequest, current_user: str = Depend
     if req.invite:
         try:
             from app.services.aws_ses_service import AWSSESService
+
             ses_service = AWSSESService()
 
             # Send invitation email using the new template
-            invite_link = f"https://app.swipesavvy.com/invite?token={invite_token}&email={req.email}"
+            invite_link = (
+                f"https://app.swipesavvy.com/invite?token={invite_token}&email={req.email}"
+            )
             await ses_service.send_user_invitation(
                 to_email=req.email,
                 name=req.name,
                 invite_link=invite_link,
-                inviter_name="SwipeSavvy Admin"
+                inviter_name="SwipeSavvy Admin",
             )
             logger.info(f"Invitation email sent to {req.email}")
         except Exception as e:
@@ -209,8 +224,11 @@ async def create_user(req: CustomerUserCreateRequest, current_user: str = Depend
 # IMPORTANT: Specific routes MUST come before wildcard /{user_id} routes
 # ============================================================================
 
+
 @router.get("/stats/overview", response_model=dict)
-async def get_admin_users_stats(current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+async def get_admin_users_stats(
+    current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
+):
     """Get admin user statistics overview"""
     total_users = db.query(AdminUser).count()
     active_users = db.query(AdminUser).filter(AdminUser.status == "active").count()
@@ -232,7 +250,7 @@ async def get_admin_users_stats(current_user: str = Depends(verify_jwt_token), d
             "admin": admin_count,
             "support": support_count,
             "analyst": analyst_count,
-        }
+        },
     }
 
 
@@ -261,7 +279,9 @@ async def get_customer_otp(
         "user_id": str(user.id),
         "email": user.email,
         "has_active_otp": has_active_otp,
-        "phone_verification_expires": user.phone_verification_expires.isoformat() if user.phone_verification_expires else None,
+        "phone_verification_expires": (
+            user.phone_verification_expires.isoformat() if user.phone_verification_expires else None
+        ),
     }
 
 
@@ -277,7 +297,7 @@ async def delete_user_by_phone(
     """
 
     # Clean the phone number - keep only digits
-    phone_digits = ''.join(filter(str.isdigit, phone))
+    phone_digits = "".join(filter(str.isdigit, phone))
 
     # Search for users with matching phone number
     users = db.query(User).filter(User.phone.ilike(f"%{phone_digits}%")).all()
@@ -287,25 +307,20 @@ async def delete_user_by_phone(
         users = db.query(User).filter(User.phone.ilike(f"%{phone_digits[-10:]}%")).all()
 
     if not users:
-        raise HTTPException(status_code=404, detail=f"No users found with phone number containing {phone}")
+        raise HTTPException(
+            status_code=404, detail=f"No users found with phone number containing {phone}"
+        )
 
     deleted_users = []
     for user in users:
-        deleted_users.append({
-            "id": str(user.id),
-            "email": user.email,
-            "phone": user.phone,
-            "name": user.name
-        })
+        deleted_users.append(
+            {"id": str(user.id), "email": user.email, "phone": user.phone, "name": user.name}
+        )
         db.delete(user)
 
     db.commit()
 
-    return {
-        "success": True,
-        "deleted_count": len(deleted_users),
-        "deleted_users": deleted_users
-    }
+    return {"success": True, "deleted_count": len(deleted_users), "deleted_users": deleted_users}
 
 
 @router.delete("/by-email/{email:path}", status_code=200)
@@ -325,22 +340,14 @@ async def delete_user_by_email(
     if not user:
         raise HTTPException(status_code=404, detail=f"No user found with email {email}")
 
-    deleted_user = {
-        "id": str(user.id),
-        "email": user.email,
-        "phone": user.phone,
-        "name": user.name
-    }
+    deleted_user = {"id": str(user.id), "email": user.email, "phone": user.phone, "name": user.name}
 
     db.delete(user)
     db.commit()
 
     logger.info(f"Deleted user with email {email}")
 
-    return {
-        "success": True,
-        "deleted_user": deleted_user
-    }
+    return {"success": True, "deleted_user": deleted_user}
 
 
 @router.post("/delete-by-emails", status_code=200)
@@ -362,23 +369,22 @@ async def delete_users_by_emails(
 
     deleted_users = []
     for user in users:
-        deleted_users.append({
-            "id": str(user.id),
-            "email": user.email,
-            "phone": user.phone,
-            "name": user.name
-        })
+        deleted_users.append(
+            {"id": str(user.id), "email": user.email, "phone": user.phone, "name": user.name}
+        )
         db.delete(user)
 
     db.commit()
 
-    logger.info(f"Deleted {len(deleted_users)} users by email: {[u['email'] for u in deleted_users]}")
+    logger.info(
+        f"Deleted {len(deleted_users)} users by email: {[u['email'] for u in deleted_users]}"
+    )
 
     return {
         "success": True,
         "deleted_count": len(deleted_users),
         "deleted_users": deleted_users,
-        "not_found": [e for e in emails if e not in [u['email'] for u in deleted_users]]
+        "not_found": [e for e in emails if e not in [u["email"] for u in deleted_users]],
     }
 
 
@@ -386,8 +392,11 @@ async def delete_users_by_emails(
 # Wildcard routes - these MUST come AFTER specific routes
 # ============================================================================
 
+
 @router.get("/{user_id}", response_model=AdminUserResponse)
-async def get_admin_user(user_id: str, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+async def get_admin_user(
+    user_id: str, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
+):
     """
     Get detailed information about a specific admin user
 
@@ -411,7 +420,12 @@ async def get_admin_user(user_id: str, current_user: str = Depends(verify_jwt_to
 
 
 @router.put("/{user_id}", response_model=AdminUserResponse)
-async def update_admin_user(user_id: str, req: AdminUserUpdateRequest, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+async def update_admin_user(
+    user_id: str,
+    req: AdminUserUpdateRequest,
+    current_user: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db),
+):
     """
     Update an admin user
 
@@ -436,7 +450,9 @@ async def update_admin_user(user_id: str, req: AdminUserUpdateRequest, current_u
         user.department = req.department
     if req.status is not None:
         if req.status not in ["active", "inactive", "suspended"]:
-            raise HTTPException(status_code=400, detail="Invalid status. Must be active, inactive, or suspended")
+            raise HTTPException(
+                status_code=400, detail="Invalid status. Must be active, inactive, or suspended"
+            )
         user.status = req.status
 
     user.updated_at = datetime.now(timezone.utc)
@@ -456,7 +472,9 @@ async def update_admin_user(user_id: str, req: AdminUserUpdateRequest, current_u
 
 
 @router.delete("/{user_id}", status_code=204)
-async def delete_admin_user(user_id: str, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+async def delete_admin_user(
+    user_id: str, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)
+):
     """
     Delete an admin user (hard delete)
 

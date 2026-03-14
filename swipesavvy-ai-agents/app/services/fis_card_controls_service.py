@@ -15,11 +15,7 @@ from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field
 
-from app.services.fis_global_service import (
-    FISGlobalService,
-    FISAPIResponse,
-    get_fis_service
-)
+from app.services.fis_global_service import FISGlobalService, FISAPIResponse, get_fis_service
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +24,10 @@ logger = logging.getLogger(__name__)
 # REQUEST/RESPONSE MODELS
 # =============================================================================
 
+
 class SpendingLimits(BaseModel):
     """Spending limit configuration"""
+
     daily_limit: Optional[Decimal] = None
     weekly_limit: Optional[Decimal] = None
     monthly_limit: Optional[Decimal] = None
@@ -38,6 +36,7 @@ class SpendingLimits(BaseModel):
 
 class ChannelControls(BaseModel):
     """Channel control configuration"""
+
     atm_enabled: bool = True
     pos_enabled: bool = True
     ecommerce_enabled: bool = True
@@ -47,18 +46,21 @@ class ChannelControls(BaseModel):
 
 class MerchantControls(BaseModel):
     """Merchant category control configuration"""
+
     blocked_mcc_codes: List[str] = Field(default_factory=list)
     allowed_mcc_codes: Optional[List[str]] = None  # If set, only these are allowed
 
 
 class GeoControls(BaseModel):
     """Geographic control configuration"""
+
     allowed_countries: List[str] = Field(default_factory=lambda: ["US"])
     blocked_countries: List[str] = Field(default_factory=list)
 
 
 class TimeControls(BaseModel):
     """Time-based control configuration"""
+
     allowed_hours_start: Optional[int] = None  # 0-23
     allowed_hours_end: Optional[int] = None  # 0-23
     allowed_days: List[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4, 5, 6])
@@ -66,6 +68,7 @@ class TimeControls(BaseModel):
 
 class AlertPreferences(BaseModel):
     """Alert preference configuration"""
+
     alert_on_transaction: bool = True
     alert_on_decline: bool = True
     alert_on_international: bool = True
@@ -74,6 +77,7 @@ class AlertPreferences(BaseModel):
 
 class CardControlsResponse(BaseModel):
     """Full card controls response"""
+
     card_id: str
     spending_limits: SpendingLimits
     channel_controls: ChannelControls
@@ -104,6 +108,7 @@ MCC_CATEGORIES = {
 # FIS CARD CONTROLS SERVICE
 # =============================================================================
 
+
 class FISCardControlsService:
     """
     Service for managing FIS card controls.
@@ -122,11 +127,7 @@ class FISCardControlsService:
     # LOCK/UNLOCK
     # =========================================================================
 
-    async def lock_card(
-        self,
-        card_id: str,
-        reason: Optional[str] = None
-    ) -> FISAPIResponse:
+    async def lock_card(self, card_id: str, reason: Optional[str] = None) -> FISAPIResponse:
         """
         Lock a card (temporary freeze).
 
@@ -142,7 +143,7 @@ class FISCardControlsService:
         response = await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/lock",
-            data={"reason": reason} if reason else None
+            data={"reason": reason} if reason else None,
         )
 
         if response.success:
@@ -164,10 +165,7 @@ class FISCardControlsService:
         """
         logger.info(f"Unlocking card {card_id}")
 
-        response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/unlock"
-        )
+        response = await self.fis._make_request(method="POST", endpoint=f"/cards/{card_id}/unlock")
 
         if response.success:
             logger.info(f"Card {card_id} unlocked successfully")
@@ -176,11 +174,7 @@ class FISCardControlsService:
 
         return response
 
-    async def freeze_card(
-        self,
-        card_id: str,
-        reason: str
-    ) -> FISAPIResponse:
+    async def freeze_card(self, card_id: str, reason: str) -> FISAPIResponse:
         """
         Freeze a card (more permanent than lock, for suspected fraud).
 
@@ -194,9 +188,7 @@ class FISCardControlsService:
         logger.info(f"Freezing card {card_id} - reason: {reason}")
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/freeze",
-            data={"reason": reason}
+            method="POST", endpoint=f"/cards/{card_id}/freeze", data={"reason": reason}
         )
 
         if response.success:
@@ -219,8 +211,7 @@ class FISCardControlsService:
         logger.info(f"Unfreezing card {card_id}")
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/unfreeze"
+            method="POST", endpoint=f"/cards/{card_id}/unfreeze"
         )
 
         if response.success:
@@ -234,11 +225,7 @@ class FISCardControlsService:
     # SPENDING LIMITS
     # =========================================================================
 
-    async def set_spending_limits(
-        self,
-        card_id: str,
-        limits: SpendingLimits
-    ) -> FISAPIResponse:
+    async def set_spending_limits(self, card_id: str, limits: SpendingLimits) -> FISAPIResponse:
         """
         Set spending limits for a card.
 
@@ -262,9 +249,7 @@ class FISCardControlsService:
             payload["per_transaction_limit"] = float(limits.per_transaction_limit)
 
         return await self.fis._make_request(
-            method="PUT",
-            endpoint=f"/cards/{card_id}/limits",
-            data=payload
+            method="PUT", endpoint=f"/cards/{card_id}/limits", data=payload
         )
 
     async def get_spending_limits(self, card_id: str) -> FISAPIResponse:
@@ -277,10 +262,7 @@ class FISCardControlsService:
         Returns:
             FISAPIResponse with current limits
         """
-        return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/limits"
-        )
+        return await self.fis._make_request(method="GET", endpoint=f"/cards/{card_id}/limits")
 
     async def remove_spending_limits(self, card_id: str) -> FISAPIResponse:
         """
@@ -294,20 +276,13 @@ class FISCardControlsService:
         """
         logger.info(f"Removing spending limits for card {card_id}")
 
-        return await self.fis._make_request(
-            method="DELETE",
-            endpoint=f"/cards/{card_id}/limits"
-        )
+        return await self.fis._make_request(method="DELETE", endpoint=f"/cards/{card_id}/limits")
 
     # =========================================================================
     # CHANNEL CONTROLS
     # =========================================================================
 
-    async def set_channel_controls(
-        self,
-        card_id: str,
-        controls: ChannelControls
-    ) -> FISAPIResponse:
+    async def set_channel_controls(self, card_id: str, controls: ChannelControls) -> FISAPIResponse:
         """
         Set channel controls (ATM, POS, eCommerce, etc.).
 
@@ -325,29 +300,25 @@ class FISCardControlsService:
             "pos_enabled": controls.pos_enabled,
             "ecommerce_enabled": controls.ecommerce_enabled,
             "contactless_enabled": controls.contactless_enabled,
-            "international_enabled": controls.international_enabled
+            "international_enabled": controls.international_enabled,
         }
 
         return await self.fis._make_request(
-            method="PUT",
-            endpoint=f"/cards/{card_id}/controls/channels",
-            data=payload
+            method="PUT", endpoint=f"/cards/{card_id}/controls/channels", data=payload
         )
 
     async def enable_international(self, card_id: str) -> FISAPIResponse:
         """Enable international transactions."""
         logger.info(f"Enabling international for card {card_id}")
         return await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/controls/international/enable"
+            method="POST", endpoint=f"/cards/{card_id}/controls/international/enable"
         )
 
     async def disable_international(self, card_id: str) -> FISAPIResponse:
         """Disable international transactions."""
         logger.info(f"Disabling international for card {card_id}")
         return await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/controls/international/disable"
+            method="POST", endpoint=f"/cards/{card_id}/controls/international/disable"
         )
 
     # =========================================================================
@@ -355,9 +326,7 @@ class FISCardControlsService:
     # =========================================================================
 
     async def set_merchant_controls(
-        self,
-        card_id: str,
-        controls: MerchantControls
+        self, card_id: str, controls: MerchantControls
     ) -> FISAPIResponse:
         """
         Set merchant category controls.
@@ -371,23 +340,15 @@ class FISCardControlsService:
         """
         logger.info(f"Setting merchant controls for card {card_id}")
 
-        payload = {
-            "blocked_mcc_codes": controls.blocked_mcc_codes
-        }
+        payload = {"blocked_mcc_codes": controls.blocked_mcc_codes}
         if controls.allowed_mcc_codes:
             payload["allowed_mcc_codes"] = controls.allowed_mcc_codes
 
         return await self.fis._make_request(
-            method="PUT",
-            endpoint=f"/cards/{card_id}/controls/merchants",
-            data=payload
+            method="PUT", endpoint=f"/cards/{card_id}/controls/merchants", data=payload
         )
 
-    async def block_merchant_category(
-        self,
-        card_id: str,
-        category: str
-    ) -> FISAPIResponse:
+    async def block_merchant_category(self, card_id: str, category: str) -> FISAPIResponse:
         """
         Block a merchant category by name.
 
@@ -403,7 +364,7 @@ class FISCardControlsService:
             return FISAPIResponse(
                 success=False,
                 error_code="INVALID_CATEGORY",
-                error_message=f"Unknown merchant category: {category}"
+                error_message=f"Unknown merchant category: {category}",
             )
 
         logger.info(f"Blocking category '{category}' for card {card_id}")
@@ -411,14 +372,10 @@ class FISCardControlsService:
         return await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/controls/merchants/block",
-            data={"mcc_codes": mcc_codes}
+            data={"mcc_codes": mcc_codes},
         )
 
-    async def unblock_merchant_category(
-        self,
-        card_id: str,
-        category: str
-    ) -> FISAPIResponse:
+    async def unblock_merchant_category(self, card_id: str, category: str) -> FISAPIResponse:
         """
         Unblock a merchant category by name.
 
@@ -434,7 +391,7 @@ class FISCardControlsService:
             return FISAPIResponse(
                 success=False,
                 error_code="INVALID_CATEGORY",
-                error_message=f"Unknown merchant category: {category}"
+                error_message=f"Unknown merchant category: {category}",
             )
 
         logger.info(f"Unblocking category '{category}' for card {card_id}")
@@ -442,18 +399,14 @@ class FISCardControlsService:
         return await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/controls/merchants/unblock",
-            data={"mcc_codes": mcc_codes}
+            data={"mcc_codes": mcc_codes},
         )
 
     # =========================================================================
     # GEOGRAPHIC CONTROLS
     # =========================================================================
 
-    async def set_geo_controls(
-        self,
-        card_id: str,
-        controls: GeoControls
-    ) -> FISAPIResponse:
+    async def set_geo_controls(self, card_id: str, controls: GeoControls) -> FISAPIResponse:
         """
         Set geographic controls.
 
@@ -468,20 +421,14 @@ class FISCardControlsService:
 
         payload = {
             "allowed_countries": controls.allowed_countries,
-            "blocked_countries": controls.blocked_countries
+            "blocked_countries": controls.blocked_countries,
         }
 
         return await self.fis._make_request(
-            method="PUT",
-            endpoint=f"/cards/{card_id}/controls/geo",
-            data=payload
+            method="PUT", endpoint=f"/cards/{card_id}/controls/geo", data=payload
         )
 
-    async def block_country(
-        self,
-        card_id: str,
-        country_code: str
-    ) -> FISAPIResponse:
+    async def block_country(self, card_id: str, country_code: str) -> FISAPIResponse:
         """
         Block a specific country.
 
@@ -497,14 +444,10 @@ class FISCardControlsService:
         return await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/controls/geo/block",
-            data={"country_code": country_code.upper()}
+            data={"country_code": country_code.upper()},
         )
 
-    async def unblock_country(
-        self,
-        card_id: str,
-        country_code: str
-    ) -> FISAPIResponse:
+    async def unblock_country(self, card_id: str, country_code: str) -> FISAPIResponse:
         """
         Unblock a specific country.
 
@@ -520,7 +463,7 @@ class FISCardControlsService:
         return await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/controls/geo/unblock",
-            data={"country_code": country_code.upper()}
+            data={"country_code": country_code.upper()},
         )
 
     # =========================================================================
@@ -537,19 +480,14 @@ class FISCardControlsService:
         Returns:
             FISAPIResponse with all controls
         """
-        return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/controls"
-        )
+        return await self.fis._make_request(method="GET", endpoint=f"/cards/{card_id}/controls")
 
     # =========================================================================
     # ALERT PREFERENCES
     # =========================================================================
 
     async def set_alert_preferences(
-        self,
-        card_id: str,
-        preferences: AlertPreferences
+        self, card_id: str, preferences: AlertPreferences
     ) -> FISAPIResponse:
         """
         Set alert preferences for a card.
@@ -566,15 +504,13 @@ class FISCardControlsService:
         payload = {
             "alert_on_transaction": preferences.alert_on_transaction,
             "alert_on_decline": preferences.alert_on_decline,
-            "alert_on_international": preferences.alert_on_international
+            "alert_on_international": preferences.alert_on_international,
         }
         if preferences.alert_threshold is not None:
             payload["alert_threshold"] = float(preferences.alert_threshold)
 
         return await self.fis._make_request(
-            method="PUT",
-            endpoint=f"/cards/{card_id}/alerts",
-            data=payload
+            method="PUT", endpoint=f"/cards/{card_id}/alerts", data=payload
         )
 
 

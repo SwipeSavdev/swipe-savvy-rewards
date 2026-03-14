@@ -16,11 +16,7 @@ from decimal import Decimal
 from enum import Enum
 from pydantic import BaseModel, Field
 
-from app.services.fis_global_service import (
-    FISGlobalService,
-    FISAPIResponse,
-    get_fis_service
-)
+from app.services.fis_global_service import FISGlobalService, FISAPIResponse, get_fis_service
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +25,10 @@ logger = logging.getLogger(__name__)
 # ENUMS
 # =============================================================================
 
+
 class TransactionType(str, Enum):
     """Transaction types"""
+
     PURCHASE = "purchase"
     REFUND = "refund"
     ATM_WITHDRAWAL = "atm_withdrawal"
@@ -43,6 +41,7 @@ class TransactionType(str, Enum):
 
 class TransactionStatus(str, Enum):
     """Transaction statuses"""
+
     PENDING = "pending"
     POSTED = "posted"
     DECLINED = "declined"
@@ -52,6 +51,7 @@ class TransactionStatus(str, Enum):
 
 class TransactionChannel(str, Enum):
     """Transaction channels"""
+
     POS = "pos"
     ATM = "atm"
     ECOMMERCE = "ecommerce"
@@ -62,6 +62,7 @@ class TransactionChannel(str, Enum):
 
 class DisputeReason(str, Enum):
     """Dispute reasons"""
+
     UNAUTHORIZED = "unauthorized"
     DUPLICATE = "duplicate"
     INCORRECT_AMOUNT = "incorrect_amount"
@@ -76,8 +77,10 @@ class DisputeReason(str, Enum):
 # REQUEST/RESPONSE MODELS
 # =============================================================================
 
+
 class TransactionFilter(BaseModel):
     """Transaction filter parameters"""
+
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     min_amount: Optional[Decimal] = None
@@ -92,12 +95,14 @@ class TransactionFilter(BaseModel):
 
 class PaginationParams(BaseModel):
     """Pagination parameters"""
+
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=25, ge=1, le=100)
 
 
 class TransactionSummary(BaseModel):
     """Transaction summary for a period"""
+
     total_spent: Decimal
     total_refunds: Decimal
     transaction_count: int
@@ -108,6 +113,7 @@ class TransactionSummary(BaseModel):
 
 class TransactionDetail(BaseModel):
     """Detailed transaction information"""
+
     transaction_id: str
     card_id: str
     transaction_type: TransactionType
@@ -131,6 +137,7 @@ class TransactionDetail(BaseModel):
 
 class DisputeRequest(BaseModel):
     """Dispute request"""
+
     transaction_id: str
     reason: DisputeReason
     description: str
@@ -140,6 +147,7 @@ class DisputeRequest(BaseModel):
 
 class DisputeResponse(BaseModel):
     """Dispute response"""
+
     dispute_id: str
     transaction_id: str
     status: str
@@ -153,6 +161,7 @@ class DisputeResponse(BaseModel):
 # =============================================================================
 # FIS TRANSACTION SERVICE
 # =============================================================================
+
 
 class FISTransactionService:
     """
@@ -176,7 +185,7 @@ class FISTransactionService:
         self,
         card_id: str,
         filters: Optional[TransactionFilter] = None,
-        pagination: Optional[PaginationParams] = None
+        pagination: Optional[PaginationParams] = None,
     ) -> FISAPIResponse:
         """
         Get transactions for a card with optional filters.
@@ -223,16 +232,10 @@ class FISTransactionService:
             params["page_size"] = 25
 
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/transactions",
-            params=params
+            method="GET", endpoint=f"/cards/{card_id}/transactions", params=params
         )
 
-    async def get_transaction(
-        self,
-        card_id: str,
-        transaction_id: str
-    ) -> FISAPIResponse:
+    async def get_transaction(self, card_id: str, transaction_id: str) -> FISAPIResponse:
         """
         Get details of a specific transaction.
 
@@ -246,14 +249,10 @@ class FISTransactionService:
         logger.info(f"Getting transaction {transaction_id} for card {card_id}")
 
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/transactions/{transaction_id}"
+            method="GET", endpoint=f"/cards/{card_id}/transactions/{transaction_id}"
         )
 
-    async def get_pending_transactions(
-        self,
-        card_id: str
-    ) -> FISAPIResponse:
+    async def get_pending_transactions(self, card_id: str) -> FISAPIResponse:
         """
         Get pending (not yet posted) transactions.
 
@@ -266,15 +265,10 @@ class FISTransactionService:
         logger.info(f"Getting pending transactions for card {card_id}")
 
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/transactions/pending"
+            method="GET", endpoint=f"/cards/{card_id}/transactions/pending"
         )
 
-    async def get_recent_transactions(
-        self,
-        card_id: str,
-        limit: int = 10
-    ) -> FISAPIResponse:
+    async def get_recent_transactions(self, card_id: str, limit: int = 10) -> FISAPIResponse:
         """
         Get most recent transactions.
 
@@ -288,7 +282,7 @@ class FISTransactionService:
         return await self.fis._make_request(
             method="GET",
             endpoint=f"/cards/{card_id}/transactions/recent",
-            params={"limit": min(limit, 50)}
+            params={"limit": min(limit, 50)},
         )
 
     # =========================================================================
@@ -296,10 +290,7 @@ class FISTransactionService:
     # =========================================================================
 
     async def get_transaction_summary(
-        self,
-        card_id: str,
-        start_date: date,
-        end_date: date
+        self, card_id: str, start_date: date, end_date: date
     ) -> FISAPIResponse:
         """
         Get transaction summary for a period.
@@ -317,17 +308,11 @@ class FISTransactionService:
         return await self.fis._make_request(
             method="GET",
             endpoint=f"/cards/{card_id}/transactions/summary",
-            params={
-                "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat()
-            }
+            params={"start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
         )
 
     async def get_spending_by_category(
-        self,
-        card_id: str,
-        start_date: date,
-        end_date: date
+        self, card_id: str, start_date: date, end_date: date
     ) -> FISAPIResponse:
         """
         Get spending breakdown by category.
@@ -343,18 +328,11 @@ class FISTransactionService:
         return await self.fis._make_request(
             method="GET",
             endpoint=f"/cards/{card_id}/transactions/categories",
-            params={
-                "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat()
-            }
+            params={"start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
         )
 
     async def get_spending_by_merchant(
-        self,
-        card_id: str,
-        start_date: date,
-        end_date: date,
-        limit: int = 10
+        self, card_id: str, start_date: date, end_date: date, limit: int = 10
     ) -> FISAPIResponse:
         """
         Get spending breakdown by merchant.
@@ -374,8 +352,8 @@ class FISTransactionService:
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
-                "limit": limit
-            }
+                "limit": limit,
+            },
         )
 
     # =========================================================================
@@ -389,7 +367,7 @@ class FISTransactionService:
         reason: DisputeReason,
         description: str,
         expected_credit_amount: Optional[Decimal] = None,
-        supporting_documents: Optional[List[str]] = None
+        supporting_documents: Optional[List[str]] = None,
     ) -> FISAPIResponse:
         """
         Initiate a dispute for a transaction.
@@ -410,7 +388,7 @@ class FISTransactionService:
         payload = {
             "transaction_id": transaction_id,
             "reason": reason.value,
-            "description": description
+            "description": description,
         }
 
         if expected_credit_amount is not None:
@@ -420,9 +398,7 @@ class FISTransactionService:
             payload["supporting_documents"] = supporting_documents
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/disputes",
-            data=payload
+            method="POST", endpoint=f"/cards/{card_id}/disputes", data=payload
         )
 
         if response.success:
@@ -432,11 +408,7 @@ class FISTransactionService:
 
         return response
 
-    async def get_disputes(
-        self,
-        card_id: str,
-        status: Optional[str] = None
-    ) -> FISAPIResponse:
+    async def get_disputes(self, card_id: str, status: Optional[str] = None) -> FISAPIResponse:
         """
         Get disputes for a card.
 
@@ -452,16 +424,10 @@ class FISTransactionService:
             params["status"] = status
 
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/disputes",
-            params=params
+            method="GET", endpoint=f"/cards/{card_id}/disputes", params=params
         )
 
-    async def get_dispute(
-        self,
-        card_id: str,
-        dispute_id: str
-    ) -> FISAPIResponse:
+    async def get_dispute(self, card_id: str, dispute_id: str) -> FISAPIResponse:
         """
         Get details of a specific dispute.
 
@@ -473,16 +439,11 @@ class FISTransactionService:
             FISAPIResponse with dispute details
         """
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/disputes/{dispute_id}"
+            method="GET", endpoint=f"/cards/{card_id}/disputes/{dispute_id}"
         )
 
     async def add_dispute_document(
-        self,
-        card_id: str,
-        dispute_id: str,
-        document_url: str,
-        document_type: str
+        self, card_id: str, dispute_id: str, document_url: str, document_type: str
     ) -> FISAPIResponse:
         """
         Add a supporting document to a dispute.
@@ -501,10 +462,7 @@ class FISTransactionService:
         return await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/disputes/{dispute_id}/documents",
-            data={
-                "document_url": document_url,
-                "document_type": document_type
-            }
+            data={"document_url": document_url, "document_type": document_type},
         )
 
     # =========================================================================
@@ -512,10 +470,7 @@ class FISTransactionService:
     # =========================================================================
 
     async def add_transaction_note(
-        self,
-        card_id: str,
-        transaction_id: str,
-        note: str
+        self, card_id: str, transaction_id: str, note: str
     ) -> FISAPIResponse:
         """
         Add a note/memo to a transaction.
@@ -531,14 +486,11 @@ class FISTransactionService:
         return await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/transactions/{transaction_id}/notes",
-            data={"note": note}
+            data={"note": note},
         )
 
     async def categorize_transaction(
-        self,
-        card_id: str,
-        transaction_id: str,
-        category: str
+        self, card_id: str, transaction_id: str, category: str
     ) -> FISAPIResponse:
         """
         Manually categorize a transaction.
@@ -554,7 +506,7 @@ class FISTransactionService:
         return await self.fis._make_request(
             method="PUT",
             endpoint=f"/cards/{card_id}/transactions/{transaction_id}/category",
-            data={"category": category}
+            data={"category": category},
         )
 
 

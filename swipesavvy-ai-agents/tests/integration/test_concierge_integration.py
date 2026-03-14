@@ -24,7 +24,7 @@ def test_concierge_chat_endpoint():
     payload = {
         "user_id": "user_123",
         "message": "What's my balance?",
-        "session_id": "test_session_1"
+        "session_id": "test_session_1",
     }
     response = client.post("/api/v1/concierge/chat", json=payload)
     assert response.status_code == 200

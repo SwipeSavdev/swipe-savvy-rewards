@@ -35,10 +35,7 @@ class SMSService:
             logger.info("SMS service initialized with AWS SNS")
 
     async def send_sms(
-        self,
-        to_phone: str,
-        message: str,
-        from_number: Optional[str] = None
+        self, to_phone: str, message: str, from_number: Optional[str] = None
     ) -> dict:
         """
         Send SMS message using AWS SNS.
@@ -62,21 +59,14 @@ class SMSService:
         return await self._sns_service.send_password_reset_code(to_phone, code)
 
     async def send_transaction_alert(
-        self,
-        to_phone: str,
-        amount: float,
-        merchant: str,
-        transaction_type: str = "purchase"
+        self, to_phone: str, amount: float, merchant: str, transaction_type: str = "purchase"
     ) -> dict:
         """Send transaction notification SMS"""
-        return await self._sns_service.send_transaction_alert(to_phone, amount, merchant, transaction_type)
+        return await self._sns_service.send_transaction_alert(
+            to_phone, amount, merchant, transaction_type
+        )
 
-    async def send_security_alert(
-        self,
-        to_phone: str,
-        alert_type: str,
-        details: str = ""
-    ) -> dict:
+    async def send_security_alert(self, to_phone: str, alert_type: str, details: str = "") -> dict:
         """Send security alert SMS"""
         return await self._sns_service.send_security_alert(to_phone, alert_type, details)
 
@@ -94,7 +84,7 @@ class SMSService:
             "valid": len(formatted) >= 10,
             "phone_number": formatted,
             "carrier": {"type": "unknown"},
-            "note": "Phone lookup not supported with AWS SNS"
+            "note": "Phone lookup not supported with AWS SNS",
         }
 
     async def verify_phone_start(self, to_phone: str) -> dict:
@@ -103,18 +93,16 @@ class SMSService:
         AWS SNS doesn't have a built-in verify service like Twilio.
         """
         import random
-        code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+        code = "".join([str(random.randint(0, 9)) for _ in range(6)])
         result = await self.send_verification_code(to_phone, code)
         if result.get("success"):
             return {
                 "success": True,
                 "status": "pending",
-                "code": code  # In production, store this securely
+                "code": code,  # In production, store this securely
             }
-        return {
-            "success": False,
-            "error": result.get("error", "Failed to send verification code")
-        }
+        return {"success": False, "error": result.get("error", "Failed to send verification code")}
 
     async def verify_phone_check(self, to_phone: str, code: str) -> dict:
         """
@@ -125,7 +113,7 @@ class SMSService:
         return {
             "success": len(code) == 6 and code.isdigit(),
             "status": "approved" if len(code) == 6 else "pending",
-            "note": "Code validation should be done against stored code"
+            "note": "Code validation should be done against stored code",
         }
 
 
@@ -145,10 +133,7 @@ async def send_password_reset_sms(phone: str, code: str) -> dict:
 
 
 async def send_transaction_alert_sms(
-    phone: str,
-    amount: float,
-    merchant: str,
-    transaction_type: str = "purchase"
+    phone: str, amount: float, merchant: str, transaction_type: str = "purchase"
 ) -> dict:
     """Send transaction alert via SMS"""
     return await sms_service.send_transaction_alert(phone, amount, merchant, transaction_type)

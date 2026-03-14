@@ -17,8 +17,10 @@ from decimal import Decimal
 
 # ==================== Models ====================
 
+
 class TransactionType(str, Enum):
     """Types of financial transactions"""
+
     DEPOSIT = "deposit"
     WITHDRAWAL = "withdrawal"
     TRANSFER = "transfer"
@@ -26,22 +28,28 @@ class TransactionType(str, Enum):
     REWARD = "reward"
     FEE = "fee"
 
+
 class TransactionStatus(str, Enum):
     """Transaction status"""
+
     PENDING = "pending"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 class AccountType(str, Enum):
     """Account types"""
+
     CHECKING = "checking"
     SAVINGS = "savings"
     INVESTMENT = "investment"
     WALLET = "wallet"
 
+
 class Account(BaseModel):
     """Account model"""
+
     id: str
     user_id: str
     account_type: AccountType
@@ -51,8 +59,10 @@ class Account(BaseModel):
     updated_at: datetime
     is_primary: bool = False
 
+
 class Transaction(BaseModel):
     """Transaction model"""
+
     id: str
     user_id: str
     account_id: str
@@ -65,13 +75,17 @@ class Transaction(BaseModel):
     updated_at: datetime
     metadata: dict = {}
 
+
 class CreateAccountRequest(BaseModel):
     """Create account request"""
+
     account_type: AccountType
     is_primary: bool = False
 
+
 class CreateTransactionRequest(BaseModel):
     """Create transaction request"""
+
     type: TransactionType
     amount: Decimal
     description: str
@@ -79,15 +93,19 @@ class CreateTransactionRequest(BaseModel):
     account_id: Optional[str] = None
     metadata: dict = {}
 
+
 class BalanceResponse(BaseModel):
     """Balance response"""
+
     account_id: str
     balance: Decimal
     currency: str
     last_updated: datetime
 
+
 class TransactionHistoryResponse(BaseModel):
     """Transaction history response"""
+
     transaction_id: str
     type: str
     amount: Decimal
@@ -96,21 +114,30 @@ class TransactionHistoryResponse(BaseModel):
     created_at: datetime
     recipient_name: Optional[str] = None
 
+
 class MonthlyAnalyticsResponse(BaseModel):
     """Monthly analytics response"""
+
     month: str
     income: Decimal
     expenses: Decimal
     net_change: Decimal
     transaction_count: int
 
+
 # ==================== Database (Mock) ====================
 
-ACCOUNTS_DB: dict = {}  # WARNING: In-memory only — data lost on restart. Use database-backed services for production.
-TRANSACTIONS_DB: dict = {}  # WARNING: In-memory only — data lost on restart. Use database-backed services for production.
+ACCOUNTS_DB: dict = (
+    {}
+)  # WARNING: In-memory only — data lost on restart. Use database-backed services for production.
+TRANSACTIONS_DB: dict = (
+    {}
+)  # WARNING: In-memory only — data lost on restart. Use database-backed services for production.
+
 
 class AccountModel:
     """Account database model"""
+
     def __init__(self, user_id: str, account_type: AccountType, is_primary: bool = False):
         self.id = secrets.token_urlsafe(16)
         self.user_id = user_id
@@ -133,11 +160,20 @@ class AccountModel:
             "is_primary": self.is_primary,
         }
 
+
 class TransactionModel:
     """Transaction database model"""
-    def __init__(self, user_id: str, account_id: str, transaction_type: TransactionType,
-                 amount: Decimal, description: str, recipient_id: Optional[str] = None,
-                 metadata: dict = None):
+
+    def __init__(
+        self,
+        user_id: str,
+        account_id: str,
+        transaction_type: TransactionType,
+        amount: Decimal,
+        description: str,
+        recipient_id: Optional[str] = None,
+        metadata: dict = None,
+    ):
         self.id = secrets.token_urlsafe(16)
         self.user_id = user_id
         self.account_id = account_id
@@ -165,13 +201,17 @@ class TransactionModel:
             "metadata": self.metadata,
         }
 
+
 # ==================== Account Service ====================
+
 
 class AccountService:
     """Account management service"""
 
     @staticmethod
-    def create_account(user_id: str, account_type: AccountType, is_primary: bool = False) -> AccountModel:
+    def create_account(
+        user_id: str, account_type: AccountType, is_primary: bool = False
+    ) -> AccountModel:
         """Create new account"""
         if user_id not in ACCOUNTS_DB:
             ACCOUNTS_DB[user_id] = []
@@ -211,7 +251,9 @@ class AccountService:
 
         new_balance = account.balance + Decimal(str(amount))
         if new_balance < 0:
-            raise HTTPException(status_code=400, detail="Insufficient funds: balance cannot go negative")
+            raise HTTPException(
+                status_code=400, detail="Insufficient funds: balance cannot go negative"
+            )
 
         account.balance = new_balance
         account.updated_at = datetime.utcnow()
@@ -226,15 +268,23 @@ class AccountService:
         ACCOUNTS_DB[user_id] = [a for a in ACCOUNTS_DB[user_id] if a.id != account_id]
         return True
 
+
 # ==================== Transaction Service ====================
+
 
 class TransactionService:
     """Transaction management service"""
 
     @staticmethod
-    def create_transaction(user_id: str, account_id: str, transaction_type: TransactionType,
-                          amount: Decimal, description: str, recipient_id: Optional[str] = None,
-                          metadata: dict = None) -> TransactionModel:
+    def create_transaction(
+        user_id: str,
+        account_id: str,
+        transaction_type: TransactionType,
+        amount: Decimal,
+        description: str,
+        recipient_id: Optional[str] = None,
+        metadata: dict = None,
+    ) -> TransactionModel:
         """Create transaction and update balance"""
         # Verify account exists
         account = AccountService.get_account(account_id, user_id)
@@ -242,8 +292,12 @@ class TransactionService:
             raise HTTPException(status_code=404, detail="Account not found")
 
         # Check sufficient funds BEFORE creating the transaction
-        debit_types = [TransactionType.WITHDRAWAL, TransactionType.TRANSFER,
-                       TransactionType.FEE, TransactionType.INVESTMENT]
+        debit_types = [
+            TransactionType.WITHDRAWAL,
+            TransactionType.TRANSFER,
+            TransactionType.FEE,
+            TransactionType.INVESTMENT,
+        ]
         if transaction_type in debit_types and account.balance < amount:
             raise HTTPException(status_code=400, detail="Insufficient funds")
 
@@ -264,11 +318,9 @@ class TransactionService:
     @staticmethod
     def get_transactions(user_id: str, limit: int = 50, offset: int = 0) -> List[TransactionModel]:
         """Get transactions for user"""
-        user_transactions = [
-            t for t in TRANSACTIONS_DB.values() if t.user_id == user_id
-        ]
+        user_transactions = [t for t in TRANSACTIONS_DB.values() if t.user_id == user_id]
         user_transactions.sort(key=lambda x: x.created_at, reverse=True)
-        return user_transactions[offset:offset + limit]
+        return user_transactions[offset : offset + limit]
 
     @staticmethod
     def get_transaction(transaction_id: str, user_id: str) -> Optional[TransactionModel]:
@@ -279,26 +331,30 @@ class TransactionService:
         return None
 
     @staticmethod
-    def get_transactions_by_account(account_id: str, user_id: str,
-                                   limit: int = 50, offset: int = 0) -> List[TransactionModel]:
+    def get_transactions_by_account(
+        account_id: str, user_id: str, limit: int = 50, offset: int = 0
+    ) -> List[TransactionModel]:
         """Get transactions for specific account"""
         # Verify account belongs to user
         if not AccountService.get_account(account_id, user_id):
             raise HTTPException(status_code=404, detail="Account not found")
 
         account_transactions = [
-            t for t in TRANSACTIONS_DB.values()
+            t
+            for t in TRANSACTIONS_DB.values()
             if t.account_id == account_id and t.user_id == user_id
         ]
         account_transactions.sort(key=lambda x: x.created_at, reverse=True)
-        return account_transactions[offset:offset + limit]
+        return account_transactions[offset : offset + limit]
 
     @staticmethod
     def get_monthly_analytics(user_id: str) -> List[MonthlyAnalyticsResponse]:
         """Get monthly financial analytics"""
         from collections import defaultdict
 
-        monthly_data = defaultdict(lambda: {"income": Decimal("0"), "expenses": Decimal("0"), "count": 0})
+        monthly_data = defaultdict(
+            lambda: {"income": Decimal("0"), "expenses": Decimal("0"), "count": 0}
+        )
 
         transactions = [t for t in TRANSACTIONS_DB.values() if t.user_id == user_id]
 
@@ -307,30 +363,38 @@ class TransactionService:
 
             if transaction.type in [TransactionType.DEPOSIT, TransactionType.REWARD]:
                 monthly_data[month_key]["income"] += transaction.amount
-            elif transaction.type in [TransactionType.WITHDRAWAL, TransactionType.TRANSFER, TransactionType.FEE]:
+            elif transaction.type in [
+                TransactionType.WITHDRAWAL,
+                TransactionType.TRANSFER,
+                TransactionType.FEE,
+            ]:
                 monthly_data[month_key]["expenses"] += transaction.amount
 
             monthly_data[month_key]["count"] += 1
 
         result = []
         for month, data in sorted(monthly_data.items()):
-            result.append(MonthlyAnalyticsResponse(
-                month=month,
-                income=data["income"],
-                expenses=data["expenses"],
-                net_change=data["income"] - data["expenses"],
-                transaction_count=data["count"]
-            ))
+            result.append(
+                MonthlyAnalyticsResponse(
+                    month=month,
+                    income=data["income"],
+                    expenses=data["expenses"],
+                    net_change=data["income"] - data["expenses"],
+                    transaction_count=data["count"],
+                )
+            )
 
         return result
 
+
 # ==================== API Routes ====================
+
 
 def create_financial_routes(app: FastAPI, get_current_user=None):
     """Create financial API routes"""
 
     @app.post("/api/accounts", response_model=Account, tags=["Accounts"])
-    async def create_account(request: CreateAccountRequest, current_user = Depends(get_current_user)):
+    async def create_account(request: CreateAccountRequest, current_user=Depends(get_current_user)):
         """Create new account"""
         account = AccountService.create_account(
             current_user.id, request.account_type, request.is_primary
@@ -338,21 +402,23 @@ def create_financial_routes(app: FastAPI, get_current_user=None):
         return account.to_dict()
 
     @app.get("/api/accounts", response_model=List[Account], tags=["Accounts"])
-    async def get_accounts(current_user = Depends(get_current_user)):
+    async def get_accounts(current_user=Depends(get_current_user)):
         """Get all accounts"""
         accounts = AccountService.get_accounts(current_user.id)
         return [a.to_dict() for a in accounts]
 
     @app.get("/api/accounts/{account_id}", response_model=Account, tags=["Accounts"])
-    async def get_account(account_id: str, current_user = Depends(get_current_user)):
+    async def get_account(account_id: str, current_user=Depends(get_current_user)):
         """Get account details"""
         account = AccountService.get_account(account_id, current_user.id)
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
         return account.to_dict()
 
-    @app.get("/api/accounts/{account_id}/balance", response_model=BalanceResponse, tags=["Accounts"])
-    async def get_balance(account_id: str, current_user = Depends(get_current_user)):
+    @app.get(
+        "/api/accounts/{account_id}/balance", response_model=BalanceResponse, tags=["Accounts"]
+    )
+    async def get_balance(account_id: str, current_user=Depends(get_current_user)):
         """Get account balance"""
         account = AccountService.get_account(account_id, current_user.id)
         if not account:
@@ -362,33 +428,42 @@ def create_financial_routes(app: FastAPI, get_current_user=None):
             "account_id": account.id,
             "balance": account.balance,
             "currency": account.currency,
-            "last_updated": account.updated_at
+            "last_updated": account.updated_at,
         }
 
     @app.post("/api/transactions", response_model=Transaction, tags=["Transactions"])
-    async def create_transaction(request: CreateTransactionRequest, current_user = Depends(get_current_user)):
+    async def create_transaction(
+        request: CreateTransactionRequest, current_user=Depends(get_current_user)
+    ):
         """Create transaction"""
         account_id = request.account_id or AccountService.get_primary_account(current_user.id).id
 
         transaction = TransactionService.create_transaction(
-            current_user.id, account_id, request.type, request.amount,
-            request.description, request.recipient_id, request.metadata
+            current_user.id,
+            account_id,
+            request.type,
+            request.amount,
+            request.description,
+            request.recipient_id,
+            request.metadata,
         )
         return transaction.to_dict()
 
     @app.get("/api/transactions", response_model=List[Transaction], tags=["Transactions"])
     async def get_transactions(
-        limit: int = 50, offset: int = 0,
-        current_user = Depends(get_current_user)
+        limit: int = 50, offset: int = 0, current_user=Depends(get_current_user)
     ):
         """Get transaction history"""
         transactions = TransactionService.get_transactions(current_user.id, limit, offset)
         return [t.to_dict() for t in transactions]
 
-    @app.get("/api/accounts/{account_id}/transactions", response_model=List[Transaction], tags=["Transactions"])
+    @app.get(
+        "/api/accounts/{account_id}/transactions",
+        response_model=List[Transaction],
+        tags=["Transactions"],
+    )
     async def get_account_transactions(
-        account_id: str, limit: int = 50, offset: int = 0,
-        current_user = Depends(get_current_user)
+        account_id: str, limit: int = 50, offset: int = 0, current_user=Depends(get_current_user)
     ):
         """Get account transaction history"""
         transactions = TransactionService.get_transactions_by_account(
@@ -396,16 +471,20 @@ def create_financial_routes(app: FastAPI, get_current_user=None):
         )
         return [t.to_dict() for t in transactions]
 
-    @app.get("/api/transactions/{transaction_id}", response_model=Transaction, tags=["Transactions"])
-    async def get_transaction(transaction_id: str, current_user = Depends(get_current_user)):
+    @app.get(
+        "/api/transactions/{transaction_id}", response_model=Transaction, tags=["Transactions"]
+    )
+    async def get_transaction(transaction_id: str, current_user=Depends(get_current_user)):
         """Get transaction details"""
         transaction = TransactionService.get_transaction(transaction_id, current_user.id)
         if not transaction:
             raise HTTPException(status_code=404, detail="Transaction not found")
         return transaction.to_dict()
 
-    @app.get("/api/analytics/monthly", response_model=List[MonthlyAnalyticsResponse], tags=["Analytics"])
-    async def get_monthly_analytics(current_user = Depends(get_current_user)):
+    @app.get(
+        "/api/analytics/monthly", response_model=List[MonthlyAnalyticsResponse], tags=["Analytics"]
+    )
+    async def get_monthly_analytics(current_user=Depends(get_current_user)):
         """Get monthly financial analytics"""
         return TransactionService.get_monthly_analytics(current_user.id)
 

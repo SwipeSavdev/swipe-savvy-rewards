@@ -36,6 +36,7 @@ ADMIN_PASSWORD = secrets.token_urlsafe(16)
 ADMIN_NAME = "SwipeSavvy Admin"
 ADMIN_ROLE = "super_admin"
 
+
 def create_admin_user():
     """Create admin user in database"""
 
@@ -48,39 +49,42 @@ def create_admin_user():
     # Check if user exists
     with engine.connect() as conn:
         result = conn.execute(
-            text("SELECT id FROM admin_users WHERE email = :email"),
-            {"email": ADMIN_EMAIL}
+            text("SELECT id FROM admin_users WHERE email = :email"), {"email": ADMIN_EMAIL}
         )
         existing = result.fetchone()
 
         if existing:
             # Update existing user
             conn.execute(
-                text("""
+                text(
+                    """
                     UPDATE admin_users
                     SET password_hash = :password_hash,
                         status = 'active',
                         updated_at = NOW()
                     WHERE email = :email
-                """),
-                {"email": ADMIN_EMAIL, "password_hash": password_hash}
+                """
+                ),
+                {"email": ADMIN_EMAIL, "password_hash": password_hash},
             )
             conn.commit()
             print(f"Updated existing admin user: {ADMIN_EMAIL}")
         else:
             # Create new user
             conn.execute(
-                text("""
+                text(
+                    """
                     INSERT INTO admin_users (id, email, password_hash, full_name, role, status, created_at, updated_at)
                     VALUES (:id, :email, :password_hash, :full_name, :role, 'active', NOW(), NOW())
-                """),
+                """
+                ),
                 {
                     "id": user_id,
                     "email": ADMIN_EMAIL,
                     "password_hash": password_hash,
                     "full_name": ADMIN_NAME,
-                    "role": ADMIN_ROLE
-                }
+                    "role": ADMIN_ROLE,
+                },
             )
             conn.commit()
             print(f"Created new admin user: {ADMIN_EMAIL}")
@@ -89,6 +93,7 @@ def create_admin_user():
     print(f"  Email: {ADMIN_EMAIL}")
     print(f"  Role: {ADMIN_ROLE}")
     print("  NOTE: Password was auto-generated. Reset it via the admin password-reset flow.")
+
 
 if __name__ == "__main__":
     create_admin_user()

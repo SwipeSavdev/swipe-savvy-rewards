@@ -11,6 +11,7 @@ from typing import List, Optional, Dict, Any
 import json
 from enum import Enum
 
+
 # Feature Flag Models
 class FeatureFlagCategory(str, Enum):
     UI = "ui"
@@ -18,68 +19,73 @@ class FeatureFlagCategory(str, Enum):
     EXPERIMENTAL = "experimental"
     ROLLOUT = "rollout"
 
+
 class FeatureFlagStatus(str, Enum):
     ENABLED = "enabled"
     DISABLED = "disabled"
+
 
 # In-memory cache for feature flags (can be Redis in production)
 feature_flags_cache: Dict[str, Dict[str, Any]] = {}
 CACHE_TTL = 300  # 5 minutes
 
+
 class FeatureFlagService:
     """Service for managing feature flags"""
-    
+
     @staticmethod
     def is_feature_enabled(flag_key: str, user_id: Optional[str] = None) -> bool:
         """
         Check if a feature flag is enabled for a user
-        
+
         Args:
             flag_key: The feature flag key
             user_id: Optional user ID for targeting rules
-            
+
         Returns:
             Boolean indicating if feature is enabled
         """
         # Check cache first
         if flag_key in feature_flags_cache:
             cached_flag = feature_flags_cache[flag_key]
-            if cached_flag['cached_at'] > datetime.utcnow() - timedelta(seconds=CACHE_TTL):
-                return cached_flag['enabled']
-        
+            if cached_flag["cached_at"] > datetime.utcnow() - timedelta(
+                seconds=CACHE_TTL
+            ):
+                return cached_flag["enabled"]
+
         # Would query database if cache miss
         return False
-    
+
     @staticmethod
     def get_flag_variant(flag_key: str, user_id: Optional[str] = None) -> str:
         """
         Get the variant for a feature flag (for A/B testing)
-        
+
         Args:
             flag_key: The feature flag key
             user_id: User ID for consistent variant assignment
-            
+
         Returns:
             Variant identifier (control, treatment, a, b, etc.)
         """
         # Hash user_id to determine consistent variant
         if not user_id:
             return "control"
-        
+
         hash_value = hash(f"{flag_key}:{user_id}")
-        percentage = (hash_value % 100)
+        percentage = hash_value % 100
         return "treatment" if percentage < 50 else "control"
-    
+
     @staticmethod
     def track_feature_usage(
         flag_key: str,
         user_id: Optional[str] = None,
         action: str = "view",
-        device_type: str = "mobile"
+        device_type: str = "mobile",
     ) -> None:
         """
         Track feature flag usage for analytics
-        
+
         Args:
             flag_key: The feature flag key
             user_id: User ID if authenticated
@@ -186,14 +192,14 @@ async def check_feature_flag(
     """Check if a feature flag is enabled"""
     if flag_key not in FEATURE_FLAGS:
         raise HTTPException(status_code=404, detail="Feature flag not found")
-    
+
     flag = FEATURE_FLAGS[flag_key]
     variant = FeatureFlagService.get_flag_variant(flag_key, user_id)
     is_enabled = flag.get("enabled", False)
-    
+
     # Track usage
     FeatureFlagService.track_feature_usage(flag_key, user_id)
-    
+
     return {
         "flag_key": flag_key,
         "enabled": is_enabled,
@@ -232,52 +238,50 @@ async def toggle_feature_flag(flag_key: str) -> Dict[str, Any]:
     """Toggle a feature flag on/off (admin only)"""
     if flag_key not in FEATURE_FLAGS:
         raise HTTPException(status_code=404, detail="Feature flag not found")
-    
+
     flag = FEATURE_FLAGS[flag_key]
     flag["enabled"] = not flag["enabled"]
     flag["updated_at"] = datetime.utcnow().isoformat()
-    
+
     return {
         "flag_key": flag_key,
         "enabled": flag["enabled"],
-        "message": f"Feature '{flag['name']}' is now {'enabled' if flag['enabled'] else 'disabled'}"
+        "message": f"Feature '{flag['name']}' is now {'enabled' if flag['enabled'] else 'disabled'}",
     }
 
 
 @router.post("/{flag_key}/rollout")
 async def set_rollout_percentage(
-    flag_key: str,
-    percentage: int = Query(..., ge=0, le=100)
+    flag_key: str, percentage: int = Query(..., ge=0, le=100)
 ) -> Dict[str, Any]:
     """Set rollout percentage for a feature flag (admin only)"""
     if flag_key not in FEATURE_FLAGS:
         raise HTTPException(status_code=404, detail="Feature flag not found")
-    
+
     if not 0 <= percentage <= 100:
         raise HTTPException(status_code=400, detail="Percentage must be 0-100")
-    
+
     flag = FEATURE_FLAGS[flag_key]
     flag["rollout_percentage"] = percentage
     flag["updated_at"] = datetime.utcnow().isoformat()
-    
+
     return {
         "flag_key": flag_key,
         "rollout_percentage": percentage,
-        "message": f"Rollout percentage for '{flag['name']}' set to {percentage}%"
+        "message": f"Rollout percentage for '{flag['name']}' set to {percentage}%",
     }
 
 
 @router.get("/{flag_key}/analytics")
 async def get_feature_analytics(
-    flag_key: str,
-    days: int = Query(7, ge=1, le=90)
+    flag_key: str, days: int = Query(7, ge=1, le=90)
 ) -> Dict[str, Any]:
     """Get analytics for a feature flag"""
     if flag_key not in FEATURE_FLAGS:
         raise HTTPException(status_code=404, detail="Feature flag not found")
-    
+
     flag = FEATURE_FLAGS[flag_key]
-    
+
     return {
         "flag_key": flag_key,
         "flag_name": flag["name"],
@@ -296,7 +300,7 @@ async def get_feature_variants(flag_key: str) -> Dict[str, Any]:
     """Get A/B test variant data for a feature"""
     if flag_key not in FEATURE_FLAGS:
         raise HTTPException(status_code=404, detail="Feature flag not found")
-    
+
     return {
         "flag_key": flag_key,
         "variants": [
@@ -313,23 +317,17 @@ async def get_feature_variants(flag_key: str) -> Dict[str, Any]:
                 "users": 0,
                 "conversions": 0,
                 "conversion_rate": 0.0,
-            }
-        ]
+            },
+        ],
     }
 
 
 @router.get("/audit-log")
 async def get_audit_log(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0)
+    limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0)
 ) -> Dict[str, Any]:
     """Get audit log of feature flag changes"""
-    return {
-        "total": 0,
-        "limit": limit,
-        "offset": offset,
-        "logs": []
-    }
+    return {"total": 0, "limit": limit, "offset": offset, "logs": []}
 
 
 def setup_feature_flags_routes(app):

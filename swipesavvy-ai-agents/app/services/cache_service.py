@@ -36,9 +36,9 @@ RATE_LIMIT_PREFIX = f"{CACHE_PREFIX}rate_limit:"
 
 # Default TTLs (in seconds)
 SESSION_TTL = 60 * 60 * 24  # 24 hours
-FEATURE_FLAG_TTL = 60 * 5   # 5 minutes
-USER_CACHE_TTL = 60 * 15    # 15 minutes
-RATE_LIMIT_WINDOW = 60      # 1 minute
+FEATURE_FLAG_TTL = 60 * 5  # 5 minutes
+USER_CACHE_TTL = 60 * 15  # 15 minutes
+RATE_LIMIT_WINDOW = 60  # 1 minute
 
 
 class RedisCache:
@@ -168,9 +168,7 @@ class RedisCache:
             logger.error(f"Invalid JSON in cache for key {key}")
             return None
 
-    def set_json(
-        self, key: str, value: Dict, ttl: Optional[int] = None
-    ) -> bool:
+    def set_json(self, key: str, value: Dict, ttl: Optional[int] = None) -> bool:
         """Serialize and set JSON in cache."""
         try:
             return self.set(key, json.dumps(value), ttl=ttl)
@@ -224,6 +222,7 @@ cache = RedisCache()
 # Session Management
 # ==========================================
 
+
 class SessionManager:
     """Manages user sessions with Redis backend."""
 
@@ -238,6 +237,7 @@ class SessionManager:
     ) -> str:
         """Create a new session and return the session ID."""
         import uuid
+
         session_id = str(uuid.uuid4())
         key = f"{SESSION_PREFIX}{session_id}"
 
@@ -318,6 +318,7 @@ class SessionManager:
     def _now_iso(self) -> str:
         """Get current time in ISO format."""
         from datetime import datetime
+
         return datetime.utcnow().isoformat()
 
 
@@ -328,6 +329,7 @@ session_manager = SessionManager()
 # ==========================================
 # Feature Flag Cache
 # ==========================================
+
 
 class FeatureFlagCache:
     """Caches feature flags for fast access."""
@@ -377,6 +379,7 @@ class FeatureFlagCache:
         # Deterministic rollout based on user_id
         if user_id:
             import hashlib
+
             hash_value = int(hashlib.md5(f"{key}:{user_id}".encode()).hexdigest(), 16)
             return (hash_value % 100) < rollout
 
@@ -418,6 +421,7 @@ class FeatureFlagCache:
 
     def _now_iso(self) -> str:
         from datetime import datetime
+
         return datetime.utcnow().isoformat()
 
 
@@ -428,6 +432,7 @@ feature_flag_cache = FeatureFlagCache()
 # ==========================================
 # Rate Limiting
 # ==========================================
+
 
 class RateLimiter:
     """Token bucket rate limiter using Redis."""
@@ -488,6 +493,7 @@ rate_limiter = RateLimiter()
 # Decorator for caching function results
 # ==========================================
 
+
 def cached(
     prefix: str = "func:",
     ttl: int = 300,
@@ -501,6 +507,7 @@ def cached(
         def get_user(user_id: str) -> Dict:
             ...
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -528,12 +535,14 @@ def cached(
             return result
 
         return wrapper
+
     return decorator
 
 
 # ==========================================
 # Health Check
 # ==========================================
+
 
 def check_redis_health() -> Dict[str, Any]:
     """Check Redis health and return stats."""
@@ -551,10 +560,7 @@ def check_redis_health() -> Dict[str, Any]:
             "version": info.get("redis_version"),
             "connected_clients": info.get("connected_clients"),
             "used_memory_human": info.get("used_memory_human"),
-            "total_keys": sum(
-                info.get(f"db{i}", {}).get("keys", 0)
-                for i in range(16)
-            ),
+            "total_keys": sum(info.get(f"db{i}", {}).get("keys", 0) for i in range(16)),
         }
     except Exception as e:
         return {

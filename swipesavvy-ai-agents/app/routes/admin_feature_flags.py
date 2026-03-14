@@ -26,10 +26,13 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
     return verify_token_string(token)
 
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-feature-flags"], dependencies=[Depends(require_auth)])
+router = APIRouter(
+    prefix="/api/v1/admin", tags=["admin-feature-flags"], dependencies=[Depends(require_auth)]
+)
 
 # Error message constants
 FEATURE_FLAG_NOT_FOUND = "Feature flag not found"
+
 
 class FeatureFlagResponse(BaseModel):
     id: int
@@ -44,6 +47,7 @@ class FeatureFlagResponse(BaseModel):
     updatedAt: Optional[str]
     createdBy: Optional[str]
 
+
 class FlagsListResponse(BaseModel):
     flags: List[FeatureFlagResponse]
     total: int
@@ -51,20 +55,24 @@ class FlagsListResponse(BaseModel):
     per_page: int
     total_pages: int
 
+
 class ToggleFlagRequest(BaseModel):
     enabled: bool
 
+
 class UpdateRolloutRequest(BaseModel):
     rollout: int = Field(..., ge=0, le=100)
+
 
 class CreateFeatureFlagRequest(BaseModel):
     key: str = Field(..., min_length=1, max_length=100)
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
-    category: str = Field(default='UI')
+    category: str = Field(default="UI")
     enabled: bool = False
     rolloutPercentage: int = Field(default=0, ge=0, le=100)
     ownerEmail: Optional[str] = None
+
 
 class UpdateFeatureFlagFullRequest(BaseModel):
     name: Optional[str] = None
@@ -74,22 +82,26 @@ class UpdateFeatureFlagFullRequest(BaseModel):
     rolloutPercentage: Optional[int] = Field(default=None, ge=0, le=100)
     ownerEmail: Optional[str] = None
 
+
 @router.post("/feature-flags")
 async def create_feature_flag(
-    request: CreateFeatureFlagRequest = Body(...),
-    db: Session = Depends(get_db)
+    request: CreateFeatureFlagRequest = Body(...), db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Create a new feature flag"""
     try:
         # Check if flag with same key exists
         existing = db.query(FeatureFlagModel).filter(FeatureFlagModel.key == request.key).first()
         if existing:
-            raise HTTPException(status_code=400, detail=f"Feature flag with key '{request.key}' already exists")
+            raise HTTPException(
+                status_code=400, detail=f"Feature flag with key '{request.key}' already exists"
+            )
 
         # Validate category
-        valid_categories = ['UI', 'Advanced', 'Experimental', 'Rollout']
+        valid_categories = ["UI", "Advanced", "Experimental", "Rollout"]
         if request.category not in valid_categories:
-            raise HTTPException(status_code=400, detail=f"Category must be one of: {', '.join(valid_categories)}")
+            raise HTTPException(
+                status_code=400, detail=f"Category must be one of: {', '.join(valid_categories)}"
+            )
 
         flag = FeatureFlagModel(
             key=request.key,
@@ -100,7 +112,7 @@ async def create_feature_flag(
             rollout_percentage=request.rolloutPercentage,
             owner_email=request.ownerEmail,
             created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
+            updated_at=datetime.now(timezone.utc),
         )
 
         db.add(flag)
@@ -121,8 +133,8 @@ async def create_feature_flag(
                 ownerEmail=flag.owner_email,
                 createdAt=flag.created_at.isoformat() if flag.created_at else None,
                 updatedAt=flag.updated_at.isoformat() if flag.updated_at else None,
-                createdBy=flag.created_by
-            )
+                createdBy=flag.created_by,
+            ),
         }
     except HTTPException:
         raise
@@ -130,6 +142,7 @@ async def create_feature_flag(
         logger.error(f"Error creating feature flag: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to create feature flag")
+
 
 @router.delete("/feature-flags/{flag_id}")
 async def delete_feature_flag(flag_id: int, db: Session = Depends(get_db)) -> Dict[str, Any]:
@@ -143,16 +156,14 @@ async def delete_feature_flag(flag_id: int, db: Session = Depends(get_db)) -> Di
         db.delete(flag)
         db.commit()
 
-        return {
-            "success": True,
-            "message": f"Feature flag '{flag_key}' deleted successfully"
-        }
+        return {"success": True, "message": f"Feature flag '{flag_key}' deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error deleting feature flag: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to delete feature flag")
+
 
 @router.get("/feature-flags")
 async def list_feature_flags(
@@ -161,7 +172,7 @@ async def list_feature_flags(
     enabled: Optional[bool] = Query(None),
     category: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """
     List all feature flags with pagination and filtering
@@ -185,9 +196,9 @@ async def list_feature_flags(
         if search:
             search_pattern = f"%{search}%"
             query = query.filter(
-                (FeatureFlagModel.key.ilike(search_pattern)) |
-                (FeatureFlagModel.name.ilike(search_pattern)) |
-                (FeatureFlagModel.description.ilike(search_pattern))
+                (FeatureFlagModel.key.ilike(search_pattern))
+                | (FeatureFlagModel.name.ilike(search_pattern))
+                | (FeatureFlagModel.description.ilike(search_pattern))
             )
 
         total = query.count()
@@ -208,14 +219,14 @@ async def list_feature_flags(
                     ownerEmail=f.owner_email,
                     createdAt=f.created_at.isoformat() if f.created_at else None,
                     updatedAt=f.updated_at.isoformat() if f.updated_at else None,
-                    createdBy=f.created_by
+                    createdBy=f.created_by,
                 )
                 for f in flags
             ],
             "total": total,
             "page": page,
             "per_page": per_page,
-            "total_pages": total_pages
+            "total_pages": total_pages,
         }
     except Exception as e:
         logger.error(f"Error listing feature flags: {str(e)}")
@@ -243,8 +254,8 @@ async def get_feature_flag(flag_id: int, db: Session = Depends(get_db)) -> Dict[
                 ownerEmail=flag.owner_email,
                 createdAt=flag.created_at.isoformat() if flag.created_at else None,
                 updatedAt=flag.updated_at.isoformat() if flag.updated_at else None,
-                createdBy=flag.created_by
-            )
+                createdBy=flag.created_by,
+            ),
         }
     except HTTPException:
         raise
@@ -258,7 +269,7 @@ async def update_feature_flag(
     flag_id: int,
     enabled: Optional[bool] = None,
     rollout_percentage: Optional[int] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """Update feature flag settings"""
     try:
@@ -271,7 +282,9 @@ async def update_feature_flag(
 
         if rollout_percentage is not None:
             if not (0 <= rollout_percentage <= 100):
-                raise HTTPException(status_code=422, detail="Rollout percentage must be between 0 and 100")
+                raise HTTPException(
+                    status_code=422, detail="Rollout percentage must be between 0 and 100"
+                )
             flag.rollout_percentage = rollout_percentage
 
         flag.updated_at = datetime.now(timezone.utc)
@@ -292,8 +305,8 @@ async def update_feature_flag(
                 ownerEmail=flag.owner_email,
                 createdAt=flag.created_at.isoformat() if flag.created_at else None,
                 updatedAt=flag.updated_at.isoformat() if flag.updated_at else None,
-                createdBy=flag.created_by
-            )
+                createdBy=flag.created_by,
+            ),
         }
     except HTTPException:
         raise
@@ -304,9 +317,7 @@ async def update_feature_flag(
 
 @router.put("/feature-flags/{flag_id}/toggle")
 async def toggle_feature_flag(
-    flag_id: int,
-    request: ToggleFlagRequest = Body(...),
-    db: Session = Depends(get_db)
+    flag_id: int, request: ToggleFlagRequest = Body(...), db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Toggle a feature flag on/off"""
     try:
@@ -333,8 +344,8 @@ async def toggle_feature_flag(
                 ownerEmail=flag.owner_email,
                 createdAt=flag.created_at.isoformat() if flag.created_at else None,
                 updatedAt=flag.updated_at.isoformat() if flag.updated_at else None,
-                createdBy=flag.created_by
-            )
+                createdBy=flag.created_by,
+            ),
         }
     except HTTPException:
         raise
@@ -345,9 +356,7 @@ async def toggle_feature_flag(
 
 @router.put("/feature-flags/{flag_id}/rollout")
 async def update_rollout(
-    flag_id: int,
-    request: UpdateRolloutRequest = Body(...),
-    db: Session = Depends(get_db)
+    flag_id: int, request: UpdateRolloutRequest = Body(...), db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Update feature flag rollout percentage"""
     try:
@@ -374,14 +383,15 @@ async def update_rollout(
                 ownerEmail=flag.owner_email,
                 createdAt=flag.created_at.isoformat() if flag.created_at else None,
                 updatedAt=flag.updated_at.isoformat() if flag.updated_at else None,
-                createdBy=flag.created_by
-            )
+                createdBy=flag.created_by,
+            ),
         }
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error updating rollout percentage: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to update rollout percentage")
+
 
 @router.get("/feature-flags/stats/overview")
 async def get_flags_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
@@ -399,11 +409,11 @@ async def get_flags_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
             "disabled_flags": disabled_count,
             "avg_rollout": avg_rollout,
             "by_category": {
-                "UI": sum(1 for f in flags if f.category == 'UI'),
-                "Advanced": sum(1 for f in flags if f.category == 'Advanced'),
-                "Experimental": sum(1 for f in flags if f.category == 'Experimental'),
-                "Rollout": sum(1 for f in flags if f.category == 'Rollout')
-            }
+                "UI": sum(1 for f in flags if f.category == "UI"),
+                "Advanced": sum(1 for f in flags if f.category == "Advanced"),
+                "Experimental": sum(1 for f in flags if f.category == "Experimental"),
+                "Rollout": sum(1 for f in flags if f.category == "Rollout"),
+            },
         }
     except Exception as e:
         logger.error(f"Error getting flags stats: {str(e)}")

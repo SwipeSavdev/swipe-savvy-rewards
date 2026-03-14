@@ -43,7 +43,7 @@ except Exception as e:
 app = FastAPI(
     title="SwipeSavvy Backend API",
     description="Multi-service backend for SwipeSavvy Mobile Wallet",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # ============================================================================
@@ -52,6 +52,7 @@ app = FastAPI(
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
+
 
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
@@ -62,9 +63,10 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         content={
             "error": "Too many requests",
             "detail": "Rate limit exceeded. Please try again later.",
-            "retry_after": 60
-        }
+            "retry_after": 60,
+        },
     )
+
 
 # ============================================================================
 # Security Middleware Stack
@@ -77,7 +79,7 @@ if settings.ENVIRONMENT == "production":
         allowed_hosts=[
             "api.swipesavvy.com",
             "api-staging.swipesavvy.com",
-        ]
+        ],
     )
 elif settings.ENVIRONMENT in ("development", "testing"):
     app.add_middleware(
@@ -87,7 +89,7 @@ elif settings.ENVIRONMENT in ("development", "testing"):
             "api-staging.swipesavvy.com",
             "localhost",
             "127.0.0.1",
-        ]
+        ],
     )
 
 # CORS Middleware with environment-specific settings
@@ -101,28 +103,29 @@ app.add_middleware(
     expose_headers=["X-Process-Time", "X-Request-ID"],
 )
 
+
 # Security Headers Middleware
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     """Add security headers to all responses"""
     response = await call_next(request)
-    
+
     # Content Security
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    
+
     # Cache Control
     if settings.ENVIRONMENT == "production":
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    
+
     # HSTS for production
     if settings.ENVIRONMENT == "production":
         response.headers["Strict-Transport-Security"] = (
             "max-age=31536000; includeSubDomains; preload"
         )
-    
+
     # CSP (Content Security Policy) - Start permissive, tighten over time
     # In development, allow requests to localhost and 192.168.1.* for LAN access
     csp_connect_src = "'self'"
@@ -130,7 +133,7 @@ async def add_security_headers(request: Request, call_next):
         csp_connect_src = "'self' http://localhost:* http://127.0.0.1:* http://192.168.1.*:*"
     else:
         csp_connect_src = "'self' https://api.together.ai"
-    
+
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -139,18 +142,16 @@ async def add_security_headers(request: Request, call_next):
         "font-src 'self'; "
         f"connect-src {csp_connect_src}"
     )
-    
+
     return response
+
 
 # Health check endpoint
 @app.get("/health")
 async def health_check():
     """Liveness probe - is service running?"""
-    return {
-        "status": "healthy",
-        "service": "swipesavvy-backend",
-        "version": "1.0.0"
-    }
+    return {"status": "healthy", "service": "swipesavvy-backend", "version": "1.0.0"}
+
 
 @app.get("/ready")
 async def readiness_check():
@@ -158,7 +159,7 @@ async def readiness_check():
     try:
         from app.database import SessionLocal
         from sqlalchemy import text
-        
+
         # Check database connectivity
         db = SessionLocal()
         db_status = "ok"
@@ -178,29 +179,23 @@ async def readiness_check():
                 status_code=503,
                 content={
                     "status": "not_ready",
-                    "checks": {
-                        "database": "failed",
-                        "reason": "Service check failed"
-                    }
-                }
+                    "checks": {"database": "failed", "reason": "Service check failed"},
+                },
             )
-        
+
         return {
             "status": "ready",
             "checks": {
                 "database": "ok",
                 "cache": "ok",
-            }
+            },
         }
     except Exception as e:
         logger.error(f"Readiness check failed: {str(e)}")
         return JSONResponse(
-            status_code=503,
-            content={
-                "status": "not_ready",
-                "reason": "Service check failed"
-            }
+            status_code=503, content={"status": "not_ready", "reason": "Service check failed"}
         )
+
 
 # API root
 @app.get("/")
@@ -218,13 +213,15 @@ async def root():
             "fis_webhooks": "/api/v1/webhooks/fis",
             "docs": "/docs",
             "health": "/health",
-            "ready": "/ready"
-        }
+            "ready": "/ready",
+        },
     }
+
 
 # Include support system routes
 try:
     from app.routes.support import router as support_router
+
     app.include_router(support_router)
     logger.info("✅ Support system routes included")
 except Exception as e:
@@ -233,6 +230,7 @@ except Exception as e:
 # Include AI Concierge routes (employee/admin support)
 try:
     from app.routes.ai_concierge import router as ai_concierge_router
+
     app.include_router(ai_concierge_router)
     logger.info("✅ AI Concierge routes included")
 except Exception as e:
@@ -241,6 +239,7 @@ except Exception as e:
 # Include Website Concierge routes (public website chatbot)
 try:
     from app.routes.website_concierge import router as website_concierge_router
+
     app.include_router(website_concierge_router)
     logger.info("✅ Website Concierge routes included")
 except Exception as e:
@@ -249,6 +248,7 @@ except Exception as e:
 # Include Website Forms routes (contact, demo request, sales inquiry)
 try:
     from app.routes.website_forms import router as website_forms_router
+
     app.include_router(website_forms_router)
     logger.info("✅ Website Forms routes included")
 except Exception as e:
@@ -257,6 +257,7 @@ except Exception as e:
 # Include marketing routes
 try:
     from app.routes.marketing import router as marketing_router
+
     app.include_router(marketing_router)
     logger.info("✅ Marketing routes included")
 except Exception as e:
@@ -265,6 +266,7 @@ except Exception as e:
 # Include feature flags routes
 try:
     from app.routes.feature_flags import router as feature_flags_router
+
     app.include_router(feature_flags_router)
     logger.info("✅ Feature flags routes included")
 except Exception as e:
@@ -273,6 +275,7 @@ except Exception as e:
 # Include admin authentication routes
 try:
     from app.routes.admin_auth import router as admin_auth_router
+
     app.include_router(admin_auth_router)
     logger.info("✅ Admin authentication routes included")
 except Exception as e:
@@ -281,6 +284,7 @@ except Exception as e:
 # Include admin dashboard routes
 try:
     from app.routes.admin_dashboard import router as admin_dashboard_router
+
     app.include_router(admin_dashboard_router)
     logger.info("✅ Admin dashboard routes included")
 except Exception as e:
@@ -289,6 +293,7 @@ except Exception as e:
 # Include admin users management routes
 try:
     from app.routes.admin_users import router as admin_users_router
+
     app.include_router(admin_users_router)
     logger.info("✅ Admin users management routes included")
 except Exception as e:
@@ -297,6 +302,7 @@ except Exception as e:
 # Include admin merchants management routes
 try:
     from app.routes.admin_merchants import router as admin_merchants_router
+
     app.include_router(admin_merchants_router)
     logger.info("✅ Admin merchants routes included")
 except Exception as e:
@@ -305,6 +311,7 @@ except Exception as e:
 # Include admin merchant onboarding routes (Fiserv integration)
 try:
     from app.routes.admin_merchant_onboarding import router as admin_merchant_onboarding_router
+
     app.include_router(admin_merchant_onboarding_router)
     logger.info("✅ Admin merchant onboarding routes included")
 except Exception as e:
@@ -313,6 +320,7 @@ except Exception as e:
 # Include admin support tickets management routes
 try:
     from app.routes.admin_support import router as admin_support_router
+
     app.include_router(admin_support_router)
     logger.info("✅ Admin support tickets routes included")
 except Exception as e:
@@ -321,6 +329,7 @@ except Exception as e:
 # Include admin feature flags management routes
 try:
     from app.routes.admin_feature_flags import router as admin_feature_flags_router
+
     app.include_router(admin_feature_flags_router)
     logger.info("✅ Admin feature flags routes included")
 except Exception as e:
@@ -329,6 +338,7 @@ except Exception as e:
 # Include admin AI campaigns management routes
 try:
     from app.routes.admin_ai_campaigns import router as admin_ai_campaigns_router
+
     app.include_router(admin_ai_campaigns_router)
     logger.info("✅ Admin AI campaigns routes included")
 except Exception as e:
@@ -337,6 +347,7 @@ except Exception as e:
 # Include admin audit logs management routes
 try:
     from app.routes.admin_audit_logs import router as admin_audit_logs_router
+
     app.include_router(admin_audit_logs_router)
     logger.info("✅ Admin audit logs routes included")
 except Exception as e:
@@ -345,6 +356,7 @@ except Exception as e:
 # Include admin settings management routes
 try:
     from app.routes.admin_settings import router as admin_settings_router
+
     app.include_router(admin_settings_router)
     logger.info("✅ Admin settings routes included")
 except Exception as e:
@@ -353,6 +365,7 @@ except Exception as e:
 # Include admin RBAC (Role-Based Access Control) routes
 try:
     from app.routes.admin_rbac import router as admin_rbac_router
+
     app.include_router(admin_rbac_router)
     logger.info("✅ Admin RBAC routes included")
 except Exception as e:
@@ -361,6 +374,7 @@ except Exception as e:
 # Include admin charity management routes
 try:
     from app.routes.admin_charities import router as admin_charities_router
+
     app.include_router(admin_charities_router, prefix="/api")
     logger.info("✅ Admin charity routes included")
 except Exception as e:
@@ -369,6 +383,7 @@ except Exception as e:
 # Include user authentication routes (Signup, Login, Verification)
 try:
     from app.routes.user_auth import router as user_auth_router
+
     app.include_router(user_auth_router)
     logger.info("✅ User authentication routes included")
 except Exception as e:
@@ -377,6 +392,7 @@ except Exception as e:
 # Include user KYC routes (Document upload, Identity verification, OFAC)
 try:
     from app.routes.user_kyc import router as user_kyc_router
+
     app.include_router(user_kyc_router)
     logger.info("✅ User KYC routes included")
 except Exception as e:
@@ -385,6 +401,7 @@ except Exception as e:
 # Include payment routes (Phase 10)
 try:
     from app.routes.payments import router as payments_router
+
     app.include_router(payments_router)
     logger.info("✅ Payment routes included")
 except Exception as e:
@@ -393,6 +410,7 @@ except Exception as e:
 # Include notification routes (Phase 10 - Task 2)
 try:
     from app.routes.notifications import router as notifications_router
+
     app.include_router(notifications_router)
     logger.info("✅ Notification routes included")
 except Exception as e:
@@ -401,6 +419,7 @@ except Exception as e:
 # Include chat routes (Phase 10 - Task 3)
 try:
     from app.routes.chat import router as chat_router
+
     app.include_router(chat_router)
     logger.info("✅ Chat routes included")
 except Exception as e:
@@ -409,6 +428,7 @@ except Exception as e:
 # Include chat dashboard routes (Phase 10 - Task 4)
 try:
     from app.routes.chat_dashboard import router as chat_dashboard_router
+
     app.include_router(chat_dashboard_router)
     logger.info("✅ Chat dashboard routes included")
 except Exception as e:
@@ -417,6 +437,7 @@ except Exception as e:
 # Include mobile API routes (Accounts, Wallet, Analytics, Goals, Budgets, Leaderboard)
 try:
     from app.routes.mobile_api import router as mobile_api_router
+
     app.include_router(mobile_api_router)
     logger.info("✅ Mobile API routes included")
 except Exception as e:
@@ -425,6 +446,7 @@ except Exception as e:
 # Include AWS Location Service routes (Geocoding, Places, Routing, Geofencing, Tracking)
 try:
     from app.routes.location import router as location_router
+
     app.include_router(location_router)
     logger.info("✅ Location services routes included")
 except Exception as e:
@@ -433,6 +455,7 @@ except Exception as e:
 # Include Preferred Merchants routes (Merchants, Deals, Subscriptions)
 try:
     from app.routes.preferred_merchants import router as preferred_merchants_router
+
     app.include_router(preferred_merchants_router)
     logger.info("✅ Preferred merchants routes included")
 except Exception as e:
@@ -441,6 +464,7 @@ except Exception as e:
 # Include Enhanced Marketing AI routes (Behavioral Learning, Personalized Promotions)
 try:
     from app.routes.marketing_ai_api import router as marketing_ai_router
+
     app.include_router(marketing_ai_router)
     logger.info("✅ Marketing AI routes included")
 except Exception as e:
@@ -453,6 +477,7 @@ except Exception as e:
 # Include FIS Card Management routes (Card issuance, controls, PIN)
 try:
     from app.routes.fis_cards import router as fis_cards_router
+
     app.include_router(fis_cards_router)
     logger.info("✅ FIS Card Management routes included")
 except Exception as e:
@@ -461,6 +486,7 @@ except Exception as e:
 # Include FIS Transaction routes (History, analytics, disputes)
 try:
     from app.routes.fis_transactions import router as fis_transactions_router
+
     app.include_router(fis_transactions_router)
     logger.info("✅ FIS Transaction routes included")
 except Exception as e:
@@ -469,6 +495,7 @@ except Exception as e:
 # Include FIS Fraud & Security routes (Alerts, travel notices, risk)
 try:
     from app.routes.fis_fraud import router as fis_fraud_router
+
     app.include_router(fis_fraud_router)
     logger.info("✅ FIS Fraud & Security routes included")
 except Exception as e:
@@ -477,6 +504,7 @@ except Exception as e:
 # Include FIS Digital Wallet routes (Apple Pay, Google Pay, Samsung Pay)
 try:
     from app.routes.fis_wallet import router as fis_wallet_router
+
     app.include_router(fis_wallet_router)
     logger.info("✅ FIS Digital Wallet routes included")
 except Exception as e:
@@ -485,6 +513,7 @@ except Exception as e:
 # Include FIS Webhook handler routes
 try:
     from app.routes.fis_webhooks import router as fis_webhooks_router
+
     app.include_router(fis_webhooks_router)
     logger.info("✅ FIS Webhook routes included")
 except Exception as e:
@@ -493,6 +522,7 @@ except Exception as e:
 # Include AI Concierge routes (existing)
 try:
     from concierge_service.main import app as concierge_app
+
     app.mount("/concierge", concierge_app)
     logger.info("✅ AI Concierge routes included")
 except Exception as e:
@@ -501,28 +531,31 @@ except Exception as e:
 # Include RAG service routes
 try:
     from rag_service.main import app as rag_app
+
     app.mount("/rag", rag_app)
     logger.info("✅ RAG service routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not mount RAG service: {e}")
+
 
 # Catch-all for unmatched routes
 @app.get("/api/{path_name:path}")
 async def catch_all(path_name: str):
     return {"message": f"Endpoint /{path_name} not found", "status": 404}
 
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     logger.error(f"Unhandled exception: {str(exc)}")
     return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error", "type": "error"}
+        status_code=500, content={"detail": "Internal server error", "type": "error"}
     )
 
 
 # ============================================================================
 # Startup and Shutdown Event Handlers for Background Tasks
 # ============================================================================
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -552,6 +585,7 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.getenv("PORT", "8000"))
     host = os.getenv("HOST", "0.0.0.0")
     uvicorn.run(app, host=host, port=port, reload=True)

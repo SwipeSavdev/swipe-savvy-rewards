@@ -44,8 +44,10 @@ DB_CONFIG = {
 # ENHANCED BEHAVIOR PATTERNS
 # ============================================================================
 
+
 class EnhancedBehaviorPattern(Enum):
     """Extended behavior patterns with granular classification"""
+
     # Spending Patterns
     HIGH_SPENDER = "high_spender"
     MEDIUM_SPENDER = "medium_spender"
@@ -103,6 +105,7 @@ class EnhancedBehaviorPattern(Enum):
 
 class SICCategory(Enum):
     """Standard Industrial Classification categories"""
+
     RESTAURANTS = "5812"
     FAST_FOOD = "5814"
     GROCERY_STORES = "5411"
@@ -124,9 +127,11 @@ class SICCategory(Enum):
 # ENHANCED DATA MODELS
 # ============================================================================
 
+
 @dataclass
 class LocationBehavior:
     """Detailed location-based behavior analysis"""
+
     primary_city: str
     primary_zip: str
     location_diversity_score: float  # 0-1, how varied shopping locations are
@@ -140,6 +145,7 @@ class LocationBehavior:
 @dataclass
 class PurchaseBehavior:
     """Detailed purchase behavior analysis"""
+
     total_transactions: int
     total_spent: float
     avg_transaction: float
@@ -159,6 +165,7 @@ class PurchaseBehavior:
 @dataclass
 class BusinessPreference:
     """Business type and category preferences"""
+
     sic_code: str
     sic_description: str
     category: str
@@ -173,6 +180,7 @@ class BusinessPreference:
 @dataclass
 class AppEngagement:
     """App engagement and session metrics"""
+
     total_sessions: int
     avg_session_duration_seconds: float
     total_time_in_app_minutes: float
@@ -190,6 +198,7 @@ class AppEngagement:
 @dataclass
 class ConversionHistory:
     """Marketing conversion tracking"""
+
     campaigns_received: int
     campaigns_opened: int
     campaigns_clicked: int
@@ -207,6 +216,7 @@ class ConversionHistory:
 @dataclass
 class EnhancedUserBehavior:
     """Comprehensive user behavior profile with all metrics"""
+
     user_id: str
     created_at: datetime
     updated_at: datetime
@@ -240,6 +250,7 @@ class EnhancedUserBehavior:
 @dataclass
 class BehavioralLearningModel:
     """Machine learning model state for behavioral predictions"""
+
     model_id: str
     model_type: str  # pattern_detection, churn_prediction, spend_prediction
     feature_weights: Dict[str, float]
@@ -252,6 +263,7 @@ class BehavioralLearningModel:
 # ============================================================================
 # BEHAVIORAL LEARNING ENGINE
 # ============================================================================
+
 
 class BehavioralLearningEngine:
     """
@@ -271,23 +283,27 @@ class BehavioralLearningEngine:
             "frequency_weight": 0.20,
             "location_weight": 0.15,
             "engagement_weight": 0.20,
-            "conversion_weight": 0.20
+            "conversion_weight": 0.20,
         }
 
         try:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT feature_name, weight FROM behavioral_feature_weights
                 WHERE is_active = true
-            """)
+            """
+            )
             rows = self.cursor.fetchall()
             if rows:
-                return {row['feature_name']: row['weight'] for row in rows}
+                return {row["feature_name"]: row["weight"] for row in rows}
         except Exception:
             pass
 
         return default_weights
 
-    def analyze_enhanced_behavior(self, user_id: str, lookback_days: int = 90) -> EnhancedUserBehavior:
+    def analyze_enhanced_behavior(
+        self, user_id: str, lookback_days: int = 90
+    ) -> EnhancedUserBehavior:
         """
         Perform comprehensive behavioral analysis for a user
         """
@@ -311,8 +327,12 @@ class BehavioralLearningEngine:
 
             # Detect patterns
             patterns, confidence_scores = self._detect_enhanced_patterns(
-                transactions, location_behavior, purchase_behavior,
-                business_preferences, app_engagement, conversion_history
+                transactions,
+                location_behavior,
+                purchase_behavior,
+                business_preferences,
+                app_engagement,
+                conversion_history,
             )
 
             # Calculate predictive metrics
@@ -320,14 +340,19 @@ class BehavioralLearningEngine:
             churn_risk = self._calculate_churn_risk(purchase_behavior, app_engagement)
             ltv = self._estimate_lifetime_value(purchase_behavior, conversion_history)
             next_purchase_prob = self._predict_next_purchase(purchase_behavior)
-            recommended_offers = self._recommend_offer_types(patterns, conversion_history, business_preferences)
+            recommended_offers = self._recommend_offer_types(
+                patterns, conversion_history, business_preferences
+            )
 
             # Get customer age
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT created_at FROM users WHERE user_id = %s
-            """, (user_id,))
+            """,
+                (user_id,),
+            )
             user_row = self.cursor.fetchone()
-            created_at = user_row['created_at'] if user_row else datetime.now(timezone.utc)
+            created_at = user_row["created_at"] if user_row else datetime.now(timezone.utc)
             days_as_customer = (datetime.now(timezone.utc) - created_at).days
 
             return EnhancedUserBehavior(
@@ -350,7 +375,7 @@ class BehavioralLearningEngine:
                 churn_risk_score=churn_risk,
                 lifetime_value_estimate=ltv,
                 next_purchase_probability=next_purchase_prob,
-                recommended_offer_types=recommended_offers
+                recommended_offer_types=recommended_offers,
             )
 
         except Exception as e:
@@ -360,7 +385,8 @@ class BehavioralLearningEngine:
     def _get_transactions(self, user_id: str, cutoff_date: datetime) -> List[Dict]:
         """Get transaction data with business details"""
         try:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT
                     t.transaction_id,
                     t.amount,
@@ -378,7 +404,9 @@ class BehavioralLearningEngine:
                 WHERE t.user_id = %s
                 AND t.transaction_date >= %s
                 ORDER BY t.transaction_date DESC
-            """, (user_id, cutoff_date))
+            """,
+                (user_id, cutoff_date),
+            )
             return self.cursor.fetchall()
         except Exception as e:
             logger.error(f"Error fetching transactions: {str(e)}")
@@ -387,7 +415,8 @@ class BehavioralLearningEngine:
     def _get_app_sessions(self, user_id: str, cutoff_date: datetime) -> List[Dict]:
         """Get app session data"""
         try:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT
                     session_id,
                     start_time,
@@ -401,7 +430,9 @@ class BehavioralLearningEngine:
                 WHERE user_id = %s
                 AND start_time >= %s
                 ORDER BY start_time DESC
-            """, (user_id, cutoff_date))
+            """,
+                (user_id, cutoff_date),
+            )
             return self.cursor.fetchall()
         except Exception:
             return []
@@ -409,7 +440,8 @@ class BehavioralLearningEngine:
     def _get_campaign_interactions(self, user_id: str, cutoff_date: datetime) -> List[Dict]:
         """Get marketing campaign interaction data"""
         try:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT
                     ci.interaction_id,
                     ci.campaign_id,
@@ -426,7 +458,9 @@ class BehavioralLearningEngine:
                 WHERE ci.user_id = %s
                 AND ci.interaction_time >= %s
                 ORDER BY ci.interaction_time DESC
-            """, (user_id, cutoff_date))
+            """,
+                (user_id, cutoff_date),
+            )
             return self.cursor.fetchall()
         except Exception:
             return []
@@ -439,17 +473,19 @@ class BehavioralLearningEngine:
         # Calculate location metrics
         city_counts: dict[str, int] = defaultdict(int)
         zip_counts: dict[str, int] = defaultdict(int)
-        location_details: dict[str, dict[str, float]] = defaultdict(lambda: {"count": 0.0, "total_spent": 0.0})
+        location_details: dict[str, dict[str, float]] = defaultdict(
+            lambda: {"count": 0.0, "total_spent": 0.0}
+        )
 
         for t in transactions:
-            city = str(t.get('merchant_city', 'Unknown'))
-            zip_code = str(t.get('merchant_zip', 'Unknown'))
-            location = str(t.get('merchant_location', 'Unknown'))
+            city = str(t.get("merchant_city", "Unknown"))
+            zip_code = str(t.get("merchant_zip", "Unknown"))
+            location = str(t.get("merchant_location", "Unknown"))
 
             city_counts[city] += 1
             zip_counts[zip_code] += 1
             location_details[location]["count"] += 1
-            location_details[location]["total_spent"] += float(t['amount'])
+            location_details[location]["total_spent"] += float(t["amount"])
 
         # Find primary locations
         primary_city = max(city_counts.items(), key=lambda x: x[1])[0] if city_counts else "Unknown"
@@ -458,7 +494,9 @@ class BehavioralLearningEngine:
         # Calculate diversity score (1 = all same location, 0 = all different)
         unique_locations = len(location_details)
         total_transactions = len(transactions)
-        diversity_score = 1 - (unique_locations / total_transactions) if total_transactions > 0 else 0
+        diversity_score = (
+            1 - (unique_locations / total_transactions) if total_transactions > 0 else 0
+        )
 
         # Build frequent locations list
         frequent_locations = [
@@ -467,13 +505,17 @@ class BehavioralLearningEngine:
                 "count": data["count"],
                 "total_spent": data["total_spent"],
                 "avg_spent": data["total_spent"] / data["count"] if data["count"] > 0 else 0,
-                "percentage": (data["count"] / total_transactions * 100) if total_transactions > 0 else 0
+                "percentage": (
+                    (data["count"] / total_transactions * 100) if total_transactions > 0 else 0
+                ),
             }
-            for loc, data in sorted(location_details.items(), key=lambda x: x[1]["count"], reverse=True)[:10]
+            for loc, data in sorted(
+                location_details.items(), key=lambda x: x[1]["count"], reverse=True
+            )[:10]
         ]
 
         # Detect travel (transactions outside primary city)
-        travel_count = sum(1 for t in transactions if t.get('merchant_city') != primary_city)
+        travel_count = sum(1 for t in transactions if t.get("merchant_city") != primary_city)
 
         return LocationBehavior(
             primary_city=primary_city,
@@ -483,7 +525,7 @@ class BehavioralLearningEngine:
             frequent_locations=frequent_locations,
             commute_pattern=self._detect_commute_pattern(transactions),
             travel_frequency=travel_count,
-            geo_clusters=self._cluster_locations(frequent_locations)
+            geo_clusters=self._cluster_locations(frequent_locations),
         )
 
     def _analyze_purchase_behavior(self, transactions: List[Dict]) -> PurchaseBehavior:
@@ -491,7 +533,7 @@ class BehavioralLearningEngine:
         if not transactions:
             return self._empty_purchase_behavior()
 
-        amounts = [float(t['amount']) for t in transactions]
+        amounts = [float(t["amount"]) for t in transactions]
         total_spent = sum(amounts)
         total_transactions = len(amounts)
         avg_transaction = total_spent / total_transactions if total_transactions > 0 else 0
@@ -508,32 +550,36 @@ class BehavioralLearningEngine:
         std_dev = math.sqrt(variance)
 
         # Frequency analysis
-        dates = [t['transaction_date'] for t in transactions if t.get('transaction_date')]
+        dates = [t["transaction_date"] for t in transactions if t.get("transaction_date")]
         if len(dates) >= 2:
-            date_diffs = [(dates[i] - dates[i+1]).days for i in range(len(dates)-1)]
+            date_diffs = [(dates[i] - dates[i + 1]).days for i in range(len(dates) - 1)]
             avg_days_between = sum(date_diffs) / len(date_diffs) if date_diffs else 0
         else:
             avg_days_between = 0
 
         # Time period counts
         now = datetime.now(timezone.utc)
-        last_7 = sum(1 for t in transactions if (now - t['transaction_date']).days <= 7)
-        last_30 = sum(1 for t in transactions if (now - t['transaction_date']).days <= 30)
-        last_90 = sum(1 for t in transactions if (now - t['transaction_date']).days <= 90)
+        last_7 = sum(1 for t in transactions if (now - t["transaction_date"]).days <= 7)
+        last_30 = sum(1 for t in transactions if (now - t["transaction_date"]).days <= 30)
+        last_90 = sum(1 for t in transactions if (now - t["transaction_date"]).days <= 90)
 
         # Spending velocity (recent vs older spending)
         mid_point = len(transactions) // 2
-        recent_spending = sum(float(t['amount']) for t in transactions[:mid_point])
-        older_spending = sum(float(t['amount']) for t in transactions[mid_point:])
-        velocity = ((recent_spending - older_spending) / older_spending * 100) if older_spending > 0 else 0
+        recent_spending = sum(float(t["amount"]) for t in transactions[:mid_point])
+        older_spending = sum(float(t["amount"]) for t in transactions[mid_point:])
+        velocity = (
+            ((recent_spending - older_spending) / older_spending * 100) if older_spending > 0 else 0
+        )
 
         # Preferred time analysis
-        hours = [t.get('hour_of_day', 12) for t in transactions if t.get('hour_of_day') is not None]
+        hours = [t.get("hour_of_day", 12) for t in transactions if t.get("hour_of_day") is not None]
         avg_hour = sum(hours) / len(hours) if hours else 12
-        preferred_time = "Morning" if avg_hour < 12 else ("Afternoon" if avg_hour < 17 else "Evening")
+        preferred_time = (
+            "Morning" if avg_hour < 12 else ("Afternoon" if avg_hour < 17 else "Evening")
+        )
 
         # Preferred day analysis
-        days = [t.get('day_of_week', 0) for t in transactions if t.get('day_of_week') is not None]
+        days = [t.get("day_of_week", 0) for t in transactions if t.get("day_of_week") is not None]
         weekend_count = sum(1 for d in days if d in [0, 6])  # 0 is Sunday, 6 is Saturday
         preferred_day = "Weekend" if weekend_count > len(days) / 2 else "Weekday"
 
@@ -551,7 +597,7 @@ class BehavioralLearningEngine:
             last_90_days_count=last_90,
             spending_velocity=velocity,
             preferred_payment_time=preferred_time,
-            preferred_payment_day=preferred_day
+            preferred_payment_day=preferred_day,
         )
 
     def _analyze_business_preferences(self, transactions: List[Dict]) -> List[BusinessPreference]:
@@ -563,27 +609,29 @@ class BehavioralLearningEngine:
         sic_data: Dict[str, Dict[str, Any]] = {}
 
         for t in transactions:
-            sic = str(t.get('merchant_sic_code', '0000'))
+            sic = str(t.get("merchant_sic_code", "0000"))
             if sic not in sic_data:
                 sic_data[sic] = {
                     "count": 0,
                     "total_spent": 0.0,
                     "amounts": [],
                     "last_visit": None,
-                    "category": "Unknown"
+                    "category": "Unknown",
                 }
             sic_data[sic]["count"] += 1
-            sic_data[sic]["total_spent"] += float(t['amount'])
-            sic_data[sic]["amounts"].append(float(t['amount']))
-            sic_data[sic]["category"] = str(t.get('category', 'Unknown'))
+            sic_data[sic]["total_spent"] += float(t["amount"])
+            sic_data[sic]["amounts"].append(float(t["amount"]))
+            sic_data[sic]["category"] = str(t.get("category", "Unknown"))
 
-            txn_date = t.get('transaction_date')
-            if txn_date and (sic_data[sic]["last_visit"] is None or txn_date > sic_data[sic]["last_visit"]):
+            txn_date = t.get("transaction_date")
+            if txn_date and (
+                sic_data[sic]["last_visit"] is None or txn_date > sic_data[sic]["last_visit"]
+            ):
                 sic_data[sic]["last_visit"] = txn_date
 
         # Calculate affinity scores and build preferences
         total_transactions = len(transactions)
-        total_spent = sum(float(t['amount']) for t in transactions)
+        total_spent = sum(float(t["amount"]) for t in transactions)
 
         preferences = []
         for sic, data in sic_data.items():
@@ -603,17 +651,19 @@ class BehavioralLearningEngine:
             else:
                 visit_freq = 0
 
-            preferences.append(BusinessPreference(
-                sic_code=sic,
-                sic_description=self._get_sic_description(sic),
-                category=str(data["category"]),
-                transaction_count=count,
-                total_spent=spent,
-                avg_transaction=avg_txn,
-                affinity_score=min(100, affinity_score),
-                last_visit=last_visit_date or datetime.now(timezone.utc),
-                visit_frequency_days=1/visit_freq if visit_freq > 0 else 999
-            ))
+            preferences.append(
+                BusinessPreference(
+                    sic_code=sic,
+                    sic_description=self._get_sic_description(sic),
+                    category=str(data["category"]),
+                    transaction_count=count,
+                    total_spent=spent,
+                    avg_transaction=avg_txn,
+                    affinity_score=min(100, affinity_score),
+                    last_visit=last_visit_date or datetime.now(timezone.utc),
+                    visit_frequency_days=1 / visit_freq if visit_freq > 0 else 999,
+                )
+            )
 
         # Sort by affinity score
         return sorted(preferences, key=lambda x: x.affinity_score, reverse=True)[:10]
@@ -624,25 +674,27 @@ class BehavioralLearningEngine:
             return self._empty_app_engagement()
 
         total_sessions = len(sessions)
-        durations = [s.get('duration_seconds', 0) for s in sessions]
+        durations = [s.get("duration_seconds", 0) for s in sessions]
         avg_duration = sum(durations) / len(durations) if durations else 0
         total_time = sum(durations) / 60  # Convert to minutes
 
         # Recent session counts
         now = datetime.now(timezone.utc)
-        last_7 = sum(1 for s in sessions if (now - s['start_time']).days <= 7)
-        last_30 = sum(1 for s in sessions if (now - s['start_time']).days <= 30)
+        last_7 = sum(1 for s in sessions if (now - s["start_time"]).days <= 7)
+        last_30 = sum(1 for s in sessions if (now - s["start_time"]).days <= 30)
 
         # Most used features
         feature_counts = defaultdict(int)
         for s in sessions:
-            features = s.get('features_used', [])
+            features = s.get("features_used", [])
             if isinstance(features, str):
                 features = json.loads(features) if features else []
             for f in features:
                 feature_counts[f] += 1
 
-        most_used = [f for f, _ in sorted(feature_counts.items(), key=lambda x: x[1], reverse=True)[:5]]
+        most_used = [
+            f for f, _ in sorted(feature_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        ]
 
         # Get notification metrics
         notification_open_rate = self._get_notification_open_rate(user_id)
@@ -660,15 +712,15 @@ class BehavioralLearningEngine:
             total_sessions=total_sessions,
             avg_session_duration_seconds=avg_duration,
             total_time_in_app_minutes=total_time,
-            last_session_date=latest_session.get('start_time', datetime.now(timezone.utc)),
+            last_session_date=latest_session.get("start_time", datetime.now(timezone.utc)),
             sessions_last_7_days=last_7,
             sessions_last_30_days=last_30,
             most_used_features=most_used,
             notification_open_rate=notification_open_rate,
             push_enabled=push_enabled,
-            app_version=latest_session.get('app_version', 'unknown'),
-            device_type=latest_session.get('device_type', 'unknown'),
-            engagement_score=engagement_score
+            app_version=latest_session.get("app_version", "unknown"),
+            device_type=latest_session.get("device_type", "unknown"),
+            engagement_score=engagement_score,
         )
 
     def _analyze_conversion_history(self, interactions: List[Dict]) -> ConversionHistory:
@@ -676,12 +728,14 @@ class BehavioralLearningEngine:
         if not interactions:
             return self._empty_conversion_history()
 
-        received = len({i['campaign_id'] for i in interactions})
-        opened = len([i for i in interactions if i['interaction_type'] == 'opened'])
-        clicked = len([i for i in interactions if i['interaction_type'] == 'clicked'])
-        converted = len([i for i in interactions if i.get('converted')])
+        received = len({i["campaign_id"] for i in interactions})
+        opened = len([i for i in interactions if i["interaction_type"] == "opened"])
+        clicked = len([i for i in interactions if i["interaction_type"] == "clicked"])
+        converted = len([i for i in interactions if i.get("converted")])
 
-        conversion_values = [i.get('conversion_value', 0) for i in interactions if i.get('converted')]
+        conversion_values = [
+            i.get("conversion_value", 0) for i in interactions if i.get("converted")
+        ]
         total_value = sum(conversion_values)
         avg_value = total_value / len(conversion_values) if conversion_values else 0
 
@@ -689,30 +743,44 @@ class BehavioralLearningEngine:
         campaign_conversions = defaultdict(int)
         offer_conversions = defaultdict(int)
         for i in interactions:
-            if i.get('converted'):
-                campaign_conversions[i.get('campaign_type', 'unknown')] += 1
-                offer_conversions[i.get('offer_type', 'unknown')] += 1
+            if i.get("converted"):
+                campaign_conversions[i.get("campaign_type", "unknown")] += 1
+                offer_conversions[i.get("offer_type", "unknown")] += 1
 
-        best_campaign = max(campaign_conversions.items(), key=lambda x: x[1])[0] if campaign_conversions else "none"
-        best_offer = max(offer_conversions.items(), key=lambda x: x[1])[0] if offer_conversions else "none"
+        best_campaign = (
+            max(campaign_conversions.items(), key=lambda x: x[1])[0]
+            if campaign_conversions
+            else "none"
+        )
+        best_offer = (
+            max(offer_conversions.items(), key=lambda x: x[1])[0] if offer_conversions else "none"
+        )
 
         # Conversion rate
         conversion_rate = (converted / received * 100) if received > 0 else 0
 
         # Average time to convert
-        convert_times = [i.get('time_to_convert_hours', 0) for i in interactions if i.get('converted')]
+        convert_times = [
+            i.get("time_to_convert_hours", 0) for i in interactions if i.get("converted")
+        ]
         avg_time_to_convert = sum(convert_times) / len(convert_times) if convert_times else 0
 
         # Last conversion
-        converted_interactions = [i for i in interactions if i.get('converted')]
-        last_conversion = max(i['interaction_time'] for i in converted_interactions) if converted_interactions else None
+        converted_interactions = [i for i in interactions if i.get("converted")]
+        last_conversion = (
+            max(i["interaction_time"] for i in converted_interactions)
+            if converted_interactions
+            else None
+        )
 
         # Responsive channels
         channel_counts = defaultdict(int)
         for i in interactions:
-            if i.get('converted'):
-                channel_counts[i.get('channel', 'unknown')] += 1
-        responsive_channels = [c for c, _ in sorted(channel_counts.items(), key=lambda x: x[1], reverse=True)]
+            if i.get("converted"):
+                channel_counts[i.get("channel", "unknown")] += 1
+        responsive_channels = [
+            c for c, _ in sorted(channel_counts.items(), key=lambda x: x[1], reverse=True)
+        ]
 
         return ConversionHistory(
             campaigns_received=received,
@@ -726,7 +794,7 @@ class BehavioralLearningEngine:
             conversion_rate=conversion_rate,
             time_to_convert_hours=avg_time_to_convert,
             last_conversion_date=last_conversion,
-            responsive_channels=responsive_channels
+            responsive_channels=responsive_channels,
         )
 
     def _detect_enhanced_patterns(
@@ -736,7 +804,7 @@ class BehavioralLearningEngine:
         purchase: PurchaseBehavior,
         businesses: List[BusinessPreference],
         engagement: AppEngagement,
-        conversions: ConversionHistory
+        conversions: ConversionHistory,
     ) -> Tuple[List[EnhancedBehaviorPattern], Dict[str, float]]:
         """Detect enhanced behavioral patterns with confidence scores"""
         patterns = []
@@ -807,16 +875,16 @@ class BehavioralLearningEngine:
         # Business type affinity
         if businesses:
             top_biz = businesses[0]
-            if top_biz.sic_code in ['5812', '5814']:
+            if top_biz.sic_code in ["5812", "5814"]:
                 patterns.append(EnhancedBehaviorPattern.RESTAURANT_ENTHUSIAST)
                 confidence_scores["restaurant_enthusiast"] = top_biz.affinity_score
-            elif top_biz.sic_code in ['5411']:
+            elif top_biz.sic_code in ["5411"]:
                 patterns.append(EnhancedBehaviorPattern.GROCERY_REGULAR)
                 confidence_scores["grocery_regular"] = top_biz.affinity_score
-            elif top_biz.sic_code in ['5541']:
+            elif top_biz.sic_code in ["5541"]:
                 patterns.append(EnhancedBehaviorPattern.GAS_STATION_FREQUENT)
                 confidence_scores["gas_station_frequent"] = top_biz.affinity_score
-            elif top_biz.sic_code in ['5311', '5651']:
+            elif top_biz.sic_code in ["5311", "5651"]:
                 patterns.append(EnhancedBehaviorPattern.RETAIL_SHOPPER)
                 confidence_scores["retail_shopper"] = top_biz.affinity_score
 
@@ -852,7 +920,9 @@ class BehavioralLearningEngine:
 
         return patterns, confidence_scores
 
-    def _predict_monthly_spend(self, purchase: PurchaseBehavior, patterns: List[EnhancedBehaviorPattern]) -> float:
+    def _predict_monthly_spend(
+        self, purchase: PurchaseBehavior, patterns: List[EnhancedBehaviorPattern]
+    ) -> float:
         """Predict expected monthly spending based on behavior"""
         if purchase.total_transactions == 0:
             return 0
@@ -879,7 +949,11 @@ class BehavioralLearningEngine:
         risk_score = 0
 
         # Days since last activity
-        days_inactive = (datetime.now(timezone.utc) - engagement.last_session_date).days if engagement.last_session_date else 999
+        days_inactive = (
+            (datetime.now(timezone.utc) - engagement.last_session_date).days
+            if engagement.last_session_date
+            else 999
+        )
         if days_inactive > 30:
             risk_score += 40
         elif days_inactive > 14:
@@ -905,7 +979,9 @@ class BehavioralLearningEngine:
 
         return min(100, risk_score)
 
-    def _estimate_lifetime_value(self, purchase: PurchaseBehavior, conversions: ConversionHistory) -> float:
+    def _estimate_lifetime_value(
+        self, purchase: PurchaseBehavior, conversions: ConversionHistory
+    ) -> float:
         """Estimate customer lifetime value"""
         # Simple LTV calculation: avg monthly spend * expected months * margin
         monthly_spend = purchase.last_30_days_count * purchase.avg_transaction
@@ -939,13 +1015,16 @@ class BehavioralLearningEngine:
         self,
         patterns: List[EnhancedBehaviorPattern],
         conversions: ConversionHistory,
-        businesses: List[BusinessPreference]
+        businesses: List[BusinessPreference],
     ) -> List[str]:
         """Recommend best offer types for user"""
         recommendations = []
 
         # Based on conversion history
-        if conversions.best_performing_offer_type and conversions.best_performing_offer_type != "none":
+        if (
+            conversions.best_performing_offer_type
+            and conversions.best_performing_offer_type != "none"
+        ):
             recommendations.append(conversions.best_performing_offer_type)
 
         # Based on patterns
@@ -977,7 +1056,7 @@ class BehavioralLearningEngine:
             frequent_locations=[],
             commute_pattern=None,
             travel_frequency=0,
-            geo_clusters=[]
+            geo_clusters=[],
         )
 
     def _empty_purchase_behavior(self) -> PurchaseBehavior:
@@ -995,7 +1074,7 @@ class BehavioralLearningEngine:
             last_90_days_count=0,
             spending_velocity=0,
             preferred_payment_time="Unknown",
-            preferred_payment_day="Unknown"
+            preferred_payment_day="Unknown",
         )
 
     def _empty_app_engagement(self) -> AppEngagement:
@@ -1011,7 +1090,7 @@ class BehavioralLearningEngine:
             push_enabled=False,
             app_version="unknown",
             device_type="unknown",
-            engagement_score=0
+            engagement_score=0,
         )
 
     def _empty_conversion_history(self) -> ConversionHistory:
@@ -1027,7 +1106,7 @@ class BehavioralLearningEngine:
             conversion_rate=0,
             time_to_convert_hours=0,
             last_conversion_date=None,
-            responsive_channels=[]
+            responsive_channels=[],
         )
 
     def _create_empty_enhanced_behavior(self, user_id: str) -> EnhancedUserBehavior:
@@ -1051,13 +1130,13 @@ class BehavioralLearningEngine:
             churn_risk_score=100,
             lifetime_value_estimate=0,
             next_purchase_probability=0,
-            recommended_offer_types=[]
+            recommended_offer_types=[],
         )
 
     def _get_days_since_last_activity(self, transactions: List[Dict]) -> int:
         if not transactions:
             return 999
-        latest = transactions[0].get('transaction_date')
+        latest = transactions[0].get("transaction_date")
         if latest:
             return (datetime.now(timezone.utc) - latest).days
         return 999
@@ -1069,8 +1148,8 @@ class BehavioralLearningEngine:
         evening_locs = set()
 
         for t in transactions:
-            hour = t.get('hour_of_day', 12)
-            loc = t.get('merchant_location', '')
+            hour = t.get("hour_of_day", 12)
+            loc = t.get("merchant_location", "")
 
             if 6 <= hour <= 9:
                 morning_locs.add(loc)
@@ -1113,24 +1192,27 @@ class BehavioralLearningEngine:
             "7538": "Automotive Services",
             "4724": "Travel Agencies",
             "7011": "Hotels/Lodging",
-            "5999": "Online Retail"
+            "5999": "Online Retail",
         }
         return sic_descriptions.get(sic_code, f"Business Type {sic_code}")
 
     def _get_notification_open_rate(self, user_id: str) -> float:
         """Get user's notification open rate"""
         try:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT
                     COUNT(*) as total,
                     COUNT(CASE WHEN opened = true THEN 1 END) as opened
                 FROM push_notifications
                 WHERE user_id = %s
                 AND sent_at >= NOW() - INTERVAL '90 days'
-            """, (user_id,))
+            """,
+                (user_id,),
+            )
             row = self.cursor.fetchone()
-            if row and row['total'] > 0:
-                return row['opened'] / row['total']
+            if row and row["total"] > 0:
+                return row["opened"] / row["total"]
         except Exception:
             pass
         return 0.5  # Default assumption
@@ -1138,11 +1220,14 @@ class BehavioralLearningEngine:
     def _check_push_enabled(self, user_id: str) -> bool:
         """Check if user has push notifications enabled"""
         try:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT push_enabled FROM user_preferences WHERE user_id = %s
-            """, (user_id,))
+            """,
+                (user_id,),
+            )
             row = self.cursor.fetchone()
-            return row['push_enabled'] if row else True
+            return row["push_enabled"] if row else True
         except Exception:
             return True
 
@@ -1152,7 +1237,7 @@ class BehavioralLearningEngine:
         avg_duration: float,
         last_7_sessions: int,
         _last_30_sessions: int,
-        notification_rate: float
+        notification_rate: float,
     ) -> float:
         """Calculate overall engagement score 0-100"""
         score = 0
@@ -1191,6 +1276,7 @@ class BehavioralLearningEngine:
 # ADAPTIVE PROMOTION ENGINE
 # ============================================================================
 
+
 class AdaptivePromotionEngine:
     """
     Creates and optimizes promotions based on learned behaviors.
@@ -1222,12 +1308,10 @@ class AdaptivePromotionEngine:
         # Score and rank promotions
         scored_promotions = self._score_promotions(promotions, behavior)
 
-        return sorted(scored_promotions, key=lambda x: x.get('score', 0), reverse=True)[:5]
+        return sorted(scored_promotions, key=lambda x: x.get("score", 0), reverse=True)[:5]
 
     def _create_promotion_for_pattern(
-        self,
-        pattern: EnhancedBehaviorPattern,
-        behavior: EnhancedUserBehavior
+        self, pattern: EnhancedBehaviorPattern, behavior: EnhancedUserBehavior
     ) -> Optional[Dict[str, Any]]:
         """Create a promotion based on detected pattern"""
         promotion_templates = {
@@ -1237,7 +1321,7 @@ class AdaptivePromotionEngine:
                 "description": "As one of our top customers, enjoy exclusive premium benefits",
                 "offer_type": "cashback",
                 "offer_value": 5,
-                "offer_unit": "percentage"
+                "offer_unit": "percentage",
             },
             EnhancedBehaviorPattern.DAILY_SHOPPER: {
                 "type": "loyalty",
@@ -1245,7 +1329,7 @@ class AdaptivePromotionEngine:
                 "description": "Extra rewards for your daily purchases",
                 "offer_type": "points_multiplier",
                 "offer_value": 2,
-                "offer_unit": "multiplier"
+                "offer_unit": "multiplier",
             },
             EnhancedBehaviorPattern.CHURNING_USER: {
                 "type": "reengagement",
@@ -1253,7 +1337,7 @@ class AdaptivePromotionEngine:
                 "description": "Come back and enjoy a special welcome discount",
                 "offer_type": "discount",
                 "offer_value": 25,
-                "offer_unit": "percentage"
+                "offer_unit": "percentage",
             },
             EnhancedBehaviorPattern.PROMOTION_HUNTER: {
                 "type": "flash_sale",
@@ -1261,7 +1345,7 @@ class AdaptivePromotionEngine:
                 "description": "Limited time offer just for you",
                 "offer_type": "discount",
                 "offer_value": 20,
-                "offer_unit": "percentage"
+                "offer_unit": "percentage",
             },
             EnhancedBehaviorPattern.NOTIFICATION_RESPONSIVE: {
                 "type": "instant",
@@ -1269,7 +1353,7 @@ class AdaptivePromotionEngine:
                 "description": "Claim your instant reward now",
                 "offer_type": "fixed_reward",
                 "offer_value": 5,
-                "offer_unit": "dollars"
+                "offer_unit": "dollars",
             },
             EnhancedBehaviorPattern.NEIGHBORHOOD_LOYAL: {
                 "type": "local",
@@ -1277,8 +1361,8 @@ class AdaptivePromotionEngine:
                 "description": f"Extra rewards at your favorite {behavior.location_behavior.primary_city} spots",
                 "offer_type": "location_bonus",
                 "offer_value": 10,
-                "offer_unit": "percentage"
-            }
+                "offer_unit": "percentage",
+            },
         }
 
         template = promotion_templates.get(pattern)
@@ -1290,13 +1374,11 @@ class AdaptivePromotionEngine:
             "target_pattern": pattern.value,
             "confidence_score": behavior.pattern_confidence_scores.get(pattern.value, 50),
             "valid_days": 14,
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def _create_business_promotion(
-        self,
-        biz_pref: BusinessPreference,
-        _behavior: EnhancedUserBehavior
+        self, biz_pref: BusinessPreference, _behavior: EnhancedUserBehavior
     ) -> Optional[Dict[str, Any]]:
         """Create promotion based on business type preference"""
         if biz_pref.affinity_score < 30:
@@ -1313,24 +1395,22 @@ class AdaptivePromotionEngine:
             "target_category": biz_pref.category,
             "affinity_score": biz_pref.affinity_score,
             "valid_days": 30,
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def _score_promotions(
-        self,
-        promotions: List[Dict[str, Any]],
-        behavior: EnhancedUserBehavior
+        self, promotions: List[Dict[str, Any]], behavior: EnhancedUserBehavior
     ) -> List[Dict[str, Any]]:
         """Score promotions based on likelihood of conversion"""
         for promo in promotions:
             score = 50  # Base score
 
             # Boost based on historical conversion for similar offers
-            if behavior.conversion_history.best_performing_offer_type == promo.get('offer_type'):
+            if behavior.conversion_history.best_performing_offer_type == promo.get("offer_type"):
                 score += 30
 
             # Boost based on pattern confidence
-            confidence = promo.get('confidence_score', 50)
+            confidence = promo.get("confidence_score", 50)
             score += confidence * 0.2
 
             # Boost based on engagement
@@ -1341,28 +1421,36 @@ class AdaptivePromotionEngine:
             if behavior.conversion_history.conversion_rate < 5:
                 score -= 20
 
-            promo['score'] = min(100, max(0, score))
+            promo["score"] = min(100, max(0, score))
 
         return promotions
 
-    def learn_from_conversion(self, user_id: str, campaign_id: str, converted: bool, value: float = 0):
+    def learn_from_conversion(
+        self, user_id: str, campaign_id: str, converted: bool, value: float = 0
+    ):
         """Update learning models based on conversion feedback"""
         try:
             # Record the conversion
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 INSERT INTO conversion_feedback
                 (user_id, campaign_id, converted, conversion_value, feedback_time)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (user_id, campaign_id, converted, value, datetime.now(timezone.utc)))
+            """,
+                (user_id, campaign_id, converted, value, datetime.now(timezone.utc)),
+            )
 
             # Update campaign stats
             if converted:
-                self.cursor.execute("""
+                self.cursor.execute(
+                    """
                     UPDATE ai_campaigns
                     SET conversions = conversions + 1,
                         total_conversion_value = total_conversion_value + %s
                     WHERE campaign_id = %s
-                """, (value, campaign_id))
+                """,
+                    (value, campaign_id),
+                )
 
             self.conn.commit()
 
@@ -1376,12 +1464,14 @@ class AdaptivePromotionEngine:
     def _check_retrain_threshold(self):
         """Check if enough data for model retraining"""
         try:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT COUNT(*) as count FROM conversion_feedback
                 WHERE feedback_time >= NOW() - INTERVAL '24 hours'
-            """)
+            """
+            )
             row = self.cursor.fetchone()
-            if row and row['count'] >= 100:
+            if row and row["count"] >= 100:
                 self._retrain_models()
         except Exception:
             pass
@@ -1394,6 +1484,7 @@ class AdaptivePromotionEngine:
 # ============================================================================
 # ENHANCED MARKETING AI SERVICE
 # ============================================================================
+
 
 class EnhancedMarketingAIService:
     """
@@ -1448,7 +1539,8 @@ class EnhancedMarketingAIService:
             cursor = self.conn.cursor(cursor_factory=RealDictCursor)
 
             # Get users by segment pattern
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT
                     user_id,
                     behavior_patterns,
@@ -1458,7 +1550,9 @@ class EnhancedMarketingAIService:
                 FROM user_behavior_profiles
                 WHERE %s = ANY(behavior_patterns)
                 LIMIT 1000
-            """, (segment_type,))
+            """,
+                (segment_type,),
+            )
 
             users = cursor.fetchall()
 
@@ -1468,9 +1562,9 @@ class EnhancedMarketingAIService:
             return {
                 "segment": segment_type,
                 "count": len(users),
-                "avg_spend": sum(u['total_spent'] for u in users) / len(users),
-                "avg_churn_risk": sum(u['churn_risk_score'] for u in users) / len(users),
-                "predicted_revenue": sum(u['predicted_monthly_spend'] for u in users)
+                "avg_spend": sum(u["total_spent"] for u in users) / len(users),
+                "avg_churn_risk": sum(u["churn_risk_score"] for u in users) / len(users),
+                "predicted_revenue": sum(u["predicted_monthly_spend"] for u in users),
             }
         except Exception as e:
             logger.error(f"Error getting segment insights: {str(e)}")
@@ -1490,7 +1584,7 @@ class EnhancedMarketingAIService:
                 "primary_zip": behavior.location_behavior.primary_zip,
                 "diversity_score": behavior.location_behavior.location_diversity_score,
                 "frequent_locations": behavior.location_behavior.frequent_locations[:5],
-                "travel_frequency": behavior.location_behavior.travel_frequency
+                "travel_frequency": behavior.location_behavior.travel_frequency,
             },
             "purchase": {
                 "frequency_days": behavior.purchase_behavior.transaction_frequency_days,
@@ -1498,14 +1592,14 @@ class EnhancedMarketingAIService:
                 "preferred_time": behavior.purchase_behavior.preferred_payment_time,
                 "preferred_day": behavior.purchase_behavior.preferred_payment_day,
                 "last_7_days": behavior.purchase_behavior.last_7_days_count,
-                "last_30_days": behavior.purchase_behavior.last_30_days_count
+                "last_30_days": behavior.purchase_behavior.last_30_days_count,
             },
             "business_preferences": [
                 {
                     "sic_code": bp.sic_code,
                     "category": bp.category,
                     "affinity_score": bp.affinity_score,
-                    "transaction_count": bp.transaction_count
+                    "transaction_count": bp.transaction_count,
                 }
                 for bp in behavior.business_preferences[:5]
             ],
@@ -1514,13 +1608,13 @@ class EnhancedMarketingAIService:
                 "total_sessions": behavior.app_engagement.total_sessions,
                 "sessions_last_7_days": behavior.app_engagement.sessions_last_7_days,
                 "notification_open_rate": behavior.app_engagement.notification_open_rate,
-                "most_used_features": behavior.app_engagement.most_used_features
+                "most_used_features": behavior.app_engagement.most_used_features,
             },
             "conversion_history": {
                 "conversion_rate": behavior.conversion_history.conversion_rate,
                 "campaigns_converted": behavior.conversion_history.campaigns_converted,
                 "best_offer_type": behavior.conversion_history.best_performing_offer_type,
-                "responsive_channels": behavior.conversion_history.responsive_channels
+                "responsive_channels": behavior.conversion_history.responsive_channels,
             },
             "patterns": [p.value for p in behavior.behavior_patterns],
             "pattern_confidence": behavior.pattern_confidence_scores,
@@ -1528,9 +1622,9 @@ class EnhancedMarketingAIService:
                 "monthly_spend": behavior.predicted_monthly_spend,
                 "churn_risk": behavior.churn_risk_score,
                 "lifetime_value": behavior.lifetime_value_estimate,
-                "next_purchase_probability": behavior.next_purchase_probability
+                "next_purchase_probability": behavior.next_purchase_probability,
             },
-            "recommended_offers": behavior.recommended_offer_types
+            "recommended_offers": behavior.recommended_offer_types,
         }
 
 
@@ -1706,6 +1800,7 @@ def setup_behavioral_learning_tables(conn):
 # ============================================================================
 
 _enhanced_marketing_instance = None
+
 
 def get_enhanced_marketing_service() -> EnhancedMarketingAIService:
     """Get or create Enhanced Marketing AI service"""

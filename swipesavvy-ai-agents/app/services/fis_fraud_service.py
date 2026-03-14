@@ -16,11 +16,7 @@ from decimal import Decimal
 from enum import Enum
 from pydantic import BaseModel, Field
 
-from app.services.fis_global_service import (
-    FISGlobalService,
-    FISAPIResponse,
-    get_fis_service
-)
+from app.services.fis_global_service import FISGlobalService, FISAPIResponse, get_fis_service
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +25,10 @@ logger = logging.getLogger(__name__)
 # ENUMS
 # =============================================================================
 
+
 class FraudType(str, Enum):
     """Types of fraud"""
+
     UNAUTHORIZED_TRANSACTION = "unauthorized_transaction"
     CARD_NOT_PRESENT = "card_not_present"
     COUNTERFEIT_CARD = "counterfeit_card"
@@ -43,6 +41,7 @@ class FraudType(str, Enum):
 
 class AlertType(str, Enum):
     """Types of security alerts"""
+
     LARGE_TRANSACTION = "large_transaction"
     INTERNATIONAL_TRANSACTION = "international_transaction"
     CARD_NOT_PRESENT = "card_not_present"
@@ -57,6 +56,7 @@ class AlertType(str, Enum):
 
 class AlertPriority(str, Enum):
     """Alert priority levels"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -65,6 +65,7 @@ class AlertPriority(str, Enum):
 
 class AlertStatus(str, Enum):
     """Alert statuses"""
+
     NEW = "new"
     ACKNOWLEDGED = "acknowledged"
     INVESTIGATING = "investigating"
@@ -74,6 +75,7 @@ class AlertStatus(str, Enum):
 
 class NotificationChannel(str, Enum):
     """Notification delivery channels"""
+
     PUSH = "push"
     SMS = "sms"
     EMAIL = "email"
@@ -84,8 +86,10 @@ class NotificationChannel(str, Enum):
 # REQUEST/RESPONSE MODELS
 # =============================================================================
 
+
 class FraudReport(BaseModel):
     """Fraud report request"""
+
     card_id: str
     transaction_id: Optional[str] = None
     fraud_type: FraudType
@@ -99,6 +103,7 @@ class FraudReport(BaseModel):
 
 class FraudReportResponse(BaseModel):
     """Fraud report response"""
+
     report_id: str
     card_id: str
     status: str
@@ -110,6 +115,7 @@ class FraudReportResponse(BaseModel):
 
 class SecurityAlert(BaseModel):
     """Security alert"""
+
     alert_id: str
     card_id: str
     alert_type: AlertType
@@ -128,6 +134,7 @@ class SecurityAlert(BaseModel):
 
 class AlertPreferences(BaseModel):
     """Alert preference settings"""
+
     # Transaction alerts
     alert_on_all_transactions: bool = False
     alert_on_large_transactions: bool = True
@@ -154,6 +161,7 @@ class AlertPreferences(BaseModel):
 
 class TravelNotice(BaseModel):
     """Travel notice for card usage"""
+
     card_id: str
     start_date: date
     end_date: date
@@ -164,6 +172,7 @@ class TravelNotice(BaseModel):
 # =============================================================================
 # FIS FRAUD SERVICE
 # =============================================================================
+
 
 class FISFraudService:
     """
@@ -193,7 +202,7 @@ class FISFraudService:
         reported_to_police: bool = False,
         police_report_number: Optional[str] = None,
         suspected_date: Optional[date] = None,
-        additional_info: Optional[Dict[str, Any]] = None
+        additional_info: Optional[Dict[str, Any]] = None,
     ) -> FISAPIResponse:
         """
         Report fraud on a card.
@@ -217,7 +226,7 @@ class FISFraudService:
         payload: Dict[str, Any] = {
             "card_id": card_id,
             "fraud_type": fraud_type.value,
-            "description": description
+            "description": description,
         }
 
         if transaction_id:
@@ -234,9 +243,7 @@ class FISFraudService:
             payload["additional_info"] = additional_info
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint="/fraud/reports",
-            data=payload
+            method="POST", endpoint="/fraud/reports", data=payload
         )
 
         if response.success:
@@ -256,15 +263,10 @@ class FISFraudService:
         Returns:
             FISAPIResponse with report details
         """
-        return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/fraud/reports/{report_id}"
-        )
+        return await self.fis._make_request(method="GET", endpoint=f"/fraud/reports/{report_id}")
 
     async def get_fraud_reports(
-        self,
-        card_id: Optional[str] = None,
-        status: Optional[str] = None
+        self, card_id: Optional[str] = None, status: Optional[str] = None
     ) -> FISAPIResponse:
         """
         Get fraud reports.
@@ -282,17 +284,9 @@ class FISFraudService:
         if status:
             params["status"] = status
 
-        return await self.fis._make_request(
-            method="GET",
-            endpoint="/fraud/reports",
-            params=params
-        )
+        return await self.fis._make_request(method="GET", endpoint="/fraud/reports", params=params)
 
-    async def update_fraud_report(
-        self,
-        report_id: str,
-        updates: Dict[str, Any]
-    ) -> FISAPIResponse:
+    async def update_fraud_report(self, report_id: str, updates: Dict[str, Any]) -> FISAPIResponse:
         """
         Update a fraud report with additional information.
 
@@ -306,9 +300,7 @@ class FISFraudService:
         logger.info(f"Updating fraud report {report_id}")
 
         return await self.fis._make_request(
-            method="PUT",
-            endpoint=f"/fraud/reports/{report_id}",
-            data=updates
+            method="PUT", endpoint=f"/fraud/reports/{report_id}", data=updates
         )
 
     # =========================================================================
@@ -321,7 +313,7 @@ class FISFraudService:
         status: Optional[AlertStatus] = None,
         priority: Optional[AlertPriority] = None,
         start_date: Optional[date] = None,
-        end_date: Optional[date] = None
+        end_date: Optional[date] = None,
     ) -> FISAPIResponse:
         """
         Get security alerts.
@@ -348,11 +340,7 @@ class FISFraudService:
         if end_date:
             params["end_date"] = end_date.isoformat()
 
-        return await self.fis._make_request(
-            method="GET",
-            endpoint="/alerts",
-            params=params
-        )
+        return await self.fis._make_request(method="GET", endpoint="/alerts", params=params)
 
     async def get_alert(self, alert_id: str) -> FISAPIResponse:
         """
@@ -364,16 +352,9 @@ class FISFraudService:
         Returns:
             FISAPIResponse with alert details
         """
-        return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/alerts/{alert_id}"
-        )
+        return await self.fis._make_request(method="GET", endpoint=f"/alerts/{alert_id}")
 
-    async def acknowledge_alert(
-        self,
-        alert_id: str,
-        notes: Optional[str] = None
-    ) -> FISAPIResponse:
+    async def acknowledge_alert(self, alert_id: str, notes: Optional[str] = None) -> FISAPIResponse:
         """
         Acknowledge a security alert.
 
@@ -391,16 +372,11 @@ class FISFraudService:
             payload["notes"] = notes
 
         return await self.fis._make_request(
-            method="PUT",
-            endpoint=f"/alerts/{alert_id}/acknowledge",
-            data=payload
+            method="PUT", endpoint=f"/alerts/{alert_id}/acknowledge", data=payload
         )
 
     async def resolve_alert(
-        self,
-        alert_id: str,
-        resolution: str,
-        is_false_positive: bool = False
+        self, alert_id: str, resolution: str, is_false_positive: bool = False
     ) -> FISAPIResponse:
         """
         Resolve a security alert.
@@ -418,16 +394,10 @@ class FISFraudService:
         return await self.fis._make_request(
             method="PUT",
             endpoint=f"/alerts/{alert_id}/resolve",
-            data={
-                "resolution": resolution,
-                "is_false_positive": is_false_positive
-            }
+            data={"resolution": resolution, "is_false_positive": is_false_positive},
         )
 
-    async def get_unread_alerts_count(
-        self,
-        card_id: Optional[str] = None
-    ) -> FISAPIResponse:
+    async def get_unread_alerts_count(self, card_id: Optional[str] = None) -> FISAPIResponse:
         """
         Get count of unread alerts.
 
@@ -442,9 +412,7 @@ class FISFraudService:
             params["card_id"] = card_id
 
         return await self.fis._make_request(
-            method="GET",
-            endpoint="/alerts/unread/count",
-            params=params
+            method="GET", endpoint="/alerts/unread/count", params=params
         )
 
     # =========================================================================
@@ -462,14 +430,11 @@ class FISFraudService:
             FISAPIResponse with preferences
         """
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/alerts/preferences"
+            method="GET", endpoint=f"/cards/{card_id}/alerts/preferences"
         )
 
     async def set_alert_preferences(
-        self,
-        card_id: str,
-        preferences: AlertPreferences
+        self, card_id: str, preferences: AlertPreferences
     ) -> FISAPIResponse:
         """
         Set alert preferences for a card.
@@ -493,20 +458,18 @@ class FISFraudService:
             "alert_on_suspicious_activity": preferences.alert_on_suspicious_activity,
             "alert_on_pin_failures": preferences.alert_on_pin_failures,
             "alert_on_card_lock": preferences.alert_on_card_lock,
-            "notification_channels": [ch.value for ch in preferences.notification_channels]
+            "notification_channels": [ch.value for ch in preferences.notification_channels],
         }
 
         if preferences.quiet_hours_enabled:
             payload["quiet_hours"] = {
                 "enabled": True,
                 "start": preferences.quiet_hours_start,
-                "end": preferences.quiet_hours_end
+                "end": preferences.quiet_hours_end,
             }
 
         return await self.fis._make_request(
-            method="PUT",
-            endpoint=f"/cards/{card_id}/alerts/preferences",
-            data=payload
+            method="PUT", endpoint=f"/cards/{card_id}/alerts/preferences", data=payload
         )
 
     # =========================================================================
@@ -519,7 +482,7 @@ class FISFraudService:
         start_date: date,
         end_date: date,
         destinations: List[str],
-        notes: Optional[str] = None
+        notes: Optional[str] = None,
     ) -> FISAPIResponse:
         """
         Set a travel notice to prevent false fraud alerts.
@@ -539,15 +502,13 @@ class FISFraudService:
         payload = {
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat(),
-            "destinations": destinations
+            "destinations": destinations,
         }
         if notes:
             payload["notes"] = notes
 
         return await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/travel-notices",
-            data=payload
+            method="POST", endpoint=f"/cards/{card_id}/travel-notices", data=payload
         )
 
     async def get_travel_notices(self, card_id: str) -> FISAPIResponse:
@@ -561,15 +522,10 @@ class FISFraudService:
             FISAPIResponse with travel notices
         """
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/travel-notices"
+            method="GET", endpoint=f"/cards/{card_id}/travel-notices"
         )
 
-    async def cancel_travel_notice(
-        self,
-        card_id: str,
-        notice_id: str
-    ) -> FISAPIResponse:
+    async def cancel_travel_notice(self, card_id: str, notice_id: str) -> FISAPIResponse:
         """
         Cancel a travel notice.
 
@@ -583,8 +539,7 @@ class FISFraudService:
         logger.info(f"Cancelling travel notice {notice_id} for card {card_id}")
 
         return await self.fis._make_request(
-            method="DELETE",
-            endpoint=f"/cards/{card_id}/travel-notices/{notice_id}"
+            method="DELETE", endpoint=f"/cards/{card_id}/travel-notices/{notice_id}"
         )
 
     # =========================================================================
@@ -599,7 +554,7 @@ class FISFraudService:
         merchant_name: str,
         mcc_code: str,
         location: Dict[str, str],
-        channel: str
+        channel: str,
     ) -> FISAPIResponse:
         """
         Screen a transaction for fraud in real-time.
@@ -623,20 +578,12 @@ class FISFraudService:
         payload = {
             "card_id": card_id,
             "amount": float(amount),
-            "merchant": {
-                "id": merchant_id,
-                "name": merchant_name,
-                "mcc_code": mcc_code
-            },
+            "merchant": {"id": merchant_id, "name": merchant_name, "mcc_code": mcc_code},
             "location": location,
-            "channel": channel
+            "channel": channel,
         }
 
-        return await self.fis._make_request(
-            method="POST",
-            endpoint="/fraud/screen",
-            data=payload
-        )
+        return await self.fis._make_request(method="POST", endpoint="/fraud/screen", data=payload)
 
     async def get_risk_score(self, card_id: str) -> FISAPIResponse:
         """
@@ -648,10 +595,7 @@ class FISFraudService:
         Returns:
             FISAPIResponse with risk score and factors
         """
-        return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/risk-score"
-        )
+        return await self.fis._make_request(method="GET", endpoint=f"/cards/{card_id}/risk-score")
 
 
 # =============================================================================

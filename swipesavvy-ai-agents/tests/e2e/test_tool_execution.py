@@ -185,7 +185,9 @@ class TestToolResults:
 
         for result in tool_results:
             assert "tool" in result, "tool_result should have tool name"
-            assert "success" in result or "result" in result, "tool_result should have success or result"
+            assert (
+                "success" in result or "result" in result
+            ), "tool_result should have success or result"
 
     @pytest.mark.asyncio
     async def test_successful_tool_result_incorporated(self, admin_session):
@@ -199,9 +201,7 @@ class TestToolResults:
 
         # Should have final message with analytics info
         message_events = [e for e in events if e.get("type") in ["message", "done"]]
-        final_content = "".join(
-            e.get("content", "") or e.get("delta", "") for e in message_events
-        )
+        final_content = "".join(e.get("content", "") or e.get("delta", "") for e in message_events)
 
         # Final response should reference analytics data
         assert len(final_content) > 50, "Response should be substantive"
@@ -287,15 +287,14 @@ class TestToolPermissionEnforcement:
 
         # Should either not call tool or get permission error
         tool_results = [e for e in events if e.get("type") == "tool_result"]
-        create_results = [
-            r for r in tool_results if r.get("tool") == "create_support_ticket"
-        ]
+        create_results = [r for r in tool_results if r.get("tool") == "create_support_ticket"]
 
         # If tool was called, it should have failed
         for result in create_results:
-            assert result.get("success") is False or "permission" in str(
-                result.get("result", {})
-            ).lower()
+            assert (
+                result.get("success") is False
+                or "permission" in str(result.get("result", {})).lower()
+            )
 
     @pytest.mark.asyncio
     async def test_analyst_cannot_process_refund(self, analyst_session):
@@ -331,9 +330,7 @@ class TestToolPermissionEnforcement:
 
         # Should successfully call tool
         tool_calls = [e for e in events if e.get("type") == "tool_call"]
-        ticket_calls = [
-            tc for tc in tool_calls if tc.get("tool") == "create_support_ticket"
-        ]
+        ticket_calls = [tc for tc in tool_calls if tc.get("tool") == "create_support_ticket"]
         assert len(ticket_calls) > 0, "Support should be able to create tickets"
 
     @pytest.mark.asyncio
@@ -353,8 +350,7 @@ class TestToolPermissionEnforcement:
         ).lower()
 
         assert any(
-            word in final_content
-            for word in ["limit", "$100", "exceed", "maximum", "escalate"]
+            word in final_content for word in ["limit", "$100", "exceed", "maximum", "escalate"]
         )
 
     async def _collect_stream_events(self, payload: Dict[str, Any]) -> List[Dict[str, Any]]:

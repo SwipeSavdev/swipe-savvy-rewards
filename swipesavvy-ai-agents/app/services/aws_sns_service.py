@@ -33,7 +33,9 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 # For development/testing, enable mock mode
 # In production (ECS), use IAM role - no access keys needed
 # Set MOCK_SMS=true explicitly to enable mock mode
-MOCK_SMS = os.getenv("MOCK_SMS", "true" if ENVIRONMENT == "development" else "false").lower() == "true"
+MOCK_SMS = (
+    os.getenv("MOCK_SMS", "true" if ENVIRONMENT == "development" else "false").lower() == "true"
+)
 
 
 class AWSSNSService:
@@ -49,16 +51,20 @@ class AWSSNSService:
                 # Use explicit credentials if provided (local dev), otherwise use IAM role (ECS)
                 if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
                     self.client = boto3.client(
-                        'sns',
+                        "sns",
                         region_name=AWS_REGION,
                         aws_access_key_id=AWS_ACCESS_KEY_ID,
-                        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+                        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
                     )
-                    logger.info(f"AWS SNS service initialized with explicit credentials in region: {AWS_REGION}")
+                    logger.info(
+                        f"AWS SNS service initialized with explicit credentials in region: {AWS_REGION}"
+                    )
                 else:
                     # ECS/Lambda: Use IAM role credentials automatically
-                    self.client = boto3.client('sns', region_name=AWS_REGION)
-                    logger.info(f"AWS SNS service initialized with IAM role in region: {AWS_REGION}")
+                    self.client = boto3.client("sns", region_name=AWS_REGION)
+                    logger.info(
+                        f"AWS SNS service initialized with IAM role in region: {AWS_REGION}"
+                    )
             except Exception as e:
                 logger.error(f"Failed to initialize AWS SNS client: {e}")
                 self.mock_mode = True
@@ -66,10 +72,7 @@ class AWSSNSService:
             logger.info("AWS SNS service running in MOCK mode - SMS will be logged only")
 
     async def send_sms(
-        self,
-        to_phone: str,
-        message: str,
-        message_type: str = "Transactional"
+        self, to_phone: str, message: str, message_type: str = "Transactional"
     ) -> dict:
         """
         Send SMS message using AWS SNS.
@@ -91,7 +94,7 @@ class AWSSNSService:
                 "success": True,
                 "message_id": "MOCK_MESSAGE_ID",
                 "status": "simulated",
-                "to": formatted_phone
+                "to": formatted_phone,
             }
 
         try:
@@ -100,44 +103,34 @@ class AWSSNSService:
                 PhoneNumber=formatted_phone,
                 Message=message,
                 MessageAttributes={
-                    'AWS.SNS.SMS.SenderID': {
-                        'DataType': 'String',
-                        'StringValue': self.sender_id
-                    },
-                    'AWS.SNS.SMS.SMSType': {
-                        'DataType': 'String',
-                        'StringValue': message_type
-                    }
-                }
+                    "AWS.SNS.SMS.SenderID": {"DataType": "String", "StringValue": self.sender_id},
+                    "AWS.SNS.SMS.SMSType": {"DataType": "String", "StringValue": message_type},
+                },
             )
 
-            message_id = response.get('MessageId')
+            message_id = response.get("MessageId")
             logger.info(f"SMS sent successfully to {formatted_phone}, MessageId: {message_id}")
 
             return {
                 "success": True,
                 "message_id": message_id,
                 "status": "sent",
-                "to": formatted_phone
+                "to": formatted_phone,
             }
 
         except ClientError as e:
-            error_code = e.response['Error']['Code']
-            error_message = e.response['Error']['Message']
+            error_code = e.response["Error"]["Code"]
+            error_message = e.response["Error"]["Message"]
             logger.error(f"AWS SNS error ({error_code}): {error_message}")
             return {
                 "success": False,
                 "error": error_message,
                 "error_code": error_code,
-                "to": formatted_phone
+                "to": formatted_phone,
             }
         except Exception as e:
             logger.error(f"Failed to send SMS to {formatted_phone}: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "to": formatted_phone
-            }
+            return {"success": False, "error": str(e), "to": formatted_phone}
 
     async def send_verification_code(self, to_phone: str, code: str) -> dict:
         """Send verification code SMS using template"""
@@ -155,32 +148,20 @@ class AWSSNSService:
         return await self.send_sms(to_phone, message, "Transactional")
 
     async def send_transaction_alert(
-        self,
-        to_phone: str,
-        amount: float,
-        merchant: str,
-        cashback: float = 0.0
+        self, to_phone: str, amount: float, merchant: str, cashback: float = 0.0
     ) -> dict:
         """Send transaction notification SMS using template"""
         message = SMSTemplates.transaction_alert(merchant, amount, cashback)
         return await self.send_sms(to_phone, message, "Transactional")
 
     async def send_large_transaction_alert(
-        self,
-        to_phone: str,
-        merchant: str,
-        amount: float
+        self, to_phone: str, merchant: str, amount: float
     ) -> dict:
         """Send large transaction security alert SMS"""
         message = SMSTemplates.large_transaction_alert(merchant, amount)
         return await self.send_sms(to_phone, message, "Transactional")
 
-    async def send_security_alert(
-        self,
-        to_phone: str,
-        alert_type: str,
-        details: str = ""
-    ) -> dict:
+    async def send_security_alert(self, to_phone: str, alert_type: str, details: str = "") -> dict:
         """Send security alert SMS using templates"""
         if alert_type == "new_device":
             message = SMSTemplates.new_device_alert(details or "Unknown device")
@@ -198,11 +179,7 @@ class AWSSNSService:
 
         return await self.send_sms(to_phone, message, "Transactional")
 
-    async def send_promotional_sms(
-        self,
-        to_phone: str,
-        message: str
-    ) -> dict:
+    async def send_promotional_sms(self, to_phone: str, message: str) -> dict:
         """Send promotional SMS (lower priority, lower cost)"""
         return await self.send_sms(to_phone, message, "Promotional")
 
@@ -236,31 +213,18 @@ class AWSSNSService:
         return await self.send_sms(to_phone, message, "Transactional")
 
     async def send_promotional_offer_sms(
-        self,
-        to_phone: str,
-        offer: str,
-        code: Optional[str] = None
+        self, to_phone: str, offer: str, code: Optional[str] = None
     ) -> dict:
         """Send promotional offer SMS using template"""
         message = SMSTemplates.promotional_offer(offer, code)
         return await self.send_sms(to_phone, message, "Promotional")
 
-    async def send_referral_bonus_sms(
-        self,
-        to_phone: str,
-        amount: float,
-        friend_name: str
-    ) -> dict:
+    async def send_referral_bonus_sms(self, to_phone: str, amount: float, friend_name: str) -> dict:
         """Send referral bonus notification SMS"""
         message = SMSTemplates.referral_bonus(amount, friend_name)
         return await self.send_sms(to_phone, message, "Transactional")
 
-    async def send_limited_time_offer_sms(
-        self,
-        to_phone: str,
-        offer: str,
-        expires: str
-    ) -> dict:
+    async def send_limited_time_offer_sms(self, to_phone: str, offer: str, expires: str) -> dict:
         """Send limited time offer SMS"""
         message = SMSTemplates.limited_time_offer(offer, expires)
         return await self.send_sms(to_phone, message, "Promotional")
@@ -272,17 +236,17 @@ class AWSSNSService:
 
         # Remove all non-digit characters except leading +
         cleaned = phone.strip()
-        if cleaned.startswith('+'):
-            digits = '+' + ''.join(filter(str.isdigit, cleaned[1:]))
+        if cleaned.startswith("+"):
+            digits = "+" + "".join(filter(str.isdigit, cleaned[1:]))
         else:
-            digits = ''.join(filter(str.isdigit, cleaned))
+            digits = "".join(filter(str.isdigit, cleaned))
 
         # Add US country code if not present
         if len(digits) == 10:
             return f"+1{digits}"
-        elif len(digits) == 11 and digits.startswith('1'):
+        elif len(digits) == 11 and digits.startswith("1"):
             return f"+{digits}"
-        elif not digits.startswith('+'):
+        elif not digits.startswith("+"):
             return f"+{digits}"
 
         return digits
@@ -293,22 +257,20 @@ class AWSSNSService:
             return {
                 "monthly_spend_limit": "1.00",
                 "default_sms_type": "Transactional",
-                "mock_mode": True
+                "mock_mode": True,
             }
 
         try:
             response = self.client.get_sms_attributes(
-                attributes=['MonthlySpendLimit', 'DefaultSMSType', 'UsageReportS3Bucket']
+                attributes=["MonthlySpendLimit", "DefaultSMSType", "UsageReportS3Bucket"]
             )
-            return response.get('attributes', {})
+            return response.get("attributes", {})
         except ClientError as e:
             logger.error(f"Failed to get SMS attributes: {e}")
             return {}
 
     def set_sms_attributes(
-        self,
-        monthly_spend_limit: Optional[str] = None,
-        default_sms_type: Optional[str] = None
+        self, monthly_spend_limit: Optional[str] = None, default_sms_type: Optional[str] = None
     ) -> bool:
         """
         Set SNS SMS attributes.
@@ -324,9 +286,9 @@ class AWSSNSService:
         try:
             attributes = {}
             if monthly_spend_limit:
-                attributes['MonthlySpendLimit'] = monthly_spend_limit
+                attributes["MonthlySpendLimit"] = monthly_spend_limit
             if default_sms_type:
-                attributes['DefaultSMSType'] = default_sms_type
+                attributes["DefaultSMSType"] = default_sms_type
 
             if attributes:
                 self.client.set_sms_attributes(attributes=attributes)
@@ -343,10 +305,8 @@ class AWSSNSService:
 
         try:
             formatted_phone = self._format_phone(phone)
-            response = self.client.check_if_phone_number_is_opted_out(
-                phoneNumber=formatted_phone
-            )
-            return response.get('isOptedOut', False)
+            response = self.client.check_if_phone_number_is_opted_out(phoneNumber=formatted_phone)
+            return response.get("isOptedOut", False)
         except ClientError as e:
             logger.error(f"Failed to check opt-out status: {e}")
             return False
@@ -388,10 +348,7 @@ async def send_password_reset_sms(phone: str, code: str) -> dict:
 
 
 async def send_transaction_alert_sms(
-    phone: str,
-    amount: float,
-    merchant: str,
-    transaction_type: str = "purchase"
+    phone: str, amount: float, merchant: str, transaction_type: str = "purchase"
 ) -> dict:
     """Send transaction alert via SMS"""
     return await aws_sns_service.send_transaction_alert(phone, amount, merchant, transaction_type)

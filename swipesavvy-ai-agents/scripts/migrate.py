@@ -169,7 +169,7 @@ def main():
     print("\nNOTE: This is a preview script. Actual database connection")
     print("will be implemented in Week 2.")
     print("\n" + "=" * 80)
-    
+
     # Create all tables
     create_sessions_table()
     create_messages_table()
@@ -177,7 +177,7 @@ def main():
     create_verifications_table()
     create_audit_logs_table()
     create_handoffs_table()
-    
+
     print("\n" + "=" * 80)
     print("Migration preview complete!")
     print("\nNext steps:")

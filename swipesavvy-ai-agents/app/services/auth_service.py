@@ -19,33 +19,43 @@ USER_NOT_FOUND = "User not found"
 
 # ==================== Models ====================
 
+
 class UserRole(str, Enum):
     """User roles in the system"""
+
     ADMIN = "admin"
     MERCHANT = "merchant"
     USER = "user"
 
+
 class UserStatus(str, Enum):
     """User account status"""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
 
+
 class UserCreate(BaseModel):
     """User registration data"""
+
     email: EmailStr
     password: str
     first_name: str
     last_name: str
     phone_number: Optional[str] = None
 
+
 class UserLogin(BaseModel):
     """User login credentials"""
+
     email: EmailStr
     password: str
 
+
 class UserResponse(BaseModel):
     """User data response"""
+
     id: str
     email: str
     first_name: str
@@ -56,34 +66,49 @@ class UserResponse(BaseModel):
     updated_at: datetime
     phone_number: Optional[str] = None
 
+
 class TokenResponse(BaseModel):
     """JWT token response"""
+
     access_token: str
     refresh_token: str
     token_type: str
     expires_in: int
 
+
 class TokenPayload(BaseModel):
     """JWT token payload"""
+
     user_id: str
     email: str
     role: UserRole
     exp: datetime
 
+
 class PasswordChangeRequest(BaseModel):
     """Password change request"""
+
     current_password: str
     new_password: str
     confirm_password: str
+
 
 # ==================== Database Models (Mock) ====================
 
 USERS_DB = {}  # Mock database
 
+
 class User:
     """User model for database"""
-    def __init__(self, email: str, password: str, first_name: str, last_name: str, 
-                 phone_number: Optional[str] = None):
+
+    def __init__(
+        self,
+        email: str,
+        password: str,
+        first_name: str,
+        last_name: str,
+        phone_number: Optional[str] = None,
+    ):
         self.id = secrets.token_urlsafe(16)
         self.email = email
         self.password_hash = self._hash_password(password)
@@ -101,14 +126,14 @@ class User:
     def _hash_password(password: str) -> str:
         """Hash password with salt"""
         salt = secrets.token_hex(32)
-        pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+        pwd_hash = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000)
         return f"{salt}${pwd_hash.hex()}"
 
     def verify_password(self, password: str) -> bool:
         """Verify password against hash"""
         try:
-            salt, pwd_hash = self.password_hash.split('$')
-            new_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+            salt, pwd_hash = self.password_hash.split("$")
+            new_hash = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000)
             return new_hash.hex() == pwd_hash
         except (ValueError, AttributeError):
             return False
@@ -128,7 +153,9 @@ class User:
             "last_login": self.last_login,
         }
 
+
 # ==================== Authentication Service ====================
+
 
 class AuthService:
     """Authentication service for JWT token management"""
@@ -147,7 +174,7 @@ class AuthService:
             "email": email,
             "role": role,
             "exp": expires,
-            "type": "access"
+            "type": "access",
         }
         token = jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
         return token, expires
@@ -155,11 +182,7 @@ class AuthService:
     def create_refresh_token(self, user_id: str) -> tuple[str, datetime]:
         """Create JWT refresh token"""
         expires = datetime.now(timezone.utc) + timedelta(days=self.refresh_token_expire_days)
-        payload = {
-            "user_id": user_id,
-            "exp": expires,
-            "type": "refresh"
-        }
+        payload = {"user_id": user_id, "exp": expires, "type": "refresh"}
         token = jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
         return token, expires
 
@@ -180,7 +203,9 @@ class AuthService:
         except (jwt.InvalidTokenError, jwt.DecodeError, TypeError):
             return None
 
+
 # ==================== User Service ====================
+
 
 class UserService:
     """User management service"""
@@ -198,7 +223,7 @@ class UserService:
             password=user_data.password,
             first_name=user_data.first_name,
             last_name=user_data.last_name,
-            phone_number=user_data.phone_number
+            phone_number=user_data.phone_number,
         )
         USERS_DB[user.id] = user
         return user
@@ -209,7 +234,7 @@ class UserService:
         user = next((u for u in USERS_DB.values() if u.email == email), None)
         if not user or not user.verify_password(password):
             return None
-        
+
         # Update last login
         user.last_login = datetime.now(timezone.utc)
         return user
@@ -267,6 +292,7 @@ class UserService:
             return True
         return False
 
+
 # ==================== Dependencies ====================
 
 security = HTTPBearer()
@@ -274,15 +300,17 @@ security = HTTPBearer()
 _jwt_secret = os.environ.get("JWT_SECRET_KEY", os.environ.get("JWT_SECRET", ""))
 if not _jwt_secret:
     import warnings
+
     warnings.warn("JWT_SECRET_KEY not set — AuthService will reject all tokens", stacklevel=1)
 auth_service = AuthService(secret_key=_jwt_secret)
 user_service = UserService()
+
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     """Get current authenticated user from token"""
     token = credentials.credentials
     payload = auth_service.verify_token(token)
-    
+
     user = user_service.get_user_by_id(payload["user_id"])
     if not user:
         raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
@@ -292,13 +320,16 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
     return user
 
+
 async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     """Get current admin user"""
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
 
+
 # ==================== API Routes ====================
+
 
 def create_auth_routes(app: FastAPI):
     """Create authentication API routes"""
@@ -311,12 +342,12 @@ def create_auth_routes(app: FastAPI):
             user.id, user.email, user.role
         )
         refresh_token, _ = auth_service.create_refresh_token(user.id)
-        
+
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
-            "expires_in": auth_service.access_token_expire_minutes * 60
+            "expires_in": auth_service.access_token_expire_minutes * 60,
         }
 
     @app.post("/api/auth/login", response_model=TokenResponse, tags=["Authentication"])
@@ -335,7 +366,7 @@ def create_auth_routes(app: FastAPI):
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
-            "expires_in": auth_service.access_token_expire_minutes * 60
+            "expires_in": auth_service.access_token_expire_minutes * 60,
         }
 
     @app.post("/api/auth/refresh", response_model=TokenResponse, tags=["Authentication"])
@@ -360,7 +391,7 @@ def create_auth_routes(app: FastAPI):
             "access_token": access_token,
             "refresh_token": new_refresh_token,
             "token_type": "bearer",
-            "expires_in": auth_service.access_token_expire_minutes * 60
+            "expires_in": auth_service.access_token_expire_minutes * 60,
         }
 
     @app.get("/api/auth/me", response_model=UserResponse, tags=["Authentication"])
@@ -370,14 +401,15 @@ def create_auth_routes(app: FastAPI):
 
     @app.post("/api/auth/change-password", tags=["Authentication"])
     async def change_password(
-        request: PasswordChangeRequest,
-        current_user: User = Depends(get_current_user)
+        request: PasswordChangeRequest, current_user: User = Depends(get_current_user)
     ):
         """Change user password"""
         if request.new_password != request.confirm_password:
             raise HTTPException(status_code=400, detail="Passwords do not match")
 
-        user_service.change_password(current_user.id, request.current_password, request.new_password)
+        user_service.change_password(
+            current_user.id, request.current_password, request.new_password
+        )
         return {"message": "Password changed successfully"}
 
     @app.post("/api/auth/logout", tags=["Authentication"])

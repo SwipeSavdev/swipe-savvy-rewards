@@ -46,6 +46,7 @@ MOCK_LOCATION = os.getenv("MOCK_LOCATION", "true").lower() == "true" or not AWS_
 
 class TravelMode(str, Enum):
     """Travel modes for route calculation"""
+
     CAR = "Car"
     TRUCK = "Truck"
     WALKING = "Walking"
@@ -53,12 +54,14 @@ class TravelMode(str, Enum):
 
 class DistanceUnit(str, Enum):
     """Distance units"""
+
     KILOMETERS = "Kilometers"
     MILES = "Miles"
 
 
 class GeofenceEventType(str, Enum):
     """Geofence event types"""
+
     ENTER = "ENTER"
     EXIT = "EXIT"
 
@@ -78,10 +81,10 @@ class AWSLocationService:
         if not self.mock_mode:
             try:
                 self.location_client = boto3.client(
-                    'location',
+                    "location",
                     region_name=AWS_REGION,
                     aws_access_key_id=AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
                 )
                 logger.info(f"AWS Location Service initialized in region: {AWS_REGION}")
             except Exception as e:
@@ -98,7 +101,7 @@ class AWSLocationService:
         self,
         address: str,
         bias_position: Optional[Tuple[float, float]] = None,
-        max_results: int = 5
+        max_results: int = 5,
     ) -> Dict[str, Any]:
         """
         Convert an address to coordinates (geocoding).
@@ -115,30 +118,25 @@ class AWSLocationService:
             logger.info(f"[MOCK GEOCODE] Address: {address}")
             return {
                 "success": True,
-                "results": [{
-                    "place_id": "mock_place_123",
-                    "label": address,
-                    "coordinates": {
-                        "longitude": -73.9857,
-                        "latitude": 40.7484
-                    },
-                    "address": {
-                        "street": "350 5th Ave",
-                        "city": "New York",
-                        "state": "NY",
-                        "postal_code": "10118",
-                        "country": "USA"
-                    },
-                    "relevance": 1.0
-                }]
+                "results": [
+                    {
+                        "place_id": "mock_place_123",
+                        "label": address,
+                        "coordinates": {"longitude": -73.9857, "latitude": 40.7484},
+                        "address": {
+                            "street": "350 5th Ave",
+                            "city": "New York",
+                            "state": "NY",
+                            "postal_code": "10118",
+                            "country": "USA",
+                        },
+                        "relevance": 1.0,
+                    }
+                ],
             }
 
         try:
-            params = {
-                "IndexName": self.place_index,
-                "Text": address,
-                "MaxResults": max_results
-            }
+            params = {"IndexName": self.place_index, "Text": address, "MaxResults": max_results}
 
             if bias_position:
                 params["BiasPosition"] = list(bias_position)
@@ -151,22 +149,21 @@ class AWSLocationService:
                 geometry = place.get("Geometry", {})
                 point = geometry.get("Point", [0, 0])
 
-                results.append({
-                    "place_id": result.get("PlaceId"),
-                    "label": place.get("Label"),
-                    "coordinates": {
-                        "longitude": point[0],
-                        "latitude": point[1]
-                    },
-                    "address": {
-                        "street": place.get("Street"),
-                        "city": place.get("Municipality"),
-                        "state": place.get("Region"),
-                        "postal_code": place.get("PostalCode"),
-                        "country": place.get("Country")
-                    },
-                    "relevance": result.get("Relevance", 0)
-                })
+                results.append(
+                    {
+                        "place_id": result.get("PlaceId"),
+                        "label": place.get("Label"),
+                        "coordinates": {"longitude": point[0], "latitude": point[1]},
+                        "address": {
+                            "street": place.get("Street"),
+                            "city": place.get("Municipality"),
+                            "state": place.get("Region"),
+                            "postal_code": place.get("PostalCode"),
+                            "country": place.get("Country"),
+                        },
+                        "relevance": result.get("Relevance", 0),
+                    }
+                )
 
             return {"success": True, "results": results}
 
@@ -175,10 +172,7 @@ class AWSLocationService:
             return {"success": False, "error": "Location service error", "results": []}
 
     async def reverse_geocode(
-        self,
-        longitude: float,
-        latitude: float,
-        max_results: int = 5
+        self, longitude: float, latitude: float, max_results: int = 5
     ) -> Dict[str, Any]:
         """
         Convert coordinates to an address (reverse geocoding).
@@ -195,49 +189,45 @@ class AWSLocationService:
             logger.info(f"[MOCK REVERSE GEOCODE] Coords: {longitude}, {latitude}")
             return {
                 "success": True,
-                "results": [{
-                    "label": "350 5th Ave, New York, NY 10118, USA",
-                    "coordinates": {
-                        "longitude": longitude,
-                        "latitude": latitude
-                    },
-                    "address": {
-                        "street": "350 5th Ave",
-                        "city": "New York",
-                        "state": "NY",
-                        "postal_code": "10118",
-                        "country": "USA"
-                    },
-                    "distance": 0
-                }]
+                "results": [
+                    {
+                        "label": "350 5th Ave, New York, NY 10118, USA",
+                        "coordinates": {"longitude": longitude, "latitude": latitude},
+                        "address": {
+                            "street": "350 5th Ave",
+                            "city": "New York",
+                            "state": "NY",
+                            "postal_code": "10118",
+                            "country": "USA",
+                        },
+                        "distance": 0,
+                    }
+                ],
             }
 
         try:
             response = self.location_client.search_place_index_for_position(
-                IndexName=self.place_index,
-                Position=[longitude, latitude],
-                MaxResults=max_results
+                IndexName=self.place_index, Position=[longitude, latitude], MaxResults=max_results
             )
 
             results = []
             for result in response.get("Results", []):
                 place = result.get("Place", {})
 
-                results.append({
-                    "label": place.get("Label"),
-                    "coordinates": {
-                        "longitude": longitude,
-                        "latitude": latitude
-                    },
-                    "address": {
-                        "street": place.get("Street"),
-                        "city": place.get("Municipality"),
-                        "state": place.get("Region"),
-                        "postal_code": place.get("PostalCode"),
-                        "country": place.get("Country")
-                    },
-                    "distance": result.get("Distance", 0)
-                })
+                results.append(
+                    {
+                        "label": place.get("Label"),
+                        "coordinates": {"longitude": longitude, "latitude": latitude},
+                        "address": {
+                            "street": place.get("Street"),
+                            "city": place.get("Municipality"),
+                            "state": place.get("Region"),
+                            "postal_code": place.get("PostalCode"),
+                            "country": place.get("Country"),
+                        },
+                        "distance": result.get("Distance", 0),
+                    }
+                )
 
             return {"success": True, "results": results}
 
@@ -255,7 +245,7 @@ class AWSLocationService:
         latitude: float,
         categories: Optional[List[str]] = None,
         radius_km: float = 5.0,
-        max_results: int = 20
+        max_results: int = 20,
     ) -> Dict[str, Any]:
         """
         Search for places near a location.
@@ -271,7 +261,9 @@ class AWSLocationService:
             Dict with nearby places
         """
         if self.mock_mode:
-            logger.info(f"[MOCK NEARBY SEARCH] Center: {longitude}, {latitude}, Radius: {radius_km}km")
+            logger.info(
+                f"[MOCK NEARBY SEARCH] Center: {longitude}, {latitude}, Radius: {radius_km}km"
+            )
             return {
                 "success": True,
                 "results": [
@@ -281,11 +273,11 @@ class AWSLocationService:
                         "label": "Starbucks, 123 Main St, New York, NY",
                         "coordinates": {
                             "longitude": longitude + 0.001,
-                            "latitude": latitude + 0.001
+                            "latitude": latitude + 0.001,
                         },
                         "categories": ["coffee_shop", "restaurant"],
                         "distance_km": 0.15,
-                        "cashback_rate": 3.0
+                        "cashback_rate": 3.0,
                     },
                     {
                         "place_id": "mock_merchant_2",
@@ -293,11 +285,11 @@ class AWSLocationService:
                         "label": "Target, 456 Broadway, New York, NY",
                         "coordinates": {
                             "longitude": longitude - 0.002,
-                            "latitude": latitude + 0.001
+                            "latitude": latitude + 0.001,
                         },
                         "categories": ["department_store", "shopping"],
                         "distance_km": 0.32,
-                        "cashback_rate": 2.5
+                        "cashback_rate": 2.5,
                     },
                     {
                         "place_id": "mock_atm_1",
@@ -305,13 +297,13 @@ class AWSLocationService:
                         "label": "Chase Bank ATM, 789 5th Ave, New York, NY",
                         "coordinates": {
                             "longitude": longitude + 0.0005,
-                            "latitude": latitude - 0.001
+                            "latitude": latitude - 0.001,
                         },
                         "categories": ["atm", "bank"],
                         "distance_km": 0.18,
-                        "cashback_rate": None
-                    }
-                ]
+                        "cashback_rate": None,
+                    },
+                ],
             }
 
         try:
@@ -324,14 +316,14 @@ class AWSLocationService:
                 longitude - lon_offset,
                 latitude - lat_offset,
                 longitude + lon_offset,
-                latitude + lat_offset
+                latitude + lat_offset,
             ]
 
             params = {
                 "IndexName": self.place_index,
                 "Position": [longitude, latitude],
                 "MaxResults": max_results,
-                "FilterBBox": filter_bbox
+                "FilterBBox": filter_bbox,
             }
 
             if categories:
@@ -345,18 +337,17 @@ class AWSLocationService:
                 geometry = place.get("Geometry", {})
                 point = geometry.get("Point", [longitude, latitude])
 
-                results.append({
-                    "place_id": result.get("PlaceId"),
-                    "name": place.get("Label", "").split(",")[0],
-                    "label": place.get("Label"),
-                    "coordinates": {
-                        "longitude": point[0],
-                        "latitude": point[1]
-                    },
-                    "categories": place.get("Categories", []),
-                    "distance_km": result.get("Distance", 0) / 1000,  # Convert to km
-                    "cashback_rate": None  # Would be populated from merchant database
-                })
+                results.append(
+                    {
+                        "place_id": result.get("PlaceId"),
+                        "name": place.get("Label", "").split(",")[0],
+                        "label": place.get("Label"),
+                        "coordinates": {"longitude": point[0], "latitude": point[1]},
+                        "categories": place.get("Categories", []),
+                        "distance_km": result.get("Distance", 0) / 1000,  # Convert to km
+                        "cashback_rate": None,  # Would be populated from merchant database
+                    }
+                )
 
             return {"success": True, "results": results}
 
@@ -369,7 +360,7 @@ class AWSLocationService:
         query: str,
         longitude: Optional[float] = None,
         latitude: Optional[float] = None,
-        max_results: int = 10
+        max_results: int = 10,
     ) -> Dict[str, Any]:
         """
         Search for places by name/query.
@@ -387,25 +378,23 @@ class AWSLocationService:
             logger.info(f"[MOCK PLACE SEARCH] Query: {query}")
             return {
                 "success": True,
-                "results": [{
-                    "place_id": "mock_search_1",
-                    "name": query,
-                    "label": f"{query}, New York, NY",
-                    "coordinates": {
-                        "longitude": longitude or -73.9857,
-                        "latitude": latitude or 40.7484
-                    },
-                    "categories": ["business"],
-                    "relevance": 0.95
-                }]
+                "results": [
+                    {
+                        "place_id": "mock_search_1",
+                        "name": query,
+                        "label": f"{query}, New York, NY",
+                        "coordinates": {
+                            "longitude": longitude or -73.9857,
+                            "latitude": latitude or 40.7484,
+                        },
+                        "categories": ["business"],
+                        "relevance": 0.95,
+                    }
+                ],
             }
 
         try:
-            params = {
-                "IndexName": self.place_index,
-                "Text": query,
-                "MaxResults": max_results
-            }
+            params = {"IndexName": self.place_index, "Text": query, "MaxResults": max_results}
 
             if longitude is not None and latitude is not None:
                 params["BiasPosition"] = [longitude, latitude]
@@ -418,17 +407,16 @@ class AWSLocationService:
                 geometry = place.get("Geometry", {})
                 point = geometry.get("Point", [0, 0])
 
-                results.append({
-                    "place_id": result.get("PlaceId"),
-                    "name": place.get("Label", "").split(",")[0],
-                    "label": place.get("Label"),
-                    "coordinates": {
-                        "longitude": point[0],
-                        "latitude": point[1]
-                    },
-                    "categories": place.get("Categories", []),
-                    "relevance": result.get("Relevance", 0)
-                })
+                results.append(
+                    {
+                        "place_id": result.get("PlaceId"),
+                        "name": place.get("Label", "").split(",")[0],
+                        "label": place.get("Label"),
+                        "coordinates": {"longitude": point[0], "latitude": point[1]},
+                        "categories": place.get("Categories", []),
+                        "relevance": result.get("Relevance", 0),
+                    }
+                )
 
             return {"success": True, "results": results}
 
@@ -448,7 +436,7 @@ class AWSLocationService:
         waypoints: Optional[List[Tuple[float, float]]] = None,
         avoid_tolls: bool = False,
         avoid_ferries: bool = False,
-        distance_unit: DistanceUnit = DistanceUnit.KILOMETERS
+        distance_unit: DistanceUnit = DistanceUnit.KILOMETERS,
     ) -> Dict[str, Any]:
         """
         Calculate a route between two points.
@@ -475,43 +463,57 @@ class AWSLocationService:
                     "summary": "Via Broadway and 5th Ave",
                     "bounds": {
                         "southwest": {"longitude": origin[0], "latitude": origin[1]},
-                        "northeast": {"longitude": destination[0], "latitude": destination[1]}
+                        "northeast": {"longitude": destination[0], "latitude": destination[1]},
                     },
-                    "legs": [{
-                        "distance_km": 5.2,
-                        "duration_minutes": 12,
-                        "start_position": {"longitude": origin[0], "latitude": origin[1]},
-                        "end_position": {"longitude": destination[0], "latitude": destination[1]},
-                        "steps": [
-                            {
-                                "distance_km": 0.3,
-                                "duration_minutes": 1,
-                                "instruction": "Head north on Broadway",
-                                "start_position": {"longitude": origin[0], "latitude": origin[1]}
+                    "legs": [
+                        {
+                            "distance_km": 5.2,
+                            "duration_minutes": 12,
+                            "start_position": {"longitude": origin[0], "latitude": origin[1]},
+                            "end_position": {
+                                "longitude": destination[0],
+                                "latitude": destination[1],
                             },
-                            {
-                                "distance_km": 2.5,
-                                "duration_minutes": 5,
-                                "instruction": "Turn right onto 5th Ave",
-                                "start_position": {"longitude": origin[0] + 0.003, "latitude": origin[1] + 0.005}
-                            },
-                            {
-                                "distance_km": 2.4,
-                                "duration_minutes": 6,
-                                "instruction": "Continue to destination",
-                                "start_position": {"longitude": destination[0] - 0.01, "latitude": destination[1] - 0.01}
-                            }
-                        ]
-                    }],
+                            "steps": [
+                                {
+                                    "distance_km": 0.3,
+                                    "duration_minutes": 1,
+                                    "instruction": "Head north on Broadway",
+                                    "start_position": {
+                                        "longitude": origin[0],
+                                        "latitude": origin[1],
+                                    },
+                                },
+                                {
+                                    "distance_km": 2.5,
+                                    "duration_minutes": 5,
+                                    "instruction": "Turn right onto 5th Ave",
+                                    "start_position": {
+                                        "longitude": origin[0] + 0.003,
+                                        "latitude": origin[1] + 0.005,
+                                    },
+                                },
+                                {
+                                    "distance_km": 2.4,
+                                    "duration_minutes": 6,
+                                    "instruction": "Continue to destination",
+                                    "start_position": {
+                                        "longitude": destination[0] - 0.01,
+                                        "latitude": destination[1] - 0.01,
+                                    },
+                                },
+                            ],
+                        }
+                    ],
                     "geometry": {
                         "line_string": [
                             list(origin),
                             [origin[0] + 0.003, origin[1] + 0.005],
                             [destination[0] - 0.01, destination[1] - 0.01],
-                            list(destination)
+                            list(destination),
                         ]
-                    }
-                }
+                    },
+                },
             }
 
         try:
@@ -521,10 +523,7 @@ class AWSLocationService:
                 "DestinationPosition": list(destination),
                 "TravelMode": travel_mode.value,
                 "DistanceUnit": distance_unit.value,
-                "CarModeOptions": {
-                    "AvoidTolls": avoid_tolls,
-                    "AvoidFerries": avoid_ferries
-                }
+                "CarModeOptions": {"AvoidTolls": avoid_tolls, "AvoidFerries": avoid_ferries},
             }
 
             if waypoints:
@@ -537,25 +536,28 @@ class AWSLocationService:
                 steps = []
                 for step in leg.get("Steps", []):
                     start_pos = step.get("StartPosition", [0, 0])
-                    steps.append({
-                        "distance_km": step.get("Distance", 0),
-                        "duration_minutes": step.get("DurationSeconds", 0) / 60,
-                        "instruction": step.get("GeometryOffset"),  # Would need instruction from geometry
-                        "start_position": {
-                            "longitude": start_pos[0],
-                            "latitude": start_pos[1]
+                    steps.append(
+                        {
+                            "distance_km": step.get("Distance", 0),
+                            "duration_minutes": step.get("DurationSeconds", 0) / 60,
+                            "instruction": step.get(
+                                "GeometryOffset"
+                            ),  # Would need instruction from geometry
+                            "start_position": {"longitude": start_pos[0], "latitude": start_pos[1]},
                         }
-                    })
+                    )
 
                 start = leg.get("StartPosition", [0, 0])
                 end = leg.get("EndPosition", [0, 0])
-                legs.append({
-                    "distance_km": leg.get("Distance", 0),
-                    "duration_minutes": leg.get("DurationSeconds", 0) / 60,
-                    "start_position": {"longitude": start[0], "latitude": start[1]},
-                    "end_position": {"longitude": end[0], "latitude": end[1]},
-                    "steps": steps
-                })
+                legs.append(
+                    {
+                        "distance_km": leg.get("Distance", 0),
+                        "duration_minutes": leg.get("DurationSeconds", 0) / 60,
+                        "start_position": {"longitude": start[0], "latitude": start[1]},
+                        "end_position": {"longitude": end[0], "latitude": end[1]},
+                        "steps": steps,
+                    }
+                )
 
             summary = response.get("Summary", {})
             return {
@@ -566,9 +568,11 @@ class AWSLocationService:
                     "summary": summary.get("DataSource", ""),
                     "legs": legs,
                     "geometry": {
-                        "line_string": response.get("Legs", [{}])[0].get("Geometry", {}).get("LineString", [])
-                    }
-                }
+                        "line_string": response.get("Legs", [{}])[0]
+                        .get("Geometry", {})
+                        .get("LineString", [])
+                    },
+                },
             }
 
         except ClientError as e:
@@ -584,7 +588,7 @@ class AWSLocationService:
         geofence_id: str,
         center: Tuple[float, float],
         radius_meters: float,
-        metadata: Optional[Dict[str, str]] = None
+        metadata: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
         Create a circular geofence.
@@ -599,22 +603,19 @@ class AWSLocationService:
             Dict with creation result
         """
         if self.mock_mode:
-            logger.info(f"[MOCK GEOFENCE CREATE] ID: {geofence_id}, Center: {center}, Radius: {radius_meters}m")
+            logger.info(
+                f"[MOCK GEOFENCE CREATE] ID: {geofence_id}, Center: {center}, Radius: {radius_meters}m"
+            )
             return {
                 "success": True,
                 "geofence_id": geofence_id,
-                "created_at": datetime.now(timezone.utc).isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat(),
             }
 
         try:
             geofence_entry = {
                 "GeofenceId": geofence_id,
-                "Geometry": {
-                    "Circle": {
-                        "Center": list(center),
-                        "Radius": radius_meters
-                    }
-                }
+                "Geometry": {"Circle": {"Center": list(center), "Radius": radius_meters}},
             }
 
             if metadata:
@@ -624,14 +625,22 @@ class AWSLocationService:
                 CollectionName=self.geofence_collection,
                 GeofenceId=geofence_id,
                 Geometry=geofence_entry["Geometry"],
-                GeofenceProperties=metadata or {}
+                GeofenceProperties=metadata or {},
             )
 
             return {
                 "success": True,
                 "geofence_id": geofence_id,
-                "created_at": response.get("CreateTime", "").isoformat() if response.get("CreateTime") else None,
-                "updated_at": response.get("UpdateTime", "").isoformat() if response.get("UpdateTime") else None
+                "created_at": (
+                    response.get("CreateTime", "").isoformat()
+                    if response.get("CreateTime")
+                    else None
+                ),
+                "updated_at": (
+                    response.get("UpdateTime", "").isoformat()
+                    if response.get("UpdateTime")
+                    else None
+                ),
             }
 
         except ClientError as e:
@@ -642,7 +651,7 @@ class AWSLocationService:
         self,
         geofence_id: str,
         polygon: List[Tuple[float, float]],
-        metadata: Optional[Dict[str, str]] = None
+        metadata: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
         Create a polygon geofence.
@@ -660,7 +669,7 @@ class AWSLocationService:
             return {
                 "success": True,
                 "geofence_id": geofence_id,
-                "created_at": datetime.now(timezone.utc).isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat(),
             }
 
         try:
@@ -672,16 +681,18 @@ class AWSLocationService:
             response = self.location_client.put_geofence(
                 CollectionName=self.geofence_collection,
                 GeofenceId=geofence_id,
-                Geometry={
-                    "Polygon": [polygon_coords]
-                },
-                GeofenceProperties=metadata or {}
+                Geometry={"Polygon": [polygon_coords]},
+                GeofenceProperties=metadata or {},
             )
 
             return {
                 "success": True,
                 "geofence_id": geofence_id,
-                "created_at": response.get("CreateTime", "").isoformat() if response.get("CreateTime") else None
+                "created_at": (
+                    response.get("CreateTime", "").isoformat()
+                    if response.get("CreateTime")
+                    else None
+                ),
             }
 
         except ClientError as e:
@@ -696,8 +707,7 @@ class AWSLocationService:
 
         try:
             self.location_client.batch_delete_geofence(
-                CollectionName=self.geofence_collection,
-                GeofenceIds=[geofence_id]
+                CollectionName=self.geofence_collection, GeofenceIds=[geofence_id]
             )
             return {"success": True, "geofence_id": geofence_id}
 
@@ -714,30 +724,39 @@ class AWSLocationService:
                     {
                         "geofence_id": "merchant_starbucks_123",
                         "status": "ACTIVE",
-                        "created_at": "2024-01-01T00:00:00Z"
+                        "created_at": "2024-01-01T00:00:00Z",
                     },
                     {
                         "geofence_id": "merchant_target_456",
                         "status": "ACTIVE",
-                        "created_at": "2024-01-02T00:00:00Z"
-                    }
-                ]
+                        "created_at": "2024-01-02T00:00:00Z",
+                    },
+                ],
             }
 
         try:
             response = self.location_client.list_geofences(
-                CollectionName=self.geofence_collection,
-                MaxResults=max_results
+                CollectionName=self.geofence_collection, MaxResults=max_results
             )
 
             geofences = []
             for entry in response.get("Entries", []):
-                geofences.append({
-                    "geofence_id": entry.get("GeofenceId"),
-                    "status": entry.get("Status"),
-                    "created_at": entry.get("CreateTime", "").isoformat() if entry.get("CreateTime") else None,
-                    "updated_at": entry.get("UpdateTime", "").isoformat() if entry.get("UpdateTime") else None
-                })
+                geofences.append(
+                    {
+                        "geofence_id": entry.get("GeofenceId"),
+                        "status": entry.get("Status"),
+                        "created_at": (
+                            entry.get("CreateTime", "").isoformat()
+                            if entry.get("CreateTime")
+                            else None
+                        ),
+                        "updated_at": (
+                            entry.get("UpdateTime", "").isoformat()
+                            if entry.get("UpdateTime")
+                            else None
+                        ),
+                    }
+                )
 
             return {"success": True, "geofences": geofences}
 
@@ -746,9 +765,7 @@ class AWSLocationService:
             return {"success": False, "error": "Location service error", "geofences": []}
 
     async def evaluate_geofences(
-        self,
-        device_id: str,
-        position: Tuple[float, float]
+        self, device_id: str, position: Tuple[float, float]
     ) -> Dict[str, Any]:
         """
         Evaluate which geofences a position is inside.
@@ -766,32 +783,36 @@ class AWSLocationService:
                 "success": True,
                 "device_id": device_id,
                 "inside_geofences": ["merchant_starbucks_123"],
-                "position": {"longitude": position[0], "latitude": position[1]}
+                "position": {"longitude": position[0], "latitude": position[1]},
             }
 
         try:
             response = self.location_client.batch_evaluate_geofences(
                 CollectionName=self.geofence_collection,
-                DevicePositionUpdates=[{
-                    "DeviceId": device_id,
-                    "Position": list(position),
-                    "SampleTime": datetime.now(timezone.utc)
-                }]
+                DevicePositionUpdates=[
+                    {
+                        "DeviceId": device_id,
+                        "Position": list(position),
+                        "SampleTime": datetime.now(timezone.utc),
+                    }
+                ],
             )
 
             # Get geofence events
             events = []
             for error in response.get("Errors", []):
-                events.append({
-                    "device_id": error.get("DeviceId"),
-                    "error": error.get("Error", {}).get("Message")
-                })
+                events.append(
+                    {
+                        "device_id": error.get("DeviceId"),
+                        "error": error.get("Error", {}).get("Message"),
+                    }
+                )
 
             return {
                 "success": True,
                 "device_id": device_id,
                 "position": {"longitude": position[0], "latitude": position[1]},
-                "errors": events if events else None
+                "errors": events if events else None,
             }
 
         except ClientError as e:
@@ -807,7 +828,7 @@ class AWSLocationService:
         device_id: str,
         position: Tuple[float, float],
         accuracy: Optional[float] = None,
-        position_properties: Optional[Dict[str, str]] = None
+        position_properties: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
         Update a device's position for tracking.
@@ -827,14 +848,14 @@ class AWSLocationService:
                 "success": True,
                 "device_id": device_id,
                 "position": {"longitude": position[0], "latitude": position[1]},
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         try:
             update = {
                 "DeviceId": device_id,
                 "Position": list(position),
-                "SampleTime": datetime.now(timezone.utc)
+                "SampleTime": datetime.now(timezone.utc),
             }
 
             if accuracy:
@@ -844,8 +865,7 @@ class AWSLocationService:
                 update["PositionProperties"] = position_properties
 
             response = self.location_client.batch_update_device_position(
-                TrackerName=self.tracker_name,
-                Updates=[update]
+                TrackerName=self.tracker_name, Updates=[update]
             )
 
             errors = response.get("Errors", [])
@@ -856,7 +876,7 @@ class AWSLocationService:
                 "success": True,
                 "device_id": device_id,
                 "position": {"longitude": position[0], "latitude": position[1]},
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except ClientError as e:
@@ -872,13 +892,12 @@ class AWSLocationService:
                 "device_id": device_id,
                 "position": {"longitude": -73.9857, "latitude": 40.7484},
                 "accuracy": 10.0,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         try:
             response = self.location_client.get_device_position(
-                TrackerName=self.tracker_name,
-                DeviceId=device_id
+                TrackerName=self.tracker_name, DeviceId=device_id
             )
 
             position = response.get("Position", [0, 0])
@@ -887,12 +906,16 @@ class AWSLocationService:
                 "device_id": device_id,
                 "position": {"longitude": position[0], "latitude": position[1]},
                 "accuracy": response.get("Accuracy", {}).get("Horizontal"),
-                "timestamp": response.get("ReceivedTime", "").isoformat() if response.get("ReceivedTime") else None,
-                "properties": response.get("PositionProperties", {})
+                "timestamp": (
+                    response.get("ReceivedTime", "").isoformat()
+                    if response.get("ReceivedTime")
+                    else None
+                ),
+                "properties": response.get("PositionProperties", {}),
             }
 
         except ClientError as e:
-            if e.response['Error']['Code'] == 'ResourceNotFoundException':
+            if e.response["Error"]["Code"] == "ResourceNotFoundException":
                 return {"success": False, "error": "Device not found"}
             logger.error(f"Get position error: {str(e)}")
             return {"success": False, "error": "Location service error"}
@@ -902,7 +925,7 @@ class AWSLocationService:
         device_id: str,
         start_time: datetime,
         end_time: Optional[datetime] = None,
-        max_results: int = 100
+        max_results: int = 100,
     ) -> Dict[str, Any]:
         """
         Get position history for a device.
@@ -924,13 +947,13 @@ class AWSLocationService:
                 "positions": [
                     {
                         "position": {"longitude": -73.9857, "latitude": 40.7484},
-                        "timestamp": "2024-01-01T10:00:00Z"
+                        "timestamp": "2024-01-01T10:00:00Z",
                     },
                     {
                         "position": {"longitude": -73.9860, "latitude": 40.7490},
-                        "timestamp": "2024-01-01T10:30:00Z"
-                    }
-                ]
+                        "timestamp": "2024-01-01T10:30:00Z",
+                    },
+                ],
             }
 
         try:
@@ -938,7 +961,7 @@ class AWSLocationService:
                 "TrackerName": self.tracker_name,
                 "DeviceId": device_id,
                 "StartTimeInclusive": start_time,
-                "MaxResults": max_results
+                "MaxResults": max_results,
             }
 
             if end_time:
@@ -949,17 +972,19 @@ class AWSLocationService:
             positions = []
             for entry in response.get("DevicePositions", []):
                 pos = entry.get("Position", [0, 0])
-                positions.append({
-                    "position": {"longitude": pos[0], "latitude": pos[1]},
-                    "accuracy": entry.get("Accuracy", {}).get("Horizontal"),
-                    "timestamp": entry.get("ReceivedTime", "").isoformat() if entry.get("ReceivedTime") else None
-                })
+                positions.append(
+                    {
+                        "position": {"longitude": pos[0], "latitude": pos[1]},
+                        "accuracy": entry.get("Accuracy", {}).get("Horizontal"),
+                        "timestamp": (
+                            entry.get("ReceivedTime", "").isoformat()
+                            if entry.get("ReceivedTime")
+                            else None
+                        ),
+                    }
+                )
 
-            return {
-                "success": True,
-                "device_id": device_id,
-                "positions": positions
-            }
+            return {"success": True, "device_id": device_id, "positions": positions}
 
         except ClientError as e:
             logger.error(f"Position history error: {str(e)}")
@@ -970,10 +995,7 @@ class AWSLocationService:
     # ========================================================================
 
     @staticmethod
-    def calculate_distance(
-        point1: Tuple[float, float],
-        point2: Tuple[float, float]
-    ) -> float:
+    def calculate_distance(point1: Tuple[float, float], point2: Tuple[float, float]) -> float:
         """
         Calculate distance between two points using Haversine formula.
 
@@ -995,16 +1017,14 @@ class AWSLocationService:
         dlat = lat2 - lat1
         dlon = lon2 - lon1
 
-        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-        c = 2 * atan2(sqrt(a), sqrt(1-a))
+        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         return R * c
 
     @staticmethod
     def is_point_in_radius(
-        center: Tuple[float, float],
-        point: Tuple[float, float],
-        radius_km: float
+        center: Tuple[float, float], point: Tuple[float, float], radius_km: float
     ) -> bool:
         """Check if a point is within a radius of a center point."""
         distance = AWSLocationService.calculate_distance(center, point)
@@ -1027,17 +1047,14 @@ async def reverse_geocode_position(longitude: float, latitude: float) -> Dict[st
 
 
 async def find_nearby_merchants(
-    longitude: float,
-    latitude: float,
-    radius_km: float = 5.0
+    longitude: float, latitude: float, radius_km: float = 5.0
 ) -> Dict[str, Any]:
     """Find nearby merchants with cashback offers."""
     return await aws_location_service.search_nearby(longitude, latitude, radius_km=radius_km)
 
 
 async def calculate_route_to_merchant(
-    origin: Tuple[float, float],
-    destination: Tuple[float, float]
+    origin: Tuple[float, float], destination: Tuple[float, float]
 ) -> Dict[str, Any]:
     """Calculate route to a merchant."""
     return await aws_location_service.calculate_route(origin, destination)

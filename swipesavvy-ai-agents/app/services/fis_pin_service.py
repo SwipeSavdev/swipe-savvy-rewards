@@ -15,11 +15,7 @@ from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field, field_validator
 
-from app.services.fis_global_service import (
-    FISGlobalService,
-    FISAPIResponse,
-    get_fis_service
-)
+from app.services.fis_global_service import FISGlobalService, FISAPIResponse, get_fis_service
 
 logger = logging.getLogger(__name__)
 
@@ -28,86 +24,131 @@ logger = logging.getLogger(__name__)
 # REQUEST/RESPONSE MODELS
 # =============================================================================
 
+
 class SetPinRequest(BaseModel):
     """Request to set initial PIN"""
+
     card_id: str
     pin: str = Field(..., min_length=4, max_length=4)
 
-    @field_validator('pin')
+    @field_validator("pin")
     @classmethod
     def validate_pin(cls, v: str) -> str:
         if not v.isdigit():
-            raise ValueError('PIN must contain only digits')
+            raise ValueError("PIN must contain only digits")
         # Check for common weak PINs
-        weak_pins = ['0000', '1111', '2222', '3333', '4444',
-                     '5555', '6666', '7777', '8888', '9999',
-                     '1234', '4321', '1212', '2121']
+        weak_pins = [
+            "0000",
+            "1111",
+            "2222",
+            "3333",
+            "4444",
+            "5555",
+            "6666",
+            "7777",
+            "8888",
+            "9999",
+            "1234",
+            "4321",
+            "1212",
+            "2121",
+        ]
         if v in weak_pins:
-            raise ValueError('PIN is too weak. Choose a more secure PIN.')
+            raise ValueError("PIN is too weak. Choose a more secure PIN.")
         return v
 
 
 class ChangePinRequest(BaseModel):
     """Request to change existing PIN"""
+
     card_id: str
     current_pin: str = Field(..., min_length=4, max_length=4)
     new_pin: str = Field(..., min_length=4, max_length=4)
 
-    @field_validator('current_pin', 'new_pin')
+    @field_validator("current_pin", "new_pin")
     @classmethod
     def validate_pin(cls, v: str) -> str:
         if not v.isdigit():
-            raise ValueError('PIN must contain only digits')
+            raise ValueError("PIN must contain only digits")
         return v
 
-    @field_validator('new_pin')
+    @field_validator("new_pin")
     @classmethod
     def validate_new_pin(cls, v: str, info) -> str:
         # Check for weak PINs
-        weak_pins = ['0000', '1111', '2222', '3333', '4444',
-                     '5555', '6666', '7777', '8888', '9999',
-                     '1234', '4321', '1212', '2121']
+        weak_pins = [
+            "0000",
+            "1111",
+            "2222",
+            "3333",
+            "4444",
+            "5555",
+            "6666",
+            "7777",
+            "8888",
+            "9999",
+            "1234",
+            "4321",
+            "1212",
+            "2121",
+        ]
         if v in weak_pins:
-            raise ValueError('PIN is too weak. Choose a more secure PIN.')
+            raise ValueError("PIN is too weak. Choose a more secure PIN.")
         return v
 
 
 class ResetPinRequest(BaseModel):
     """Request to reset forgotten PIN"""
+
     card_id: str
     verification_method: str  # otp, security_questions, biometric
     verification_data: Dict[str, Any]
     new_pin: str = Field(..., min_length=4, max_length=4)
 
-    @field_validator('new_pin')
+    @field_validator("new_pin")
     @classmethod
     def validate_pin(cls, v: str) -> str:
         if not v.isdigit():
-            raise ValueError('PIN must contain only digits')
-        weak_pins = ['0000', '1111', '2222', '3333', '4444',
-                     '5555', '6666', '7777', '8888', '9999',
-                     '1234', '4321', '1212', '2121']
+            raise ValueError("PIN must contain only digits")
+        weak_pins = [
+            "0000",
+            "1111",
+            "2222",
+            "3333",
+            "4444",
+            "5555",
+            "6666",
+            "7777",
+            "8888",
+            "9999",
+            "1234",
+            "4321",
+            "1212",
+            "2121",
+        ]
         if v in weak_pins:
-            raise ValueError('PIN is too weak. Choose a more secure PIN.')
+            raise ValueError("PIN is too weak. Choose a more secure PIN.")
         return v
 
 
 class ValidatePinRequest(BaseModel):
     """Request to validate PIN"""
+
     card_id: str
     pin: str = Field(..., min_length=4, max_length=4)
     operation: Optional[str] = None  # What operation requires PIN validation
 
-    @field_validator('pin')
+    @field_validator("pin")
     @classmethod
     def validate_pin(cls, v: str) -> str:
         if not v.isdigit():
-            raise ValueError('PIN must contain only digits')
+            raise ValueError("PIN must contain only digits")
         return v
 
 
 class PinStatusResponse(BaseModel):
     """PIN status response"""
+
     card_id: str
     pin_set: bool
     pin_locked: bool = False
@@ -119,6 +160,7 @@ class PinStatusResponse(BaseModel):
 # =============================================================================
 # FIS PIN SERVICE
 # =============================================================================
+
 
 class FISPinService:
     """
@@ -179,11 +221,7 @@ class FISPinService:
 
         return pin_hash
 
-    async def set_pin(
-        self,
-        card_id: str,
-        pin: str
-    ) -> FISAPIResponse:
+    async def set_pin(self, card_id: str, pin: str) -> FISAPIResponse:
         """
         Set initial PIN for a card.
 
@@ -200,11 +238,7 @@ class FISPinService:
         try:
             request = SetPinRequest(card_id=card_id, pin=pin)
         except ValueError as e:
-            return FISAPIResponse(
-                success=False,
-                error_code="INVALID_PIN",
-                error_message=str(e)
-            )
+            return FISAPIResponse(success=False, error_code="INVALID_PIN", error_message=str(e))
 
         # Encrypt PIN for transmission
         encrypted_pin = self._encrypt_pin(pin, card_id)
@@ -212,10 +246,7 @@ class FISPinService:
         response = await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/pin/set",
-            data={
-                "encrypted_pin": encrypted_pin,
-                "pin_format": "ISO_9564_FORMAT_0"
-            }
+            data={"encrypted_pin": encrypted_pin, "pin_format": "ISO_9564_FORMAT_0"},
         )
 
         if response.success:
@@ -225,12 +256,7 @@ class FISPinService:
 
         return response
 
-    async def change_pin(
-        self,
-        card_id: str,
-        current_pin: str,
-        new_pin: str
-    ) -> FISAPIResponse:
+    async def change_pin(self, card_id: str, current_pin: str, new_pin: str) -> FISAPIResponse:
         """
         Change existing PIN.
 
@@ -246,24 +272,16 @@ class FISPinService:
 
         # Validate request
         try:
-            request = ChangePinRequest(
-                card_id=card_id,
-                current_pin=current_pin,
-                new_pin=new_pin
-            )
+            request = ChangePinRequest(card_id=card_id, current_pin=current_pin, new_pin=new_pin)
         except ValueError as e:
-            return FISAPIResponse(
-                success=False,
-                error_code="INVALID_PIN",
-                error_message=str(e)
-            )
+            return FISAPIResponse(success=False, error_code="INVALID_PIN", error_message=str(e))
 
         # Check if new PIN is same as current
         if current_pin == new_pin:
             return FISAPIResponse(
                 success=False,
                 error_code="SAME_PIN",
-                error_message="New PIN must be different from current PIN"
+                error_message="New PIN must be different from current PIN",
             )
 
         # Encrypt PINs for transmission
@@ -276,8 +294,8 @@ class FISPinService:
             data={
                 "current_pin_block": encrypted_current,
                 "new_pin_block": encrypted_new,
-                "pin_format": "ISO_9564_FORMAT_0"
-            }
+                "pin_format": "ISO_9564_FORMAT_0",
+            },
         )
 
         if response.success:
@@ -292,7 +310,7 @@ class FISPinService:
         card_id: str,
         verification_method: str,
         verification_data: Dict[str, Any],
-        new_pin: str
+        new_pin: str,
     ) -> FISAPIResponse:
         """
         Reset forgotten PIN after identity verification.
@@ -314,14 +332,10 @@ class FISPinService:
                 card_id=card_id,
                 verification_method=verification_method,
                 verification_data=verification_data,
-                new_pin=new_pin
+                new_pin=new_pin,
             )
         except ValueError as e:
-            return FISAPIResponse(
-                success=False,
-                error_code="INVALID_PIN",
-                error_message=str(e)
-            )
+            return FISAPIResponse(success=False, error_code="INVALID_PIN", error_message=str(e))
 
         # Encrypt new PIN
         encrypted_pin = self._encrypt_pin(new_pin, card_id)
@@ -333,8 +347,8 @@ class FISPinService:
                 "verification_method": verification_method,
                 "verification_data": verification_data,
                 "new_pin_block": encrypted_pin,
-                "pin_format": "ISO_9564_FORMAT_0"
-            }
+                "pin_format": "ISO_9564_FORMAT_0",
+            },
         )
 
         if response.success:
@@ -345,10 +359,7 @@ class FISPinService:
         return response
 
     async def validate_pin(
-        self,
-        card_id: str,
-        pin: str,
-        operation: Optional[str] = None
+        self, card_id: str, pin: str, operation: Optional[str] = None
     ) -> FISAPIResponse:
         """
         Validate PIN for sensitive operations.
@@ -361,33 +372,28 @@ class FISPinService:
         Returns:
             FISAPIResponse with validation result
         """
-        logger.info(f"Validating PIN for card {card_id}" +
-                   (f" for operation: {operation}" if operation else ""))
+        logger.info(
+            f"Validating PIN for card {card_id}"
+            + (f" for operation: {operation}" if operation else "")
+        )
 
         # Basic validation
         try:
             request = ValidatePinRequest(card_id=card_id, pin=pin, operation=operation)
         except ValueError as e:
             return FISAPIResponse(
-                success=False,
-                error_code="INVALID_PIN_FORMAT",
-                error_message=str(e)
+                success=False, error_code="INVALID_PIN_FORMAT", error_message=str(e)
             )
 
         # Encrypt PIN
         encrypted_pin = self._encrypt_pin(pin, card_id)
 
-        payload = {
-            "pin_block": encrypted_pin,
-            "pin_format": "ISO_9564_FORMAT_0"
-        }
+        payload = {"pin_block": encrypted_pin, "pin_format": "ISO_9564_FORMAT_0"}
         if operation:
             payload["operation"] = operation
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/pin/validate",
-            data=payload
+            method="POST", endpoint=f"/cards/{card_id}/pin/validate", data=payload
         )
 
         if response.success:
@@ -408,10 +414,7 @@ class FISPinService:
         Returns:
             FISAPIResponse with PIN status
         """
-        return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/pin/status"
-        )
+        return await self.fis._make_request(method="GET", endpoint=f"/cards/{card_id}/pin/status")
 
     async def unlock_pin(self, card_id: str) -> FISAPIResponse:
         """
@@ -429,8 +432,7 @@ class FISPinService:
         logger.info(f"Unlocking PIN for card {card_id}")
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/pin/unlock"
+            method="POST", endpoint=f"/cards/{card_id}/pin/unlock"
         )
 
         if response.success:
@@ -455,15 +457,10 @@ class FISPinService:
         logger.info(f"Requesting PIN reset OTP for card {card_id}")
 
         return await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/pin/reset/otp"
+            method="POST", endpoint=f"/cards/{card_id}/pin/reset/otp"
         )
 
-    async def verify_pin_reset_otp(
-        self,
-        card_id: str,
-        otp_code: str
-    ) -> FISAPIResponse:
+    async def verify_pin_reset_otp(self, card_id: str, otp_code: str) -> FISAPIResponse:
         """
         Verify OTP for PIN reset.
 
@@ -479,7 +476,7 @@ class FISPinService:
         return await self.fis._make_request(
             method="POST",
             endpoint=f"/cards/{card_id}/pin/reset/verify",
-            data={"otp_code": otp_code}
+            data={"otp_code": otp_code},
         )
 
 

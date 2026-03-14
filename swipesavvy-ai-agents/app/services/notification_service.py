@@ -22,23 +22,29 @@ logger = logging.getLogger(__name__)
 
 # ==================== Models ====================
 
+
 class NotificationChannel(str, Enum):
     """Notification channels"""
+
     EMAIL = "email"
     SMS = "sms"
     PUSH = "push"
     IN_APP = "in_app"
 
+
 class NotificationStatus(str, Enum):
     """Notification delivery status"""
+
     PENDING = "pending"
     SENT = "sent"
     DELIVERED = "delivered"
     FAILED = "failed"
     BOUNCED = "bounced"
 
+
 class NotificationType(str, Enum):
     """Types of notifications"""
+
     TRANSACTION_ALERT = "transaction_alert"
     REWARD_EARNED = "reward_earned"
     CHALLENGE_REMINDER = "challenge_reminder"
@@ -47,8 +53,10 @@ class NotificationType(str, Enum):
     PROMOTIONAL = "promotional"
     SYSTEM_UPDATE = "system_update"
 
+
 class Notification(BaseModel):
     """Notification model"""
+
     id: str
     user_id: str
     type: NotificationType
@@ -62,8 +70,10 @@ class Notification(BaseModel):
     recipient: str
     metadata: dict = {}
 
+
 class CreateNotificationRequest(BaseModel):
     """Create notification request"""
+
     type: NotificationType
     channel: NotificationChannel
     title: str
@@ -71,8 +81,10 @@ class CreateNotificationRequest(BaseModel):
     recipient: str
     metadata: dict = {}
 
+
 class NotificationPreferences(BaseModel):
     """User notification preferences"""
+
     user_id: str
     email_enabled: bool = True
     sms_enabled: bool = True
@@ -81,32 +93,41 @@ class NotificationPreferences(BaseModel):
     digest_frequency: str = "daily"  # daily, weekly, none
     updated_at: datetime
 
+
 class CreatePreferencesRequest(BaseModel):
     """Update notification preferences request"""
+
     email_enabled: bool = True
     sms_enabled: bool = True
     push_enabled: bool = True
     marketing_emails: bool = False
     digest_frequency: str = "daily"
 
+
 class SendEmailRequest(BaseModel):
     """Send email request"""
+
     to_email: EmailStr
     subject: str
     body: str
     html_body: Optional[str] = None
 
+
 class SendSMSRequest(BaseModel):
     """Send SMS request"""
+
     phone_number: str
     message: str
 
+
 class SendPushRequest(BaseModel):
     """Send push notification request"""
+
     user_id: str
     title: str
     body: str
     data: dict = {}
+
 
 # ==================== Database Layer ====================
 
@@ -117,9 +138,10 @@ import uuid
 # Import SQLAlchemy models for database persistence
 from app.models.notifications import (
     NotificationHistory as NotificationHistoryDB,
-    NotificationPreferences as NotificationPreferencesDB
+    NotificationPreferences as NotificationPreferencesDB,
 )
 from app.database import SessionLocal
+
 
 def get_db_session() -> Session:
     """Get a database session for notification operations"""
@@ -128,9 +150,18 @@ def get_db_session() -> Session:
 
 class NotificationModel:
     """Wrapper class for notification that works with both DB and in-memory"""
-    def __init__(self, user_id: str, notification_type: NotificationType,
-                 channel: NotificationChannel, title: str, content: str,
-                 recipient: str, metadata: dict = None, db_record=None):
+
+    def __init__(
+        self,
+        user_id: str,
+        notification_type: NotificationType,
+        channel: NotificationChannel,
+        title: str,
+        content: str,
+        recipient: str,
+        metadata: dict = None,
+        db_record=None,
+    ):
         if db_record:
             # Initialize from database record
             self.id = str(db_record.id)
@@ -139,7 +170,11 @@ class NotificationModel:
             self.channel = channel if channel else NotificationChannel.IN_APP
             self.title = db_record.title
             self.content = db_record.body
-            self.status = NotificationStatus(db_record.status) if db_record.status in [s.value for s in NotificationStatus] else NotificationStatus.PENDING
+            self.status = (
+                NotificationStatus(db_record.status)
+                if db_record.status in [s.value for s in NotificationStatus]
+                else NotificationStatus.PENDING
+            )
             self.created_at = db_record.created_at
             self.sent_at = db_record.sent_at
             self.read_at = db_record.read_at
@@ -164,11 +199,11 @@ class NotificationModel:
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "type": self.type.value if hasattr(self.type, 'value') else self.type,
-            "channel": self.channel.value if hasattr(self.channel, 'value') else self.channel,
+            "type": self.type.value if hasattr(self.type, "value") else self.type,
+            "channel": self.channel.value if hasattr(self.channel, "value") else self.channel,
             "title": self.title,
             "content": self.content,
-            "status": self.status.value if hasattr(self.status, 'value') else self.status,
+            "status": self.status.value if hasattr(self.status, "value") else self.status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "sent_at": self.sent_at.isoformat() if self.sent_at else None,
             "read_at": self.read_at.isoformat() if self.read_at else None,
@@ -176,20 +211,20 @@ class NotificationModel:
             "metadata": self.metadata,
         }
 
-    def save_to_db(self, db: Session) -> 'NotificationModel':
+    def save_to_db(self, db: Session) -> "NotificationModel":
         """Persist notification to database"""
         db_notification = NotificationHistoryDB(
             id=uuid.UUID(self.id) if isinstance(self.id, str) else self.id,
             user_id=uuid.UUID(self.user_id) if isinstance(self.user_id, str) else self.user_id,
             title=self.title,
             body=self.content,
-            notification_type=self.type.value if hasattr(self.type, 'value') else str(self.type),
-            status=self.status.value if hasattr(self.status, 'value') else self.status,
+            notification_type=self.type.value if hasattr(self.type, "value") else str(self.type),
+            status=self.status.value if hasattr(self.status, "value") else self.status,
             data=self.metadata,
             is_read=self.read_at is not None,
             read_at=self.read_at,
             sent_at=self.sent_at,
-            created_at=self.created_at
+            created_at=self.created_at,
         )
         db.add(db_notification)
         db.commit()
@@ -199,6 +234,7 @@ class NotificationModel:
 
 class PreferencesModel:
     """Wrapper class for notification preferences"""
+
     def __init__(self, user_id: str, db_record=None):
         if db_record:
             self.id = str(db_record.id)
@@ -230,12 +266,14 @@ class PreferencesModel:
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
-    def save_to_db(self, db: Session) -> 'PreferencesModel':
+    def save_to_db(self, db: Session) -> "PreferencesModel":
         """Persist preferences to database"""
         # Check if preferences exist
-        existing = db.query(NotificationPreferencesDB).filter(
-            NotificationPreferencesDB.user_id == uuid.UUID(self.user_id)
-        ).first()
+        existing = (
+            db.query(NotificationPreferencesDB)
+            .filter(NotificationPreferencesDB.user_id == uuid.UUID(self.user_id))
+            .first()
+        )
 
         if existing:
             existing.payment_notifications = self.email_enabled
@@ -252,14 +290,16 @@ class PreferencesModel:
                 security_notifications=self.sms_enabled,
                 feature_notifications=self.push_enabled,
                 allow_marketing=self.marketing_emails,
-                email_digest_frequency=self.digest_frequency
+                email_digest_frequency=self.digest_frequency,
             )
             db.add(db_prefs)
 
         db.commit()
         return self
 
+
 # ==================== Notification Providers ====================
+
 
 class NotificationProvider(ABC):
     """Abstract base class for notification providers"""
@@ -285,6 +325,7 @@ class SendGridEmailProvider(NotificationProvider):
         if self._sg is None and self.api_key:
             try:
                 from sendgrid import SendGridAPIClient
+
                 self._sg = SendGridAPIClient(self.api_key)
             except ImportError:
                 logger.warning("sendgrid package not installed. Run: pip install sendgrid")
@@ -328,10 +369,7 @@ class SendGridEmailProvider(NotificationProvider):
             return False
 
     async def send_template(
-        self,
-        recipient: str,
-        template_id: str,
-        dynamic_data: Dict[str, Any]
+        self, recipient: str, template_id: str, dynamic_data: Dict[str, Any]
     ) -> bool:
         """Send email using SendGrid dynamic template"""
         if not self.api_key:
@@ -378,6 +416,7 @@ class TwilioSMSProvider(NotificationProvider):
         if self._client is None and self.account_sid and self.auth_token:
             try:
                 from twilio.rest import Client
+
                 self._client = Client(self.account_sid, self.auth_token)
             except ImportError:
                 logger.warning("twilio package not installed. Run: pip install twilio")
@@ -394,11 +433,7 @@ class TwilioSMSProvider(NotificationProvider):
             # Normalize phone number
             phone = self._normalize_phone(recipient)
 
-            sms = self.client.messages.create(
-                body=message,
-                from_=self.from_number,
-                to=phone
-            )
+            sms = self.client.messages.create(body=message, from_=self.from_number, to=phone)
 
             logger.info(f"📱 SMS sent to {phone}: SID={sms.sid}")
             return True
@@ -418,18 +453,12 @@ class TwilioSMSProvider(NotificationProvider):
         try:
             phone = self._normalize_phone(phone_number)
 
-            verification = self.client.verify \
-                .v2 \
-                .services(self.verify_service_sid) \
-                .verifications \
-                .create(to=phone, channel="sms")
+            verification = self.client.verify.v2.services(
+                self.verify_service_sid
+            ).verifications.create(to=phone, channel="sms")
 
             logger.info(f"📱 OTP sent to {phone}: status={verification.status}")
-            return {
-                "success": True,
-                "status": verification.status,
-                "sid": verification.sid
-            }
+            return {"success": True, "status": verification.status, "sid": verification.sid}
 
         except Exception as e:
             logger.error(f"Failed to send OTP: {str(e)}")
@@ -445,20 +474,14 @@ class TwilioSMSProvider(NotificationProvider):
         try:
             phone = self._normalize_phone(phone_number)
 
-            verification_check = self.client.verify \
-                .v2 \
-                .services(self.verify_service_sid) \
-                .verification_checks \
-                .create(to=phone, code=code)
+            verification_check = self.client.verify.v2.services(
+                self.verify_service_sid
+            ).verification_checks.create(to=phone, code=code)
 
             is_valid = verification_check.status == "approved"
             logger.info(f"📱 OTP verification for {phone}: valid={is_valid}")
 
-            return {
-                "success": True,
-                "valid": is_valid,
-                "status": verification_check.status
-            }
+            return {"success": True, "valid": is_valid, "status": verification_check.status}
 
         except Exception as e:
             logger.error(f"Failed to verify OTP: {str(e)}")
@@ -467,7 +490,7 @@ class TwilioSMSProvider(NotificationProvider):
     def _normalize_phone(self, phone: str) -> str:
         """Normalize phone number to E.164 format"""
         # Remove all non-digit characters
-        digits = ''.join(filter(str.isdigit, phone))
+        digits = "".join(filter(str.isdigit, phone))
 
         # Add US country code if not present
         if len(digits) == 10:
@@ -493,7 +516,9 @@ class PushProvider(NotificationProvider):
         logger.info(f"🔔 [STUB] Push to {recipient}: {subject} - {message}")
         return True
 
+
 # ==================== Notification Service ====================
+
 
 class NotificationService:
     """Notification management service with SendGrid and Twilio integration"""
@@ -503,9 +528,16 @@ class NotificationService:
         self.sms_provider = TwilioSMSProvider()
         self.push_provider = PushProvider()
 
-    async def send_notification(self, user_id: str, notification_type: NotificationType,
-                               channel: NotificationChannel, title: str, content: str,
-                               recipient: str, metadata: dict = None) -> NotificationModel:
+    async def send_notification(
+        self,
+        user_id: str,
+        notification_type: NotificationType,
+        channel: NotificationChannel,
+        title: str,
+        content: str,
+        recipient: str,
+        metadata: dict = None,
+    ) -> NotificationModel:
         """Send notification with database persistence"""
         notification = NotificationModel(
             user_id, notification_type, channel, title, content, recipient, metadata
@@ -558,9 +590,11 @@ class NotificationService:
     def _get_or_create_preferences(self, db: Session, user_id: str) -> PreferencesModel:
         """Get or create user preferences from database"""
         try:
-            db_prefs = db.query(NotificationPreferencesDB).filter(
-                NotificationPreferencesDB.user_id == uuid.UUID(user_id)
-            ).first()
+            db_prefs = (
+                db.query(NotificationPreferencesDB)
+                .filter(NotificationPreferencesDB.user_id == uuid.UUID(user_id))
+                .first()
+            )
 
             if db_prefs:
                 return PreferencesModel(user_id, db_record=db_prefs)
@@ -582,13 +616,13 @@ class NotificationService:
             return await self.email_provider.send_template(
                 recipient=email,
                 template_id=template_id,
-                dynamic_data={"name": name, "email": email}
+                dynamic_data={"name": name, "email": email},
             )
         else:
             return await self.email_provider.send(
                 recipient=email,
                 subject="Welcome to SwipeSavvy!",
-                message=f"Hi {name},\n\nWelcome to SwipeSavvy! We're excited to have you.\n\nBest,\nThe SwipeSavvy Team"
+                message=f"Hi {name},\n\nWelcome to SwipeSavvy! We're excited to have you.\n\nBest,\nThe SwipeSavvy Team",
             )
 
     async def send_verification_email(self, email: str, code: str, name: str = "") -> bool:
@@ -596,15 +630,13 @@ class NotificationService:
         template_id = os.getenv("SENDGRID_TEMPLATE_VERIFICATION")
         if template_id and template_id.startswith("d-"):
             return await self.email_provider.send_template(
-                recipient=email,
-                template_id=template_id,
-                dynamic_data={"name": name, "code": code}
+                recipient=email, template_id=template_id, dynamic_data={"name": name, "code": code}
             )
         else:
             return await self.email_provider.send(
                 recipient=email,
                 subject="Verify your SwipeSavvy account",
-                message=f"Your verification code is: {code}\n\nThis code expires in 10 minutes."
+                message=f"Your verification code is: {code}\n\nThis code expires in 10 minutes.",
             )
 
     async def send_password_reset_email(self, email: str, reset_link: str, name: str = "") -> bool:
@@ -614,13 +646,13 @@ class NotificationService:
             return await self.email_provider.send_template(
                 recipient=email,
                 template_id=template_id,
-                dynamic_data={"name": name, "reset_link": reset_link}
+                dynamic_data={"name": name, "reset_link": reset_link},
             )
         else:
             return await self.email_provider.send(
                 recipient=email,
                 subject="Reset your SwipeSavvy password",
-                message=f"Click here to reset your password: {reset_link}\n\nThis link expires in 1 hour."
+                message=f"Click here to reset your password: {reset_link}\n\nThis link expires in 1 hour.",
             )
 
     async def send_transaction_alert_email(
@@ -636,14 +668,14 @@ class NotificationService:
                     "name": name,
                     "amount": amount,
                     "merchant": merchant,
-                    "type": transaction_type
-                }
+                    "type": transaction_type,
+                },
             )
         else:
             return await self.email_provider.send(
                 recipient=email,
                 subject=f"SwipeSavvy Alert: {amount} {transaction_type}",
-                message=f"A {transaction_type} of {amount} was made at {merchant}."
+                message=f"A {transaction_type} of {amount} was made at {merchant}.",
             )
 
     async def send_kyc_status_email(
@@ -663,14 +695,10 @@ class NotificationService:
             return await self.email_provider.send_template(
                 recipient=email,
                 template_id=template_id,
-                dynamic_data={"name": name, "status": status, "tier": tier, "reason": reason}
+                dynamic_data={"name": name, "status": status, "tier": tier, "reason": reason},
             )
         else:
-            return await self.email_provider.send(
-                recipient=email,
-                subject=subject,
-                message=message
-            )
+            return await self.email_provider.send(recipient=email, subject=subject, message=message)
 
     async def send_otp_sms(self, phone_number: str) -> Dict[str, Any]:
         """Send OTP via SMS using Twilio Verify"""
@@ -684,29 +712,40 @@ class NotificationService:
         self, phone_number: str, amount: str, merchant: str, transaction_type: str
     ) -> bool:
         """Send transaction alert via SMS"""
-        message = f"SwipeSavvy Alert: {amount} {transaction_type} at {merchant}. Reply STOP to opt out."
+        message = (
+            f"SwipeSavvy Alert: {amount} {transaction_type} at {merchant}. Reply STOP to opt out."
+        )
         return await self.sms_provider.send(phone_number, "", message)
 
     @staticmethod
-    def get_notifications(user_id: str, limit: int = 50, offset: int = 0) -> List[NotificationModel]:
+    def get_notifications(
+        user_id: str, limit: int = 50, offset: int = 0
+    ) -> List[NotificationModel]:
         """Get notifications for user from database"""
         db = get_db_session()
         try:
-            db_notifications = db.query(NotificationHistoryDB).filter(
-                NotificationHistoryDB.user_id == uuid.UUID(user_id)
-            ).order_by(
-                NotificationHistoryDB.created_at.desc()
-            ).offset(offset).limit(limit).all()
+            db_notifications = (
+                db.query(NotificationHistoryDB)
+                .filter(NotificationHistoryDB.user_id == uuid.UUID(user_id))
+                .order_by(NotificationHistoryDB.created_at.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
 
             return [
                 NotificationModel(
                     user_id=str(n.user_id),
-                    notification_type=NotificationType(n.notification_type) if n.notification_type in [t.value for t in NotificationType] else NotificationType.SYSTEM_UPDATE,
+                    notification_type=(
+                        NotificationType(n.notification_type)
+                        if n.notification_type in [t.value for t in NotificationType]
+                        else NotificationType.SYSTEM_UPDATE
+                    ),
                     channel=NotificationChannel.IN_APP,
                     title=n.title,
                     content=n.body,
                     recipient="",
-                    db_record=n
+                    db_record=n,
                 )
                 for n in db_notifications
             ]
@@ -721,10 +760,14 @@ class NotificationService:
         """Mark notification as read in database"""
         db = get_db_session()
         try:
-            notification = db.query(NotificationHistoryDB).filter(
-                NotificationHistoryDB.id == uuid.UUID(notification_id),
-                NotificationHistoryDB.user_id == uuid.UUID(user_id)
-            ).first()
+            notification = (
+                db.query(NotificationHistoryDB)
+                .filter(
+                    NotificationHistoryDB.id == uuid.UUID(notification_id),
+                    NotificationHistoryDB.user_id == uuid.UUID(user_id),
+                )
+                .first()
+            )
 
             if not notification:
                 return None
@@ -740,7 +783,7 @@ class NotificationService:
                 title=notification.title,
                 content=notification.body,
                 recipient="",
-                db_record=notification
+                db_record=notification,
             )
         except Exception as e:
             logger.error(f"Error marking notification as read: {e}")
@@ -754,13 +797,14 @@ class NotificationService:
         """Mark all notifications as read in database"""
         db = get_db_session()
         try:
-            count = db.query(NotificationHistoryDB).filter(
-                NotificationHistoryDB.user_id == uuid.UUID(user_id),
-                NotificationHistoryDB.is_read == False
-            ).update({
-                "is_read": True,
-                "read_at": datetime.utcnow()
-            })
+            count = (
+                db.query(NotificationHistoryDB)
+                .filter(
+                    NotificationHistoryDB.user_id == uuid.UUID(user_id),
+                    NotificationHistoryDB.is_read == False,
+                )
+                .update({"is_read": True, "read_at": datetime.utcnow()})
+            )
             db.commit()
             return count
         except Exception as e:
@@ -775,10 +819,14 @@ class NotificationService:
         """Delete notification from database"""
         db = get_db_session()
         try:
-            result = db.query(NotificationHistoryDB).filter(
-                NotificationHistoryDB.id == uuid.UUID(notification_id),
-                NotificationHistoryDB.user_id == uuid.UUID(user_id)
-            ).delete()
+            result = (
+                db.query(NotificationHistoryDB)
+                .filter(
+                    NotificationHistoryDB.id == uuid.UUID(notification_id),
+                    NotificationHistoryDB.user_id == uuid.UUID(user_id),
+                )
+                .delete()
+            )
             db.commit()
             return result > 0
         except Exception as e:
@@ -793,9 +841,11 @@ class NotificationService:
         """Get notification preferences from database"""
         db = get_db_session()
         try:
-            db_prefs = db.query(NotificationPreferencesDB).filter(
-                NotificationPreferencesDB.user_id == uuid.UUID(user_id)
-            ).first()
+            db_prefs = (
+                db.query(NotificationPreferencesDB)
+                .filter(NotificationPreferencesDB.user_id == uuid.UUID(user_id))
+                .first()
+            )
 
             if db_prefs:
                 return PreferencesModel(user_id, db_record=db_prefs)
@@ -830,31 +880,41 @@ class NotificationService:
         finally:
             db.close()
 
+
 # ==================== API Routes ====================
 
 notification_service = NotificationService()
+
 
 def create_notification_routes(app: FastAPI, get_current_user=None):
     """Create notification API routes"""
 
     @app.post("/api/notifications/send", response_model=Notification, tags=["Notifications"])
-    async def send_notification(request: CreateNotificationRequest, current_user = Depends(get_current_user)):
+    async def send_notification(
+        request: CreateNotificationRequest, current_user=Depends(get_current_user)
+    ):
         """Send notification"""
         notification = await notification_service.send_notification(
-            current_user.id, request.type, request.channel, request.title,
-            request.content, request.recipient, request.metadata
+            current_user.id,
+            request.type,
+            request.channel,
+            request.title,
+            request.content,
+            request.recipient,
+            request.metadata,
         )
         return notification.to_dict()
 
     @app.get("/api/notifications", response_model=List[Notification], tags=["Notifications"])
-    async def get_notifications(limit: int = 50, offset: int = 0,
-                               current_user = Depends(get_current_user)):
+    async def get_notifications(
+        limit: int = 50, offset: int = 0, current_user=Depends(get_current_user)
+    ):
         """Get user notifications"""
         notifications = NotificationService.get_notifications(current_user.id, limit, offset)
         return [n.to_dict() for n in notifications]
 
     @app.post("/api/notifications/{notification_id}/read", tags=["Notifications"])
-    async def mark_as_read(notification_id: str, current_user = Depends(get_current_user)):
+    async def mark_as_read(notification_id: str, current_user=Depends(get_current_user)):
         """Mark notification as read"""
         notification = NotificationService.mark_as_read(notification_id, current_user.id)
         if not notification:
@@ -862,26 +922,36 @@ def create_notification_routes(app: FastAPI, get_current_user=None):
         return {"message": "Marked as read"}
 
     @app.post("/api/notifications/read-all", tags=["Notifications"])
-    async def mark_all_as_read(current_user = Depends(get_current_user)):
+    async def mark_all_as_read(current_user=Depends(get_current_user)):
         """Mark all notifications as read"""
         count = NotificationService.mark_all_as_read(current_user.id)
         return {"message": f"Marked {count} notifications as read"}
 
     @app.delete("/api/notifications/{notification_id}", tags=["Notifications"])
-    async def delete_notification(notification_id: str, current_user = Depends(get_current_user)):
+    async def delete_notification(notification_id: str, current_user=Depends(get_current_user)):
         """Delete notification"""
         if not NotificationService.delete_notification(notification_id, current_user.id):
             raise HTTPException(status_code=404, detail="Notification not found")
         return {"message": "Notification deleted"}
 
-    @app.get("/api/notifications/preferences", response_model=NotificationPreferences, tags=["Notifications"])
-    async def get_preferences(current_user = Depends(get_current_user)):
+    @app.get(
+        "/api/notifications/preferences",
+        response_model=NotificationPreferences,
+        tags=["Notifications"],
+    )
+    async def get_preferences(current_user=Depends(get_current_user)):
         """Get notification preferences"""
         prefs = NotificationService.get_preferences(current_user.id)
         return prefs.to_dict()
 
-    @app.patch("/api/notifications/preferences", response_model=NotificationPreferences, tags=["Notifications"])
-    async def update_preferences(request: CreatePreferencesRequest, current_user = Depends(get_current_user)):
+    @app.patch(
+        "/api/notifications/preferences",
+        response_model=NotificationPreferences,
+        tags=["Notifications"],
+    )
+    async def update_preferences(
+        request: CreatePreferencesRequest, current_user=Depends(get_current_user)
+    ):
         """Update notification preferences"""
         prefs = NotificationService.update_preferences(current_user.id, request)
         return prefs.to_dict()

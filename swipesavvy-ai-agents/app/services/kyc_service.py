@@ -57,18 +57,18 @@ TIER_LIMITS = {
     KYCTier.TIER1: {
         "daily_limit": 500.00,
         "monthly_limit": 2000.00,
-        "single_transaction_limit": 200.00
+        "single_transaction_limit": 200.00,
     },
     KYCTier.TIER2: {
         "daily_limit": 2000.00,
         "monthly_limit": 10000.00,
-        "single_transaction_limit": 1000.00
+        "single_transaction_limit": 1000.00,
     },
     KYCTier.TIER3: {
         "daily_limit": 10000.00,
         "monthly_limit": 50000.00,
-        "single_transaction_limit": 5000.00
-    }
+        "single_transaction_limit": 5000.00,
+    },
 }
 
 
@@ -85,22 +85,24 @@ class KYCService:
 
         # Initialize S3 client
         import boto3
-        self.s3_client = boto3.client(
-            's3',
-            region_name=self.s3_region,
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
-        ) if os.getenv("AWS_ACCESS_KEY_ID") else None
+
+        self.s3_client = (
+            boto3.client(
+                "s3",
+                region_name=self.s3_region,
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            )
+            if os.getenv("AWS_ACCESS_KEY_ID")
+            else None
+        )
 
     def get_tier_limits(self, tier: str) -> Dict[str, float]:
         """Get transaction limits for a KYC tier"""
         return TIER_LIMITS.get(KYCTier(tier), TIER_LIMITS[KYCTier.TIER1])
 
     async def check_transaction_limit(
-        self,
-        db: Session,
-        user: User,
-        amount: float
+        self, db: Session, user: User, amount: float
     ) -> Dict[str, Any]:
         """
         Check if a transaction is within user's KYC limits.
@@ -131,7 +133,7 @@ class KYCService:
                 "reason": f"Amount exceeds single transaction limit of ${limits['single_transaction_limit']:.2f}",
                 "remaining_daily": remaining_daily,
                 "remaining_monthly": remaining_monthly,
-                "upgrade_tier": self._get_next_tier(user.kyc_tier)
+                "upgrade_tier": self._get_next_tier(user.kyc_tier),
             }
 
         if amount > remaining_daily:
@@ -140,7 +142,7 @@ class KYCService:
                 "reason": f"Amount exceeds remaining daily limit of ${remaining_daily:.2f}",
                 "remaining_daily": remaining_daily,
                 "remaining_monthly": remaining_monthly,
-                "upgrade_tier": self._get_next_tier(user.kyc_tier)
+                "upgrade_tier": self._get_next_tier(user.kyc_tier),
             }
 
         if amount > remaining_monthly:
@@ -149,13 +151,13 @@ class KYCService:
                 "reason": f"Amount exceeds remaining monthly limit of ${remaining_monthly:.2f}",
                 "remaining_daily": remaining_daily,
                 "remaining_monthly": remaining_monthly,
-                "upgrade_tier": self._get_next_tier(user.kyc_tier)
+                "upgrade_tier": self._get_next_tier(user.kyc_tier),
             }
 
         return {
             "allowed": True,
             "remaining_daily": remaining_daily - amount,
-            "remaining_monthly": remaining_monthly - amount
+            "remaining_monthly": remaining_monthly - amount,
         }
 
     def _get_next_tier(self, current_tier: str) -> Optional[str]:
@@ -177,7 +179,7 @@ class KYCService:
         file_content: bytes,
         file_name: str,
         mime_type: str,
-        document_subtype: Optional[str] = None
+        document_subtype: Optional[str] = None,
     ) -> UserKYCDocument:
         """
         Upload and store KYC document.
@@ -215,12 +217,12 @@ class KYCService:
                 Key=s3_key,
                 Body=file_content,
                 ContentType=mime_type,
-                ServerSideEncryption='aws:kms',
+                ServerSideEncryption="aws:kms",
                 Metadata={
-                    'user_id': str(user.id),
-                    'document_type': document_type,
-                    'original_filename': file_name
-                }
+                    "user_id": str(user.id),
+                    "document_type": document_type,
+                    "original_filename": file_name,
+                },
             )
         else:
             # Development mode - store locally or skip
@@ -236,7 +238,7 @@ class KYCService:
             file_name=file_name,
             file_size=len(file_content),
             mime_type=mime_type,
-            status="pending"
+            status="pending",
         )
 
         db.add(document)
@@ -246,7 +248,7 @@ class KYCService:
             user_id=user.id,
             action="document_uploaded",
             verification_type="document",
-            notes=f"Uploaded {document_type} document"
+            notes=f"Uploaded {document_type} document",
         )
         db.add(history)
 
@@ -264,7 +266,7 @@ class KYCService:
             "image/jpeg": ".jpg",
             "image/png": ".png",
             "image/heic": ".heic",
-            "application/pdf": ".pdf"
+            "application/pdf": ".pdf",
         }
         return extensions.get(mime_type, ".bin")
 
@@ -273,7 +275,7 @@ class KYCService:
         db: Session,
         document: UserKYCDocument,
         admin_user_id: Optional[UUID] = None,
-        auto_verify: bool = False
+        auto_verify: bool = False,
     ) -> Dict[str, Any]:
         """
         Verify a KYC document.
@@ -281,12 +283,7 @@ class KYCService:
         STUB: Awaiting Connect Financial IDV API for automated verification.
         Currently performs basic file validation only.
         """
-        verification_result = {
-            "verified": False,
-            "checks": [],
-            "warnings": [],
-            "errors": []
-        }
+        verification_result = {"verified": False, "checks": [], "warnings": [], "errors": []}
 
         # Basic validation checks
         if document.file_size < 10000:  # Less than 10KB
@@ -312,11 +309,7 @@ class KYCService:
 
         return verification_result
 
-    async def initiate_identity_verification(
-        self,
-        db: Session,
-        user: User
-    ) -> Dict[str, Any]:
+    async def initiate_identity_verification(self, db: Session, user: User) -> Dict[str, Any]:
         """
         Initiate identity verification flow.
 
@@ -338,14 +331,11 @@ class KYCService:
             "provider": "connect_financial",
             "status": "demo_mode",
             "message": "Identity verification is in demo mode. Connect Financial APIs pending integration.",
-            "expiration": (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            "expiration": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
         }
 
     async def complete_identity_verification(
-        self,
-        db: Session,
-        user: User,
-        idv_session_id: str
+        self, db: Session, user: User, idv_session_id: str
     ) -> Dict[str, Any]:
         """
         Complete identity verification.
@@ -354,7 +344,9 @@ class KYCService:
         All submissions are queued for manual review.
         """
         # IDV provider not configured — queue for manual review
-        logger.warning("Connect Financial IDV API not yet integrated — verification queued for manual review")
+        logger.warning(
+            "Connect Financial IDV API not yet integrated — verification queued for manual review"
+        )
         verification_result = {
             "verified": False,
             "status": "pending_review",
@@ -362,8 +354,8 @@ class KYCService:
             "checks": {
                 "selfie_check": "pending",
                 "document_check": "pending",
-                "watchlist_screening": "pending"
-            }
+                "watchlist_screening": "pending",
+            },
         }
 
         # Update user — do NOT auto-approve or upgrade tier
@@ -379,7 +371,7 @@ class KYCService:
             verification_provider="connect_financial",
             previous_status="in_review",
             new_status=KYCStatus.IN_REVIEW.value,
-            verification_result=verification_result
+            verification_result=verification_result,
         )
         db.add(history)
         db.commit()
@@ -388,14 +380,10 @@ class KYCService:
             "success": True,
             "kyc_status": user.kyc_status,
             "kyc_tier": user.kyc_tier,
-            "limits": self.get_tier_limits(user.kyc_tier)
+            "limits": self.get_tier_limits(user.kyc_tier),
         }
 
-    async def run_sanctions_screening(
-        self,
-        db: Session,
-        user: User
-    ) -> OFACScreeningResult:
+    async def run_sanctions_screening(self, db: Session, user: User) -> OFACScreeningResult:
         """
         Run sanctions screening on user.
 
@@ -403,17 +391,23 @@ class KYCService:
         All screenings return pending_review and require manual compliance review.
         """
         # Check if recent screening exists
-        recent = db.query(OFACScreeningResult).filter(
-            OFACScreeningResult.user_id == user.id,
-            OFACScreeningResult.created_at > datetime.utcnow() - timedelta(days=30),
-            OFACScreeningResult.status == "clear"
-        ).first()
+        recent = (
+            db.query(OFACScreeningResult)
+            .filter(
+                OFACScreeningResult.user_id == user.id,
+                OFACScreeningResult.created_at > datetime.utcnow() - timedelta(days=30),
+                OFACScreeningResult.status == "clear",
+            )
+            .first()
+        )
 
         if recent:
             return recent
 
         # STUB: Connect Financial sanctions screening API pending integration
-        logger.warning("Connect Financial sanctions screening API not yet integrated — screening queued for manual review")
+        logger.warning(
+            "Connect Financial sanctions screening API not yet integrated — screening queued for manual review"
+        )
         screening = OFACScreeningResult(
             id=uuid4(),
             user_id=user.id,
@@ -427,8 +421,8 @@ class KYCService:
                 "name_checked": user.name,
                 "result": "pending_review",
                 "provider": "connect_financial",
-                "note": "Awaiting Connect Financial API integration"
-            }
+                "note": "Awaiting Connect Financial API integration",
+            },
         )
 
         db.add(screening)
@@ -439,7 +433,7 @@ class KYCService:
             action="sanctions_screening",
             verification_type="sanctions",
             verification_provider="connect_financial",
-            verification_result={"status": "pending_review"}
+            verification_result={"status": "pending_review"},
         )
         db.add(history)
 
@@ -451,10 +445,7 @@ class KYCService:
     run_ofac_screening = run_sanctions_screening
 
     async def request_tier_upgrade(
-        self,
-        db: Session,
-        user: User,
-        target_tier: str
+        self, db: Session, user: User, target_tier: str
     ) -> Dict[str, Any]:
         """
         Request KYC tier upgrade.
@@ -467,10 +458,7 @@ class KYCService:
         # Validate upgrade path
         tier_order = [KYCTier.TIER1, KYCTier.TIER2, KYCTier.TIER3]
         if tier_order.index(target) <= tier_order.index(current_tier):
-            return {
-                "success": False,
-                "error": "Cannot downgrade tier or already at requested tier"
-            }
+            return {"success": False, "error": "Cannot downgrade tier or already at requested tier"}
 
         # Define requirements per tier
         requirements = {
@@ -479,37 +467,50 @@ class KYCService:
                 "steps": [
                     {"id": "document", "name": "Upload Government ID", "completed": False},
                     {"id": "selfie", "name": "Take Selfie for Verification", "completed": False},
-                    {"id": "identity", "name": "Complete Identity Verification", "completed": False}
-                ]
+                    {
+                        "id": "identity",
+                        "name": "Complete Identity Verification",
+                        "completed": False,
+                    },
+                ],
             },
             KYCTier.TIER3: {
                 "description": "Premium verification with enhanced KYC",
                 "steps": [
                     {"id": "address_proof", "name": "Upload Proof of Address", "completed": False},
                     {"id": "income_proof", "name": "Upload Proof of Income", "completed": False},
-                    {"id": "enhanced_review", "name": "Complete Enhanced Review", "completed": False}
-                ]
-            }
+                    {
+                        "id": "enhanced_review",
+                        "name": "Complete Enhanced Review",
+                        "completed": False,
+                    },
+                ],
+            },
         }
 
         # Check existing documents
-        existing_docs = db.query(UserKYCDocument).filter(
-            UserKYCDocument.user_id == user.id,
-            UserKYCDocument.status == "verified"
-        ).all()
+        existing_docs = (
+            db.query(UserKYCDocument)
+            .filter(UserKYCDocument.user_id == user.id, UserKYCDocument.status == "verified")
+            .all()
+        )
 
         doc_types = {doc.document_type for doc in existing_docs}
 
         # Mark completed steps
         tier_reqs = requirements.get(target, {})
         for step in tier_reqs.get("steps", []):
-            if step["id"] == "document" and any(dt in doc_types for dt in ["drivers_license", "passport", "state_id"]):
+            if step["id"] == "document" and any(
+                dt in doc_types for dt in ["drivers_license", "passport", "state_id"]
+            ):
                 step["completed"] = True
             elif step["id"] == "selfie" and "selfie" in doc_types:
                 step["completed"] = True
             elif step["id"] == "identity" and user.identity_verification_status == "verified":
                 step["completed"] = True
-            elif step["id"] == "address_proof" and any(dt in doc_types for dt in ["utility_bill", "bank_statement"]):
+            elif step["id"] == "address_proof" and any(
+                dt in doc_types for dt in ["utility_bill", "bank_statement"]
+            ):
                 step["completed"] = True
 
         return {
@@ -518,29 +519,30 @@ class KYCService:
             "target_tier": target.value,
             "current_limits": self.get_tier_limits(current_tier.value),
             "target_limits": self.get_tier_limits(target.value),
-            "requirements": tier_reqs
+            "requirements": tier_reqs,
         }
 
-    async def get_kyc_status(
-        self,
-        db: Session,
-        user: User
-    ) -> Dict[str, Any]:
+    async def get_kyc_status(self, db: Session, user: User) -> Dict[str, Any]:
         """Get comprehensive KYC status for user"""
         # Get documents
-        documents = db.query(UserKYCDocument).filter(
-            UserKYCDocument.user_id == user.id
-        ).all()
+        documents = db.query(UserKYCDocument).filter(UserKYCDocument.user_id == user.id).all()
 
         # Get latest sanctions screening
-        screening_result = db.query(OFACScreeningResult).filter(
-            OFACScreeningResult.user_id == user.id
-        ).order_by(OFACScreeningResult.created_at.desc()).first()
+        screening_result = (
+            db.query(OFACScreeningResult)
+            .filter(OFACScreeningResult.user_id == user.id)
+            .order_by(OFACScreeningResult.created_at.desc())
+            .first()
+        )
 
         # Get history
-        history = db.query(UserKYCHistory).filter(
-            UserKYCHistory.user_id == user.id
-        ).order_by(UserKYCHistory.created_at.desc()).limit(10).all()
+        history = (
+            db.query(UserKYCHistory)
+            .filter(UserKYCHistory.user_id == user.id)
+            .order_by(UserKYCHistory.created_at.desc())
+            .limit(10)
+            .all()
+        )
 
         return {
             "user_id": str(user.id),
@@ -551,14 +553,14 @@ class KYCService:
             "verification": {
                 "email_verified": user.email_verified,
                 "phone_verified": user.phone_verified,
-                "identity_verified": user.identity_verification_status == "verified"
+                "identity_verified": user.identity_verification_status == "verified",
             },
             "documents": [
                 {
                     "id": str(doc.id),
                     "type": doc.document_type,
                     "status": doc.status,
-                    "uploaded_at": doc.created_at.isoformat()
+                    "uploaded_at": doc.created_at.isoformat(),
                 }
                 for doc in documents
             ],
@@ -568,8 +570,8 @@ class KYCService:
                 {
                     "action": h.action,
                     "type": h.verification_type,
-                    "created_at": h.created_at.isoformat()
+                    "created_at": h.created_at.isoformat(),
                 }
                 for h in history
-            ]
+            ],
         }

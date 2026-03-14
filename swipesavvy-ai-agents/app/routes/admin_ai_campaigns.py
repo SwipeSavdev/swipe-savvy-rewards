@@ -26,7 +26,10 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
     return verify_token_string(token)
 
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-ai-campaigns"], dependencies=[Depends(require_auth)])
+router = APIRouter(
+    prefix="/api/v1/admin", tags=["admin-ai-campaigns"], dependencies=[Depends(require_auth)]
+)
+
 
 class CampaignResponse(BaseModel):
     id: str
@@ -45,12 +48,14 @@ class CampaignResponse(BaseModel):
     createdBy: Optional[str]
     lastUpdated: str
 
+
 class CampaignsListResponse(BaseModel):
     campaigns: List[CampaignResponse]
     total: int
     page: int
     per_page: int
     total_pages: int
+
 
 @router.get("/ai-campaigns")
 async def list_ai_campaigns(
@@ -59,11 +64,11 @@ async def list_ai_campaigns(
     status: Optional[str] = Query(None),
     campaign_type: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """
     List all AI marketing campaigns with pagination and filtering
-    
+
     Query params:
     - page: Page number (default: 1)
     - per_page: Items per page (default: 10, max: 100)
@@ -73,25 +78,25 @@ async def list_ai_campaigns(
     """
     try:
         query = db.query(AICampaignModel)
-        
+
         if status:
             query = query.filter(AICampaignModel.status == status)
-        
+
         if campaign_type:
             query = query.filter(AICampaignModel.type == campaign_type)
-        
+
         if search:
             search_pattern = f"%{search}%"
             query = query.filter(
-                (AICampaignModel.name.ilike(search_pattern)) |
-                (AICampaignModel.description.ilike(search_pattern))
+                (AICampaignModel.name.ilike(search_pattern))
+                | (AICampaignModel.description.ilike(search_pattern))
             )
-        
+
         total = query.count()
         total_pages = (total + per_page - 1) // per_page
-        
+
         campaigns = query.offset((page - 1) * per_page).limit(per_page).all()
-        
+
         return {
             "campaigns": [
                 CampaignResponse(
@@ -109,14 +114,14 @@ async def list_ai_campaigns(
                     conversions=c.conversions or 0,
                     roi=float(c.roi or 0),
                     createdBy=str(c.created_by) if c.created_by else None,
-                    lastUpdated=c.updated_at.isoformat() if c.updated_at else None
+                    lastUpdated=c.updated_at.isoformat() if c.updated_at else None,
                 )
                 for c in campaigns
             ],
             "total": total,
             "page": page,
             "per_page": per_page,
-            "total_pages": total_pages
+            "total_pages": total_pages,
         }
     except Exception as e:
         logger.error(f"Error listing AI campaigns: {str(e)}")
@@ -130,7 +135,7 @@ async def get_ai_campaign(campaign_id: str, db: Session = Depends(get_db)) -> Di
         campaign = db.query(AICampaignModel).filter(AICampaignModel.id == campaign_id).first()
         if not campaign:
             raise HTTPException(status_code=404, detail="Campaign not found")
-        
+
         return {
             "success": True,
             "campaign": CampaignResponse(
@@ -148,8 +153,8 @@ async def get_ai_campaign(campaign_id: str, db: Session = Depends(get_db)) -> Di
                 conversions=campaign.conversions or 0,
                 roi=float(campaign.roi or 0),
                 createdBy=str(campaign.created_by) if campaign.created_by else None,
-                lastUpdated=campaign.updated_at.isoformat() if campaign.updated_at else None
-            )
+                lastUpdated=campaign.updated_at.isoformat() if campaign.updated_at else None,
+            ),
         }
     except HTTPException:
         raise
@@ -160,25 +165,26 @@ async def get_ai_campaign(campaign_id: str, db: Session = Depends(get_db)) -> Di
 
 @router.put("/ai-campaigns/{campaign_id}/status")
 async def update_campaign_status(
-    campaign_id: str,
-    status: str,
-    db: Session = Depends(get_db)
+    campaign_id: str, status: str, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Update campaign status"""
     try:
         campaign = db.query(AICampaignModel).filter(AICampaignModel.id == campaign_id).first()
         if not campaign:
             raise HTTPException(status_code=404, detail="Campaign not found")
-        
-        valid_statuses = ['draft', 'active', 'paused', 'scheduled', 'completed', 'archived']
+
+        valid_statuses = ["draft", "active", "paused", "scheduled", "completed", "archived"]
         if status not in valid_statuses:
-            raise HTTPException(status_code=422, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
-        
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
+            )
+
         campaign.status = status
         campaign.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(campaign)
-        
+
         return {
             "success": True,
             "message": f"Campaign status updated to {status}",
@@ -197,8 +203,8 @@ async def update_campaign_status(
                 conversions=campaign.conversions or 0,
                 roi=float(campaign.roi or 0),
                 createdBy=str(campaign.created_by) if campaign.created_by else None,
-                lastUpdated=campaign.updated_at.isoformat() if campaign.updated_at else None
-            )
+                lastUpdated=campaign.updated_at.isoformat() if campaign.updated_at else None,
+            ),
         }
     except HTTPException:
         raise
@@ -212,15 +218,17 @@ async def get_campaigns_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get AI campaigns overview statistics"""
     try:
         campaigns = db.query(AICampaignModel).all()
-        
-        active_count = sum(1 for c in campaigns if c.status == 'active')
+
+        active_count = sum(1 for c in campaigns if c.status == "active")
         total_reach = sum(c.audience_size or 0 for c in campaigns)
         total_conversions = sum(c.conversions or 0 for c in campaigns)
         total_budget = sum(float(c.budget or 0) for c in campaigns)
         total_spent = sum(float(c.spent or 0) for c in campaigns)
         avg_roi = sum(float(c.roi or 0) for c in campaigns) / len(campaigns) if campaigns else 0
-        best_performer = max(campaigns, key=lambda c: float(c.roi or 0)).name if campaigns else "N/A"
-        
+        best_performer = (
+            max(campaigns, key=lambda c: float(c.roi or 0)).name if campaigns else "N/A"
+        )
+
         return {
             "total_campaigns": len(campaigns),
             "active_campaigns": active_count,
@@ -229,7 +237,7 @@ async def get_campaigns_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
             "total_budget": round(total_budget, 2),
             "total_spent": round(total_spent, 2),
             "avg_roi": round(avg_roi, 2),
-            "best_performer": best_performer
+            "best_performer": best_performer,
         }
     except Exception as e:
         logger.error(f"Error getting campaigns stats: {str(e)}")

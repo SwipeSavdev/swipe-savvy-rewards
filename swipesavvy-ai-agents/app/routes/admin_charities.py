@@ -33,6 +33,7 @@ router = APIRouter(tags=["Admin Charities"], dependencies=[Depends(require_auth)
 # Pydantic Models
 # ============================================
 
+
 class CharityCreate(BaseModel):
     name: str
     email: EmailStr
@@ -93,7 +94,11 @@ def charity_to_response(charity: Charity) -> Dict[str, Any]:
         "status": charity.status or "incomplete",
         "completionPercentage": charity.completion_percentage or 0,
         "notes": charity.notes,
-        "submittedAt": charity.submitted_at.strftime("%Y-%m-%d") if charity.submitted_at else datetime.utcnow().strftime("%Y-%m-%d"),
+        "submittedAt": (
+            charity.submitted_at.strftime("%Y-%m-%d")
+            if charity.submitted_at
+            else datetime.utcnow().strftime("%Y-%m-%d")
+        ),
         "approvedAt": charity.approved_at.strftime("%Y-%m-%d") if charity.approved_at else None,
     }
 
@@ -102,6 +107,7 @@ def charity_to_response(charity: Charity) -> Dict[str, Any]:
 # Routes
 # ============================================
 
+
 @router.get("/charities")
 async def list_charities(
     q: Optional[str] = Query(None, description="Search query"),
@@ -109,7 +115,7 @@ async def list_charities(
     category: Optional[str] = Query(None, description="Filter by category"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> List[Dict[str, Any]]:
     """List all charities with optional filtering."""
     query = db.query(Charity)
@@ -121,7 +127,7 @@ async def list_charities(
             or_(
                 Charity.name.ilike(search),
                 Charity.email.ilike(search),
-                Charity.registration_number.ilike(search)
+                Charity.registration_number.ilike(search),
             )
         )
 
@@ -143,10 +149,7 @@ async def list_charities(
 
 
 @router.get("/charities/{charity_id}")
-async def get_charity(
-    charity_id: str,
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+async def get_charity(charity_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get a single charity by ID."""
     charity = db.query(Charity).filter(Charity.id == charity_id).first()
     if not charity:
@@ -155,10 +158,7 @@ async def get_charity(
 
 
 @router.post("/charities")
-async def create_charity(
-    request: CharityCreate,
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+async def create_charity(request: CharityCreate, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Create a new charity."""
     # Check for duplicate email
     existing = db.query(Charity).filter(Charity.email == request.email).first()
@@ -167,11 +167,15 @@ async def create_charity(
 
     # Check for duplicate registration number if provided
     if request.registration_number:
-        existing_reg = db.query(Charity).filter(
-            Charity.registration_number == request.registration_number
-        ).first()
+        existing_reg = (
+            db.query(Charity)
+            .filter(Charity.registration_number == request.registration_number)
+            .first()
+        )
         if existing_reg:
-            raise HTTPException(status_code=400, detail="A charity with this registration number already exists")
+            raise HTTPException(
+                status_code=400, detail="A charity with this registration number already exists"
+            )
 
     charity = Charity(
         name=request.name,
@@ -195,15 +199,13 @@ async def create_charity(
     return {
         "success": True,
         "message": f"Charity '{charity.name}' created successfully",
-        "charity": charity_to_response(charity)
+        "charity": charity_to_response(charity),
     }
 
 
 @router.put("/charities/{charity_id}")
 async def update_charity(
-    charity_id: str,
-    request: CharityUpdate,
-    db: Session = Depends(get_db)
+    charity_id: str, request: CharityUpdate, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Update an existing charity."""
     charity = db.query(Charity).filter(Charity.id == charity_id).first()
@@ -236,15 +238,12 @@ async def update_charity(
     return {
         "success": True,
         "message": f"Charity '{charity.name}' updated successfully",
-        "charity": charity_to_response(charity)
+        "charity": charity_to_response(charity),
     }
 
 
 @router.delete("/charities/{charity_id}")
-async def delete_charity(
-    charity_id: str,
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+async def delete_charity(charity_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Delete a charity."""
     charity = db.query(Charity).filter(Charity.id == charity_id).first()
     if not charity:
@@ -254,17 +253,11 @@ async def delete_charity(
     db.delete(charity)
     db.commit()
 
-    return {
-        "success": True,
-        "message": f"Charity '{charity_name}' deleted successfully"
-    }
+    return {"success": True, "message": f"Charity '{charity_name}' deleted successfully"}
 
 
 @router.post("/charities/{charity_id}/approve")
-async def approve_charity(
-    charity_id: str,
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+async def approve_charity(charity_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Approve a charity application."""
     charity = db.query(Charity).filter(Charity.id == charity_id).first()
     if not charity:
@@ -280,15 +273,13 @@ async def approve_charity(
     return {
         "success": True,
         "message": f"Charity '{charity.name}' approved successfully",
-        "charity": charity_to_response(charity)
+        "charity": charity_to_response(charity),
     }
 
 
 @router.post("/charities/{charity_id}/reject")
 async def reject_charity(
-    charity_id: str,
-    notes: Optional[str] = None,
-    db: Session = Depends(get_db)
+    charity_id: str, notes: Optional[str] = None, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Reject a charity application."""
     charity = db.query(Charity).filter(Charity.id == charity_id).first()
@@ -306,5 +297,5 @@ async def reject_charity(
     return {
         "success": True,
         "message": f"Charity '{charity.name}' rejected",
-        "charity": charity_to_response(charity)
+        "charity": charity_to_response(charity),
     }

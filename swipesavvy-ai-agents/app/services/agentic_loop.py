@@ -36,7 +36,7 @@ class AgenticLoop:
         self,
         api_key: str,
         model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        max_iterations: int = 5
+        max_iterations: int = 5,
     ):
         """
         Initialize the agentic loop.
@@ -54,7 +54,7 @@ class AgenticLoop:
         self,
         message: str,
         context: Dict[str, Any],
-        conversation_history: Optional[List[Dict[str, str]]] = None
+        conversation_history: Optional[List[Dict[str, str]]] = None,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
         Run the agentic loop with streaming responses.
@@ -75,7 +75,7 @@ class AgenticLoop:
             role=role,
             permissions=permissions,
             employee_name=context.get("employee_name"),
-            additional_context=context.get("additional_context")
+            additional_context=context.get("additional_context"),
         )
 
         # Get available tools for this role
@@ -123,11 +123,7 @@ class AgenticLoop:
                     # Handle content streaming
                     if hasattr(delta, "content") and delta.content:
                         content_buffer += delta.content
-                        yield {
-                            "type": "message",
-                            "delta": delta.content,
-                            "content": content_buffer
-                        }
+                        yield {"type": "message", "delta": delta.content, "content": content_buffer}
 
                     # Handle tool calls
                     if hasattr(delta, "tool_calls") and delta.tool_calls:
@@ -135,10 +131,9 @@ class AgenticLoop:
                             if tc.index is not None:
                                 # New tool call or continuing existing one
                                 while len(tool_calls) <= tc.index:
-                                    tool_calls.append({
-                                        "id": "",
-                                        "function": {"name": "", "arguments": ""}
-                                    })
+                                    tool_calls.append(
+                                        {"id": "", "function": {"name": "", "arguments": ""}}
+                                    )
 
                                 if tc.id:
                                     tool_calls[tc.index]["id"] = tc.id
@@ -146,7 +141,9 @@ class AgenticLoop:
                                     if tc.function.name:
                                         tool_calls[tc.index]["function"]["name"] = tc.function.name
                                     if tc.function.arguments:
-                                        tool_calls[tc.index]["function"]["arguments"] += tc.function.arguments
+                                        tool_calls[tc.index]["function"][
+                                            "arguments"
+                                        ] += tc.function.arguments
 
                 # Check finish reason
                 finish_reason = None
@@ -167,11 +164,7 @@ class AgenticLoop:
                     tool_args_str = tc["function"]["arguments"]
 
                     # Emit tool call event
-                    yield {
-                        "type": "tool_call",
-                        "tool": tool_name,
-                        "args": tool_args_str
-                    }
+                    yield {"type": "tool_call", "tool": tool_name, "args": tool_args_str}
 
                     # Parse arguments
                     try:
@@ -188,11 +181,13 @@ class AgenticLoop:
                             "tool": tool_name,
                             "args": tool_args,
                             "approval_key": f"{context.get('user_id')}_{tool_name}_{iteration}",
-                            "message": f"The action '{tool_name}' requires your approval before proceeding."
+                            "message": f"The action '{tool_name}' requires your approval before proceeding.",
                         }
                         # For now, auto-approve in the demo flow
                         # In production, this would wait for user confirmation
-                        tool_registry.approve_action(f"{context.get('user_id')}_{tool_name}_{iteration}")
+                        tool_registry.approve_action(
+                            f"{context.get('user_id')}_{tool_name}_{iteration}"
+                        )
 
                     # Execute tool
                     result = await tool_registry.execute(tool_name, tool_args, context)
@@ -202,34 +197,37 @@ class AgenticLoop:
                         "type": "tool_result",
                         "tool": tool_name,
                         "result": result,
-                        "success": result.get("success", False)
+                        "success": result.get("success", False),
                     }
 
                     # Add tool call and result to messages for next iteration
-                    messages.append({
-                        "role": "assistant",
-                        "content": None,
-                        "tool_calls": [{
-                            "id": tc["id"] or f"call_{tool_name}_{iteration}",
-                            "type": "function",
-                            "function": {
-                                "name": tool_name,
-                                "arguments": tool_args_str
-                            }
-                        }]
-                    })
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tc["id"] or f"call_{tool_name}_{iteration}",
-                        "content": json.dumps(result)
-                    })
+                    messages.append(
+                        {
+                            "role": "assistant",
+                            "content": None,
+                            "tool_calls": [
+                                {
+                                    "id": tc["id"] or f"call_{tool_name}_{iteration}",
+                                    "type": "function",
+                                    "function": {"name": tool_name, "arguments": tool_args_str},
+                                }
+                            ],
+                        }
+                    )
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tc["id"] or f"call_{tool_name}_{iteration}",
+                            "content": json.dumps(result),
+                        }
+                    )
 
             except Exception as e:
                 logger.error(f"Agentic loop error: {e}", exc_info=True)
                 yield {
                     "type": "error",
                     "error": str(e),
-                    "message": f"An error occurred while processing your request: {str(e)}"
+                    "message": f"An error occurred while processing your request: {str(e)}",
                 }
                 break
 
@@ -238,7 +236,7 @@ class AgenticLoop:
             logger.warning("Max iterations reached in agentic loop")
             yield {
                 "type": "warning",
-                "message": "Maximum tool execution limit reached. Please continue in a new message."
+                "message": "Maximum tool execution limit reached. Please continue in a new message.",
             }
 
 
@@ -249,7 +247,7 @@ async def run_agentic_chat(
     role: str = "analyst",
     permissions: Optional[List[str]] = None,
     employee_name: Optional[str] = None,
-    additional_context: Optional[str] = None
+    additional_context: Optional[str] = None,
 ) -> AsyncGenerator[Dict[str, Any], None]:
     """
     Convenience function to run an agentic chat.

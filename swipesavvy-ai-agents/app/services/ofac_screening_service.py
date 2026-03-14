@@ -144,7 +144,9 @@ class SanctionsScreeningService:
         - Body: { first_name, last_name, date_of_birth, country, address }
         - Response: { status, matches[], score }
         """
-        logger.warning("Connect Financial screening API not yet implemented — returning pending_review")
+        logger.warning(
+            "Connect Financial screening API not yet implemented — returning pending_review"
+        )
         return SanctionsScreeningResponse(result=ScreeningResult.PENDING_REVIEW)
 
 

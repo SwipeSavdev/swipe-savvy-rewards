@@ -23,10 +23,11 @@ logger = logging.getLogger(__name__)
 # LOOKUP TOOLS (Read Operations)
 # ============================================================================
 
+
 async def lookup_user_handler(
     email: Optional[str] = None,
     user_id: Optional[str] = None,
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Look up user details by email or ID."""
     try:
@@ -50,7 +51,7 @@ async def lookup_user_handler(
                 "account_tier": "premium",
                 "total_transactions": 156,
                 "total_spent": 4523.50,
-            }
+            },
         }
     except Exception as e:
         logger.error(f"User lookup failed: {str(e)}")
@@ -61,7 +62,7 @@ async def lookup_transaction_handler(
     transaction_id: Optional[str] = None,
     user_email: Optional[str] = None,
     limit: int = 10,
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Look up transaction details or history."""
     try:
@@ -80,7 +81,7 @@ async def lookup_transaction_handler(
                     "created_at": "2024-12-01T14:30:00Z",
                     "rewards_earned": 0.12,
                     "category": "food_and_drink",
-                }
+                },
             }
         elif user_email:
             logger.info(f"Looking up transactions for: {user_email}")
@@ -109,7 +110,7 @@ async def lookup_transaction_handler(
 async def lookup_merchant_handler(
     merchant_id: Optional[str] = None,
     merchant_name: Optional[str] = None,
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Look up merchant details."""
     try:
@@ -131,7 +132,7 @@ async def lookup_merchant_handler(
                 "total_revenue": 125000.00,
                 "rewards_rate": 2.0,
                 "joined_at": "2024-03-15",
-            }
+            },
         }
     except Exception as e:
         logger.error(f"Merchant lookup failed: {str(e)}")
@@ -142,13 +143,14 @@ async def lookup_merchant_handler(
 # SUPPORT TOOLS
 # ============================================================================
 
+
 async def create_support_ticket_handler(
     subject: str,
     customer_email: str,
     priority: str = "medium",
     description: Optional[str] = None,
     category: str = "general",
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Create a new support ticket."""
     try:
@@ -180,7 +182,7 @@ async def update_support_ticket_handler(
     status: Optional[str] = None,
     priority: Optional[str] = None,
     assigned_to: Optional[str] = None,
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Update an existing support ticket."""
     try:
@@ -207,10 +209,7 @@ async def update_support_ticket_handler(
 
 
 async def add_ticket_note_handler(
-    ticket_id: str,
-    note: str,
-    internal: bool = True,
-    context: Optional[Dict[str, Any]] = None
+    ticket_id: str, note: str, internal: bool = True, context: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Add a note to a support ticket."""
     try:
@@ -236,11 +235,9 @@ async def add_ticket_note_handler(
 # FINANCIAL TOOLS
 # ============================================================================
 
+
 async def process_refund_handler(
-    transaction_id: str,
-    amount: float,
-    reason: str,
-    context: Optional[Dict[str, Any]] = None
+    transaction_id: str, amount: float, reason: str, context: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Process a refund for a transaction with role-based limits."""
     try:
@@ -253,7 +250,7 @@ async def process_refund_handler(
             return {
                 "success": False,
                 "error": f"Refund amount ${amount:.2f} exceeds your limit of ${max_amount:.2f}. "
-                         f"Please escalate to a supervisor or admin for larger refunds.",
+                f"Please escalate to a supervisor or admin for larger refunds.",
                 "limit_exceeded": True,
                 "max_allowed": max_amount,
             }
@@ -281,10 +278,9 @@ async def process_refund_handler(
 # ANALYTICS TOOLS
 # ============================================================================
 
+
 async def get_analytics_handler(
-    metric: str = "overview",
-    time_range: str = "7d",
-    context: Optional[Dict[str, Any]] = None
+    metric: str = "overview", time_range: str = "7d", context: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Get analytics data."""
     try:
@@ -315,7 +311,7 @@ async def get_analytics_handler(
 async def get_merchant_analytics_handler(
     merchant_id: Optional[str] = None,
     time_range: str = "30d",
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Get merchant-specific analytics."""
     try:
@@ -343,10 +339,9 @@ async def get_merchant_analytics_handler(
 # FEATURE FLAG TOOLS
 # ============================================================================
 
+
 async def toggle_feature_flag_handler(
-    flag_key: str,
-    enabled: bool,
-    context: Optional[Dict[str, Any]] = None
+    flag_key: str, enabled: bool, context: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Toggle a feature flag on or off."""
     try:
@@ -370,281 +365,276 @@ async def toggle_feature_flag_handler(
 # TOOL REGISTRATION
 # ============================================================================
 
+
 def register_all_tools() -> None:
     """Register all tools with the tool registry."""
 
     # Lookup User
-    tool_registry.register(ToolDefinition(
-        name="lookup_user",
-        description="Look up user/customer details by email address or user ID. Returns account information, status, and transaction summary.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "description": "User's email address to search for"
+    tool_registry.register(
+        ToolDefinition(
+            name="lookup_user",
+            description="Look up user/customer details by email address or user ID. Returns account information, status, and transaction summary.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "description": "User's email address to search for",
+                    },
+                    "user_id": {"type": "string", "description": "User's unique ID"},
                 },
-                "user_id": {
-                    "type": "string",
-                    "description": "User's unique ID"
-                },
+                "required": [],
             },
-            "required": [],
-        },
-        handler=lookup_user_handler,
-        required_permissions=["users:read"],
-        category="lookup",
-    ))
+            handler=lookup_user_handler,
+            required_permissions=["users:read"],
+            category="lookup",
+        )
+    )
 
     # Lookup Transaction
-    tool_registry.register(ToolDefinition(
-        name="lookup_transaction",
-        description="Look up transaction details by ID, or get transaction history for a user by email.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "transaction_id": {
-                    "type": "string",
-                    "description": "Transaction ID to look up"
+    tool_registry.register(
+        ToolDefinition(
+            name="lookup_transaction",
+            description="Look up transaction details by ID, or get transaction history for a user by email.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "transaction_id": {
+                        "type": "string",
+                        "description": "Transaction ID to look up",
+                    },
+                    "user_email": {
+                        "type": "string",
+                        "description": "User email to get transaction history",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Number of transactions to return (default: 10)",
+                        "default": 10,
+                    },
                 },
-                "user_email": {
-                    "type": "string",
-                    "description": "User email to get transaction history"
-                },
-                "limit": {
-                    "type": "integer",
-                    "description": "Number of transactions to return (default: 10)",
-                    "default": 10,
-                },
+                "required": [],
             },
-            "required": [],
-        },
-        handler=lookup_transaction_handler,
-        required_permissions=["transactions:read"],
-        category="lookup",
-    ))
+            handler=lookup_transaction_handler,
+            required_permissions=["transactions:read"],
+            category="lookup",
+        )
+    )
 
     # Lookup Merchant
-    tool_registry.register(ToolDefinition(
-        name="lookup_merchant",
-        description="Look up merchant details by ID or name.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "merchant_id": {
-                    "type": "string",
-                    "description": "Merchant ID"
+    tool_registry.register(
+        ToolDefinition(
+            name="lookup_merchant",
+            description="Look up merchant details by ID or name.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "merchant_id": {"type": "string", "description": "Merchant ID"},
+                    "merchant_name": {"type": "string", "description": "Merchant name to search"},
                 },
-                "merchant_name": {
-                    "type": "string",
-                    "description": "Merchant name to search"
-                },
+                "required": [],
             },
-            "required": [],
-        },
-        handler=lookup_merchant_handler,
-        required_permissions=["merchants:read"],
-        category="lookup",
-    ))
+            handler=lookup_merchant_handler,
+            required_permissions=["merchants:read"],
+            category="lookup",
+        )
+    )
 
     # Create Support Ticket
-    tool_registry.register(ToolDefinition(
-        name="create_support_ticket",
-        description="Create a new support ticket for a customer issue.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "subject": {
-                    "type": "string",
-                    "description": "Ticket subject/title"
+    tool_registry.register(
+        ToolDefinition(
+            name="create_support_ticket",
+            description="Create a new support ticket for a customer issue.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "subject": {"type": "string", "description": "Ticket subject/title"},
+                    "customer_email": {"type": "string", "description": "Customer's email address"},
+                    "priority": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high", "critical"],
+                        "description": "Ticket priority level",
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Detailed description of the issue",
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "billing",
+                            "technical",
+                            "account",
+                            "transaction",
+                            "rewards",
+                            "general",
+                        ],
+                        "description": "Issue category",
+                    },
                 },
-                "customer_email": {
-                    "type": "string",
-                    "description": "Customer's email address"
-                },
-                "priority": {
-                    "type": "string",
-                    "enum": ["low", "medium", "high", "critical"],
-                    "description": "Ticket priority level"
-                },
-                "description": {
-                    "type": "string",
-                    "description": "Detailed description of the issue"
-                },
-                "category": {
-                    "type": "string",
-                    "enum": ["billing", "technical", "account", "transaction", "rewards", "general"],
-                    "description": "Issue category"
-                },
+                "required": ["subject", "customer_email"],
             },
-            "required": ["subject", "customer_email"],
-        },
-        handler=create_support_ticket_handler,
-        required_permissions=["support:write"],
-        category="support",
-    ))
+            handler=create_support_ticket_handler,
+            required_permissions=["support:write"],
+            category="support",
+        )
+    )
 
     # Update Support Ticket
-    tool_registry.register(ToolDefinition(
-        name="update_support_ticket",
-        description="Update an existing support ticket's status, priority, or assignment.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "ticket_id": {
-                    "type": "string",
-                    "description": "The ticket ID to update"
+    tool_registry.register(
+        ToolDefinition(
+            name="update_support_ticket",
+            description="Update an existing support ticket's status, priority, or assignment.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "string", "description": "The ticket ID to update"},
+                    "status": {
+                        "type": "string",
+                        "enum": ["open", "in_progress", "waiting", "resolved", "closed"],
+                        "description": "New status",
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high", "critical"],
+                        "description": "New priority",
+                    },
+                    "assigned_to": {"type": "string", "description": "User ID to assign ticket to"},
                 },
-                "status": {
-                    "type": "string",
-                    "enum": ["open", "in_progress", "waiting", "resolved", "closed"],
-                    "description": "New status"
-                },
-                "priority": {
-                    "type": "string",
-                    "enum": ["low", "medium", "high", "critical"],
-                    "description": "New priority"
-                },
-                "assigned_to": {
-                    "type": "string",
-                    "description": "User ID to assign ticket to"
-                },
+                "required": ["ticket_id"],
             },
-            "required": ["ticket_id"],
-        },
-        handler=update_support_ticket_handler,
-        required_permissions=["support:write"],
-        category="support",
-    ))
+            handler=update_support_ticket_handler,
+            required_permissions=["support:write"],
+            category="support",
+        )
+    )
 
     # Add Ticket Note
-    tool_registry.register(ToolDefinition(
-        name="add_ticket_note",
-        description="Add a note to an existing support ticket.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "ticket_id": {
-                    "type": "string",
-                    "description": "The ticket ID"
+    tool_registry.register(
+        ToolDefinition(
+            name="add_ticket_note",
+            description="Add a note to an existing support ticket.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "string", "description": "The ticket ID"},
+                    "note": {"type": "string", "description": "Note content to add"},
+                    "internal": {
+                        "type": "boolean",
+                        "description": "True for internal notes (not visible to customer)",
+                        "default": True,
+                    },
                 },
-                "note": {
-                    "type": "string",
-                    "description": "Note content to add"
-                },
-                "internal": {
-                    "type": "boolean",
-                    "description": "True for internal notes (not visible to customer)",
-                    "default": True,
-                },
+                "required": ["ticket_id", "note"],
             },
-            "required": ["ticket_id", "note"],
-        },
-        handler=add_ticket_note_handler,
-        required_permissions=["support:write"],
-        category="support",
-    ))
+            handler=add_ticket_note_handler,
+            required_permissions=["support:write"],
+            category="support",
+        )
+    )
 
     # Process Refund
-    tool_registry.register(ToolDefinition(
-        name="process_refund",
-        description="Process a refund for a transaction. Amount limits apply based on your role.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "transaction_id": {
-                    "type": "string",
-                    "description": "The transaction ID to refund"
+    tool_registry.register(
+        ToolDefinition(
+            name="process_refund",
+            description="Process a refund for a transaction. Amount limits apply based on your role.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "transaction_id": {
+                        "type": "string",
+                        "description": "The transaction ID to refund",
+                    },
+                    "amount": {"type": "number", "description": "Refund amount in dollars"},
+                    "reason": {"type": "string", "description": "Reason for the refund"},
                 },
-                "amount": {
-                    "type": "number",
-                    "description": "Refund amount in dollars"
-                },
-                "reason": {
-                    "type": "string",
-                    "description": "Reason for the refund"
-                },
+                "required": ["transaction_id", "amount", "reason"],
             },
-            "required": ["transaction_id", "amount", "reason"],
-        },
-        handler=process_refund_handler,
-        required_permissions=["transactions:refund"],
-        requires_approval=True,
-        is_destructive=True,
-        category="financial",
-    ))
+            handler=process_refund_handler,
+            required_permissions=["transactions:refund"],
+            requires_approval=True,
+            is_destructive=True,
+            category="financial",
+        )
+    )
 
     # Get Analytics
-    tool_registry.register(ToolDefinition(
-        name="get_analytics",
-        description="Get analytics and metrics data.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "metric": {
-                    "type": "string",
-                    "enum": ["overview", "transactions", "users", "revenue", "rewards"],
-                    "description": "Type of metrics to retrieve"
+    tool_registry.register(
+        ToolDefinition(
+            name="get_analytics",
+            description="Get analytics and metrics data.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "metric": {
+                        "type": "string",
+                        "enum": ["overview", "transactions", "users", "revenue", "rewards"],
+                        "description": "Type of metrics to retrieve",
+                    },
+                    "time_range": {
+                        "type": "string",
+                        "enum": ["24h", "7d", "30d", "90d", "1y"],
+                        "description": "Time range for the data",
+                    },
                 },
-                "time_range": {
-                    "type": "string",
-                    "enum": ["24h", "7d", "30d", "90d", "1y"],
-                    "description": "Time range for the data"
-                },
+                "required": [],
             },
-            "required": [],
-        },
-        handler=get_analytics_handler,
-        required_permissions=["analytics:read"],
-        category="analytics",
-    ))
+            handler=get_analytics_handler,
+            required_permissions=["analytics:read"],
+            category="analytics",
+        )
+    )
 
     # Get Merchant Analytics
-    tool_registry.register(ToolDefinition(
-        name="get_merchant_analytics",
-        description="Get analytics for a specific merchant or all merchants.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "merchant_id": {
-                    "type": "string",
-                    "description": "Merchant ID (optional, omit for all merchants)"
+    tool_registry.register(
+        ToolDefinition(
+            name="get_merchant_analytics",
+            description="Get analytics for a specific merchant or all merchants.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "merchant_id": {
+                        "type": "string",
+                        "description": "Merchant ID (optional, omit for all merchants)",
+                    },
+                    "time_range": {
+                        "type": "string",
+                        "enum": ["7d", "30d", "90d", "1y"],
+                        "description": "Time range",
+                    },
                 },
-                "time_range": {
-                    "type": "string",
-                    "enum": ["7d", "30d", "90d", "1y"],
-                    "description": "Time range"
-                },
+                "required": [],
             },
-            "required": [],
-        },
-        handler=get_merchant_analytics_handler,
-        required_permissions=["analytics:read", "merchants:read"],
-        category="analytics",
-    ))
+            handler=get_merchant_analytics_handler,
+            required_permissions=["analytics:read", "merchants:read"],
+            category="analytics",
+        )
+    )
 
     # Toggle Feature Flag
-    tool_registry.register(ToolDefinition(
-        name="toggle_feature_flag",
-        description="Enable or disable a feature flag.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "flag_key": {
-                    "type": "string",
-                    "description": "The feature flag key/identifier"
+    tool_registry.register(
+        ToolDefinition(
+            name="toggle_feature_flag",
+            description="Enable or disable a feature flag.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "flag_key": {
+                        "type": "string",
+                        "description": "The feature flag key/identifier",
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "True to enable, False to disable",
+                    },
                 },
-                "enabled": {
-                    "type": "boolean",
-                    "description": "True to enable, False to disable"
-                },
+                "required": ["flag_key", "enabled"],
             },
-            "required": ["flag_key", "enabled"],
-        },
-        handler=toggle_feature_flag_handler,
-        required_permissions=["feature_flags:write"],
-        requires_approval=True,
-        category="admin",
-    ))
+            handler=toggle_feature_flag_handler,
+            required_permissions=["feature_flags:write"],
+            requires_approval=True,
+            category="admin",
+        )
+    )
 
     logger.info(f"Registered {len(tool_registry.list_tools())} tools with the registry")

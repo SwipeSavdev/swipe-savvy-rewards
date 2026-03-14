@@ -41,23 +41,28 @@ kyc_service = KYCService()
 # Pydantic Models
 # ============================================
 
+
 class TierUpgradeRequest(BaseModel):
     """Request for KYC tier upgrade"""
+
     target_tier: str
 
 
 class IdentityVerificationStart(BaseModel):
     """Start identity verification flow"""
+
     pass
 
 
 class IdentityVerificationComplete(BaseModel):
     """Complete identity verification"""
+
     session_id: str
 
 
 class TransactionLimitCheck(BaseModel):
     """Check transaction against limits"""
+
     amount: float
 
 
@@ -65,10 +70,10 @@ class TransactionLimitCheck(BaseModel):
 # API Endpoints
 # ============================================
 
+
 @router.get("/status")
 async def get_kyc_status(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """Get current KYC status and verification progress"""
     if not current_user:
@@ -80,8 +85,7 @@ async def get_kyc_status(
 
 @router.get("/limits")
 async def get_transaction_limits(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """Get current transaction limits based on KYC tier"""
     if not current_user:
@@ -91,7 +95,7 @@ async def get_transaction_limits(
     return {
         "kyc_tier": current_user.kyc_tier,
         "limits": limits,
-        "next_tier": kyc_service._get_next_tier(current_user.kyc_tier)
+        "next_tier": kyc_service._get_next_tier(current_user.kyc_tier),
     }
 
 
@@ -99,7 +103,7 @@ async def get_transaction_limits(
 async def check_transaction_limit(
     request: TransactionLimitCheck,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Check if a transaction amount is within limits"""
     if not current_user:
@@ -115,7 +119,7 @@ async def upload_document(
     document_subtype: Optional[str] = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Upload a KYC document.
@@ -141,17 +145,14 @@ async def upload_document(
     if document_type not in valid_types:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid document type. Must be one of: {', '.join(valid_types)}"
+            detail=f"Invalid document type. Must be one of: {', '.join(valid_types)}",
         )
 
     # Validate file type
-    allowed_content_types = [
-        "image/jpeg", "image/png", "image/heic", "application/pdf"
-    ]
+    allowed_content_types = ["image/jpeg", "image/png", "image/heic", "application/pdf"]
     if file.content_type not in allowed_content_types:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type. Allowed: JPEG, PNG, HEIC, PDF"
+            status_code=400, detail=f"Invalid file type. Allowed: JPEG, PNG, HEIC, PDF"
         )
 
     # Check file size (max 10MB)
@@ -171,7 +172,7 @@ async def upload_document(
             file_content=content,
             file_name=file.filename,
             mime_type=file.content_type,
-            document_subtype=document_subtype
+            document_subtype=document_subtype,
         )
 
         return {
@@ -179,7 +180,7 @@ async def upload_document(
             "document_id": str(document.id),
             "document_type": document.document_type,
             "status": document.status,
-            "message": "Document uploaded successfully. It will be reviewed shortly."
+            "message": "Document uploaded successfully. It will be reviewed shortly.",
         }
 
     except ValueError as e:
@@ -188,16 +189,18 @@ async def upload_document(
 
 @router.get("/documents")
 async def list_documents(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """List all uploaded KYC documents"""
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    documents = db.query(UserKYCDocument).filter(
-        UserKYCDocument.user_id == current_user.id
-    ).order_by(UserKYCDocument.created_at.desc()).all()
+    documents = (
+        db.query(UserKYCDocument)
+        .filter(UserKYCDocument.user_id == current_user.id)
+        .order_by(UserKYCDocument.created_at.desc())
+        .all()
+    )
 
     return {
         "documents": [
@@ -210,7 +213,7 @@ async def list_documents(
                 "rejection_reason": doc.rejection_reason,
                 "expires_at": doc.expires_at.isoformat() if doc.expires_at else None,
                 "verified_at": doc.verified_at.isoformat() if doc.verified_at else None,
-                "uploaded_at": doc.created_at.isoformat()
+                "uploaded_at": doc.created_at.isoformat(),
             }
             for doc in documents
         ]
@@ -219,27 +222,23 @@ async def list_documents(
 
 @router.delete("/documents/{document_id}")
 async def delete_document(
-    document_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    document_id: UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """Delete an uploaded document (only if pending)"""
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    document = db.query(UserKYCDocument).filter(
-        UserKYCDocument.id == document_id,
-        UserKYCDocument.user_id == current_user.id
-    ).first()
+    document = (
+        db.query(UserKYCDocument)
+        .filter(UserKYCDocument.id == document_id, UserKYCDocument.user_id == current_user.id)
+        .first()
+    )
 
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
     if document.status != "pending":
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot delete document that has been reviewed"
-        )
+        raise HTTPException(status_code=400, detail="Cannot delete document that has been reviewed")
 
     db.delete(document)
     db.commit()
@@ -251,7 +250,7 @@ async def delete_document(
 async def request_tier_upgrade(
     request: TierUpgradeRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Request upgrade to a higher KYC tier.
@@ -265,9 +264,7 @@ async def request_tier_upgrade(
     if request.target_tier not in valid_tiers:
         raise HTTPException(status_code=400, detail="Invalid tier")
 
-    result = await kyc_service.request_tier_upgrade(
-        db, current_user, request.target_tier
-    )
+    result = await kyc_service.request_tier_upgrade(db, current_user, request.target_tier)
 
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error"))
@@ -277,8 +274,7 @@ async def request_tier_upgrade(
 
 @router.post("/identity/start")
 async def start_identity_verification(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """
     Start identity verification flow.
@@ -289,11 +285,7 @@ async def start_identity_verification(
         raise HTTPException(status_code=401, detail="Authentication required")
 
     if current_user.identity_verification_status == "verified":
-        return {
-            "success": True,
-            "already_verified": True,
-            "message": "Identity already verified"
-        }
+        return {"success": True, "already_verified": True, "message": "Identity already verified"}
 
     result = await kyc_service.initiate_identity_verification(db, current_user)
 
@@ -307,7 +299,7 @@ async def start_identity_verification(
 async def complete_identity_verification(
     request: IdentityVerificationComplete,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Complete identity verification flow.
@@ -317,17 +309,14 @@ async def complete_identity_verification(
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    result = await kyc_service.complete_identity_verification(
-        db, current_user, request.session_id
-    )
+    result = await kyc_service.complete_identity_verification(db, current_user, request.session_id)
 
     return result
 
 
 @router.post("/screening/ofac")
 async def run_ofac_screening(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """
     Run sanctions screening.
@@ -344,15 +333,13 @@ async def run_ofac_screening(
         "success": True,
         "screening_id": str(result.id),
         "status": result.status,
-        "screened_at": result.created_at.isoformat()
+        "screened_at": result.created_at.isoformat(),
     }
 
 
 @router.get("/requirements/{tier}")
 async def get_tier_requirements(
-    tier: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    tier: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """Get requirements for a specific KYC tier"""
     if not current_user:
@@ -370,5 +357,5 @@ async def get_tier_requirements(
     return {
         "tier": tier,
         "limits": kyc_service.get_tier_limits(tier),
-        "requirements": result.get("requirements", {})
+        "requirements": result.get("requirements", {}),
     }

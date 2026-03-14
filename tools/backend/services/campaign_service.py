@@ -21,14 +21,17 @@ logger = logging.getLogger(__name__)
 # Import get_db from main module
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+
 # Temporary placeholder for get_db until main is properly imported
 def get_db():
     """Temporary placeholder get_db function"""
     pass
 
+
 # ============================================================================
 # ENUMS & MODELS
 # ============================================================================
+
 
 class CampaignType(str, Enum):
     LOCATION_DEAL = "LOCATION_DEAL"
@@ -37,12 +40,14 @@ class CampaignType(str, Enum):
     LOYALTY_BOOST = "LOYALTY_BOOST"
     FLASH_SALE = "FLASH_SALE"
 
+
 class CampaignStatus(str, Enum):
     DRAFT = "draft"
     RUNNING = "running"
     PAUSED = "paused"
     COMPLETED = "completed"
     ARCHIVED = "archived"
+
 
 class OfferType(str, Enum):
     FIXED_DISCOUNT = "FIXED_DISCOUNT"
@@ -51,16 +56,18 @@ class OfferType(str, Enum):
     FREE_SHIPPING = "FREE_SHIPPING"
     OTHER = "OTHER"
 
+
 # ============================================================================
 # CAMPAIGN SERVICE
 # ============================================================================
 
+
 class CampaignService:
     """Service for managing marketing campaigns"""
-    
+
     def __init__(self, db: Session):
         self.db = db
-    
+
     def create_campaign(
         self,
         name: str,
@@ -71,12 +78,12 @@ class CampaignService:
         end_date: Optional[datetime] = None,
         target_segment: Optional[str] = None,
         description: Optional[str] = None,
-        created_by: Optional[str] = None
+        created_by: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create new campaign"""
         try:
             campaign_id = f"camp-{int(datetime.utcnow().timestamp())}"
-            
+
             # TODO: Insert into campaigns table
             # For now, return mock response for testing
             return {
@@ -88,11 +95,11 @@ class CampaignService:
                 "offer_type": offer_type.value,
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat() if end_date else None,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.utcnow().isoformat(),
             }
         except Exception as e:
             raise Exception(f"Failed to create campaign: {str(e)}")
-    
+
     def get_campaign(self, campaign_id: str) -> Dict[str, Any]:
         """Get campaign details"""
         try:
@@ -104,16 +111,13 @@ class CampaignService:
                 "type": "LOCATION_DEAL",
                 "status": "running",
                 "offer_amount": 10.00,
-                "offer_type": "FIXED_DISCOUNT"
+                "offer_type": "FIXED_DISCOUNT",
             }
         except Exception as e:
             raise Exception(f"Failed to get campaign: {str(e)}")
-    
+
     def list_campaigns(
-        self,
-        status: Optional[CampaignStatus] = None,
-        limit: int = 20,
-        offset: int = 0
+        self, status: Optional[CampaignStatus] = None, limit: int = 20, offset: int = 0
     ) -> Dict[str, Any]:
         """List all campaigns with optional filtering"""
         try:
@@ -126,28 +130,24 @@ class CampaignService:
                         "name": "Holiday Promotion",
                         "type": "SEASONAL",
                         "status": "running",
-                        "created_at": datetime.utcnow().isoformat()
+                        "created_at": datetime.utcnow().isoformat(),
                     }
                 ],
                 "total": 1,
                 "limit": limit,
-                "offset": offset
+                "offset": offset,
             }
         except Exception as e:
             raise Exception(f"Failed to list campaigns: {str(e)}")
-    
-    def update_campaign(
-        self,
-        campaign_id: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+
+    def update_campaign(self, campaign_id: str, **kwargs) -> Dict[str, Any]:
         """Update campaign fields"""
         try:
             # TODO: Update campaigns table
             return {"campaign_id": campaign_id, "updated": True}
         except Exception as e:
             raise Exception(f"Failed to update campaign: {str(e)}")
-    
+
     def delete_campaign(self, campaign_id: str) -> bool:
         """Delete campaign (soft delete - set status to archived)"""
         try:
@@ -155,7 +155,7 @@ class CampaignService:
             return True
         except Exception as e:
             raise Exception(f"Failed to delete campaign: {str(e)}")
-    
+
     def launch_campaign(self, campaign_id: str) -> Dict[str, Any]:
         """Launch campaign (change status from draft to running)"""
         try:
@@ -163,21 +163,19 @@ class CampaignService:
             return {
                 "campaign_id": campaign_id,
                 "status": "running",
-                "launched_at": datetime.utcnow().isoformat()
+                "launched_at": datetime.utcnow().isoformat(),
             }
         except Exception as e:
             raise Exception(f"Failed to launch campaign: {str(e)}")
-    
+
     def pause_campaign(self, campaign_id: str) -> Dict[str, Any]:
         """Pause running campaign"""
         try:
             # TODO: Update campaigns.status = 'paused'
-            return {
-                "campaign_id": campaign_id,
-                "status": "paused"
-            }
+            return {"campaign_id": campaign_id, "status": "paused"}
         except Exception as e:
             raise Exception(f"Failed to pause campaign: {str(e)}")
+
 
 # ============================================================================
 # FASTAPI ROUTER
@@ -185,29 +183,32 @@ class CampaignService:
 
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
 
+
 def get_campaign_service(db: Session = Depends(get_db)) -> CampaignService:
     """Dependency injection for campaign service"""
     return CampaignService(db)
 
+
 # ============================================================================
 # ENDPOINTS
 # ============================================================================
+
 
 @router.get("")
 async def list_campaigns(
     status: Optional[CampaignStatus] = Query(None),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    service: CampaignService = Depends(get_campaign_service)
+    service: CampaignService = Depends(get_campaign_service),
 ):
     """
     List all campaigns with optional filtering
-    
+
     Query Parameters:
     - status: Filter by campaign status (draft, running, paused, completed, archived)
     - limit: Number of results to return (default 20, max 100)
     - offset: Number of results to skip for pagination (default 0)
-    
+
     Response:
     {
       "campaigns": [...],
@@ -223,6 +224,7 @@ async def list_campaigns(
         logger.error(f"Error listing campaigns: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.post("")
 async def create_campaign(
     name: str = Query(..., min_length=1),
@@ -233,11 +235,11 @@ async def create_campaign(
     end_date: Optional[str] = Query(None),
     target_segment: Optional[str] = Query(None),
     description: Optional[str] = Query(None),
-    service: CampaignService = Depends(get_campaign_service)
+    service: CampaignService = Depends(get_campaign_service),
 ):
     """
     Create new marketing campaign
-    
+
     Query Parameters:
     - name: Campaign name (required)
     - campaign_type: Type of campaign (required)
@@ -247,7 +249,7 @@ async def create_campaign(
     - end_date: Campaign end date in ISO 8601 format (optional)
     - target_segment: Target user segment (optional)
     - description: Campaign description (optional)
-    
+
     Response:
     {
       "campaign_id": "camp-001",
@@ -260,7 +262,7 @@ async def create_campaign(
     try:
         start = datetime.fromisoformat(start_date)
         end = datetime.fromisoformat(end_date) if end_date else None
-        
+
         result = service.create_campaign(
             name=name,
             campaign_type=campaign_type,
@@ -269,7 +271,7 @@ async def create_campaign(
             start_date=start,
             end_date=end,
             target_segment=target_segment,
-            description=description
+            description=description,
         )
         return result
     except ValueError as e:
@@ -278,17 +280,17 @@ async def create_campaign(
         logger.error(f"Error creating campaign: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.get("/{campaign_id}")
 async def get_campaign(
-    campaign_id: str,
-    service: CampaignService = Depends(get_campaign_service)
+    campaign_id: str, service: CampaignService = Depends(get_campaign_service)
 ):
     """
     Get campaign details
-    
+
     Path Parameters:
     - campaign_id: Campaign identifier
-    
+
     Response:
     {
       "campaign_id": "camp-001",
@@ -311,25 +313,26 @@ async def get_campaign(
         logger.error(f"Error getting campaign: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.put("/{campaign_id}")
 async def update_campaign(
     campaign_id: str,
     name: Optional[str] = Query(None),
     status: Optional[CampaignStatus] = Query(None),
     end_date: Optional[str] = Query(None),
-    service: CampaignService = Depends(get_campaign_service)
+    service: CampaignService = Depends(get_campaign_service),
 ):
     """
     Update campaign (partial update)
-    
+
     Path Parameters:
     - campaign_id: Campaign identifier
-    
+
     Query Parameters (optional):
     - name: New campaign name
     - status: New status
     - end_date: New end date
-    
+
     Response:
     {
       "campaign_id": "camp-001",
@@ -340,29 +343,29 @@ async def update_campaign(
     try:
         updates = {}
         if name:
-            updates['name'] = name
+            updates["name"] = name
         if status:
-            updates['status'] = status.value
+            updates["status"] = status.value
         if end_date:
-            updates['end_date'] = datetime.fromisoformat(end_date)
-        
+            updates["end_date"] = datetime.fromisoformat(end_date)
+
         result = service.update_campaign(campaign_id, **updates)
         return result
     except Exception as e:
         logger.error(f"Error updating campaign: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.delete("/{campaign_id}")
 async def delete_campaign(
-    campaign_id: str,
-    service: CampaignService = Depends(get_campaign_service)
+    campaign_id: str, service: CampaignService = Depends(get_campaign_service)
 ):
     """
     Delete campaign (soft delete - archives the campaign)
-    
+
     Path Parameters:
     - campaign_id: Campaign identifier
-    
+
     Response:
     {
       "campaign_id": "camp-001",
@@ -372,26 +375,22 @@ async def delete_campaign(
     """
     try:
         service.delete_campaign(campaign_id)
-        return {
-            "campaign_id": campaign_id,
-            "deleted": True,
-            "status": "archived"
-        }
+        return {"campaign_id": campaign_id, "deleted": True, "status": "archived"}
     except Exception as e:
         logger.error(f"Error deleting campaign: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.post("/{campaign_id}/launch")
 async def launch_campaign(
-    campaign_id: str,
-    service: CampaignService = Depends(get_campaign_service)
+    campaign_id: str, service: CampaignService = Depends(get_campaign_service)
 ):
     """
     Launch campaign (transition from draft to running)
-    
+
     Path Parameters:
     - campaign_id: Campaign identifier
-    
+
     Response:
     {
       "campaign_id": "camp-001",
@@ -406,17 +405,17 @@ async def launch_campaign(
         logger.error(f"Error launching campaign: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.post("/{campaign_id}/pause")
 async def pause_campaign(
-    campaign_id: str,
-    service: CampaignService = Depends(get_campaign_service)
+    campaign_id: str, service: CampaignService = Depends(get_campaign_service)
 ):
     """
     Pause running campaign
-    
+
     Path Parameters:
     - campaign_id: Campaign identifier
-    
+
     Response:
     {
       "campaign_id": "camp-001",
@@ -430,18 +429,20 @@ async def pause_campaign(
         logger.error(f"Error pausing campaign: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 # ============================================================================
 # SETUP FUNCTION
 # ============================================================================
 
+
 def setup_campaign_routes(app):
     """
     Setup campaign routes in FastAPI app
-    
+
     Usage in main.py:
         from campaign_service import setup_campaign_routes
         setup_campaign_routes(app)
-    
+
     This will register all campaign endpoints:
     - GET    /api/campaigns
     - POST   /api/campaigns

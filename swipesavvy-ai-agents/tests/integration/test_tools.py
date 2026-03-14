@@ -21,7 +21,7 @@ if result["success"]:
     print("✅ Success!")
     print(f"User: {result['data']['user_id']}")
     print(f"Accounts: {len(result['data']['accounts'])}")
-    for acc in result['data']['accounts']:
+    for acc in result["data"]["accounts"]:
         print(f"  - {acc['account_type']}: ${acc['balance']:.2f} ({acc['account_number']})")
     print(f"Total Balance: ${result['data']['total_balance']:.2f}")
 else:
@@ -38,9 +38,11 @@ if result["success"]:
     print(f"Total amount: ${result['data']['summary']['total_amount']:.2f}")
     print(f"Pending: {result['data']['summary']['pending_count']}")
     print("\nRecent transactions:")
-    for txn in result['data']['transactions'][:5]:
-        status_icon = "⏳" if txn['status'] == 'pending' else "✓"
-        print(f"  {status_icon} {txn['date'][:10]} - {txn['merchant']}: ${txn['amount']:.2f} ({txn['category']})")
+    for txn in result["data"]["transactions"][:5]:
+        status_icon = "⏳" if txn["status"] == "pending" else "✓"
+        print(
+            f"  {status_icon} {txn['date'][:10]} - {txn['merchant']}: ${txn['amount']:.2f} ({txn['category']})"
+        )
 else:
     print(f"❌ Error: {result['error']['message']}")
 
@@ -49,12 +51,12 @@ print("TEST 3: Get Transaction Details")
 print("=" * 60)
 
 # Get first transaction ID from previous result
-if result["success"] and result['data']['transactions']:
-    txn_id = result['data']['transactions'][0]['id']
+if result["success"] and result["data"]["transactions"]:
+    txn_id = result["data"]["transactions"][0]["id"]
     result = get_transaction_details(user_id="user_001", transaction_id=txn_id)
     if result["success"]:
         print("✅ Success!")
-        txn = result['data']
+        txn = result["data"]
         print(f"Transaction ID: {txn['id']}")
         print(f"Merchant: {txn['merchant']}")
         print(f"Amount: ${txn['amount']:.2f}")
@@ -73,7 +75,7 @@ result = get_transactions(user_id="user_001", category="shopping", limit=5)
 if result["success"]:
     print("✅ Success!")
     print(f"Found {result['data']['count']} shopping transactions")
-    for txn in result['data']['transactions']:
+    for txn in result["data"]["transactions"]:
         print(f"  - {txn['merchant']}: ${txn['amount']:.2f}")
 else:
     print(f"❌ Error: {result['error']['message']}")

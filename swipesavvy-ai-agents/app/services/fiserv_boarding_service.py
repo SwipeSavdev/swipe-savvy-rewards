@@ -21,12 +21,14 @@ logger = logging.getLogger(__name__)
 
 class FiservChannel(str, Enum):
     """Available boarding channels"""
+
     FACS = "FACS"
     ITS = "ITS"
 
 
 class FiservStatus(str, Enum):
     """MPA status codes returned by Fiserv"""
+
     SUBMITTED = "Submitted"
     PENDING_CREDIT = "Pending Credit Review"
     PENDING_BOS = "Pending BOS"
@@ -37,6 +39,7 @@ class FiservStatus(str, Enum):
 
 class FiservAttachment(BaseModel):
     """Document attachment for credit resubmission"""
+
     ext_ref_id: str
     description: str
     file_type: str
@@ -46,6 +49,7 @@ class FiservAttachment(BaseModel):
 
 class MPASubmitResponse(BaseModel):
     """Response from MPA submission"""
+
     success: bool
     mpa_id: Optional[str] = None
     north_number: Optional[str] = None
@@ -56,6 +60,7 @@ class MPASubmitResponse(BaseModel):
 
 class MPAStatusResponse(BaseModel):
     """Response from status query"""
+
     success: bool
     mpa_id: Optional[str] = None
     ext_ref_id: Optional[str] = None
@@ -82,7 +87,7 @@ class FiservBoardingService:
         api_user: str,
         api_password: str,
         base_url: str = "https://lsuat-api.fdportfoliomanager.com/boarding/north/NorthAsBoardingAPIService.svc/rest",
-        channel: str = "FACS"
+        channel: str = "FACS",
     ):
         """
         Initialize the Fiserv Boarding Service.
@@ -95,13 +100,13 @@ class FiservBoardingService:
         """
         self.api_user = api_user
         self.api_token = self._hash_password(api_password)
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.channel = channel
 
         self.headers = {
             "user": self.api_user,
             "token": self.api_token,
-            "Content-Type": "application/xml"
+            "Content-Type": "application/xml",
         }
 
     @staticmethod
@@ -115,7 +120,7 @@ class FiservBoardingService:
         endpoint: str,
         params: Optional[Dict[str, str]] = None,
         data: Optional[str] = None,
-        timeout: float = 60.0
+        timeout: float = 60.0,
     ) -> Dict[str, Any]:
         """
         Make an HTTP request to the Fiserv API.
@@ -135,11 +140,7 @@ class FiservBoardingService:
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.request(
-                    method=method,
-                    url=url,
-                    headers=self.headers,
-                    params=params,
-                    content=data
+                    method=method, url=url, headers=self.headers, params=params, content=data
                 )
 
                 logger.info(f"Fiserv API {method} {endpoint}: {response.status_code}")
@@ -148,14 +149,14 @@ class FiservBoardingService:
                     return {
                         "success": True,
                         "status_code": response.status_code,
-                        "content": response.text
+                        "content": response.text,
                     }
                 else:
                     logger.error(f"Fiserv API error: {response.status_code} - {response.text}")
                     return {
                         "success": False,
                         "status_code": response.status_code,
-                        "error": response.text
+                        "error": response.text,
                     }
 
         except httpx.TimeoutException:
@@ -166,10 +167,7 @@ class FiservBoardingService:
             return {"success": False, "error": str(e)}
 
     async def submit_mpa(
-        self,
-        xml_content: str,
-        ext_ref_id: str,
-        channel: Optional[str] = None
+        self, xml_content: str, ext_ref_id: str, channel: Optional[str] = None
     ) -> MPASubmitResponse:
         """
         Submit a new Merchant Processing Agreement (MPA).
@@ -183,10 +181,7 @@ class FiservBoardingService:
             MPASubmitResponse with MPA ID and status
         """
         endpoint = "SubmitMPA"
-        params = {
-            "extRefId": ext_ref_id,
-            "channel": channel or self.channel
-        }
+        params = {"extRefId": ext_ref_id, "channel": channel or self.channel}
 
         result = await self._make_request("POST", endpoint, params=params, data=xml_content)
 
@@ -202,19 +197,13 @@ class FiservBoardingService:
                 mpa_id=mpa_id,
                 north_number=north_number,
                 status=status,
-                response_xml=response_xml
+                response_xml=response_xml,
             )
         else:
-            return MPASubmitResponse(
-                success=False,
-                error_message=result.get("error")
-            )
+            return MPASubmitResponse(success=False, error_message=result.get("error"))
 
     async def resubmit_mpa(
-        self,
-        xml_content: str,
-        ext_ref_id: str,
-        north_number: str
+        self, xml_content: str, ext_ref_id: str, north_number: str
     ) -> MPASubmitResponse:
         """
         Resubmit a corrected MPA (for rejected applications).
@@ -228,10 +217,7 @@ class FiservBoardingService:
             MPASubmitResponse with updated status
         """
         endpoint = "ReSubmitMPA"
-        params = {
-            "extRefId": ext_ref_id,
-            "northNumber": north_number
-        }
+        params = {"extRefId": ext_ref_id, "northNumber": north_number}
 
         result = await self._make_request("PUT", endpoint, params=params, data=xml_content)
 
@@ -245,19 +231,12 @@ class FiservBoardingService:
                 mpa_id=mpa_id,
                 north_number=north_number,
                 status=status,
-                response_xml=response_xml
+                response_xml=response_xml,
             )
         else:
-            return MPASubmitResponse(
-                success=False,
-                error_message=result.get("error")
-            )
+            return MPASubmitResponse(success=False, error_message=result.get("error"))
 
-    async def get_status_by_mpa_id(
-        self,
-        mpa_id: str,
-        ext_ref_id: str
-    ) -> MPAStatusResponse:
+    async def get_status_by_mpa_id(self, mpa_id: str, ext_ref_id: str) -> MPAStatusResponse:
         """
         Get MPA status by MPA ID.
 
@@ -269,10 +248,7 @@ class FiservBoardingService:
             MPAStatusResponse with current status
         """
         endpoint = "GetStatusByMPAID"
-        params = {
-            "mpaId": mpa_id,
-            "extRefId": ext_ref_id
-        }
+        params = {"mpaId": mpa_id, "extRefId": ext_ref_id}
 
         result = await self._make_request("GET", endpoint, params=params)
 
@@ -288,13 +264,10 @@ class FiservBoardingService:
                 ext_ref_id=ext_ref_id,
                 status=status,
                 north_number=north_number,
-                status_message=status_message
+                status_message=status_message,
             )
         else:
-            return MPAStatusResponse(
-                success=False,
-                error_message=result.get("error")
-            )
+            return MPAStatusResponse(success=False, error_message=result.get("error"))
 
     async def search_by_ext_ref_id(self, ext_ref_id: str) -> MPAStatusResponse:
         """
@@ -322,19 +295,12 @@ class FiservBoardingService:
                 mpa_id=mpa_id,
                 ext_ref_id=ext_ref_id,
                 status=status,
-                north_number=north_number
+                north_number=north_number,
             )
         else:
-            return MPAStatusResponse(
-                success=False,
-                error_message=result.get("error")
-            )
+            return MPAStatusResponse(success=False, error_message=result.get("error"))
 
-    async def retrieve_mpa_xml(
-        self,
-        mpa_id: str,
-        ext_ref_id: str
-    ) -> Dict[str, Any]:
+    async def retrieve_mpa_xml(self, mpa_id: str, ext_ref_id: str) -> Dict[str, Any]:
         """
         Retrieve the original MPA XML document.
 
@@ -346,23 +312,18 @@ class FiservBoardingService:
             Dict with success status and XML content
         """
         endpoint = "RetrieveMpaXml"
-        params = {
-            "mpaId": mpa_id,
-            "extRefId": ext_ref_id
-        }
+        params = {"mpaId": mpa_id, "extRefId": ext_ref_id}
 
         result = await self._make_request("GET", endpoint, params=params)
 
         return {
             "success": result.get("success", False),
             "xml_content": result.get("content") if result.get("success") else None,
-            "error": result.get("error") if not result.get("success") else None
+            "error": result.get("error") if not result.get("success") else None,
         }
 
     async def get_status_by_timespan(
-        self,
-        from_timestamp: datetime,
-        to_timestamp: datetime
+        self, from_timestamp: datetime, to_timestamp: datetime
     ) -> List[MPAStatusResponse]:
         """
         Get all MPA statuses within a time range.
@@ -377,7 +338,7 @@ class FiservBoardingService:
         endpoint = "GetStatusByTimeSpan"
         params = {
             "fromTimeStamp": from_timestamp.strftime("%Y-%m-%dT%H:%M:%S"),
-            "toTimeStamp": to_timestamp.strftime("%Y-%m-%dT%H:%M:%S")
+            "toTimeStamp": to_timestamp.strftime("%Y-%m-%dT%H:%M:%S"),
         }
 
         result = await self._make_request("GET", endpoint, params=params)
@@ -391,10 +352,7 @@ class FiservBoardingService:
             return []
 
     async def resubmit_to_credit_underwriting(
-        self,
-        mpa_id: str,
-        ext_ref_id: str,
-        attachments: List[FiservAttachment]
+        self, mpa_id: str, ext_ref_id: str, attachments: List[FiservAttachment]
     ) -> MPASubmitResponse:
         """
         Resubmit MPA to credit underwriting with additional documents.
@@ -408,10 +366,7 @@ class FiservBoardingService:
             MPASubmitResponse with updated status
         """
         endpoint = "ReSubmitToCreditUnderwriting"
-        params = {
-            "mpaId": mpa_id,
-            "extRefId": ext_ref_id
-        }
+        params = {"mpaId": mpa_id, "extRefId": ext_ref_id}
 
         # Build XML for attachments
         attachments_xml = self._build_attachments_xml(attachments)
@@ -423,22 +378,13 @@ class FiservBoardingService:
             status = self._extract_xml_value(response_xml, "Status")
 
             return MPASubmitResponse(
-                success=True,
-                mpa_id=mpa_id,
-                status=status,
-                response_xml=response_xml
+                success=True, mpa_id=mpa_id, status=status, response_xml=response_xml
             )
         else:
-            return MPASubmitResponse(
-                success=False,
-                error_message=result.get("error")
-            )
+            return MPASubmitResponse(success=False, error_message=result.get("error"))
 
     async def resubmit_to_bos(
-        self,
-        mpa_id: str,
-        ext_ref_id: str,
-        xml_content: str
+        self, mpa_id: str, ext_ref_id: str, xml_content: str
     ) -> MPASubmitResponse:
         """
         Resubmit MPA to BOS (Back Office System) after credit approval.
@@ -452,10 +398,7 @@ class FiservBoardingService:
             MPASubmitResponse with updated status
         """
         endpoint = "ReSubmitToBOS"
-        params = {
-            "mpaId": mpa_id,
-            "extRefId": ext_ref_id
-        }
+        params = {"mpaId": mpa_id, "extRefId": ext_ref_id}
 
         result = await self._make_request("PUT", endpoint, params=params, data=xml_content)
 
@@ -469,18 +412,16 @@ class FiservBoardingService:
                 mpa_id=mpa_id,
                 north_number=north_number,
                 status=status,
-                response_xml=response_xml
+                response_xml=response_xml,
             )
         else:
-            return MPASubmitResponse(
-                success=False,
-                error_message=result.get("error")
-            )
+            return MPASubmitResponse(success=False, error_message=result.get("error"))
 
     @staticmethod
     def _extract_xml_value(xml_content: str, tag: str) -> Optional[str]:
         """Extract a value from XML by tag name (simple regex-based parsing)"""
         import re
+
         pattern = f"<{tag}>([^<]*)</{tag}>"
         match = re.search(pattern, xml_content, re.IGNORECASE)
         return match.group(1) if match else None
@@ -488,6 +429,7 @@ class FiservBoardingService:
     def _parse_mpa_list(self, xml_content: str) -> List[MPAStatusResponse]:
         """Parse XML containing multiple MPA records"""
         import re
+
         mpas = []
 
         # Find all MPA elements
@@ -500,13 +442,15 @@ class FiservBoardingService:
             status = self._extract_xml_value(mpa_xml, "Status")
             north_number = self._extract_xml_value(mpa_xml, "NorthNumber")
 
-            mpas.append(MPAStatusResponse(
-                success=True,
-                mpa_id=mpa_id,
-                ext_ref_id=ext_ref_id,
-                status=status,
-                north_number=north_number
-            ))
+            mpas.append(
+                MPAStatusResponse(
+                    success=True,
+                    mpa_id=mpa_id,
+                    ext_ref_id=ext_ref_id,
+                    status=status,
+                    north_number=north_number,
+                )
+            )
 
         return mpas
 
@@ -515,7 +459,8 @@ class FiservBoardingService:
         attachment_elements = []
 
         for att in attachments:
-            attachment_elements.append(f"""
+            attachment_elements.append(
+                f"""
             <Attachment>
                 <ExtRefId>{att.ext_ref_id}</ExtRefId>
                 <Description>{att.description}</Description>
@@ -523,7 +468,8 @@ class FiservBoardingService:
                 <FileName>{att.file_name}</FileName>
                 <FileContent>{att.file_content_base64}</FileContent>
             </Attachment>
-            """)
+            """
+            )
 
         return f"""<?xml version="1.0" encoding="utf-8"?>
         <Attachments>
@@ -558,10 +504,14 @@ class MPAXmlBuilder:
         owners_xml = MPAXmlBuilder._build_owners_xml(f.get("merchantOwners", []))
 
         # Build bank accounts XML
-        bank_accounts_xml = MPAXmlBuilder._build_bank_accounts_xml(f.get("merchantBankAccounts", []))
+        bank_accounts_xml = MPAXmlBuilder._build_bank_accounts_xml(
+            f.get("merchantBankAccounts", [])
+        )
 
         # Build funding accounts XML
-        funding_accounts_xml = MPAXmlBuilder._build_funding_accounts_xml(f.get("merchantFundingAccounts", []))
+        funding_accounts_xml = MPAXmlBuilder._build_funding_accounts_xml(
+            f.get("merchantFundingAccounts", [])
+        )
 
         # Build card entitlements XML
         cards_xml = MPAXmlBuilder._build_cards_xml(f.get("merchantCards", []))
@@ -862,7 +812,8 @@ class MPAXmlBuilder:
 
         owner_elements = []
         for owner in owners:
-            owner_elements.append(f"""
+            owner_elements.append(
+                f"""
         <Owner>
             <OwnerSequenceNumber>{owner.get('ownerSequenceNumber', 1)}</OwnerSequenceNumber>
             <OwnerFirstName>{owner.get('ownerFirstName', '')}</OwnerFirstName>
@@ -881,7 +832,8 @@ class MPAXmlBuilder:
             <OwnerPercent>{owner.get('ownerPercent', 100)}</OwnerPercent>
             <OwnerGuarenteeIndicator>{owner.get('ownerGuarenteeIndicator', 'Y')}</OwnerGuarenteeIndicator>
             <OwnerSignerIndicator>{owner.get('ownerSignerIndicator', 'N')}</OwnerSignerIndicator>
-        </Owner>""")
+        </Owner>"""
+            )
 
         return "\n".join(owner_elements)
 
@@ -893,7 +845,8 @@ class MPAXmlBuilder:
 
         account_elements = []
         for account in accounts:
-            account_elements.append(f"""
+            account_elements.append(
+                f"""
         <BankAccount>
             <BankSequenceNumber>{account.get('bankSequenceNumber', 1)}</BankSequenceNumber>
             <BankRoutingNumber>{account.get('bankRoutingNumber', '')}</BankRoutingNumber>
@@ -901,7 +854,8 @@ class MPAXmlBuilder:
             <BankAccountTypeCode>{account.get('bankAccountTypeCode', 'C')}</BankAccountTypeCode>
             <BankAccountEffectiveDate>{account.get('bankAccountEffectiveDate', '')}</BankAccountEffectiveDate>
             <BankFundingFileCode>{account.get('bankFundingFileCode', '1')}</BankFundingFileCode>
-        </BankAccount>""")
+        </BankAccount>"""
+            )
 
         return "\n".join(account_elements)
 
@@ -913,13 +867,15 @@ class MPAXmlBuilder:
 
         account_elements = []
         for account in accounts:
-            account_elements.append(f"""
+            account_elements.append(
+                f"""
         <FundingAccount>
             <FundingCategoryCode>{account.get('fundingCategoryCode', '')}</FundingCategoryCode>
             <BankSequenceNumber>{account.get('bankSequenceNumber', '01')}</BankSequenceNumber>
             <FundingRollupCode>{account.get('fundingRollupCode', '2')}</FundingRollupCode>
             <FundingDivertCode>{account.get('fundingDivertCode', 'N')}</FundingDivertCode>
-        </FundingAccount>""")
+        </FundingAccount>"""
+            )
 
         return "\n".join(account_elements)
 
@@ -931,7 +887,8 @@ class MPAXmlBuilder:
 
         card_elements = []
         for card in cards:
-            card_elements.append(f"""
+            card_elements.append(
+                f"""
         <Card>
             <ProductCode>{card.get('productCode', '')}</ProductCode>
             <CardTypeCode>{card.get('cardTypeCode', '')}</CardTypeCode>
@@ -943,7 +900,8 @@ class MPAXmlBuilder:
             <PricingPlanCode>{card.get('pricingPlanCode', '000')}</PricingPlanCode>
             <EdcCode>{card.get('edcCode', '0')}</EdcCode>
             <DiscountMethodCode>{card.get('discountMethodCode', 'A')}</DiscountMethodCode>
-        </Card>""")
+        </Card>"""
+            )
 
         return "\n".join(card_elements)
 
@@ -955,7 +913,8 @@ class MPAXmlBuilder:
 
         level_elements = []
         for level in hierarchy:
-            level_elements.append(f"""
+            level_elements.append(
+                f"""
         <HierarchyLevel>
             <LevelCode>{level.get('levelCode', '')}</LevelCode>
             <MerchantName>{level.get('merchantName', '')}</MerchantName>
@@ -966,7 +925,8 @@ class MPAXmlBuilder:
             <CountryCode>{level.get('countryCode', 'US')}</CountryCode>
             <PostalCode>{level.get('postalCode', '')}</PostalCode>
             <PhoneNumber>{level.get('phoneNumber', '')}</PhoneNumber>
-        </HierarchyLevel>""")
+        </HierarchyLevel>"""
+            )
 
         return "\n".join(level_elements)
 
@@ -978,12 +938,14 @@ class MPAXmlBuilder:
 
         email_elements = []
         for email in emails:
-            email_elements.append(f"""
+            email_elements.append(
+                f"""
         <Email>
             <EmailTypeCode>{email.get('emailTypeCode', '001')}</EmailTypeCode>
             <EmailText>{email.get('emailText', '')}</EmailText>
             <EmailContactName>{email.get('emailContactName', '')}</EmailContactName>
-        </Email>""")
+        </Email>"""
+            )
 
         return "\n".join(email_elements)
 
@@ -996,7 +958,6 @@ class MPAXmlBuilder:
         business_type: str,
         mcc_code: str,
         business_address: Dict[str, str],
-
         # Owner/Principal Information
         owner_name: str,
         owner_ssn_last4: str,
@@ -1004,20 +965,17 @@ class MPAXmlBuilder:
         owner_address: Dict[str, str],
         owner_phone: str,
         owner_email: str,
-
         # Bank Information
         bank_name: str,
         routing_number: str,
         account_number: str,
-
         # Processing Information
         monthly_volume: float,
         avg_ticket: float,
         high_ticket: float,
-
         # Optional fields
         website: Optional[str] = None,
-        customer_service_phone: Optional[str] = None
+        customer_service_phone: Optional[str] = None,
     ) -> str:
         """
         Legacy method for backwards compatibility.
@@ -1086,7 +1044,10 @@ def create_fiserv_service() -> Optional[FiservBoardingService]:
 
     api_user = os.getenv("FISERV_API_USER", "")
     api_password = os.getenv("FISERV_API_PASSWORD", "")
-    api_url = os.getenv("FISERV_API_URL", "https://lsuat-api.fdportfoliomanager.com/boarding/north/NorthAsBoardingAPIService.svc/rest")
+    api_url = os.getenv(
+        "FISERV_API_URL",
+        "https://lsuat-api.fdportfoliomanager.com/boarding/north/NorthAsBoardingAPIService.svc/rest",
+    )
     channel = os.getenv("FISERV_NORTH_CHANNEL", "FACS")
 
     if not api_user or not api_password:
@@ -1094,8 +1055,5 @@ def create_fiserv_service() -> Optional[FiservBoardingService]:
         return None
 
     return FiservBoardingService(
-        api_user=api_user,
-        api_password=api_password,
-        base_url=api_url,
-        channel=channel
+        api_user=api_user, api_password=api_password, base_url=api_url, channel=channel
     )

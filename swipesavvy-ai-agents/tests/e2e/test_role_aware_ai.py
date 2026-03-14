@@ -90,8 +90,7 @@ class TestRoleAwareResponses:
             content = response.text.lower()
             # Should mention limit or suggest escalation
             assert any(
-                word in content
-                for word in ["limit", "exceed", "maximum", "escalate", "$100"]
+                word in content for word in ["limit", "exceed", "maximum", "escalate", "$100"]
             )
 
     @pytest.mark.asyncio
@@ -348,8 +347,7 @@ class TestEscalationFlow:
             content = response.text.lower()
             # Should offer to connect with human support
             assert any(
-                word in content
-                for word in ["agent", "support", "help", "connect", "security"]
+                word in content for word in ["agent", "support", "help", "connect", "security"]
             )
 
     @pytest.mark.asyncio

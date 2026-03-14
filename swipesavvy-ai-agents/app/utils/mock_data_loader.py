@@ -38,37 +38,37 @@ class MerchantList:
     def load(self):
         """Load merchants from CSV file"""
         try:
-            with open(self.csv_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(self.csv_path, "r", encoding="utf-8", errors="ignore") as f:
                 # Skip header
                 next(f)
-                
+
                 for line in f:
                     # Handle quoted fields that span multiple lines
                     if not line.strip():
                         continue
-                    
+
                     try:
                         # Simple CSV parsing
                         parts = [p.strip('"').strip() for p in line.split('","')]
-                        
+
                         if len(parts) >= 13:
                             merchant = {
-                                'merchant_id': parts[0],
-                                'merchant_name': parts[1][:100],
-                                'store_number': parts[2] if parts[2] else '',
-                                'corporate_name': parts[3][:100],
-                                'mcc_code': parts[10][:4] if len(parts) > 10 else '5999',
-                                'city': parts[13][:50] if len(parts) > 13 else 'Unknown',
-                                'state': parts[14][:2] if len(parts) > 14 else 'FL',
-                                'zip': parts[15][:10] if len(parts) > 15 else '00000',
+                                "merchant_id": parts[0],
+                                "merchant_name": parts[1][:100],
+                                "store_number": parts[2] if parts[2] else "",
+                                "corporate_name": parts[3][:100],
+                                "mcc_code": parts[10][:4] if len(parts) > 10 else "5999",
+                                "city": parts[13][:50] if len(parts) > 13 else "Unknown",
+                                "state": parts[14][:2] if len(parts) > 14 else "FL",
+                                "zip": parts[15][:10] if len(parts) > 15 else "00000",
                             }
-                            
+
                             self.merchants.append(merchant)
                     except Exception as e:
                         continue
-            
+
             logger.info(f"Loaded {len(self.merchants)} merchants")
-            
+
         except Exception as e:
             logger.error(f"Error loading merchants: {str(e)}")
 
@@ -85,24 +85,21 @@ class MockTransactionGenerator:
     """Generates realistic mock transaction data based on merchant info"""
 
     CATEGORIES = [
-        'grocery',
-        'restaurant',
-        'retail',
-        'healthcare',
-        'gas',
-        'utilities',
-        'entertainment',
-        'travel',
-        'technology',
-        'clothing',
+        "grocery",
+        "restaurant",
+        "retail",
+        "healthcare",
+        "gas",
+        "utilities",
+        "entertainment",
+        "travel",
+        "technology",
+        "clothing",
     ]
 
     @staticmethod
     def generate_transactions(
-        user_id: str,
-        merchant: Dict,
-        num_transactions: int = 50,
-        days_back: int = 90
+        user_id: str, merchant: Dict, num_transactions: int = 50, days_back: int = 90
     ) -> List[Dict]:
         """Generate realistic transactions for a user at a merchant"""
         transactions = []
@@ -118,15 +115,15 @@ class MockTransactionGenerator:
             amount = round(random.uniform(10, 500), 2)
 
             transaction = {
-                'transaction_id': f"{user_id}_{merchant['merchant_id']}_{i}_{int(transaction_date.timestamp())}",
-                'user_id': user_id,
-                'merchant_id': merchant['merchant_id'],
-                'merchant_name': merchant['merchant_name'],
-                'merchant_location': f"{merchant['city']}, {merchant['state']}",
-                'category': random.choice(MockTransactionGenerator.CATEGORIES),
-                'amount': amount,
-                'transaction_date': transaction_date,
-                'mcc_code': merchant['mcc_code'],
+                "transaction_id": f"{user_id}_{merchant['merchant_id']}_{i}_{int(transaction_date.timestamp())}",
+                "user_id": user_id,
+                "merchant_id": merchant["merchant_id"],
+                "merchant_name": merchant["merchant_name"],
+                "merchant_location": f"{merchant['city']}, {merchant['state']}",
+                "category": random.choice(MockTransactionGenerator.CATEGORIES),
+                "amount": amount,
+                "transaction_date": transaction_date,
+                "mcc_code": merchant["mcc_code"],
             }
 
             transactions.append(transaction)
@@ -205,22 +202,22 @@ class MockDataLoader:
             # Prepare data tuples
             data = [
                 (
-                    t['transaction_id'],
-                    t['user_id'],
-                    t['merchant_id'],
-                    t['merchant_name'],
-                    t['merchant_location'],
-                    t['category'],
-                    t['amount'],
-                    t['transaction_date'],
-                    t['mcc_code'],
+                    t["transaction_id"],
+                    t["user_id"],
+                    t["merchant_id"],
+                    t["merchant_name"],
+                    t["merchant_location"],
+                    t["category"],
+                    t["amount"],
+                    t["transaction_date"],
+                    t["mcc_code"],
                 )
                 for t in transactions
             ]
 
             # Insert in batches
             for i in range(0, len(data), batch_size):
-                batch = data[i:i + batch_size]
+                batch = data[i : i + batch_size]
                 execute_batch(self.cursor, query, batch)
                 self.conn.commit()
                 logger.info(f"Inserted {min(batch_size, len(batch))} transactions")
@@ -247,11 +244,11 @@ class MockDataLoader:
         merchant_csv: str,
         num_users: int = 100,
         transactions_per_user: int = 50,
-        clear_existing: bool = False
+        clear_existing: bool = False,
     ):
         """
         Load complete mock dataset
-        
+
         Args:
             merchant_csv: Path to merchant list CSV
             num_users: Number of mock users to create
@@ -291,15 +288,14 @@ class MockDataLoader:
                 for merchant in selected_merchants:
                     # Generate transactions for this user at this merchant
                     transactions = generator.generate_transactions(
-                        user_id,
-                        merchant,
-                        num_transactions=transactions_per_user,
-                        days_back=90
+                        user_id, merchant, num_transactions=transactions_per_user, days_back=90
                     )
                     all_transactions.extend(transactions)
 
                 if user_num % 10 == 0:
-                    logger.info(f"  Generated data for {user_num} users ({len(all_transactions)} transactions)")
+                    logger.info(
+                        f"  Generated data for {user_num} users ({len(all_transactions)} transactions)"
+                    )
 
             logger.info(f"📊 Total transactions generated: {len(all_transactions)}")
 
@@ -326,36 +322,39 @@ class MockDataLoader:
 
             # Total transactions
             self.cursor.execute("SELECT COUNT(*) FROM transactions")
-            stats['total_transactions'] = self.cursor.fetchone()[0]
+            stats["total_transactions"] = self.cursor.fetchone()[0]
 
             # Unique users
             self.cursor.execute("SELECT COUNT(DISTINCT user_id) FROM transactions")
-            stats['unique_users'] = self.cursor.fetchone()[0]
+            stats["unique_users"] = self.cursor.fetchone()[0]
 
             # Unique merchants
             self.cursor.execute("SELECT COUNT(DISTINCT merchant_id) FROM transactions")
-            stats['unique_merchants'] = self.cursor.fetchone()[0]
+            stats["unique_merchants"] = self.cursor.fetchone()[0]
 
             # Total volume
             self.cursor.execute("SELECT SUM(amount) FROM transactions")
             result = self.cursor.fetchone()
-            stats['total_volume'] = float(result[0]) if result[0] else 0
+            stats["total_volume"] = float(result[0]) if result[0] else 0
 
             # Date range
-            self.cursor.execute("SELECT MIN(transaction_date), MAX(transaction_date) FROM transactions")
+            self.cursor.execute(
+                "SELECT MIN(transaction_date), MAX(transaction_date) FROM transactions"
+            )
             min_date, max_date = self.cursor.fetchone()
-            stats['date_range'] = f"{min_date} to {max_date}"
+            stats["date_range"] = f"{min_date} to {max_date}"
 
             # By category
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT category, COUNT(*), SUM(amount)
                 FROM transactions
                 GROUP BY category
                 ORDER BY COUNT(*) DESC
-            """)
-            stats['by_category'] = {
-                row[0]: {'count': row[1], 'total': float(row[2])}
-                for row in self.cursor.fetchall()
+            """
+            )
+            stats["by_category"] = {
+                row[0]: {"count": row[1], "total": float(row[2])} for row in self.cursor.fetchall()
             }
 
             self.disconnect()
@@ -371,10 +370,7 @@ def main():
     import sys
 
     # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     # Find the merchant CSV file
     possible_paths = [
@@ -407,7 +403,7 @@ def main():
         merchant_csv=merchant_csv,
         num_users=num_users,
         transactions_per_user=transactions_per_user,
-        clear_existing=clear_first
+        clear_existing=clear_first,
     )
 
     if success:
@@ -415,19 +411,19 @@ def main():
         logger.info("\n" + "=" * 60)
         logger.info("📊 MOCK DATA STATISTICS")
         logger.info("=" * 60)
-        
+
         stats = loader.get_statistics()
-        
+
         logger.info(f"Total Transactions: {stats.get('total_transactions', 0):,}")
         logger.info(f"Unique Users: {stats.get('unique_users', 0):,}")
         logger.info(f"Unique Merchants: {stats.get('unique_merchants', 0):,}")
         logger.info(f"Total Volume: ${stats.get('total_volume', 0):,.2f}")
         logger.info(f"Date Range: {stats.get('date_range', 'N/A')}")
-        
+
         logger.info("\nTransactions by Category:")
-        for category, data in stats.get('by_category', {}).items():
+        for category, data in stats.get("by_category", {}).items():
             logger.info(f"  {category}: {data['count']:,} transactions (${data['total']:,.2f})")
-        
+
         logger.info("=" * 60)
         logger.info("✅ Mock data loaded successfully!")
         sys.exit(0)

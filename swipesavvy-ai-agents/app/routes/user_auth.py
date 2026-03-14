@@ -72,8 +72,10 @@ _otp_failure_counts: dict[str, int] = {}
 # Pydantic Models
 # ============================================
 
+
 class SignupRequest(BaseModel):
     """User registration request"""
+
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     first_name: str = Field(..., min_length=1, max_length=100)
@@ -87,64 +89,66 @@ class SignupRequest(BaseModel):
     ssn_last4: str = Field(..., min_length=4, max_length=4)
     terms_accepted: bool = Field(...)
 
-    @validator('password')
+    @validator("password")
     def validate_password(cls, v):
         if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters')
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Password must contain at least one lowercase letter')
-        if not re.search(r'\d', v):
-            raise ValueError('Password must contain at least one digit')
+            raise ValueError("Password must be at least 8 characters")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one digit")
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Password must contain at least one special character')
+            raise ValueError("Password must contain at least one special character")
         return v
 
-    @validator('phone')
+    @validator("phone")
     def validate_phone(cls, v):
         # Remove non-digits
-        digits = re.sub(r'\D', '', v)
+        digits = re.sub(r"\D", "", v)
         if len(digits) < 10 or len(digits) > 15:
-            raise ValueError('Invalid phone number')
+            raise ValueError("Invalid phone number")
         return digits
 
-    @validator('date_of_birth')
+    @validator("date_of_birth")
     def validate_dob(cls, v):
         try:
-            dob = datetime.strptime(v, '%Y-%m-%d')
+            dob = datetime.strptime(v, "%Y-%m-%d")
             age = (datetime.now() - dob).days // 365
             if age < 18:
-                raise ValueError('You must be at least 18 years old')
+                raise ValueError("You must be at least 18 years old")
             if age > 120:
-                raise ValueError('Invalid date of birth')
+                raise ValueError("Invalid date of birth")
             return v
         except ValueError as e:
-            if 'time data' in str(e):
-                raise ValueError('Invalid date format. Use YYYY-MM-DD')
+            if "time data" in str(e):
+                raise ValueError("Invalid date format. Use YYYY-MM-DD")
             raise
 
-    @validator('ssn_last4')
+    @validator("ssn_last4")
     def validate_ssn(cls, v):
         if not v.isdigit() or len(v) != 4:
-            raise ValueError('SSN last 4 must be exactly 4 digits')
+            raise ValueError("SSN last 4 must be exactly 4 digits")
         return v
 
-    @validator('terms_accepted')
+    @validator("terms_accepted")
     def validate_terms(cls, v):
         if not v:
-            raise ValueError('You must accept the terms and conditions')
+            raise ValueError("You must accept the terms and conditions")
         return v
 
 
 class LoginRequest(BaseModel):
     """User login request"""
+
     email: EmailStr
     password: str
 
 
 class TokenResponse(BaseModel):
     """JWT token response"""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -154,44 +158,50 @@ class TokenResponse(BaseModel):
 
 class EmailVerificationRequest(BaseModel):
     """Email verification request"""
+
     token: str
 
 
 class PhoneVerificationRequest(BaseModel):
     """Phone verification code submission"""
+
     code: str = Field(..., min_length=6, max_length=6)
 
 
 class ResendVerificationRequest(BaseModel):
     """Resend verification email/SMS"""
+
     type: str = Field(..., pattern="^(email|phone)$")
 
 
 class PasswordResetRequest(BaseModel):
     """Password reset request"""
+
     email: EmailStr
 
 
 class PasswordResetConfirm(BaseModel):
     """Password reset confirmation"""
+
     token: str
     new_password: str = Field(..., min_length=8, max_length=128)
 
-    @validator('new_password')
+    @validator("new_password")
     def validate_password(cls, v):
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Password must contain at least one lowercase letter')
-        if not re.search(r'\d', v):
-            raise ValueError('Password must contain at least one digit')
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one digit")
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Password must contain at least one special character')
+            raise ValueError("Password must contain at least one special character")
         return v
 
 
 class RefreshTokenRequest(BaseModel):
     """Refresh token request"""
+
     refresh_token: str
 
 
@@ -199,15 +209,16 @@ class RefreshTokenRequest(BaseModel):
 # Helper Functions
 # ============================================
 
+
 def hash_password(password: str) -> str:
     """Hash password using bcrypt"""
     salt = bcrypt.gensalt(rounds=12)
-    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
 
 def verify_password(password: str, password_hash: str) -> bool:
     """Verify password against hash"""
-    return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
+    return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
 
 
 def create_access_token(user_id: str, email: str, device_fingerprint: str = None) -> str:
@@ -222,7 +233,7 @@ def create_access_token(user_id: str, email: str, device_fingerprint: str = None
         "iss": "swipesavvy",
         "aud": "user-api",
         "exp": expire,
-        "iat": datetime.utcnow()
+        "iat": datetime.utcnow(),
     }
     if device_fingerprint:
         payload["dfp"] = device_fingerprint
@@ -239,7 +250,7 @@ def create_refresh_token(user_id: str, device_fingerprint: str = None) -> str:
         "iss": "swipesavvy",
         "aud": "user-api",
         "exp": expire,
-        "iat": datetime.utcnow()
+        "iat": datetime.utcnow(),
     }
     if device_fingerprint:
         payload["dfp"] = device_fingerprint
@@ -253,7 +264,7 @@ def generate_verification_token() -> str:
 
 def generate_verification_code() -> str:
     """Generate 6-digit verification code"""
-    return ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+    return "".join([str(secrets.randbelow(10)) for _ in range(6)])
 
 
 def hash_ssn(ssn_last4: str, salt: str) -> str:
@@ -263,12 +274,14 @@ def hash_ssn(ssn_last4: str, salt: str) -> str:
     trivially reversible. bcrypt with 12 rounds provides adequate protection.
     The salt parameter is embedded in the bcrypt hash itself.
     """
-    return bcrypt.hashpw(f"{ssn_last4}{salt}".encode('utf-8'), bcrypt.gensalt(rounds=12)).decode('utf-8')
+    return bcrypt.hashpw(f"{ssn_last4}{salt}".encode("utf-8"), bcrypt.gensalt(rounds=12)).decode(
+        "utf-8"
+    )
 
 
 def verify_ssn(ssn_last4: str, salt: str, stored_hash: str) -> bool:
     """Verify SSN against stored bcrypt hash"""
-    return bcrypt.checkpw(f"{ssn_last4}{salt}".encode('utf-8'), stored_hash.encode('utf-8'))
+    return bcrypt.checkpw(f"{ssn_last4}{salt}".encode("utf-8"), stored_hash.encode("utf-8"))
 
 
 def hash_otp(code: str) -> str:
@@ -282,8 +295,7 @@ def hash_otp(code: str) -> str:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
+    credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)
 ) -> Optional[User]:
     """Get current authenticated user from JWT token"""
     if not credentials:
@@ -291,8 +303,11 @@ async def get_current_user(
 
     try:
         payload = jwt.decode(
-            credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM],
-            issuer="swipesavvy", audience="user-api"
+            credentials.credentials,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM],
+            issuer="swipesavvy",
+            audience="user-api",
         )
         if payload.get("type") != "access":
             return None
@@ -320,7 +335,7 @@ def log_kyc_history(
     new_status: str = None,
     notes: str = None,
     ip_address: str = None,
-    user_agent: str = None
+    user_agent: str = None,
 ):
     """Log KYC action to history"""
     history = UserKYCHistory(
@@ -331,7 +346,7 @@ def log_kyc_history(
         new_status=new_status,
         notes=notes,
         ip_address=ip_address,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
     db.add(history)
 
@@ -340,13 +355,14 @@ def log_kyc_history(
 # API Endpoints
 # ============================================
 
+
 @router.post("/signup", response_model=dict)
 @limiter.limit("10/hour")
 async def signup(
     request: SignupRequest,
     background_tasks: BackgroundTasks,
     req: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Register a new user account.
@@ -369,7 +385,7 @@ async def signup(
             "message": SIGNUP_SUCCESS_MESSAGE,
             "user_id": str(uuid4()),  # Dummy ID for anti-enumeration
             "next_steps": ["Check your email for the 6-digit verification code"],
-            "verification_required": {"email": True, "phone": False}
+            "verification_required": {"email": True, "phone": False},
         }
 
     # Check if phone already exists
@@ -381,11 +397,11 @@ async def signup(
             "message": SIGNUP_SUCCESS_MESSAGE,
             "user_id": str(uuid4()),  # Dummy ID for anti-enumeration
             "next_steps": ["Check your email for the 6-digit verification code"],
-            "verification_required": {"email": True, "phone": False}
+            "verification_required": {"email": True, "phone": False},
         }
 
     # Parse date of birth
-    dob = datetime.strptime(request.date_of_birth, '%Y-%m-%d').date()
+    dob = datetime.strptime(request.date_of_birth, "%Y-%m-%d").date()
 
     # Generate verification tokens
     email_token = generate_verification_token()
@@ -410,19 +426,21 @@ async def signup(
         city=request.city,
         state=request.state,
         zip_code=request.zip_code,
-        country='US',
+        country="US",
         ssn_last4=None,  # SECURITY: Do not store plaintext SSN — use ssn_hash only (OWASP A02)
         ssn_hash=f"{ssn_hashed}:{ssn_salt}",
-        status='pending',
-        role='user',
-        kyc_tier='tier1',
-        kyc_status='pending',
+        status="pending",
+        role="user",
+        kyc_tier="tier1",
+        kyc_status="pending",
         email_verified=False,
         email_verification_token=email_token,
-        email_verification_expires=datetime.utcnow() + timedelta(hours=EMAIL_VERIFICATION_EXPIRE_HOURS),
+        email_verification_expires=datetime.utcnow()
+        + timedelta(hours=EMAIL_VERIFICATION_EXPIRE_HOURS),
         phone_verified=False,
         phone_verification_code=hash_otp(phone_code),
-        phone_verification_expires=datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
+        phone_verification_expires=datetime.utcnow()
+        + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES),
     )
 
     db.add(user)
@@ -437,14 +455,12 @@ async def signup(
         new_status="pending",
         notes="User completed registration form",
         ip_address=req.client.host if req.client else None,
-        user_agent=req.headers.get("user-agent")
+        user_agent=req.headers.get("user-agent"),
     )
 
     # Create initial sanctions screening record
     screening_record = OFACScreeningResult(
-        user_id=user.id,
-        screening_type='sanctions',
-        status='pending'
+        user_id=user.id, screening_type="sanctions", status="pending"
     )
     db.add(screening_record)
 
@@ -456,7 +472,11 @@ async def signup(
         user_id=str(user.id),
         first_name=request.first_name,
         last_name=request.last_name,
-        date_of_birth=str(request.date_of_birth) if hasattr(request, 'date_of_birth') and request.date_of_birth else None,
+        date_of_birth=(
+            str(request.date_of_birth)
+            if hasattr(request, "date_of_birth") and request.date_of_birth
+            else None
+        ),
     )
 
     # Send verification email in background
@@ -464,28 +484,20 @@ async def signup(
         send_verification_email,
         email=request.email,
         first_name=request.first_name,
-        token=email_token
+        token=email_token,
     )
 
     # Send phone verification OTP via email in background
     background_tasks.add_task(
-        send_verification_otp,
-        email=request.email,
-        code=phone_code,
-        user_name=request.first_name
+        send_verification_otp, email=request.email, code=phone_code, user_name=request.first_name
     )
 
     return {
         "success": True,
         "message": SIGNUP_SUCCESS_MESSAGE,
         "user_id": str(user.id),
-        "next_steps": [
-            "Check your email for the 6-digit verification code"
-        ],
-        "verification_required": {
-            "email": True,
-            "phone": False
-        }
+        "next_steps": ["Check your email for the 6-digit verification code"],
+        "verification_required": {"email": True, "phone": False},
     }
 
 
@@ -495,7 +507,7 @@ async def login(
     request: LoginRequest,
     background_tasks: BackgroundTasks,
     req: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Authenticate user and send OTP for verification.
@@ -511,8 +523,7 @@ async def login(
     if user.locked_until and user.locked_until > datetime.utcnow():
         remaining = (user.locked_until - datetime.utcnow()).seconds // 60
         raise HTTPException(
-            status_code=423,
-            detail=f"Account is locked. Try again in {remaining} minutes."
+            status_code=423, detail=f"Account is locked. Try again in {remaining} minutes."
         )
 
     # Verify password
@@ -526,16 +537,16 @@ async def login(
             db.commit()
             raise HTTPException(
                 status_code=423,
-                detail="Account locked due to too many failed attempts. Try again in 30 minutes."
+                detail="Account locked due to too many failed attempts. Try again in 30 minutes.",
             )
 
         db.commit()
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     # Check account status
-    if user.status == 'suspended':
+    if user.status == "suspended":
         raise HTTPException(status_code=403, detail="Account is suspended")
-    if user.status == 'deleted':
+    if user.status == "deleted":
         raise HTTPException(status_code=403, detail="Account has been deleted")
 
     # Reset failed attempts on successful password verification
@@ -545,15 +556,14 @@ async def login(
     # Generate OTP code for login verification
     otp_code = generate_verification_code()
     user.phone_verification_code = hash_otp(otp_code)
-    user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
+    user.phone_verification_expires = datetime.utcnow() + timedelta(
+        minutes=PHONE_VERIFICATION_EXPIRE_MINUTES
+    )
     db.commit()
 
     # Send OTP via email in background
     background_tasks.add_task(
-        send_verification_otp,
-        email=user.email,
-        code=otp_code,
-        user_name=user.first_name or "User"
+        send_verification_otp, email=user.email, code=otp_code, user_name=user.first_name or "User"
     )
 
     # Return response indicating OTP is required (no tokens yet)
@@ -575,22 +585,18 @@ async def login(
             "kyc_tier": user.kyc_tier,
             "kyc_status": user.kyc_status,
             "email_verified": user.email_verified,
-            "phone_verified": user.phone_verified
-        }
+            "phone_verified": user.phone_verified,
+        },
     }
 
 
 @router.post("/verify-email")
 @limiter.limit("5/minute")
 async def verify_email(
-    request: EmailVerificationRequest,
-    req: Request,
-    db: Session = Depends(get_db)
+    request: EmailVerificationRequest, req: Request, db: Session = Depends(get_db)
 ):
     """Verify user email with token"""
-    user = db.query(User).filter(
-        User.email_verification_token == request.token
-    ).first()
+    user = db.query(User).filter(User.email_verification_token == request.token).first()
 
     if not user:
         raise HTTPException(status_code=400, detail="Invalid verification token")
@@ -609,8 +615,8 @@ async def verify_email(
 
     # Update user status if both email and phone are verified
     if user.phone_verified:
-        user.status = 'active'
-        user.kyc_status = 'in_review'
+        user.status = "active"
+        user.kyc_status = "in_review"
 
     # Log KYC history
     log_kyc_history(
@@ -620,7 +626,7 @@ async def verify_email(
         verification_type="email",
         previous_status=user.kyc_status,
         new_status=user.kyc_status,
-        ip_address=req.client.host if req.client else None
+        ip_address=req.client.host if req.client else None,
     )
 
     db.commit()
@@ -629,12 +635,13 @@ async def verify_email(
         "success": True,
         "message": "Email verified successfully",
         "status": user.status,
-        "phone_verified": user.phone_verified
+        "phone_verified": user.phone_verified,
     }
 
 
 class VerifyLoginOTPRequest(BaseModel):
     """Verify OTP for login"""
+
     user_id: str
     code: str = Field(..., min_length=6, max_length=6)
 
@@ -642,9 +649,7 @@ class VerifyLoginOTPRequest(BaseModel):
 @router.post("/verify-login-otp")
 @limiter.limit("5/minute")
 async def verify_login_otp(
-    request: VerifyLoginOTPRequest,
-    req: Request,
-    db: Session = Depends(get_db)
+    request: VerifyLoginOTPRequest, req: Request, db: Session = Depends(get_db)
 ):
     """
     Verify OTP code during login and return JWT tokens.
@@ -658,7 +663,9 @@ async def verify_login_otp(
 
     # Check if code has expired
     if not user.phone_verification_expires or user.phone_verification_expires < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Verification code has expired. Please login again.")
+        raise HTTPException(
+            status_code=400, detail="Verification code has expired. Please login again."
+        )
 
     # Verify the OTP code against stored hash
     otp_key = str(user.id)
@@ -673,7 +680,9 @@ async def verify_login_otp(
             user.phone_verification_expires = None
             _otp_failure_counts.pop(otp_key, None)
             db.commit()
-            raise HTTPException(status_code=429, detail="Too many failed attempts. Please login again.")
+            raise HTTPException(
+                status_code=429, detail="Too many failed attempts. Please login again."
+            )
         db.commit()
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
@@ -717,8 +726,8 @@ async def verify_login_otp(
             "kyc_tier": user.kyc_tier,
             "kyc_status": user.kyc_status,
             "email_verified": user.email_verified,
-            "phone_verified": user.phone_verified
-        }
+            "phone_verified": user.phone_verified,
+        },
     }
 
 
@@ -728,7 +737,7 @@ async def verify_phone(
     request: PhoneVerificationRequest,
     req: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Verify user phone with OTP code (for initial signup verification)"""
     if not current_user:
@@ -751,8 +760,8 @@ async def verify_phone(
 
     # Update user status if both email and phone are verified
     if current_user.email_verified:
-        current_user.status = 'active'
-        current_user.kyc_status = 'in_review'
+        current_user.status = "active"
+        current_user.kyc_status = "in_review"
 
     # Log KYC history
     log_kyc_history(
@@ -762,7 +771,7 @@ async def verify_phone(
         verification_type="phone",
         previous_status=current_user.kyc_status,
         new_status=current_user.kyc_status,
-        ip_address=req.client.host if req.client else None
+        ip_address=req.client.host if req.client else None,
     )
 
     db.commit()
@@ -771,12 +780,13 @@ async def verify_phone(
         "success": True,
         "message": "Phone verified successfully",
         "status": current_user.status,
-        "email_verified": current_user.email_verified
+        "email_verified": current_user.email_verified,
     }
 
 
 class ResendLoginOTPRequest(BaseModel):
     """Resend OTP for login verification"""
+
     user_id: str
 
 
@@ -786,7 +796,7 @@ async def resend_login_otp(
     request: ResendLoginOTPRequest,
     req: Request,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Resend OTP code for login verification.
@@ -801,15 +811,14 @@ async def resend_login_otp(
     # Generate new OTP code
     otp_code = generate_verification_code()
     user.phone_verification_code = hash_otp(otp_code)
-    user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
+    user.phone_verification_expires = datetime.utcnow() + timedelta(
+        minutes=PHONE_VERIFICATION_EXPIRE_MINUTES
+    )
     db.commit()
 
     # Send OTP via email in background
     background_tasks.add_task(
-        send_verification_otp,
-        email=user.email,
-        code=otp_code,
-        user_name=user.first_name or "User"
+        send_verification_otp, email=user.email, code=otp_code, user_name=user.first_name or "User"
     )
 
     return {"success": True, "message": "Verification code sent to your email"}
@@ -822,7 +831,7 @@ async def resend_verification(
     req: Request,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Resend email or phone verification (requires authentication)"""
     if not current_user:
@@ -835,7 +844,9 @@ async def resend_verification(
         # Generate new token
         token = generate_verification_token()
         current_user.email_verification_token = token
-        current_user.email_verification_expires = datetime.utcnow() + timedelta(hours=EMAIL_VERIFICATION_EXPIRE_HOURS)
+        current_user.email_verification_expires = datetime.utcnow() + timedelta(
+            hours=EMAIL_VERIFICATION_EXPIRE_HOURS
+        )
         db.commit()
 
         # Send email
@@ -843,7 +854,7 @@ async def resend_verification(
             send_verification_email,
             email=current_user.email,
             first_name=current_user.first_name,
-            token=token
+            token=token,
         )
 
         return {"success": True, "message": "Verification email sent"}
@@ -855,7 +866,9 @@ async def resend_verification(
         # Generate new code
         code = generate_verification_code()
         current_user.phone_verification_code = hash_otp(code)
-        current_user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
+        current_user.phone_verification_expires = datetime.utcnow() + timedelta(
+            minutes=PHONE_VERIFICATION_EXPIRE_MINUTES
+        )
         db.commit()
 
         # Send OTP via email
@@ -863,7 +876,7 @@ async def resend_verification(
             send_verification_otp,
             email=current_user.email,
             code=code,
-            user_name=current_user.first_name or "User"
+            user_name=current_user.first_name or "User",
         )
 
         return {"success": True, "message": "Verification code sent to your email"}
@@ -875,14 +888,17 @@ async def forgot_password(
     request: PasswordResetRequest,
     background_tasks: BackgroundTasks,
     req: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Request password reset"""
     user = db.query(User).filter(User.email == request.email.lower()).first()
 
     # Always return success to prevent email enumeration
     if not user:
-        return {"success": True, "message": "If an account exists, a password reset email has been sent"}
+        return {
+            "success": True,
+            "message": "If an account exists, a password reset email has been sent",
+        }
 
     # Generate reset token
     token = generate_verification_token()
@@ -892,26 +908,22 @@ async def forgot_password(
 
     # Send password reset email
     background_tasks.add_task(
-        send_password_reset_email,
-        email=user.email,
-        first_name=user.first_name,
-        token=token
+        send_password_reset_email, email=user.email, first_name=user.first_name, token=token
     )
 
-    return {"success": True, "message": "If an account exists, a password reset email has been sent"}
+    return {
+        "success": True,
+        "message": "If an account exists, a password reset email has been sent",
+    }
 
 
 @router.post("/reset-password")
 @limiter.limit("5/minute")
 async def reset_password(
-    request: PasswordResetConfirm,
-    req: Request,
-    db: Session = Depends(get_db)
+    request: PasswordResetConfirm, req: Request, db: Session = Depends(get_db)
 ):
     """Reset password with token"""
-    user = db.query(User).filter(
-        User.password_reset_token == request.token
-    ).first()
+    user = db.query(User).filter(User.password_reset_token == request.token).first()
 
     if not user:
         raise HTTPException(status_code=400, detail="Invalid reset token")
@@ -933,7 +945,7 @@ async def reset_password(
         action="password_reset",
         verification_type="password",
         notes="Password reset via email link",
-        ip_address=req.client.host if req.client else None
+        ip_address=req.client.host if req.client else None,
     )
 
     db.commit()
@@ -943,16 +955,15 @@ async def reset_password(
 
 @router.post("/refresh")
 @limiter.limit("10/minute")
-async def refresh_token(
-    request: RefreshTokenRequest,
-    req: Request,
-    db: Session = Depends(get_db)
-):
+async def refresh_token(request: RefreshTokenRequest, req: Request, db: Session = Depends(get_db)):
     """Refresh access token"""
     try:
         payload = jwt.decode(
-            request.refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM],
-            issuer="swipesavvy", audience="user-api"
+            request.refresh_token,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM],
+            issuer="swipesavvy",
+            audience="user-api",
         )
 
         if payload.get("type") != "refresh":
@@ -969,7 +980,7 @@ async def refresh_token(
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
 
-        if user.status in ['suspended', 'deleted']:
+        if user.status in ["suspended", "deleted"]:
             raise HTTPException(status_code=403, detail="Account is not active")
 
         # SECURITY: Blacklist the old refresh token so it cannot be reused (token rotation)
@@ -992,8 +1003,8 @@ async def refresh_token(
                 "name": user.name,
                 "status": user.status,
                 "kyc_tier": user.kyc_tier,
-                "kyc_status": user.kyc_status
-            }
+                "kyc_status": user.kyc_status,
+            },
         )
 
     except jwt.ExpiredSignatureError:
@@ -1020,7 +1031,8 @@ except Exception as e:
     _redis_client = None
     logger.warning(
         "Token blacklist: Redis unavailable (%s), falling back to in-memory. "
-        "This is NOT safe for multi-instance deployments.", e
+        "This is NOT safe for multi-instance deployments.",
+        e,
     )
 
 
@@ -1077,8 +1089,11 @@ async def logout(
 
     try:
         payload = jwt.decode(
-            credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM],
-            issuer="swipesavvy", audience="user-api"
+            credentials.credentials,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM],
+            issuer="swipesavvy",
+            audience="user-api",
         )
         jti = payload.get("jti")
         exp = payload.get("exp", 0)
@@ -1091,9 +1106,7 @@ async def logout(
 
 
 @router.get("/me")
-async def get_current_user_info(
-    current_user: User = Depends(get_current_user)
-):
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user profile"""
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -1116,10 +1129,10 @@ async def get_current_user_info(
             "city": current_user.city,
             "state": current_user.state,
             "zip_code": current_user.zip_code,
-            "country": current_user.country
+            "country": current_user.country,
         },
         "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
-        "last_login": current_user.last_login.isoformat() if current_user.last_login else None
+        "last_login": current_user.last_login.isoformat() if current_user.last_login else None,
     }
 
 
@@ -1129,32 +1142,27 @@ async def get_current_user_info(
 # These aliases ensure it hits the same backend logic.
 # ============================================
 
+
 @router.post("/wallet/login")
 async def wallet_login(
     request: LoginRequest,
     background_tasks: BackgroundTasks,
     req: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Wallet portal login alias — delegates to the standard login endpoint."""
     return await login(request, background_tasks, req, db)
 
 
 @router.get("/wallet/me")
-async def get_me_alias(
-    current_user: User = Depends(get_current_user)
-):
+async def get_me_alias(current_user: User = Depends(get_current_user)):
     """Wallet portal alias for /auth/me (wallet portal calls /auth/wallet/me)."""
     return await get_current_user_info(current_user)
 
 
 @router.post("/check-email")
 @limiter.limit("10/minute")
-async def check_email_availability(
-    email: EmailStr,
-    req: Request,
-    db: Session = Depends(get_db)
-):
+async def check_email_availability(email: EmailStr, req: Request, db: Session = Depends(get_db)):
     """Check if email is available for registration"""
     existing = db.query(User).filter(User.email == email.lower()).first()
     return {"available": existing is None}
@@ -1162,14 +1170,10 @@ async def check_email_availability(
 
 @router.post("/check-phone")
 @limiter.limit("10/minute")
-async def check_phone_availability(
-    phone: str,
-    req: Request,
-    db: Session = Depends(get_db)
-):
+async def check_phone_availability(phone: str, req: Request, db: Session = Depends(get_db)):
     """Check if phone number is available for registration"""
     # Normalize phone number
-    digits = re.sub(r'\D', '', phone)
+    digits = re.sub(r"\D", "", phone)
     existing = db.query(User).filter(User.phone == digits).first()
     return {"available": existing is None}
 
@@ -1178,14 +1182,13 @@ async def check_phone_availability(
 # Background Task Functions
 # ============================================
 
+
 async def send_verification_email(email: str, first_name: str, token: str):
     """Send email verification link using AWS SES"""
     try:
         email_service = AWSSESService()
         await email_service.send_verification_email(
-            to_email=email,
-            verification_token=token,
-            user_name=first_name
+            to_email=email, verification_token=token, user_name=first_name
         )
     except Exception as e:
         print(f"Failed to send verification email: {e}")
@@ -1196,9 +1199,7 @@ async def send_verification_otp(email: str, code: str, user_name: str = "User"):
     try:
         email_service = AWSSESService()
         result = await email_service.send_login_otp_email(
-            to_email=email,
-            otp_code=code,
-            user_name=user_name
+            to_email=email, otp_code=code, user_name=user_name
         )
         if not result:
             print(f"Failed to send verification OTP email to {email}")
@@ -1211,9 +1212,7 @@ async def send_password_reset_email(email: str, first_name: str, token: str):
     try:
         email_service = AWSSESService()
         await email_service.send_password_reset_email(
-            to_email=email,
-            reset_token=token,
-            user_name=first_name
+            to_email=email, reset_token=token, user_name=first_name
         )
     except Exception as e:
         print(f"Failed to send password reset email: {e}")
@@ -1239,23 +1238,32 @@ async def run_ofac_screening(
         )
 
         # Update the sanctions screening record
-        screening = db.query(OFACScreeningResult).filter(
-            OFACScreeningResult.user_id == user_id,
-            OFACScreeningResult.screening_type.in_(['sanctions', 'ofac']),
-        ).order_by(OFACScreeningResult.id.desc()).first()
+        screening = (
+            db.query(OFACScreeningResult)
+            .filter(
+                OFACScreeningResult.user_id == user_id,
+                OFACScreeningResult.screening_type.in_(["sanctions", "ofac"]),
+            )
+            .order_by(OFACScreeningResult.id.desc())
+            .first()
+        )
 
         if screening:
             if result.is_clear:
-                screening.status = 'cleared'
+                screening.status = "cleared"
             elif result.result == ScreeningResult.MATCH:
-                screening.status = 'flagged'
+                screening.status = "flagged"
                 logger.warning(f"Sanctions MATCH for user {user_id}: score={result.score}")
             elif result.result == ScreeningResult.POTENTIAL_MATCH:
-                screening.status = 'review_required'
-                logger.warning(f"Sanctions potential match for user {user_id}: score={result.score}")
+                screening.status = "review_required"
+                logger.warning(
+                    f"Sanctions potential match for user {user_id}: score={result.score}"
+                )
             else:
-                screening.status = 'error'
-                logger.error(f"Sanctions screening error for user {user_id}: {result.error_message}")
+                screening.status = "error"
+                logger.error(
+                    f"Sanctions screening error for user {user_id}: {result.error_message}"
+                )
 
             db.commit()
 

@@ -44,11 +44,7 @@ class EmailService:
             logger.info("Email service initialized with AWS SES")
 
     async def send_email(
-        self,
-        to_email: str,
-        subject: str,
-        html_body: str,
-        text_body: Optional[str] = None
+        self, to_email: str, subject: str, html_body: str, text_body: Optional[str] = None
     ) -> bool:
         """
         Send an email using AWS SES
@@ -65,28 +61,20 @@ class EmailService:
         return await self._ses_service.send_email(to_email, subject, html_body, text_body)
 
     async def send_verification_email(
-        self,
-        to_email: str,
-        verification_token: str,
-        user_name: str = "User"
+        self, to_email: str, verification_token: str, user_name: str = "User"
     ) -> bool:
         """Send email verification link"""
-        return await self._ses_service.send_verification_email(to_email, verification_token, user_name)
+        return await self._ses_service.send_verification_email(
+            to_email, verification_token, user_name
+        )
 
     async def send_password_reset_email(
-        self,
-        to_email: str,
-        reset_token: str,
-        user_name: str = "User"
+        self, to_email: str, reset_token: str, user_name: str = "User"
     ) -> bool:
         """Send password reset link"""
         return await self._ses_service.send_password_reset_email(to_email, reset_token, user_name)
 
-    async def send_welcome_email(
-        self,
-        to_email: str,
-        user_name: str = "User"
-    ) -> bool:
+    async def send_welcome_email(self, to_email: str, user_name: str = "User") -> bool:
         """Send welcome email after account verification"""
         return await self._ses_service.send_welcome_email(to_email, user_name)
 
@@ -95,16 +83,15 @@ class EmailService:
         to_email: str,
         status: str,
         user_name: str = "User",
-        rejection_reason: Optional[str] = None
+        rejection_reason: Optional[str] = None,
     ) -> bool:
         """Send KYC status update email"""
-        return await self._ses_service.send_kyc_status_email(to_email, status, user_name, rejection_reason)
+        return await self._ses_service.send_kyc_status_email(
+            to_email, status, user_name, rejection_reason
+        )
 
     async def send_template_email(
-        self,
-        to_email: str,
-        template_name: str,
-        template_data: dict
+        self, to_email: str, template_name: str, template_data: dict
     ) -> bool:
         """
         Send templated email using AWS SES.
@@ -134,10 +121,7 @@ async def send_welcome_email(to_email: str, name: str = "User") -> bool:
 
 
 async def send_kyc_status_email(
-    to_email: str,
-    status: str,
-    name: str = "User",
-    rejection_reason: Optional[str] = None
+    to_email: str, status: str, name: str = "User", rejection_reason: Optional[str] = None
 ) -> bool:
     """Convenience function to send KYC status email"""
     return await email_service.send_kyc_status_email(to_email, status, name, rejection_reason)

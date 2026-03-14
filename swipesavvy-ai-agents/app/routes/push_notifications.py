@@ -35,7 +35,11 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
     return verify_token_string(token)
 
 
-router = APIRouter(prefix="/api/v1/push-notifications", tags=["push-notifications"], dependencies=[Depends(require_auth)])
+router = APIRouter(
+    prefix="/api/v1/push-notifications",
+    tags=["push-notifications"],
+    dependencies=[Depends(require_auth)],
+)
 
 # Initialize services
 aws_push_service = None
@@ -45,8 +49,9 @@ try:
     from app.services.aws_push_notification_service import (
         aws_push_service as push_service,
         Platform,
-        NotificationType
+        NotificationType,
     )
+
     aws_push_service = push_service
     logger.info("AWS Push Notification service initialized")
 except Exception as e:
@@ -56,8 +61,9 @@ try:
     from app.services.in_app_notification_service import (
         in_app_notification_service,
         NotificationCategory,
-        NotificationPriority
+        NotificationPriority,
     )
+
     in_app_service = in_app_notification_service
     logger.info("In-App Notification service initialized")
 except Exception as e:
@@ -68,38 +74,46 @@ except Exception as e:
 # REQUEST/RESPONSE MODELS
 # ============================================================================
 
+
 class RegisterDeviceRequest(BaseModel):
     """Register a device for push notifications"""
+
     device_token: str = Field(..., description="Platform-specific device token (APNS or FCM)")
     platform: str = Field(..., description="Platform: ios, ios_sandbox, or android")
     device_name: Optional[str] = Field(None, description="Optional device name")
     app_version: Optional[str] = Field(None, description="App version")
 
-    @validator('platform')
+    @validator("platform")
     def validate_platform(cls, v):
-        valid = ['ios', 'ios_sandbox', 'android']
+        valid = ["ios", "ios_sandbox", "android"]
         if v.lower() not in valid:
-            raise ValueError(f'platform must be one of: {valid}')
+            raise ValueError(f"platform must be one of: {valid}")
         return v.lower()
 
 
 class UnregisterDeviceRequest(BaseModel):
     """Unregister a device from push notifications"""
+
     endpoint_arn: str = Field(..., description="AWS SNS endpoint ARN from registration")
 
 
 class SendPushRequest(BaseModel):
     """Send a push notification"""
+
     endpoint_arn: str = Field(..., description="Target device endpoint ARN")
     title: str = Field(..., description="Notification title")
     body: str = Field(..., description="Notification body")
-    notification_type: str = Field(default="system", description="Type: transaction, cashback, security, marketing, system, chat")
+    notification_type: str = Field(
+        default="system",
+        description="Type: transaction, cashback, security, marketing, system, chat",
+    )
     data: Optional[Dict[str, Any]] = Field(None, description="Custom data payload")
     badge: Optional[int] = Field(None, description="iOS badge count")
 
 
 class SendBroadcastRequest(BaseModel):
     """Send push notification to multiple devices"""
+
     endpoint_arns: List[str] = Field(..., description="List of target endpoint ARNs")
     title: str = Field(..., description="Notification title")
     body: str = Field(..., description="Notification body")
@@ -109,9 +123,13 @@ class SendBroadcastRequest(BaseModel):
 
 class InAppNotificationRequest(BaseModel):
     """Create an in-app notification"""
+
     title: str = Field(..., description="Notification title")
     body: str = Field(..., description="Notification body")
-    category: str = Field(default="system", description="Category: transaction, cashback, security, account, marketing, system, social, support")
+    category: str = Field(
+        default="system",
+        description="Category: transaction, cashback, security, account, marketing, system, social, support",
+    )
     priority: str = Field(default="normal", description="Priority: low, normal, high, urgent")
     icon: Optional[str] = Field(None, description="Icon name")
     image_url: Optional[str] = Field(None, description="Image URL for rich notifications")
@@ -122,6 +140,7 @@ class InAppNotificationRequest(BaseModel):
 
 class NotificationResponse(BaseModel):
     """Standard notification API response"""
+
     success: bool
     message: str
     timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
@@ -132,11 +151,12 @@ class NotificationResponse(BaseModel):
 # DEVICE REGISTRATION ENDPOINTS
 # ============================================================================
 
+
 @router.post("/register-device", response_model=NotificationResponse)
 async def register_device(
     request: RegisterDeviceRequest,
     user_id: str = Query(..., description="User ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Register a device for AWS SNS push notifications.
@@ -166,10 +186,11 @@ async def register_device(
             device_token=request.device_token,
             platform=platform_enum,
             user_id=user_id,
-            custom_data={
-                "device_name": request.device_name,
-                "app_version": request.app_version
-            } if request.device_name or request.app_version else None
+            custom_data=(
+                {"device_name": request.device_name, "app_version": request.app_version}
+                if request.device_name or request.app_version
+                else None
+            ),
         )
 
         if not result.get("success"):
@@ -183,8 +204,8 @@ async def register_device(
             data={
                 "endpoint_arn": result.get("endpoint_arn"),
                 "platform": result.get("platform"),
-                "status": result.get("status")
-            }
+                "status": result.get("status"),
+            },
         )
 
     except HTTPException:
@@ -195,10 +216,7 @@ async def register_device(
 
 
 @router.post("/unregister-device", response_model=NotificationResponse)
-async def unregister_device(
-    request: UnregisterDeviceRequest,
-    db: Session = Depends(get_db)
-):
+async def unregister_device(request: UnregisterDeviceRequest, db: Session = Depends(get_db)):
     """
     Unregister a device from push notifications.
 
@@ -216,7 +234,7 @@ async def unregister_device(
         return NotificationResponse(
             success=result.get("success", True),
             message="Device unregistered successfully",
-            data=result
+            data=result,
         )
 
     except Exception as e:
@@ -228,11 +246,9 @@ async def unregister_device(
 # PUSH NOTIFICATION ENDPOINTS
 # ============================================================================
 
+
 @router.post("/send", response_model=NotificationResponse)
-async def send_push_notification(
-    request: SendPushRequest,
-    db: Session = Depends(get_db)
-):
+async def send_push_notification(request: SendPushRequest, db: Session = Depends(get_db)):
     """
     Send a push notification to a specific device.
 
@@ -257,7 +273,7 @@ async def send_push_notification(
             body=request.body,
             notification_type=notification_type,
             data=request.data,
-            badge=request.badge
+            badge=request.badge,
         )
 
         if not result.get("success"):
@@ -266,10 +282,7 @@ async def send_push_notification(
         return NotificationResponse(
             success=True,
             message="Push notification sent",
-            data={
-                "message_id": result.get("message_id"),
-                "status": result.get("status")
-            }
+            data={"message_id": result.get("message_id"), "status": result.get("status")},
         )
 
     except HTTPException:
@@ -280,10 +293,7 @@ async def send_push_notification(
 
 
 @router.post("/send-broadcast", response_model=NotificationResponse)
-async def send_broadcast_notification(
-    request: SendBroadcastRequest,
-    db: Session = Depends(get_db)
-):
+async def send_broadcast_notification(request: SendBroadcastRequest, db: Session = Depends(get_db)):
     """
     Send push notification to multiple devices.
 
@@ -306,13 +316,13 @@ async def send_broadcast_notification(
             title=request.title,
             body=request.body,
             notification_type=notification_type,
-            data=request.data
+            data=request.data,
         )
 
         return NotificationResponse(
             success=True,
             message=f"Broadcast sent: {result['success']} succeeded, {result['failed']} failed",
-            data=result
+            data=result,
         )
 
     except Exception as e:
@@ -324,11 +334,12 @@ async def send_broadcast_notification(
 # IN-APP NOTIFICATION ENDPOINTS
 # ============================================================================
 
+
 @router.post("/in-app", response_model=NotificationResponse)
 async def create_in_app_notification(
     request: InAppNotificationRequest,
     user_id: str = Query(..., description="Target user ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Create an in-app notification for a user.
@@ -353,7 +364,7 @@ async def create_in_app_notification(
     try:
         from app.services.in_app_notification_service import (
             NotificationCategory,
-            NotificationPriority
+            NotificationPriority,
         )
 
         category = NotificationCategory(request.category.lower())
@@ -370,13 +381,11 @@ async def create_in_app_notification(
             action_url=request.action_url,
             data=request.data,
             expires_in_hours=request.expires_in_hours,
-            db=db
+            db=db,
         )
 
         return NotificationResponse(
-            success=True,
-            message="In-app notification created",
-            data=notification.to_dict()
+            success=True, message="In-app notification created", data=notification.to_dict()
         )
 
     except Exception as e:
@@ -391,7 +400,7 @@ async def get_in_app_notifications(
     unread_only: bool = Query(False, description="Only return unread notifications"),
     limit: int = Query(50, ge=1, le=100, description="Max results"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get in-app notifications for a user.
@@ -412,6 +421,7 @@ async def get_in_app_notifications(
         category_enum = None
         if category:
             from app.services.in_app_notification_service import NotificationCategory
+
             category_enum = NotificationCategory(category.lower())
 
         notifications = await in_app_service.get_notifications(
@@ -420,7 +430,7 @@ async def get_in_app_notifications(
             unread_only=unread_only,
             limit=limit,
             offset=offset,
-            db=db
+            db=db,
         )
 
         unread_count = await in_app_service.get_unread_count(user_id, db=db)
@@ -433,8 +443,8 @@ async def get_in_app_notifications(
                 "total_count": len(notifications),
                 "unread_count": unread_count,
                 "limit": limit,
-                "offset": offset
-            }
+                "offset": offset,
+            },
         )
 
     except Exception as e:
@@ -444,8 +454,7 @@ async def get_in_app_notifications(
 
 @router.get("/in-app/unread-count", response_model=NotificationResponse)
 async def get_unread_count(
-    user_id: str = Query(..., description="User ID"),
-    db: Session = Depends(get_db)
+    user_id: str = Query(..., description="User ID"), db: Session = Depends(get_db)
 ):
     """
     Get unread notification count for a user.
@@ -459,9 +468,7 @@ async def get_unread_count(
         count = await in_app_service.get_unread_count(user_id, db=db)
 
         return NotificationResponse(
-            success=True,
-            message="Unread count retrieved",
-            data={"unread_count": count}
+            success=True, message="Unread count retrieved", data={"unread_count": count}
         )
 
     except Exception as e:
@@ -473,7 +480,7 @@ async def get_unread_count(
 async def mark_notification_read(
     notification_id: str,
     user_id: str = Query(..., description="User ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Mark a notification as read."""
     if not in_app_service:
@@ -488,7 +495,7 @@ async def mark_notification_read(
         return NotificationResponse(
             success=True,
             message="Notification marked as read",
-            data={"notification_id": notification_id}
+            data={"notification_id": notification_id},
         )
 
     except HTTPException:
@@ -502,7 +509,7 @@ async def mark_notification_read(
 async def mark_all_read(
     user_id: str = Query(..., description="User ID"),
     category: Optional[str] = Query(None, description="Optional category filter"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Mark all notifications as read for a user."""
     if not in_app_service:
@@ -512,14 +519,13 @@ async def mark_all_read(
         category_enum = None
         if category:
             from app.services.in_app_notification_service import NotificationCategory
+
             category_enum = NotificationCategory(category.lower())
 
         count = await in_app_service.mark_all_as_read(user_id, category=category_enum, db=db)
 
         return NotificationResponse(
-            success=True,
-            message=f"Marked {count} notifications as read",
-            data={"count": count}
+            success=True, message=f"Marked {count} notifications as read", data={"count": count}
         )
 
     except Exception as e:
@@ -531,7 +537,7 @@ async def mark_all_read(
 async def delete_notification(
     notification_id: str,
     user_id: str = Query(..., description="User ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Delete a notification."""
     if not in_app_service:
@@ -544,9 +550,7 @@ async def delete_notification(
             raise HTTPException(status_code=404, detail="Notification not found")
 
         return NotificationResponse(
-            success=True,
-            message="Notification deleted",
-            data={"notification_id": notification_id}
+            success=True, message="Notification deleted", data={"notification_id": notification_id}
         )
 
     except HTTPException:
@@ -560,7 +564,7 @@ async def delete_notification(
 async def clear_all_notifications(
     user_id: str = Query(..., description="User ID"),
     category: Optional[str] = Query(None, description="Optional category filter"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Clear all notifications for a user."""
     if not in_app_service:
@@ -570,14 +574,13 @@ async def clear_all_notifications(
         category_enum = None
         if category:
             from app.services.in_app_notification_service import NotificationCategory
+
             category_enum = NotificationCategory(category.lower())
 
         count = await in_app_service.clear_all_notifications(user_id, category=category_enum, db=db)
 
         return NotificationResponse(
-            success=True,
-            message=f"Cleared {count} notifications",
-            data={"count": count}
+            success=True, message=f"Cleared {count} notifications", data={"count": count}
         )
 
     except Exception as e:

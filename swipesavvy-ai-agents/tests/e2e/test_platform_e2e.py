@@ -88,13 +88,11 @@ class TestUserAuthentication:
                 "city": "New York",
                 "state": "NY",
                 "zip_code": "10001",
-                "terms_accepted": True
+                "terms_accepted": True,
             }
 
             response = await client.post(
-                f"{BASE_URL}/api/v1/auth/signup",
-                json=signup_data,
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/v1/auth/signup", json=signup_data, timeout=TIMEOUT
             )
 
             # Accept both success and validation errors
@@ -110,11 +108,8 @@ class TestUserAuthentication:
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.post(
                 f"{BASE_URL}/api/v1/auth/login",
-                json={
-                    "email": "nonexistent@test.com",
-                    "password": "wrongpassword"
-                },
-                timeout=TIMEOUT
+                json={"email": "nonexistent@test.com", "password": "wrongpassword"},
+                timeout=TIMEOUT,
             )
 
             # Should return 401 or 400 for invalid credentials
@@ -127,7 +122,7 @@ class TestUserAuthentication:
             response = await client.post(
                 f"{BASE_URL}/api/v1/auth/login",
                 json={"email": "test@test.com"},  # Missing password
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code in [400, 422]
@@ -143,11 +138,8 @@ class TestAdminAuthentication:
             # Correct endpoint path is /api/v1/admin/auth/login
             response = await client.post(
                 f"{BASE_URL}/api/v1/admin/auth/login",
-                json={
-                    "email": ADMIN_EMAIL,
-                    "password": ADMIN_PASSWORD
-                },
-                timeout=TIMEOUT
+                json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD},
+                timeout=TIMEOUT,
             )
 
             # Should return 200 with token or 401 if credentials invalid
@@ -163,11 +155,8 @@ class TestAdminAuthentication:
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.post(
                 f"{BASE_URL}/api/v1/admin/auth/login",
-                json={
-                    "email": "fake@admin.com",
-                    "password": "wrongpassword"
-                },
-                timeout=TIMEOUT
+                json={"email": "fake@admin.com", "password": "wrongpassword"},
+                timeout=TIMEOUT,
             )
 
             assert response.status_code in [400, 401, 403]
@@ -181,9 +170,7 @@ class TestMobileAPIEndpoints:
         """Test accounts listing endpoint"""
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.get(
-                f"{BASE_URL}/api/v1/accounts",
-                params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/v1/accounts", params={"user_id": "test_user_001"}, timeout=TIMEOUT
             )
 
             assert response.status_code == 200
@@ -197,7 +184,7 @@ class TestMobileAPIEndpoints:
             response = await client.get(
                 f"{BASE_URL}/api/v1/wallet/balance",
                 params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code == 200
@@ -213,7 +200,7 @@ class TestMobileAPIEndpoints:
             response = await client.get(
                 f"{BASE_URL}/api/v1/wallet/transactions",
                 params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code == 200
@@ -227,7 +214,7 @@ class TestMobileAPIEndpoints:
             response = await client.get(
                 f"{BASE_URL}/api/v1/rewards/points",
                 params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code == 200
@@ -239,10 +226,7 @@ class TestMobileAPIEndpoints:
     async def test_rewards_leaderboard_endpoint(self):
         """Test rewards leaderboard endpoint"""
         async with httpx.AsyncClient(verify=False) as client:
-            response = await client.get(
-                f"{BASE_URL}/api/v1/rewards/leaderboard",
-                timeout=TIMEOUT
-            )
+            response = await client.get(f"{BASE_URL}/api/v1/rewards/leaderboard", timeout=TIMEOUT)
 
             assert response.status_code == 200
             data = response.json()
@@ -255,22 +239,24 @@ class TestMobileAPIEndpoints:
             response = await client.get(
                 f"{BASE_URL}/api/v1/analytics",
                 params={"user_id": "test_user_001", "period": "30d"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code == 200
             data = response.json()
             # API returns spendingByCategory instead of category_breakdown
-            assert "spendingByCategory" in data or "total_spending" in data or "category_breakdown" in data
+            assert (
+                "spendingByCategory" in data
+                or "total_spending" in data
+                or "category_breakdown" in data
+            )
 
     @pytest.mark.asyncio
     async def test_savings_goals_endpoint(self):
         """Test savings goals endpoint"""
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.get(
-                f"{BASE_URL}/api/v1/goals",
-                params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/v1/goals", params={"user_id": "test_user_001"}, timeout=TIMEOUT
             )
 
             assert response.status_code == 200
@@ -286,13 +272,11 @@ class TestMobileAPIEndpoints:
                 "name": f"Test Goal {int(time.time())}",
                 "target_amount": 1000.00,
                 "target_date": "2026-12-31",
-                "category": "vacation"
+                "category": "vacation",
             }
 
             response = await client.post(
-                f"{BASE_URL}/api/v1/goals",
-                json=goal_data,
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/v1/goals", json=goal_data, timeout=TIMEOUT
             )
 
             # Accept 200, 201 for success or 422 for validation issues
@@ -306,9 +290,7 @@ class TestMobileAPIEndpoints:
         """Test budgets endpoint"""
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.get(
-                f"{BASE_URL}/api/v1/budgets",
-                params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/v1/budgets", params={"user_id": "test_user_001"}, timeout=TIMEOUT
             )
 
             assert response.status_code == 200
@@ -322,7 +304,7 @@ class TestMobileAPIEndpoints:
             response = await client.get(
                 f"{BASE_URL}/api/v1/banks/linked",
                 params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code == 200
@@ -334,9 +316,7 @@ class TestMobileAPIEndpoints:
         """Test user cards endpoint"""
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.get(
-                f"{BASE_URL}/api/v1/cards",
-                params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/v1/cards", params={"user_id": "test_user_001"}, timeout=TIMEOUT
             )
 
             assert response.status_code == 200
@@ -350,7 +330,7 @@ class TestMobileAPIEndpoints:
             response = await client.get(
                 f"{BASE_URL}/api/v1/transfers/recipients",
                 params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code == 200
@@ -366,7 +346,7 @@ class TestAdminDashboard:
         response = await client.post(
             f"{BASE_URL}/api/admin/login",
             json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD},
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
         )
         if response.status_code == 200:
             data = response.json()
@@ -381,9 +361,7 @@ class TestAdminDashboard:
             headers = {"Authorization": f"Bearer {token}"} if token else {}
 
             response = await client.get(
-                f"{BASE_URL}/api/admin/dashboard/stats",
-                headers=headers,
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/admin/dashboard/stats", headers=headers, timeout=TIMEOUT
             )
 
             # Accept 200 (success) or 401/403 (if auth required)
@@ -397,9 +375,7 @@ class TestAdminDashboard:
             headers = {"Authorization": f"Bearer {token}"} if token else {}
 
             response = await client.get(
-                f"{BASE_URL}/api/admin/users",
-                headers=headers,
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/admin/users", headers=headers, timeout=TIMEOUT
             )
 
             assert response.status_code in [200, 401, 403]
@@ -412,9 +388,7 @@ class TestAdminDashboard:
             headers = {"Authorization": f"Bearer {token}"} if token else {}
 
             response = await client.get(
-                f"{BASE_URL}/api/admin/support/tickets",
-                headers=headers,
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/admin/support/tickets", headers=headers, timeout=TIMEOUT
             )
 
             assert response.status_code in [200, 401, 403]
@@ -432,13 +406,11 @@ class TestSupportSystem:
                 "subject": f"Test Ticket {int(time.time())}",
                 "description": "This is a test support ticket",
                 "category": "general",
-                "priority": "medium"
+                "priority": "medium",
             }
 
             response = await client.post(
-                f"{BASE_URL}/api/support/tickets",
-                json=ticket_data,
-                timeout=TIMEOUT
+                f"{BASE_URL}/api/support/tickets", json=ticket_data, timeout=TIMEOUT
             )
 
             assert response.status_code in [200, 201, 422]
@@ -450,7 +422,7 @@ class TestSupportSystem:
             response = await client.get(
                 f"{BASE_URL}/api/support/tickets",
                 params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code in [200, 404]
@@ -469,9 +441,9 @@ class TestAIConcierge:
                 json={
                     "message": "Hello, what services do you offer?",
                     "user_id": "test_user_001",
-                    "session_id": f"test_session_{int(time.time())}"
+                    "session_id": f"test_session_{int(time.time())}",
                 },
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             # Accept various status codes
@@ -490,9 +462,9 @@ class TestAIConcierge:
                 json={
                     "message": "What's my current balance?",
                     "user_id": "test_user_001",
-                    "session_id": f"test_session_{int(time.time())}"
+                    "session_id": f"test_session_{int(time.time())}",
                 },
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             # Accept various status codes
@@ -509,7 +481,7 @@ class TestFeatureFlags:
             response = await client.get(
                 f"{BASE_URL}/api/v1/feature-flags",
                 params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code in [200, 404]
@@ -529,7 +501,7 @@ class TestNotifications:
             response = await client.get(
                 f"{BASE_URL}/api/v1/notifications",
                 params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code in [200, 404]
@@ -545,7 +517,7 @@ class TestPayments:
             response = await client.get(
                 f"{BASE_URL}/api/v1/wallet/payment-methods",
                 params={"user_id": "test_user_001"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code == 200
@@ -592,11 +564,8 @@ class TestCORS:
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.options(
                 f"{BASE_URL}/api/v1/accounts",
-                headers={
-                    "Origin": "http://localhost:3000",
-                    "Access-Control-Request-Method": "GET"
-                },
-                timeout=TIMEOUT
+                headers={"Origin": "http://localhost:3000", "Access-Control-Request-Method": "GET"},
+                timeout=TIMEOUT,
             )
 
             # Accept various status codes for preflight
@@ -610,10 +579,7 @@ class TestErrorHandling:
     async def test_404_for_nonexistent_endpoint(self):
         """Test 404 for non-existent endpoint"""
         async with httpx.AsyncClient(verify=False) as client:
-            response = await client.get(
-                f"{BASE_URL}/api/v1/this-does-not-exist",
-                timeout=TIMEOUT
-            )
+            response = await client.get(f"{BASE_URL}/api/v1/this-does-not-exist", timeout=TIMEOUT)
 
             assert response.status_code in [404, 200]  # 200 if catch-all handler
 
@@ -624,7 +590,7 @@ class TestErrorHandling:
             response = await client.post(
                 f"{BASE_URL}/api/v1/auth/login",
                 json={},  # Empty body should fail validation
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             assert response.status_code in [400, 422]

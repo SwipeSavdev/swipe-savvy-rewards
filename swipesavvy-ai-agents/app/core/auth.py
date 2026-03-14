@@ -20,6 +20,7 @@ security = HTTPBearer()
 
 class TokenError(Exception):
     """Custom exception for token-related errors"""
+
     def __init__(self, message: str, is_expired: bool = False):
         self.message = message
         self.is_expired = is_expired
@@ -32,7 +33,7 @@ def create_access_token(user_id: str, expires_delta: Optional[timedelta] = None)
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(hours=settings.JWT_EXPIRATION_HOURS)
-    
+
     to_encode = {
         "user_id": str(user_id),
         "exp": expire,
@@ -41,12 +42,10 @@ def create_access_token(user_id: str, expires_delta: Optional[timedelta] = None)
         "iss": "swipesavvy",
         "aud": "user-api",
     }
-    
+
     try:
         encoded_jwt = jwt.encode(
-            to_encode,
-            settings.JWT_SECRET_KEY,
-            algorithm=settings.JWT_ALGORITHM
+            to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
         )
         return encoded_jwt
     except Exception as e:
@@ -73,7 +72,7 @@ def verify_token_string(token: str) -> str:
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
             issuer="swipesavvy",
-            audience="user-api"
+            audience="user-api",
         )
         user_id: str = payload.get("user_id") or payload.get("sub")
         if user_id is None:
@@ -85,14 +84,14 @@ def verify_token_string(token: str) -> str:
         raise HTTPException(
             status_code=401,
             detail="Token expired. Please login again.",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
     except jwt.InvalidTokenError as e:
         logger.warning(f"Invalid token: {str(e)}")
         raise HTTPException(
             status_code=401,
             detail="Invalid token. Please login again.",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
     except TokenError as e:
         raise HTTPException(status_code=401, detail=e.message)

@@ -27,7 +27,10 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
     return verify_token_string(token)
 
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-merchants"], dependencies=[Depends(require_auth)])
+router = APIRouter(
+    prefix="/api/v1/admin", tags=["admin-merchants"], dependencies=[Depends(require_auth)]
+)
+
 
 class MerchantResponse(BaseModel):
     id: str
@@ -42,6 +45,7 @@ class MerchantResponse(BaseModel):
     category: Optional[str]
     location: Optional[str]
     country: Optional[str]
+
 
 class MerchantsListResponse(BaseModel):
     merchants: List[MerchantResponse]
@@ -77,11 +81,11 @@ async def list_merchants(
     per_page: int = Query(10, ge=1, le=100),
     status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """
     List all merchants with pagination and filtering
-    
+
     Query params:
     - page: Page number (default: 1)
     - per_page: Items per page (default: 10, max: 100)
@@ -90,22 +94,22 @@ async def list_merchants(
     """
     try:
         query = db.query(MerchantModel)
-        
+
         if status:
             query = query.filter(MerchantModel.status == status)
-        
+
         if search:
             search_pattern = f"%{search}%"
             query = query.filter(
-                (MerchantModel.name.ilike(search_pattern)) |
-                (MerchantModel.email.ilike(search_pattern))
+                (MerchantModel.name.ilike(search_pattern))
+                | (MerchantModel.email.ilike(search_pattern))
             )
-        
+
         total = query.count()
         total_pages = (total + per_page - 1) // per_page
-        
+
         merchants = query.offset((page - 1) * per_page).limit(per_page).all()
-        
+
         return {
             "merchants": [
                 MerchantResponse(
@@ -120,14 +124,14 @@ async def list_merchants(
                     monthlyVolume=float(m.monthly_volume or 0),
                     category=m.business_type,
                     location=m.location,
-                    country=m.country
+                    country=m.country,
                 )
                 for m in merchants
             ],
             "total": total,
             "page": page,
             "per_page": per_page,
-            "total_pages": total_pages
+            "total_pages": total_pages,
         }
     except Exception as e:
         logger.error(f"Error listing merchants: {str(e)}")
@@ -141,7 +145,7 @@ async def get_merchant(merchant_id: str, db: Session = Depends(get_db)) -> Dict[
         merchant = db.query(MerchantModel).filter(MerchantModel.id == merchant_id).first()
         if not merchant:
             raise HTTPException(status_code=404, detail="Merchant not found")
-        
+
         return {
             "success": True,
             "merchant": MerchantResponse(
@@ -156,8 +160,8 @@ async def get_merchant(merchant_id: str, db: Session = Depends(get_db)) -> Dict[
                 monthlyVolume=float(merchant.monthly_volume or 0),
                 category=merchant.business_type,
                 location=merchant.location,
-                country=merchant.country
-            )
+                country=merchant.country,
+            ),
         }
     except HTTPException:
         raise
@@ -168,25 +172,26 @@ async def get_merchant(merchant_id: str, db: Session = Depends(get_db)) -> Dict[
 
 @router.put("/merchants/{merchant_id}/status")
 async def update_merchant_status(
-    merchant_id: str,
-    status: str,
-    db: Session = Depends(get_db)
+    merchant_id: str, status: str, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Update merchant status (active, suspended, disabled)"""
     try:
         merchant = db.query(MerchantModel).filter(MerchantModel.id == merchant_id).first()
         if not merchant:
             raise HTTPException(status_code=404, detail="Merchant not found")
-        
-        valid_statuses = ['active', 'suspended', 'inactive', 'pending']
+
+        valid_statuses = ["active", "suspended", "inactive", "pending"]
         if status not in valid_statuses:
-            raise HTTPException(status_code=422, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
-        
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
+            )
+
         merchant.status = status
         merchant.updated_at = datetime.utcnow()
         db.commit()
         db.refresh(merchant)
-        
+
         return {
             "success": True,
             "message": f"Merchant status updated to {status}",
@@ -202,8 +207,8 @@ async def update_merchant_status(
                 monthlyVolume=float(merchant.monthly_volume or 0),
                 category=merchant.business_type,
                 location=merchant.location,
-                country=merchant.country
-            )
+                country=merchant.country,
+            ),
         }
     except HTTPException:
         raise
@@ -217,21 +222,27 @@ async def get_merchants_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get merchants overview statistics"""
     try:
         merchants = db.query(MerchantModel).all()
-        
-        active = sum(1 for m in merchants if m.status == 'active')
-        suspended = sum(1 for m in merchants if m.status == 'suspended')
+
+        active = sum(1 for m in merchants if m.status == "active")
+        suspended = sum(1 for m in merchants if m.status == "suspended")
         total_volume = sum(float(m.monthly_volume or 0) for m in merchants)
-        avg_success_rate = (sum(float(m.success_rate or 0) for m in merchants) / len(merchants)) if merchants else 0
-        
-        top_merchant = max(merchants, key=lambda m: float(m.monthly_volume or 0)) if merchants else None
-        
+        avg_success_rate = (
+            (sum(float(m.success_rate or 0) for m in merchants) / len(merchants))
+            if merchants
+            else 0
+        )
+
+        top_merchant = (
+            max(merchants, key=lambda m: float(m.monthly_volume or 0)) if merchants else None
+        )
+
         return {
             "total_merchants": len(merchants),
             "active_merchants": active,
             "suspended_merchants": suspended,
             "total_monthly_volume": round(total_volume, 2),
             "avg_success_rate": round(avg_success_rate, 2),
-            "top_performer": top_merchant.name if top_merchant else "N/A"
+            "top_performer": top_merchant.name if top_merchant else "N/A",
         }
     except Exception as e:
         logger.error(f"Error getting merchants stats: {str(e)}")
@@ -240,15 +251,18 @@ async def get_merchants_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
 
 @router.post("/merchants")
 async def create_merchant(
-    request: CreateMerchantRequest,
-    db: Session = Depends(get_db)
+    request: CreateMerchantRequest, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Create a new merchant"""
     try:
         # Check if email already exists
-        existing = db.query(MerchantModel).filter(MerchantModel.email == request.email.lower()).first()
+        existing = (
+            db.query(MerchantModel).filter(MerchantModel.email == request.email.lower()).first()
+        )
         if existing:
-            raise HTTPException(status_code=400, detail=f"Merchant with email '{request.email}' already exists")
+            raise HTTPException(
+                status_code=400, detail=f"Merchant with email '{request.email}' already exists"
+            )
 
         merchant = MerchantModel(
             name=request.name,
@@ -258,13 +272,13 @@ async def create_merchant(
             country=request.country,
             location=request.location,
             business_type=request.business_type,
-            status='active',
+            status="active",
             transaction_count=0,
             success_rate=0,
             monthly_volume=0,
             join_date=datetime.utcnow(),
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         db.add(merchant)
@@ -286,8 +300,8 @@ async def create_merchant(
                 monthlyVolume=float(merchant.monthly_volume or 0),
                 category=merchant.business_type,
                 location=merchant.location,
-                country=merchant.country
-            )
+                country=merchant.country,
+            ),
         }
     except HTTPException:
         raise
@@ -299,9 +313,7 @@ async def create_merchant(
 
 @router.put("/merchants/{merchant_id}")
 async def update_merchant(
-    merchant_id: str,
-    request: UpdateMerchantRequest,
-    db: Session = Depends(get_db)
+    merchant_id: str, request: UpdateMerchantRequest, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Update a merchant"""
     try:
@@ -343,8 +355,8 @@ async def update_merchant(
                 monthlyVolume=float(merchant.monthly_volume or 0),
                 category=merchant.business_type,
                 location=merchant.location,
-                country=merchant.country
-            )
+                country=merchant.country,
+            ),
         }
     except HTTPException:
         raise
@@ -366,10 +378,7 @@ async def delete_merchant(merchant_id: str, db: Session = Depends(get_db)) -> Di
         db.delete(merchant)
         db.commit()
 
-        return {
-            "success": True,
-            "message": f"Merchant '{merchant_name}' deleted successfully"
-        }
+        return {"success": True, "message": f"Merchant '{merchant_name}' deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:

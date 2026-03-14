@@ -19,10 +19,13 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
     return verify_token_string(token)
 
 
-router = APIRouter(prefix="/api/feature-flags", tags=["feature-flags"], dependencies=[Depends(require_auth)])
+router = APIRouter(
+    prefix="/api/feature-flags", tags=["feature-flags"], dependencies=[Depends(require_auth)]
+)
 
 # Error message constants
 FEATURE_FLAG_NOT_FOUND = "Feature flag not found"
+
 
 # Pydantic models for request/response
 class FeatureFlagCreate(BaseModel):
@@ -32,10 +35,12 @@ class FeatureFlagCreate(BaseModel):
     rollout_percentage: int = 0
     environment: str = "development"
 
+
 class FeatureFlagUpdate(BaseModel):
     description: Optional[str] = None
     enabled: Optional[bool] = None
     rollout_percentage: Optional[int] = None
+
 
 class FeatureFlagResponse(BaseModel):
     id: str
@@ -45,9 +50,10 @@ class FeatureFlagResponse(BaseModel):
     rollout_percentage: int
     environment: str
     created_at: str
-    
+
     class Config:
         from_attributes = True
+
 
 class FeatureFlagListResponse(BaseModel):
     total: int
@@ -55,10 +61,12 @@ class FeatureFlagListResponse(BaseModel):
     page_size: int
     flags: List[FeatureFlagResponse]
 
+
 class MobileFeatureFlagsResponse(BaseModel):
     flags: Dict[str, Any]
     timestamp: str
     version: str = "1.0"
+
 
 # Mock user_id for demo (in production, extract from JWT token)
 DEMO_USER_ID = "admin-user-1"
@@ -73,11 +81,13 @@ def create_feature_flag(
     # Check if flag already exists
     existing = db.query(FeatureFlag).filter(FeatureFlag.name == flag_data.name).first()
     if existing:
-        raise HTTPException(status_code=400, detail=f"Feature flag '{flag_data.name}' already exists")
+        raise HTTPException(
+            status_code=400, detail=f"Feature flag '{flag_data.name}' already exists"
+        )
 
     flag = FeatureFlag(
         name=flag_data.name,
-        display_name=flag_data.name.replace('_', ' ').title(),
+        display_name=flag_data.name.replace("_", " ").title(),
         description=flag_data.description,
         enabled=flag_data.enabled,
         rollout_percentage=flag_data.rollout_percentage,
@@ -87,7 +97,7 @@ def create_feature_flag(
     db.add(flag)
     db.commit()
     db.refresh(flag)
-    
+
     return {
         "success": True,
         "data": {
@@ -159,10 +169,10 @@ def list_feature_flags(
 ):
     """List all feature flags with pagination."""
     query = db.query(FeatureFlag)
-    
+
     if enabled_only:
         query = query.filter(FeatureFlag.enabled == True)
-    
+
     total = query.count()
     flags = query.offset((page - 1) * page_size).limit(page_size).all()
 
@@ -183,7 +193,7 @@ def list_feature_flags(
                     "created_at": f.created_at.isoformat() if f.created_at else None,
                 }
                 for f in flags
-            ]
+            ],
         },
     }
 
@@ -205,7 +215,7 @@ def update_feature_flag(
         flag.enabled = flag_data.enabled
     if flag_data.rollout_percentage is not None:
         flag.rollout_percentage = flag_data.rollout_percentage
-    
+
     flag.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(flag)
@@ -264,7 +274,7 @@ def delete_feature_flag(
     flag = db.query(FeatureFlag).filter(FeatureFlag.id == flag_id).first()
     if not flag:
         raise HTTPException(status_code=404, detail=FEATURE_FLAG_NOT_FOUND)
-    
+
     db.delete(flag)
     db.commit()
 
@@ -280,7 +290,7 @@ def get_mobile_feature_flags(
     db: Session = Depends(get_db),
 ):
     """Get active feature flags for mobile app.
-    
+
     This endpoint returns only enabled flags, considering rollout percentage.
     Used by mobile app to determine which features to show.
     """
@@ -301,6 +311,6 @@ def get_mobile_feature_flags(
         "data": {
             "flags": mobile_flags,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "version": "1.0"
+            "version": "1.0",
         },
     }

@@ -38,6 +38,7 @@ MOCK_PUSH = os.getenv("MOCK_PUSH", "true").lower() == "true" or not AWS_ACCESS_K
 
 class Platform(str, Enum):
     """Supported push notification platforms"""
+
     IOS = "ios"
     IOS_SANDBOX = "ios_sandbox"
     ANDROID = "android"
@@ -45,6 +46,7 @@ class Platform(str, Enum):
 
 class NotificationType(str, Enum):
     """Types of push notifications"""
+
     TRANSACTION = "transaction"
     CASHBACK = "cashback"
     SECURITY = "security"
@@ -68,10 +70,10 @@ class AWSPushNotificationService:
         if not self.mock_mode:
             try:
                 self.client = boto3.client(
-                    'sns',
+                    "sns",
                     region_name=AWS_REGION,
                     aws_access_key_id=AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
                 )
                 logger.info(f"AWS Push Notification service initialized in region: {AWS_REGION}")
             except Exception as e:
@@ -89,7 +91,7 @@ class AWSPushNotificationService:
         device_token: str,
         platform: Platform,
         user_id: Optional[str] = None,
-        custom_data: Optional[Dict] = None
+        custom_data: Optional[Dict] = None,
     ) -> Dict[str, Any]:
         """
         Register a device for push notifications.
@@ -104,21 +106,22 @@ class AWSPushNotificationService:
             Dict with endpoint_arn and status
         """
         if self.mock_mode:
-            mock_arn = f"arn:aws:sns:{AWS_REGION}:mock:endpoint/{platform.value}/{device_token[:20]}"
-            logger.info(f"[MOCK] Registered device: {platform.value}, token: {device_token[:20]}...")
+            mock_arn = (
+                f"arn:aws:sns:{AWS_REGION}:mock:endpoint/{platform.value}/{device_token[:20]}"
+            )
+            logger.info(
+                f"[MOCK] Registered device: {platform.value}, token: {device_token[:20]}..."
+            )
             return {
                 "success": True,
                 "endpoint_arn": mock_arn,
                 "platform": platform.value,
-                "status": "mock_registered"
+                "status": "mock_registered",
             }
 
         platform_arn = self.platform_arns.get(platform)
         if not platform_arn:
-            return {
-                "success": False,
-                "error": f"Platform ARN not configured for {platform.value}"
-            }
+            return {"success": False, "error": f"Platform ARN not configured for {platform.value}"}
 
         try:
             # Build custom user data
@@ -134,41 +137,34 @@ class AWSPushNotificationService:
                 PlatformApplicationArn=platform_arn,
                 Token=device_token,
                 CustomUserData=json.dumps({"user_id": user_id}) if user_id else "",
-                Attributes=attributes if attributes else {}
+                Attributes=attributes if attributes else {},
             )
 
-            endpoint_arn = response.get('EndpointArn')
+            endpoint_arn = response.get("EndpointArn")
             logger.info(f"Device registered: {endpoint_arn}")
 
             return {
                 "success": True,
                 "endpoint_arn": endpoint_arn,
                 "platform": platform.value,
-                "status": "registered"
+                "status": "registered",
             }
 
         except ClientError as e:
-            error_code = e.response['Error']['Code']
-            error_message = e.response['Error']['Message']
+            error_code = e.response["Error"]["Code"]
+            error_message = e.response["Error"]["Message"]
 
             # Handle duplicate endpoint
-            if error_code == 'InvalidParameter' and 'already exists' in error_message.lower():
+            if error_code == "InvalidParameter" and "already exists" in error_message.lower():
                 # Extract existing endpoint ARN and update it
                 logger.info(f"Device already registered, updating endpoint")
                 return await self._update_existing_endpoint(device_token, platform, user_id)
 
             logger.error(f"Failed to register device: {error_code} - {error_message}")
-            return {
-                "success": False,
-                "error": error_message,
-                "error_code": error_code
-            }
+            return {"success": False, "error": error_message, "error_code": error_code}
 
     async def _update_existing_endpoint(
-        self,
-        device_token: str,
-        platform: Platform,
-        user_id: Optional[str] = None
+        self, device_token: str, platform: Platform, user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Update an existing endpoint with new token"""
         try:
@@ -178,38 +174,29 @@ class AWSPushNotificationService:
                 PlatformApplicationArn=platform_arn
             )
 
-            for endpoint in response.get('Endpoints', []):
-                attrs = endpoint.get('Attributes', {})
-                if attrs.get('Token') == device_token:
-                    endpoint_arn = endpoint['EndpointArn']
+            for endpoint in response.get("Endpoints", []):
+                attrs = endpoint.get("Attributes", {})
+                if attrs.get("Token") == device_token:
+                    endpoint_arn = endpoint["EndpointArn"]
 
                     # Update the endpoint to re-enable it
                     self.client.set_endpoint_attributes(
                         EndpointArn=endpoint_arn,
-                        Attributes={
-                            'Enabled': 'true',
-                            'Token': device_token
-                        }
+                        Attributes={"Enabled": "true", "Token": device_token},
                     )
 
                     return {
                         "success": True,
                         "endpoint_arn": endpoint_arn,
                         "platform": platform.value,
-                        "status": "updated"
+                        "status": "updated",
                     }
 
-            return {
-                "success": False,
-                "error": "Could not find existing endpoint"
-            }
+            return {"success": False, "error": "Could not find existing endpoint"}
 
         except ClientError as e:
             logger.error(f"Failed to update endpoint: {str(e)}")
-            return {
-                "success": False,
-                "error": "Operation failed"
-            }
+            return {"success": False, "error": "Operation failed"}
 
     async def unregister_device(self, endpoint_arn: str) -> Dict[str, Any]:
         """
@@ -245,7 +232,7 @@ class AWSPushNotificationService:
         sound: str = "default",
         category: Optional[str] = None,
         thread_id: Optional[str] = None,
-        ttl: int = 86400  # 24 hours
+        ttl: int = 86400,  # 24 hours
     ) -> Dict[str, Any]:
         """
         Send a push notification to a specific device.
@@ -263,12 +250,10 @@ class AWSPushNotificationService:
             ttl: Time to live in seconds
         """
         if self.mock_mode:
-            logger.info(f"[MOCK PUSH] To: {endpoint_arn[:50]}..., Title: {title}, Body: {body[:50]}...")
-            return {
-                "success": True,
-                "message_id": "MOCK_MESSAGE_ID",
-                "status": "mock_sent"
-            }
+            logger.info(
+                f"[MOCK PUSH] To: {endpoint_arn[:50]}..., Title: {title}, Body: {body[:50]}..."
+            )
+            return {"success": True, "message_id": "MOCK_MESSAGE_ID", "status": "mock_sent"}
 
         try:
             # Build platform-specific payloads
@@ -280,54 +265,40 @@ class AWSPushNotificationService:
                 badge=badge,
                 sound=sound,
                 category=category,
-                thread_id=thread_id
+                thread_id=thread_id,
             )
 
             response = self.client.publish(
                 TargetArn=endpoint_arn,
                 Message=json.dumps(message),
-                MessageStructure='json',
+                MessageStructure="json",
                 MessageAttributes={
-                    'AWS.SNS.MOBILE.APNS.TTL': {
-                        'DataType': 'String',
-                        'StringValue': str(ttl)
-                    },
-                    'AWS.SNS.MOBILE.FCM.TTL': {
-                        'DataType': 'String',
-                        'StringValue': str(ttl)
-                    }
-                }
+                    "AWS.SNS.MOBILE.APNS.TTL": {"DataType": "String", "StringValue": str(ttl)},
+                    "AWS.SNS.MOBILE.FCM.TTL": {"DataType": "String", "StringValue": str(ttl)},
+                },
             )
 
-            message_id = response.get('MessageId')
+            message_id = response.get("MessageId")
             logger.info(f"Push notification sent: {message_id}")
 
-            return {
-                "success": True,
-                "message_id": message_id,
-                "status": "sent"
-            }
+            return {"success": True, "message_id": message_id, "status": "sent"}
 
         except ClientError as e:
-            error_code = e.response['Error']['Code']
-            error_message = e.response['Error']['Message']
+            error_code = e.response["Error"]["Code"]
+            error_message = e.response["Error"]["Message"]
 
             # Handle disabled endpoint
-            if error_code == 'EndpointDisabled':
+            if error_code == "EndpointDisabled":
                 logger.warning(f"Endpoint disabled: {endpoint_arn}")
                 return {
                     "success": False,
                     "error": "Device endpoint is disabled",
                     "error_code": error_code,
-                    "should_remove": True
+                    "should_remove": True,
                 }
 
             logger.error(f"Failed to send push: {error_code} - {error_message}")
-            return {
-                "success": False,
-                "error": error_message,
-                "error_code": error_code
-            }
+            return {"success": False, "error": error_message, "error_code": error_code}
 
     def _build_push_message(
         self,
@@ -338,7 +309,7 @@ class AWSPushNotificationService:
         badge: Optional[int] = None,
         sound: str = "default",
         category: Optional[str] = None,
-        thread_id: Optional[str] = None
+        thread_id: Optional[str] = None,
     ) -> Dict[str, str]:
         """Build platform-specific push notification payloads"""
 
@@ -349,15 +320,8 @@ class AWSPushNotificationService:
 
         # APNS payload (iOS)
         apns_payload = {
-            "aps": {
-                "alert": {
-                    "title": title,
-                    "body": body
-                },
-                "sound": sound,
-                "mutable-content": 1
-            },
-            **custom_data
+            "aps": {"alert": {"title": title, "body": body}, "sound": sound, "mutable-content": 1},
+            **custom_data,
         }
 
         if badge is not None:
@@ -374,21 +338,17 @@ class AWSPushNotificationService:
                 "body": body,
                 "sound": sound,
                 "click_action": "OPEN_APP",
-                "channel_id": f"swipesavvy_{notification_type.value}"
+                "channel_id": f"swipesavvy_{notification_type.value}",
             },
-            "data": {
-                **{k: str(v) for k, v in custom_data.items()},
-                "title": title,
-                "body": body
-            },
-            "priority": "high"
+            "data": {**{k: str(v) for k, v in custom_data.items()}, "title": title, "body": body},
+            "priority": "high",
         }
 
         return {
             "default": body,
             "APNS": json.dumps(apns_payload),
             "APNS_SANDBOX": json.dumps(apns_payload),
-            "GCM": json.dumps(fcm_payload)
+            "GCM": json.dumps(fcm_payload),
         }
 
     # ========================================================================
@@ -401,7 +361,7 @@ class AWSPushNotificationService:
         title: str,
         body: str,
         notification_type: NotificationType = NotificationType.SYSTEM,
-        data: Optional[Dict] = None
+        data: Optional[Dict] = None,
     ) -> Dict[str, Any]:
         """
         Send push notification to multiple devices.
@@ -413,7 +373,7 @@ class AWSPushNotificationService:
             "success": 0,
             "failed": 0,
             "disabled": 0,
-            "details": []
+            "details": [],
         }
 
         for endpoint_arn in endpoint_arns:
@@ -422,7 +382,7 @@ class AWSPushNotificationService:
                 title=title,
                 body=body,
                 notification_type=notification_type,
-                data=data
+                data=data,
             )
 
             if result.get("success"):
@@ -432,14 +392,13 @@ class AWSPushNotificationService:
                 if result.get("should_remove"):
                     results["disabled"] += 1
 
-            results["details"].append({
-                "endpoint": endpoint_arn,
-                **result
-            })
+            results["details"].append({"endpoint": endpoint_arn, **result})
 
         return results
 
-    async def create_topic(self, topic_name: str, display_name: Optional[str] = None) -> Dict[str, Any]:
+    async def create_topic(
+        self, topic_name: str, display_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Create an SNS topic for broadcast notifications.
 
@@ -454,14 +413,11 @@ class AWSPushNotificationService:
         try:
             attributes = {}
             if display_name:
-                attributes['DisplayName'] = display_name
+                attributes["DisplayName"] = display_name
 
-            response = self.client.create_topic(
-                Name=topic_name,
-                Attributes=attributes
-            )
+            response = self.client.create_topic(Name=topic_name, Attributes=attributes)
 
-            topic_arn = response.get('TopicArn')
+            topic_arn = response.get("TopicArn")
             logger.info(f"Topic created: {topic_arn}")
 
             return {"success": True, "topic_arn": topic_arn}
@@ -477,12 +433,10 @@ class AWSPushNotificationService:
 
         try:
             response = self.client.subscribe(
-                TopicArn=topic_arn,
-                Protocol='application',
-                Endpoint=endpoint_arn
+                TopicArn=topic_arn, Protocol="application", Endpoint=endpoint_arn
             )
 
-            subscription_arn = response.get('SubscriptionArn')
+            subscription_arn = response.get("SubscriptionArn")
             return {"success": True, "subscription_arn": subscription_arn}
 
         except ClientError as e:
@@ -495,7 +449,7 @@ class AWSPushNotificationService:
         title: str,
         body: str,
         notification_type: NotificationType = NotificationType.MARKETING,
-        data: Optional[Dict] = None
+        data: Optional[Dict] = None,
     ) -> Dict[str, Any]:
         """
         Publish a push notification to all subscribers of a topic.
@@ -508,22 +462,14 @@ class AWSPushNotificationService:
 
         try:
             message = self._build_push_message(
-                title=title,
-                body=body,
-                notification_type=notification_type,
-                data=data
+                title=title, body=body, notification_type=notification_type, data=data
             )
 
             response = self.client.publish(
-                TopicArn=topic_arn,
-                Message=json.dumps(message),
-                MessageStructure='json'
+                TopicArn=topic_arn, Message=json.dumps(message), MessageStructure="json"
             )
 
-            return {
-                "success": True,
-                "message_id": response.get('MessageId')
-            }
+            return {"success": True, "message_id": response.get("MessageId")}
 
         except ClientError as e:
             logger.error(f"Failed to publish to topic: {str(e)}")
@@ -534,12 +480,7 @@ class AWSPushNotificationService:
     # ========================================================================
 
     async def send_transaction_notification(
-        self,
-        endpoint_arn: str,
-        merchant: str,
-        amount: float,
-        cashback: float,
-        transaction_id: str
+        self, endpoint_arn: str, merchant: str, amount: float, cashback: float, transaction_id: str
     ) -> Dict[str, Any]:
         """Send transaction receipt push notification"""
         return await self.send_push_notification(
@@ -552,17 +493,13 @@ class AWSPushNotificationService:
                 "merchant": merchant,
                 "amount": str(amount),
                 "cashback": str(cashback),
-                "action": "view_transaction"
+                "action": "view_transaction",
             },
-            sound="transaction.wav"
+            sound="transaction.wav",
         )
 
     async def send_cashback_notification(
-        self,
-        endpoint_arn: str,
-        amount: float,
-        merchant: str,
-        total_balance: float
+        self, endpoint_arn: str, amount: float, merchant: str, total_balance: float
     ) -> Dict[str, Any]:
         """Send cashback earned push notification"""
         return await self.send_push_notification(
@@ -574,24 +511,21 @@ class AWSPushNotificationService:
                 "amount": str(amount),
                 "merchant": merchant,
                 "total_balance": str(total_balance),
-                "action": "view_rewards"
+                "action": "view_rewards",
             },
             badge=1,
-            sound="cashback.wav"
+            sound="cashback.wav",
         )
 
     async def send_security_alert(
-        self,
-        endpoint_arn: str,
-        alert_type: str,
-        details: str
+        self, endpoint_arn: str, alert_type: str, details: str
     ) -> Dict[str, Any]:
         """Send security alert push notification"""
         titles = {
             "new_login": "New Login Detected",
             "new_device": "New Device",
             "suspicious_activity": "Security Alert",
-            "password_changed": "Password Changed"
+            "password_changed": "Password Changed",
         }
 
         return await self.send_push_notification(
@@ -599,20 +533,13 @@ class AWSPushNotificationService:
             title=titles.get(alert_type, "Security Alert"),
             body=details,
             notification_type=NotificationType.SECURITY,
-            data={
-                "alert_type": alert_type,
-                "action": "view_security"
-            },
+            data={"alert_type": alert_type, "action": "view_security"},
             sound="alert.wav",
-            category="SECURITY_ALERT"
+            category="SECURITY_ALERT",
         )
 
     async def send_chat_notification(
-        self,
-        endpoint_arn: str,
-        sender_name: str,
-        message_preview: str,
-        conversation_id: str
+        self, endpoint_arn: str, sender_name: str, message_preview: str, conversation_id: str
     ) -> Dict[str, Any]:
         """Send chat message push notification"""
         return await self.send_push_notification(
@@ -620,12 +547,9 @@ class AWSPushNotificationService:
             title=sender_name,
             body=message_preview[:100],
             notification_type=NotificationType.CHAT,
-            data={
-                "conversation_id": conversation_id,
-                "action": "open_chat"
-            },
+            data={"conversation_id": conversation_id, "action": "open_chat"},
             thread_id=f"chat_{conversation_id}",
-            category="CHAT_MESSAGE"
+            category="CHAT_MESSAGE",
         )
 
     async def send_promotional_notification(
@@ -634,7 +558,7 @@ class AWSPushNotificationService:
         title: str,
         body: str,
         offer_id: Optional[str] = None,
-        deep_link: Optional[str] = None
+        deep_link: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Send promotional push notification"""
         return await self.send_push_notification(
@@ -642,11 +566,7 @@ class AWSPushNotificationService:
             title=title,
             body=body,
             notification_type=NotificationType.MARKETING,
-            data={
-                "offer_id": offer_id,
-                "deep_link": deep_link,
-                "action": "view_offer"
-            }
+            data={"offer_id": offer_id, "deep_link": deep_link, "action": "view_offer"},
         )
 
 
@@ -655,17 +575,25 @@ aws_push_service = AWSPushNotificationService()
 
 
 # Convenience functions
-async def register_device(device_token: str, platform: str, user_id: Optional[str] = None) -> Dict[str, Any]:
+async def register_device(
+    device_token: str, platform: str, user_id: Optional[str] = None
+) -> Dict[str, Any]:
     """Register a device for push notifications"""
     platform_enum = Platform(platform.lower())
     return await aws_push_service.register_device(device_token, platform_enum, user_id)
 
 
-async def send_push(endpoint_arn: str, title: str, body: str, data: Optional[Dict] = None) -> Dict[str, Any]:
+async def send_push(
+    endpoint_arn: str, title: str, body: str, data: Optional[Dict] = None
+) -> Dict[str, Any]:
     """Send a push notification"""
     return await aws_push_service.send_push_notification(endpoint_arn, title, body, data=data)
 
 
-async def send_transaction_push(endpoint_arn: str, merchant: str, amount: float, cashback: float, tx_id: str):
+async def send_transaction_push(
+    endpoint_arn: str, merchant: str, amount: float, cashback: float, tx_id: str
+):
     """Send transaction notification"""
-    return await aws_push_service.send_transaction_notification(endpoint_arn, merchant, amount, cashback, tx_id)
+    return await aws_push_service.send_transaction_notification(
+        endpoint_arn, merchant, amount, cashback, tx_id
+    )

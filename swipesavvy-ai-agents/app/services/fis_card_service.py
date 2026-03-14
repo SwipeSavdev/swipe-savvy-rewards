@@ -20,7 +20,7 @@ from app.services.fis_global_service import (
     FISAPIResponse,
     FISCardStatus,
     FISCardType,
-    get_fis_service
+    get_fis_service,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,8 +30,10 @@ logger = logging.getLogger(__name__)
 # REQUEST/RESPONSE MODELS
 # =============================================================================
 
+
 class IssueVirtualCardRequest(BaseModel):
     """Request to issue a virtual card"""
+
     user_id: UUID
     cardholder_name: str
     nickname: Optional[str] = None
@@ -40,6 +42,7 @@ class IssueVirtualCardRequest(BaseModel):
 
 class IssuePhysicalCardRequest(BaseModel):
     """Request to order a physical card"""
+
     user_id: UUID
     cardholder_name: str
     shipping_address: Dict[str, str]  # street, city, state, zip, country
@@ -50,6 +53,7 @@ class IssuePhysicalCardRequest(BaseModel):
 
 class ActivateCardRequest(BaseModel):
     """Request to activate a card"""
+
     card_id: str
     last_four: str  # For verification
     activation_code: Optional[str] = None  # For physical cards
@@ -57,6 +61,7 @@ class ActivateCardRequest(BaseModel):
 
 class ReplaceCardRequest(BaseModel):
     """Request to replace a card"""
+
     card_id: str
     reason: str  # lost, stolen, damaged, expired
     shipping_address: Optional[Dict[str, str]] = None  # For physical cards
@@ -65,6 +70,7 @@ class ReplaceCardRequest(BaseModel):
 
 class CardResponse(BaseModel):
     """Card response data"""
+
     card_id: str
     fis_card_id: str
     card_type: str
@@ -83,6 +89,7 @@ class CardResponse(BaseModel):
 # =============================================================================
 # FIS CARD SERVICE
 # =============================================================================
+
 
 class FISCardService:
     """
@@ -103,7 +110,7 @@ class FISCardService:
         user_id: UUID,
         cardholder_name: str,
         nickname: Optional[str] = None,
-        set_as_primary: bool = False
+        set_as_primary: bool = False,
     ) -> FISAPIResponse:
         """
         Issue a new virtual card for instant use.
@@ -124,16 +131,11 @@ class FISCardService:
             "cardholder_name": cardholder_name.upper(),
             "external_user_id": str(user_id),
             "program_id": "swipesavvy_virtual",
-            "metadata": {
-                "nickname": nickname,
-                "is_primary": set_as_primary
-            }
+            "metadata": {"nickname": nickname, "is_primary": set_as_primary},
         }
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint="/cards/issue",
-            data=payload
+            method="POST", endpoint="/cards/issue", data=payload
         )
 
         if response.success:
@@ -150,7 +152,7 @@ class FISCardService:
         shipping_address: Dict[str, str],
         expedited: bool = False,
         nickname: Optional[str] = None,
-        set_as_primary: bool = False
+        set_as_primary: bool = False,
     ) -> FISAPIResponse:
         """
         Order a physical card for mailing.
@@ -179,21 +181,16 @@ class FISCardService:
                     "city": shipping_address.get("city"),
                     "state": shipping_address.get("state"),
                     "postal_code": shipping_address.get("zip"),
-                    "country": shipping_address.get("country", "US")
+                    "country": shipping_address.get("country", "US"),
                 },
                 "expedited": expedited,
-                "method": "expedited" if expedited else "standard"
+                "method": "expedited" if expedited else "standard",
             },
-            "metadata": {
-                "nickname": nickname,
-                "is_primary": set_as_primary
-            }
+            "metadata": {"nickname": nickname, "is_primary": set_as_primary},
         }
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint="/cards/issue",
-            data=payload
+            method="POST", endpoint="/cards/issue", data=payload
         )
 
         if response.success:
@@ -204,10 +201,7 @@ class FISCardService:
         return response
 
     async def activate_card(
-        self,
-        card_id: str,
-        last_four: str,
-        activation_code: Optional[str] = None
+        self, card_id: str, last_four: str, activation_code: Optional[str] = None
     ) -> FISAPIResponse:
         """
         Activate a card.
@@ -222,17 +216,13 @@ class FISCardService:
         """
         logger.info(f"Activating card {card_id}")
 
-        payload = {
-            "last_four_verification": last_four
-        }
+        payload = {"last_four_verification": last_four}
 
         if activation_code:
             payload["activation_code"] = activation_code
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/activate",
-            data=payload
+            method="POST", endpoint=f"/cards/{card_id}/activate", data=payload
         )
 
         if response.success:
@@ -252,10 +242,7 @@ class FISCardService:
         Returns:
             FISAPIResponse with card details
         """
-        return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}"
-        )
+        return await self.fis._make_request(method="GET", endpoint=f"/cards/{card_id}")
 
     async def get_user_cards(self, user_id: UUID) -> FISAPIResponse:
         """
@@ -268,16 +255,11 @@ class FISCardService:
             FISAPIResponse with list of cards
         """
         return await self.fis._make_request(
-            method="GET",
-            endpoint="/cards",
-            params={"external_user_id": str(user_id)}
+            method="GET", endpoint="/cards", params={"external_user_id": str(user_id)}
         )
 
     async def get_card_sensitive_data(
-        self,
-        card_id: str,
-        include_pan: bool = False,
-        include_cvv: bool = False
+        self, card_id: str, include_pan: bool = False, include_cvv: bool = False
     ) -> FISAPIResponse:
         """
         Get sensitive card data (PAN, CVV) - requires additional authorization.
@@ -299,9 +281,7 @@ class FISCardService:
             params["include_cvv"] = "true"
 
         return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/sensitive",
-            params=params
+            method="GET", endpoint=f"/cards/{card_id}/sensitive", params=params
         )
 
     async def replace_card(
@@ -309,7 +289,7 @@ class FISCardService:
         card_id: str,
         reason: str,
         shipping_address: Optional[Dict[str, str]] = None,
-        expedited: bool = False
+        expedited: bool = False,
     ) -> FISAPIResponse:
         """
         Replace a card (lost, stolen, damaged, expired).
@@ -325,10 +305,7 @@ class FISCardService:
         """
         logger.info(f"Replacing card {card_id} - reason: {reason}")
 
-        payload = {
-            "reason": reason,
-            "expedited": expedited
-        }
+        payload = {"reason": reason, "expedited": expedited}
 
         if shipping_address:
             payload["shipping"] = {
@@ -337,14 +314,12 @@ class FISCardService:
                     "city": shipping_address.get("city"),
                     "state": shipping_address.get("state"),
                     "postal_code": shipping_address.get("zip"),
-                    "country": shipping_address.get("country", "US")
+                    "country": shipping_address.get("country", "US"),
                 }
             }
 
         response = await self.fis._make_request(
-            method="POST",
-            endpoint=f"/cards/{card_id}/replace",
-            data=payload
+            method="POST", endpoint=f"/cards/{card_id}/replace", data=payload
         )
 
         if response.success:
@@ -354,11 +329,7 @@ class FISCardService:
 
         return response
 
-    async def cancel_card(
-        self,
-        card_id: str,
-        reason: str
-    ) -> FISAPIResponse:
+    async def cancel_card(self, card_id: str, reason: str) -> FISAPIResponse:
         """
         Cancel/close a card permanently.
 
@@ -372,9 +343,7 @@ class FISCardService:
         logger.info(f"Cancelling card {card_id} - reason: {reason}")
 
         response = await self.fis._make_request(
-            method="DELETE",
-            endpoint=f"/cards/{card_id}",
-            data={"reason": reason}
+            method="DELETE", endpoint=f"/cards/{card_id}", data={"reason": reason}
         )
 
         if response.success:
@@ -384,11 +353,7 @@ class FISCardService:
 
         return response
 
-    async def update_card_status(
-        self,
-        card_id: str,
-        status: FISCardStatus
-    ) -> FISAPIResponse:
+    async def update_card_status(self, card_id: str, status: FISCardStatus) -> FISAPIResponse:
         """
         Update card status.
 
@@ -402,9 +367,7 @@ class FISCardService:
         logger.info(f"Updating card {card_id} status to {status.value}")
 
         return await self.fis._make_request(
-            method="PUT",
-            endpoint=f"/cards/{card_id}/status",
-            data={"status": status.value}
+            method="PUT", endpoint=f"/cards/{card_id}/status", data={"status": status.value}
         )
 
     async def get_shipping_status(self, card_id: str) -> FISAPIResponse:
@@ -417,10 +380,7 @@ class FISCardService:
         Returns:
             FISAPIResponse with shipping details
         """
-        return await self.fis._make_request(
-            method="GET",
-            endpoint=f"/cards/{card_id}/shipping"
-        )
+        return await self.fis._make_request(method="GET", endpoint=f"/cards/{card_id}/shipping")
 
 
 # =============================================================================

@@ -38,7 +38,7 @@ def test_check_endpoint_input():
     payload = {
         "message": "What is my account balance?",
         "direction": "input",
-        "user_id": "user_123"
+        "user_id": "user_123",
     }
     response = client.post("/api/v1/guardrails/check", json=payload)
     assert response.status_code == 200
@@ -51,10 +51,7 @@ def test_check_endpoint_input():
 
 def test_check_endpoint_output():
     """Test guardrails check endpoint with output direction"""
-    payload = {
-        "message": "Your balance is $1,234.56",
-        "direction": "output"
-    }
+    payload = {"message": "Your balance is $1,234.56", "direction": "output"}
     response = client.post("/api/v1/guardrails/check", json=payload)
     assert response.status_code == 200
     data = response.json()

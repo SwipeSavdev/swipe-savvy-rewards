@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CampaignRecipient:
     """Campaign recipient data"""
+
     user_id: str
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -35,6 +36,7 @@ class CampaignRecipient:
 @dataclass
 class CampaignContent:
     """Campaign content data"""
+
     campaign_id: str
     campaign_name: str
     subject: str
@@ -63,7 +65,7 @@ class MarketingDeliveryService:
         self,
         content: CampaignContent,
         recipients: List[CampaignRecipient],
-        track_opens: bool = True
+        track_opens: bool = True,
     ) -> Dict[str, Any]:
         """
         Send email marketing campaign to multiple recipients.
@@ -82,7 +84,7 @@ class MarketingDeliveryService:
             "sent": 0,
             "failed": 0,
             "failed_emails": [],
-            "started_at": datetime.utcnow().isoformat()
+            "started_at": datetime.utcnow().isoformat(),
         }
 
         for i, recipient in enumerate(recipients):
@@ -98,7 +100,7 @@ class MarketingDeliveryService:
                     to_email=recipient.email,
                     subject=content.subject,
                     html_body=html_body,
-                    text_body=text_body
+                    text_body=text_body,
                 )
 
                 if success:
@@ -117,15 +119,19 @@ class MarketingDeliveryService:
                 results["failed_emails"].append(recipient.email)
 
         results["completed_at"] = datetime.utcnow().isoformat()
-        results["success_rate"] = (results["sent"] / results["total_recipients"] * 100) if results["total_recipients"] > 0 else 0
+        results["success_rate"] = (
+            (results["sent"] / results["total_recipients"] * 100)
+            if results["total_recipients"] > 0
+            else 0
+        )
 
-        logger.info(f"Email campaign {content.campaign_id} completed: {results['sent']}/{results['total_recipients']} sent")
+        logger.info(
+            f"Email campaign {content.campaign_id} completed: {results['sent']}/{results['total_recipients']} sent"
+        )
         return results
 
     async def send_sms_campaign(
-        self,
-        content: CampaignContent,
-        recipients: List[CampaignRecipient]
+        self, content: CampaignContent, recipients: List[CampaignRecipient]
     ) -> Dict[str, Any]:
         """
         Send SMS marketing campaign to multiple recipients.
@@ -143,7 +149,7 @@ class MarketingDeliveryService:
             "sent": 0,
             "failed": 0,
             "failed_phones": [],
-            "started_at": datetime.utcnow().isoformat()
+            "started_at": datetime.utcnow().isoformat(),
         }
 
         for i, recipient in enumerate(recipients):
@@ -155,8 +161,7 @@ class MarketingDeliveryService:
                 message = self._build_sms_message(content, recipient)
 
                 result = await self.sns_service.send_promotional_sms(
-                    to_phone=recipient.phone,
-                    message=message
+                    to_phone=recipient.phone, message=message
                 )
 
                 if result.get("success"):
@@ -175,16 +180,22 @@ class MarketingDeliveryService:
                 results["failed_phones"].append(recipient.phone)
 
         results["completed_at"] = datetime.utcnow().isoformat()
-        results["success_rate"] = (results["sent"] / results["total_recipients"] * 100) if results["total_recipients"] > 0 else 0
+        results["success_rate"] = (
+            (results["sent"] / results["total_recipients"] * 100)
+            if results["total_recipients"] > 0
+            else 0
+        )
 
-        logger.info(f"SMS campaign {content.campaign_id} completed: {results['sent']}/{results['total_recipients']} sent")
+        logger.info(
+            f"SMS campaign {content.campaign_id} completed: {results['sent']}/{results['total_recipients']} sent"
+        )
         return results
 
     async def send_multichannel_campaign(
         self,
         content: CampaignContent,
         recipients: List[CampaignRecipient],
-        channels: List[str] = None
+        channels: List[str] = None,
     ) -> Dict[str, Any]:
         """
         Send marketing campaign via multiple channels.
@@ -203,7 +214,7 @@ class MarketingDeliveryService:
         results = {
             "campaign_id": content.campaign_id,
             "channels": channels,
-            "started_at": datetime.utcnow().isoformat()
+            "started_at": datetime.utcnow().isoformat(),
         }
 
         if "email" in channels:
@@ -221,6 +232,7 @@ class MarketingDeliveryService:
     def _escape_html(text: str) -> str:
         """Escape HTML special characters to prevent injection"""
         import html
+
         return html.escape(str(text)) if text else ""
 
     def _build_email_html(self, content: CampaignContent, recipient: CampaignRecipient) -> str:
@@ -336,7 +348,7 @@ To unsubscribe: https://app.swipesavvy.com/unsubscribe
 
         # Truncate if too long
         if len(message) > max_length:
-            message = message[:max_length-3] + "..."
+            message = message[: max_length - 3] + "..."
 
         return message
 
@@ -347,7 +359,7 @@ To unsubscribe: https://app.swipesavvy.com/unsubscribe
         subject: str,
         message: str,
         offer_value: Optional[str] = None,
-        cta_link: Optional[str] = None
+        cta_link: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Send a single promotional notification to a user.
@@ -396,10 +408,7 @@ To unsubscribe: https://app.swipesavvy.com/unsubscribe
             """
 
             results["email"] = await self.ses_service.send_email(
-                to_email=user_email,
-                subject=subject,
-                html_body=html_body,
-                text_body=message
+                to_email=user_email, subject=subject, html_body=html_body, text_body=message
             )
 
         # Send SMS
@@ -409,8 +418,7 @@ To unsubscribe: https://app.swipesavvy.com/unsubscribe
                 sms_message = f"SwipeSavvy: {offer_value}! {message[:80]}"
 
             results["sms"] = await self.sns_service.send_promotional_sms(
-                to_phone=user_phone,
-                message=sms_message
+                to_phone=user_phone, message=sms_message
             )
 
         return results
@@ -419,7 +427,7 @@ To unsubscribe: https://app.swipesavvy.com/unsubscribe
         self,
         campaign_data: Dict[str, Any],
         recipients: List[Dict[str, Any]],
-        ai_copy: Dict[str, Any]
+        ai_copy: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
         Send AI-generated marketing campaign using AWS SES/SNS.
@@ -436,14 +444,17 @@ To unsubscribe: https://app.swipesavvy.com/unsubscribe
         content = CampaignContent(
             campaign_id=campaign_data.get("campaign_id", str(datetime.utcnow().timestamp())),
             campaign_name=campaign_data.get("name", "AI Campaign"),
-            subject=ai_copy.get("headline", campaign_data.get("name", "Special Offer from SwipeSavvy")),
+            subject=ai_copy.get(
+                "headline", campaign_data.get("name", "Special Offer from SwipeSavvy")
+            ),
             headline=ai_copy.get("headline", "Exclusive Offer Just for You"),
             description=ai_copy.get("description", campaign_data.get("description", "")),
             cta_text=ai_copy.get("cta", "Shop Now"),
             cta_link=campaign_data.get("cta_link", "https://app.swipesavvy.com/offers"),
-            offer_value=f"{campaign_data.get('offer_value', '')} {campaign_data.get('offer_unit', '')}".strip() or None,
+            offer_value=f"{campaign_data.get('offer_value', '')} {campaign_data.get('offer_unit', '')}".strip()
+            or None,
             offer_code=campaign_data.get("offer_code"),
-            expires_at=None  # Could be calculated from duration_days
+            expires_at=None,  # Could be calculated from duration_days
         )
 
         # Convert recipient dicts to CampaignRecipient objects
@@ -452,7 +463,7 @@ To unsubscribe: https://app.swipesavvy.com/unsubscribe
                 user_id=r.get("user_id", ""),
                 email=r.get("email"),
                 phone=r.get("phone"),
-                name=r.get("name", "Valued Customer")
+                name=r.get("name", "Valued Customer"),
             )
             for r in recipients
         ]

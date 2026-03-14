@@ -20,7 +20,7 @@ test_messages = [
     "I want to speak to a human",
     "Can I talk to a real person?",
     "Connect me with customer service",
-    "I need to speak with a representative"
+    "I need to speak with a representative",
 ]
 
 for msg in test_messages:
@@ -39,7 +39,7 @@ frustration_messages = [
     "This is not helpful at all!!!",
     "You're USELESS and wasting my time",
     "This is the worst service ever",
-    "I'm so frustrated with this"
+    "I'm so frustrated with this",
 ]
 
 for msg in frustration_messages:
@@ -58,7 +58,7 @@ complex_messages = [
     "Someone stole my card and made unauthorized charges",
     "I need to dispute a transaction for fraud",
     "I want to file a complaint and speak to legal",
-    "There's been a scam on my account"
+    "There's been a scam on my account",
 ]
 
 for msg in complex_messages:
@@ -74,12 +74,7 @@ print("\n" + "=" * 60)
 print("TEST 4: Low Confidence Handoff")
 print("=" * 60)
 
-trigger = handoff_mgr.should_handoff(
-    "What is the meaning of life?",
-    [],
-    {},
-    agent_confidence=0.4
-)
+trigger = handoff_mgr.should_handoff("What is the meaning of life?", [], {}, agent_confidence=0.4)
 
 if trigger and trigger.reason == "low_confidence":
     print(f"✅ Low confidence detected")
@@ -93,11 +88,7 @@ print("TEST 5: Max Attempts Exceeded")
 print("=" * 60)
 
 context_with_failures = {"failed_resolution_attempts": 3}
-trigger = handoff_mgr.should_handoff(
-    "I still don't understand",
-    [],
-    context_with_failures
-)
+trigger = handoff_mgr.should_handoff("I still don't understand", [], context_with_failures)
 
 if trigger and trigger.reason == "max_attempts_exceeded":
     print(f"✅ Max attempts detected")
@@ -112,7 +103,7 @@ print("=" * 60)
 high_value_messages = [
     "I want to transfer $5,000 to my savings",
     "Can you send $2,500 to my friend?",
-    "I need to make a payment of $10,000"
+    "I need to make a payment of $10,000",
 ]
 
 for msg in high_value_messages:
@@ -132,7 +123,7 @@ from datetime import datetime
 triggers = [
     HandoffTrigger("user_requested", 1.0, datetime.now().isoformat(), {}),
     HandoffTrigger("user_frustrated", 0.9, datetime.now().isoformat(), {}),
-    HandoffTrigger("complex_topic", 0.85, datetime.now().isoformat(), {})
+    HandoffTrigger("complex_topic", 0.85, datetime.now().isoformat(), {}),
 ]
 
 for trigger in triggers:
@@ -144,18 +135,16 @@ print("\n" + "=" * 60)
 print("TEST 8: Create Handoff Context")
 print("=" * 60)
 
-session_summary = {
-    "session_id": "test_123",
-    "user_id": "user_001",
-    "message_count": 5
-}
+session_summary = {"session_id": "test_123", "user_id": "user_001", "message_count": 5}
 
 conversation_history = [
     {"role": "user", "content": "What's my balance?"},
-    {"role": "assistant", "content": "Your balance is $3,456.78"}
+    {"role": "assistant", "content": "Your balance is $3,456.78"},
 ]
 
-trigger = HandoffTrigger("user_frustrated", 0.9, datetime.now().isoformat(), {"message": "This doesn't help!"})
+trigger = HandoffTrigger(
+    "user_frustrated", 0.9, datetime.now().isoformat(), {"message": "This doesn't help!"}
+)
 context = handoff_mgr.create_handoff_context(trigger, session_summary, conversation_history)
 
 print("✅ Handoff context created:")

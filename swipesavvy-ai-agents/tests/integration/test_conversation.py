@@ -28,11 +28,19 @@ print("=" * 60)
 
 # Simulate a conversation
 conv_mgr.add_message("test_session_001", "user", "What's my account balance?")
-conv_mgr.add_message("test_session_001", "assistant", "Your checking account has $3,456.78 and your savings has $12,500.00.", 
-                     metadata={"tool_calls": ["get_account_balance"]})
+conv_mgr.add_message(
+    "test_session_001",
+    "assistant",
+    "Your checking account has $3,456.78 and your savings has $12,500.00.",
+    metadata={"tool_calls": ["get_account_balance"]},
+)
 conv_mgr.add_message("test_session_001", "user", "Show me my recent transactions")
-conv_mgr.add_message("test_session_001", "assistant", "Here are your 5 most recent transactions...",
-                     metadata={"tool_calls": ["get_transactions"]})
+conv_mgr.add_message(
+    "test_session_001",
+    "assistant",
+    "Here are your 5 most recent transactions...",
+    metadata={"tool_calls": ["get_transactions"]},
+)
 
 history = conv_mgr.get_history("test_session_001")
 print(f"✅ Added {len(history)} messages")
@@ -52,11 +60,14 @@ print("\n" + "=" * 60)
 print("TEST 4: Update Session Context")
 print("=" * 60)
 
-conv_mgr.update_context("test_session_001", {
-    "user_preferences": {"notifications": "enabled"},
-    "last_query_type": "transactions",
-    "account_accessed": "acct_001"
-})
+conv_mgr.update_context(
+    "test_session_001",
+    {
+        "user_preferences": {"notifications": "enabled"},
+        "last_query_type": "transactions",
+        "account_accessed": "acct_001",
+    },
+)
 
 context = conv_mgr.get_context("test_session_001")
 print("✅ Context updated:")
@@ -80,8 +91,12 @@ print("TEST 6: Get Recent Tool Calls")
 print("=" * 60)
 
 # Add a tool message
-conv_mgr.add_message("test_session_001", "tool", "{'success': True, 'data': {...}}",
-                     metadata={"tool_name": "get_account_balance", "tool_result": {"success": True}})
+conv_mgr.add_message(
+    "test_session_001",
+    "tool",
+    "{'success': True, 'data': {...}}",
+    metadata={"tool_name": "get_account_balance", "tool_result": {"success": True}},
+)
 
 tool_calls = conv_mgr.get_recent_tool_calls("test_session_001", limit=3)
 print(f"✅ Recent tool calls: {len(tool_calls)}")

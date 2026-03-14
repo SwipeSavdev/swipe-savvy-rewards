@@ -29,7 +29,7 @@ PAYMENT_PROCESSING_FAILED = "Payment processing failed. Please try again."
 
 class AuthorizeNetService:
     """Service for managing payments through Authorize.Net"""
-    
+
     def __init__(self, api_login_id: str, transaction_key: str):
         """Initialize payment service with Authorize.Net credentials"""
         self.api_login_id = api_login_id
@@ -39,20 +39,20 @@ class AuthorizeNetService:
             self.base_url = "https://api.authorize.net/xml/v1/request.api"
         else:
             self.base_url = "https://apitest.authorize.net/xml/v1/request.api"
-    
+
     def _build_request_headers(self) -> Dict[str, str]:
         """Build request headers for Authorize.Net"""
         return {
             "Content-Type": "application/json",
         }
-    
+
     def _build_auth(self) -> Dict[str, Any]:
         """Build authentication object for Authorize.Net requests"""
         return {
             "name": self.api_login_id,
             "transactionKey": self.transaction_key,
         }
-    
+
     def create_payment_intent(
         self,
         db: Session,
@@ -66,7 +66,7 @@ class AuthorizeNetService:
     ) -> Dict[str, Any]:
         """
         Create a payment transaction via Authorize.Net
-        
+
         Args:
             db: Database session
             user_id: ID of user making payment
@@ -76,10 +76,10 @@ class AuthorizeNetService:
             merchant_id: ID of merchant receiving payment
             metadata: Additional metadata for payment
             payment_method: Payment method details (card info, etc)
-        
+
         Returns:
             Payment intent with transaction ID
-        
+
         Raises:
             Exception: If payment creation fails
         """
@@ -115,7 +115,7 @@ class AuthorizeNetService:
             db.rollback()
             logger.error(f"Payment creation failed: {str(e)}")
             raise Exception(PAYMENT_PROCESSING_FAILED)
-    
+
     def confirm_payment(
         self,
         db: Session,
@@ -126,21 +126,23 @@ class AuthorizeNetService:
     ) -> Dict[str, Any]:
         """
         Confirm and process a payment via Authorize.Net
-        
+
         Args:
             db: Database session
             payment_id: ID of payment to confirm
             card_number: Credit card number
             expiration_date: Card expiration (MMYY)
             card_code: CVV code
-        
+
         Returns:
             Confirmed payment details
         """
         try:
             # PCI DSS compliance: Raw card data should not be handled server-side.
             # This endpoint is for administrative/settlement use only — not exposed to end users.
-            logger.warning("SECURITY: Raw card data received server-side. This endpoint is for admin/settlement use only.")
+            logger.warning(
+                "SECURITY: Raw card data received server-side. This endpoint is for admin/settlement use only."
+            )
 
             # Get payment from database
             payment = db.query(Payment).filter(Payment.id == payment_id).first()
@@ -163,19 +165,19 @@ class AuthorizeNetService:
                                 "cardCode": card_code,
                             }
                         },
-                    }
+                    },
                 }
             }
-            
+
             # Send request to Authorize.Net
             response = requests.post(
                 self.base_url,
                 data=json.dumps(request_payload),
                 headers=self._build_request_headers(),
             )
-            
+
             response_data = response.json()
-            
+
             # Check response
             if response_data.get("messages", {}).get("resultCode") == "Ok":
                 transaction_response = response_data.get("transactionResponse", {})
@@ -191,7 +193,7 @@ class AuthorizeNetService:
             else:
                 payment.status = "failed"
                 logger.warning(f"Payment {payment_id} failed with API error")
-            
+
             db.commit()
             db.refresh(payment)
 
@@ -208,7 +210,7 @@ class AuthorizeNetService:
             db.rollback()
             logger.error(f"Payment confirmation failed: {str(e)}")
             raise Exception(PAYMENT_PROCESSING_FAILED)
-    
+
     def refund_payment(
         self,
         db: Session,
@@ -218,13 +220,13 @@ class AuthorizeNetService:
     ) -> Dict[str, Any]:
         """
         Refund a payment or partial refund
-        
+
         Args:
             db: Database session
             payment_id: ID of payment to refund
             amount: Refund amount (None for full refund)
             reason: Reason for refund
-        
+
         Returns:
             Refund details
         """
@@ -233,10 +235,10 @@ class AuthorizeNetService:
             payment = db.query(Payment).filter(Payment.id == payment_id).first()
             if not payment:
                 raise ValueError(PAYMENT_NOT_FOUND)
-            
+
             if payment.status != "succeeded":
                 raise ValueError(f"Cannot refund payment with status: {payment.status}")
-            
+
             # Build refund request
             refund_amount = amount or float(payment.amount)
             request_body = {
@@ -247,19 +249,19 @@ class AuthorizeNetService:
                         "transactionType": "refundTransaction",
                         "amount": str(refund_amount),
                         "refTransId": payment.stripe_charge_id,
-                    }
+                    },
                 }
             }
-            
+
             # Send refund request
             response = requests.post(
                 self.base_url,
                 data=json.dumps(request_body),
                 headers=self._build_request_headers(),
             )
-            
+
             response.json()
-            
+
             # Update payment record
             refund_decimal = Decimal(str(refund_amount))
             payment.refund_amount = refund_decimal
@@ -268,7 +270,7 @@ class AuthorizeNetService:
                 payment.status = "refunded"
             else:
                 payment.status = "partially_refunded"
-            
+
             db.commit()
             db.refresh(payment)
 
@@ -286,7 +288,7 @@ class AuthorizeNetService:
             db.rollback()
             logger.error(f"Refund failed: {str(e)}")
             raise Exception(PAYMENT_PROCESSING_FAILED)
-    
+
     def get_payment_history(
         self,
         db: Session,
@@ -296,24 +298,26 @@ class AuthorizeNetService:
     ) -> Dict[str, Any]:
         """
         Get payment history for a user
-        
+
         Args:
             db: Database session
             user_id: User ID
             limit: Number of records to return
             offset: Offset for pagination
-        
+
         Returns:
             Payment history with pagination
         """
         try:
-            query = db.query(Payment).filter(
-                Payment.user_id == user_id
-            ).order_by(Payment.created_at.desc())
-            
+            query = (
+                db.query(Payment)
+                .filter(Payment.user_id == user_id)
+                .order_by(Payment.created_at.desc())
+            )
+
             total = query.count()
             payments = query.limit(limit).offset(offset).all()
-            
+
             return {
                 "total": total,
                 "limit": limit,
@@ -332,11 +336,11 @@ class AuthorizeNetService:
                     for p in payments
                 ],
             }
-        
+
         except Exception as e:
             logger.error(f"Failed to retrieve payment history: {str(e)}")
             raise
-    
+
     def get_payment_details(
         self,
         db: Session,
@@ -347,7 +351,7 @@ class AuthorizeNetService:
             payment = db.query(Payment).filter(Payment.id == payment_id).first()
             if not payment:
                 raise ValueError(PAYMENT_NOT_FOUND)
-            
+
             return {
                 "id": payment.id,
                 "user_id": payment.user_id,
@@ -363,7 +367,7 @@ class AuthorizeNetService:
                 "updated_at": payment.updated_at.isoformat(),
                 "completed_at": payment.completed_at.isoformat() if payment.completed_at else None,
             }
-        
+
         except Exception as e:
             logger.error(f"Failed to retrieve payment details: {str(e)}")
             raise
@@ -371,24 +375,24 @@ class AuthorizeNetService:
 
 class SubscriptionService:
     """Service for managing subscriptions via Authorize.Net ARB"""
-    
+
     def __init__(self, api_login_id: str, transaction_key: str):
         """Initialize subscription service"""
         self.api_login_id = api_login_id
         self.transaction_key = transaction_key
         self.base_url = "https://apitest.authorize.net/xml/v1/request.api"
-    
+
     def _build_auth(self) -> Dict[str, Any]:
         """Build authentication object"""
         return {
             "name": self.api_login_id,
             "transactionKey": self.transaction_key,
         }
-    
+
     def _build_request_headers(self) -> Dict[str, str]:
         """Build request headers"""
         return {"Content-Type": "application/json"}
-    
+
     def create_subscription(
         self,
         db: Session,
@@ -397,12 +401,12 @@ class SubscriptionService:
     ) -> Dict[str, Any]:
         """
         Create a new subscription via Authorize.Net ARB
-        
+
         Args:
             db: Database session
             user_id: User ID
             plan: Plan type (starter, pro, enterprise)
-        
+
         Returns:
             Subscription details
         """
@@ -411,19 +415,19 @@ class SubscriptionService:
             user = db.query(User).filter(User.id == user_id).first()
             if not user:
                 raise ValueError(USER_NOT_FOUND)
-            
+
             # Plan pricing
             plan_prices = {
                 "starter": 9.99,
                 "pro": 29.99,
                 "enterprise": 99.99,
             }
-            
+
             amount = plan_prices.get(plan, 0)
-            
+
             # Build ARB subscription request for Authorize.Net
             # (Would be sent to Authorize.Net API for actual subscription processing)
-            
+
             # Save subscription in database
             db_subscription = Subscription(
                 user_id=user_id,
@@ -454,7 +458,7 @@ class SubscriptionService:
             db.rollback()
             logger.error(f"Subscription creation failed: {str(e)}")
             raise
-    
+
     def cancel_subscription(
         self,
         db: Session,
@@ -463,13 +467,11 @@ class SubscriptionService:
     ) -> Dict[str, Any]:
         """Cancel a subscription"""
         try:
-            subscription = db.query(Subscription).filter(
-                Subscription.id == subscription_id
-            ).first()
-            
+            subscription = db.query(Subscription).filter(Subscription.id == subscription_id).first()
+
             if not subscription:
                 raise ValueError(SUBSCRIPTION_NOT_FOUND)
-            
+
             # Update in database
             subscription.status = "canceled"
             subscription.canceled_at = datetime.now(timezone.utc)
@@ -491,4 +493,3 @@ class SubscriptionService:
             db.rollback()
             logger.error(f"Subscription cancellation failed: {str(e)}")
             raise
-

@@ -102,7 +102,9 @@ class FeatureFlagService:
         return True
 
     @staticmethod
-    def toggle_flag(db: Session, flag_id: str, enabled: bool, user_id: str) -> Optional[FeatureFlagResponse]:
+    def toggle_flag(
+        db: Session, flag_id: str, enabled: bool, user_id: str
+    ) -> Optional[FeatureFlagResponse]:
         """Toggle a feature flag on/off."""
         return FeatureFlagService.update_flag(
             db,
@@ -151,4 +153,5 @@ class FeatureFlagService:
 
         # Without user_id, use random decision
         import random
+
         return random.randint(0, 99) < flag.rollout_percentage

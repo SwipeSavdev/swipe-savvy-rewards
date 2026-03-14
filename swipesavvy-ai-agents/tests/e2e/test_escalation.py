@@ -103,8 +103,7 @@ class TestEscalationTriggers:
 
             # Should acknowledge and offer to connect
             assert any(
-                phrase in content
-                for phrase in ["connect", "transfer", "agent", "support", "human"]
+                phrase in content for phrase in ["connect", "transfer", "agent", "support", "human"]
             )
 
     @pytest.mark.asyncio
@@ -132,8 +131,7 @@ class TestEscalationTriggers:
             # Final response should offer escalation
             content = response.text.lower()
             assert any(
-                phrase in content
-                for phrase in ["agent", "support", "help", "assist", "connect"]
+                phrase in content for phrase in ["agent", "support", "help", "assist", "connect"]
             )
 
     @pytest.mark.asyncio
@@ -385,9 +383,7 @@ class TestCategoryClassification:
             assert response.status_code == 200
             content = response.text.lower()
             # Should mention security or fraud team
-            assert any(
-                word in content for word in ["security", "fraud", "protect", "investigate"]
-            )
+            assert any(word in content for word in ["security", "fraud", "protect", "investigate"])
 
     @pytest.mark.asyncio
     async def test_banking_issue_classification(self, customer_session):

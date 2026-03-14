@@ -9,6 +9,11 @@ on:
     # Run security scans daily at 2 AM UTC
     - cron: '0 2 * * *'
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   # Python security scanning with Bandit
   python-security:

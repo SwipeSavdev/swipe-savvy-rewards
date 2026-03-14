@@ -61,9 +61,7 @@ class ToolRegistry:
         return list(self._tools.keys())
 
     def get_tools_for_role(
-        self,
-        role: str,
-        permissions: Optional[List[str]] = None
+        self, role: str, permissions: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """
         Get OpenAI-compatible tool definitions for a user's role.
@@ -86,39 +84,34 @@ class ToolRegistry:
 
             # Check specific permissions if provided
             if permissions and tool.required_permissions:
-                has_permission = any(
-                    perm in permissions for perm in tool.required_permissions
-                )
+                has_permission = any(perm in permissions for perm in tool.required_permissions)
                 if not has_permission:
                     continue
 
             # Build OpenAI-compatible tool definition
-            tools.append({
-                "type": "function",
-                "function": {
-                    "name": tool.name,
-                    "description": tool.description,
-                    "parameters": tool.parameters,
+            tools.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.parameters,
+                    },
                 }
-            })
+            )
 
         logger.debug(f"Role {role} has access to {len(tools)} tools")
         return tools
 
     def get_tool_names_for_role(
-        self,
-        role: str,
-        permissions: Optional[List[str]] = None
+        self, role: str, permissions: Optional[List[str]] = None
     ) -> List[str]:
         """Get just the names of tools available to a role."""
         tools = self.get_tools_for_role(role, permissions)
         return [t["function"]["name"] for t in tools]
 
     async def execute(
-        self,
-        tool_name: str,
-        args: Dict[str, Any],
-        context: Dict[str, Any]
+        self, tool_name: str, args: Dict[str, Any], context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Execute a tool with the given arguments.
@@ -144,7 +137,7 @@ class ToolRegistry:
             logger.warning(f"Permission denied for {role} to use {tool_name}")
             return {
                 "success": False,
-                "error": f"Permission denied: Your role ({role}) cannot use {tool_name}"
+                "error": f"Permission denied: Your role ({role}) cannot use {tool_name}",
             }
 
         # Check if approval is required and pending
@@ -158,7 +151,7 @@ class ToolRegistry:
                     "approval_key": approval_key,
                     "tool": tool_name,
                     "args": args,
-                    "message": f"Action '{tool_name}' requires approval. Please confirm to proceed."
+                    "message": f"Action '{tool_name}' requires approval. Please confirm to proceed.",
                 }
 
         try:
@@ -221,7 +214,7 @@ def register_tool(
     required_permissions: Optional[List[str]] = None,
     requires_approval: bool = False,
     is_destructive: bool = False,
-    category: str = "general"
+    category: str = "general",
 ) -> Callable:
     """
     Decorator for registering a function as an AI tool.
@@ -236,6 +229,7 @@ def register_tool(
         async def lookup_user_handler(email: str, context: dict) -> dict:
             ...
     """
+
     def decorator(func: Callable[..., Awaitable[Dict[str, Any]]]) -> Callable:
         tool = ToolDefinition(
             name=name,
