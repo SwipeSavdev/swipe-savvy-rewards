@@ -461,8 +461,8 @@ class FISGlobalService:
             True if signature is valid
         """
         if not self.webhook_secret:
-            logger.warning("Webhook secret not configured, skipping verification")
-            return True
+            logger.error("Webhook secret not configured — rejecting verification (PCI DSS 6.5.10)")
+            return False
 
         # Recreate the signed message
         message = f"{timestamp}.{payload.decode('utf-8')}"
@@ -651,7 +651,7 @@ class FISGlobalService:
                 "verification_id": f"kyc_{self._generate_request_id()}",
                 "status": "approved",
                 "risk_score": 15,
-                "checks_passed": ["identity", "address", "ofac", "watchlist"],
+                "checks_passed": ["identity", "address", "sanctions", "watchlist"],
                 "verified_at": datetime.utcnow().isoformat()
             },
             request_id=self._generate_request_id()

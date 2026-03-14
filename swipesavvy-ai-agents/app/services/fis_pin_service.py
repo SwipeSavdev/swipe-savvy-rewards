@@ -10,7 +10,6 @@ Handles PIN operations:
 """
 
 import logging
-import hashlib
 import secrets
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
@@ -144,28 +143,41 @@ class FISPinService:
         """
         self.fis = fis_service or get_fis_service()
 
-    def _encrypt_pin(self, pin: str, card_id: str) -> str:
+    def _encrypt_pin(self, pin: str, card_id: str) -> str:  # noqa: card_id needed for HSM PIN block
         """
-        Encrypt PIN for transmission.
+        Encrypt PIN for transmission to FIS.
 
-        In production, this would use FIS's PIN encryption key (PEK)
-        and proper HSM-based encryption.
+        SECURITY NOTE: In production, PINs MUST be encrypted using an HSM
+        (Hardware Security Module) via the card processor's API using ISO 9564
+        PIN block format. The PIN should never be hashed or stored server-side.
+        The HSM handles PIN encryption with the PEK (PIN Encryption Key)
+        provided by FIS, ensuring the plain-text PIN never persists in memory
+        longer than necessary and is never written to disk or logs.
+
+        This implementation uses bcrypt for at-rest PIN verification (e.g.,
+        step-up auth) as a safer interim measure than SHA256, since bcrypt
+        includes a per-hash salt and adaptive cost factor. However, for
+        transmission to FIS, the PIN block should be produced by the HSM.
 
         Args:
             pin: Plain text PIN
-            card_id: Card ID for key derivation
+            card_id: Card ID for context
 
         Returns:
-            Encrypted PIN block
+            Bcrypt hash of the PIN for at-rest verification
         """
-        # Generate a random IV
-        iv = secrets.token_hex(8)
+        from passlib.context import CryptContext
 
-        # In production, this would be proper PIN block encryption
-        # using ISO 9564 format with the card's PEK
-        pin_block = hashlib.sha256(f"{pin}:{card_id}:{iv}".encode()).hexdigest()
+        logger.warning(
+            "PIN handled server-side without HSM. Migrate to HSM-based "
+            "encryption via FIS PIN block API before production deployment."
+        )
 
-        return f"{iv}:{pin_block}"
+        # Use bcrypt for at-rest PIN storage/verification (salted + adaptive cost)
+        pin_crypt = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        pin_hash = pin_crypt.hash(pin)
+
+        return pin_hash
 
     async def set_pin(
         self,

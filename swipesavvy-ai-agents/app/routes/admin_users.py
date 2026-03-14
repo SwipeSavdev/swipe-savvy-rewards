@@ -4,41 +4,28 @@ This module provides endpoints for managing admin portal users AND customer user
 Includes user listing, creation, invitation, details, status updates, and deletion.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body, Header, Depends
+from fastapi import APIRouter, HTTPException, Query, Body, Depends
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional, Union
+from typing import List, Optional
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-import jwt
-import os
 import bcrypt
 import secrets
 import logging
 
 from app.database import get_db
 from app.models import AdminUser, User
+from app.core.auth import verify_jwt_token
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/admin/users", tags=["admin-users"])
 
-# Configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
-ALGORITHM = "HS256"
-
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt."""
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-def verify_token(token: str) -> dict:
-    """Verify JWT token."""
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
 
 def generate_invite_token() -> str:
     """Generate a secure invitation token."""
@@ -104,22 +91,13 @@ async def list_users(
     per_page: int = Query(25, ge=1, le=100),
     status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    authorization: Optional[str] = Header(None),
+    current_user: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """
-    List all customer users with pagination and filtering
-
-    Query Parameters:
-    - page: Page number (default: 1)
-    - per_page: Items per page (default: 25, max: 100)
-    - status: Filter by status (active, invited, suspended)
-    - search: Search by email or name
+    List all customer users with pagination and filtering.
+    Requires admin authentication.
     """
-    # Token is optional for demo
-    if authorization:
-        token = authorization.replace("Bearer ", "")
-        verify_token(token)
 
     # Build query for customer users (User model)
     query = db.query(User)
@@ -165,7 +143,7 @@ async def list_users(
 
 
 @router.post("", response_model=AdminUserResponse, status_code=201)
-async def create_user(req: CustomerUserCreateRequest, db: Session = Depends(get_db)):
+async def create_user(req: CustomerUserCreateRequest, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Create/invite a new customer user
 
@@ -232,7 +210,7 @@ async def create_user(req: CustomerUserCreateRequest, db: Session = Depends(get_
 # ============================================================================
 
 @router.get("/stats/overview", response_model=dict)
-async def get_admin_users_stats(db: Session = Depends(get_db)):
+async def get_admin_users_stats(current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """Get admin user statistics overview"""
     total_users = db.query(AdminUser).count()
     active_users = db.query(AdminUser).filter(AdminUser.status == "active").count()
@@ -261,51 +239,42 @@ async def get_admin_users_stats(db: Session = Depends(get_db)):
 @router.get("/customer/{user_id}/otp")
 async def get_customer_otp(
     user_id: str,
-    authorization: Optional[str] = Header(None),
+    current_user: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """
-    Get a customer user's current OTP code (development/admin use only).
-    Requires admin authentication.
+    Check if a customer user has a pending OTP (admin use only).
+    Requires admin authentication. Does NOT return the OTP code itself.
     """
-    # Verify admin token
-    if authorization:
-        token = authorization.replace("Bearer ", "")
-        verify_token(token)
-
     # Find the customer user
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    has_active_otp = (
+        user.phone_verification_code is not None
+        and user.phone_verification_expires is not None
+        and user.phone_verification_expires > datetime.now(timezone.utc)
+    )
+
     return {
         "user_id": str(user.id),
         "email": user.email,
-        "phone_verification_code": user.phone_verification_code,
+        "has_active_otp": has_active_otp,
         "phone_verification_expires": user.phone_verification_expires.isoformat() if user.phone_verification_expires else None,
-        "note": "This endpoint is for development/testing only"
     }
 
 
 @router.delete("/by-phone/{phone}", status_code=200)
 async def delete_user_by_phone(
     phone: str,
-    authorization: Optional[str] = Header(None),
+    current_user: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """
     Delete a customer user by phone number (hard delete).
     Requires admin authentication.
-
-    Path Parameters:
-    - phone: The phone number to search for (will match partial)
     """
-    # Verify admin token
-    if authorization:
-        token = authorization.replace("Bearer ", "")
-        verify_token(token)
-    else:
-        raise HTTPException(status_code=401, detail="Admin authentication required")
 
     # Clean the phone number - keep only digits
     phone_digits = ''.join(filter(str.isdigit, phone))
@@ -342,22 +311,13 @@ async def delete_user_by_phone(
 @router.delete("/by-email/{email:path}", status_code=200)
 async def delete_user_by_email(
     email: str,
-    authorization: Optional[str] = Header(None),
+    current_user: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """
     Delete a customer user by email address (hard delete).
     Requires admin authentication.
-
-    Path Parameters:
-    - email: The email address to delete
     """
-    # Verify admin token
-    if authorization:
-        token = authorization.replace("Bearer ", "")
-        verify_token(token)
-    else:
-        raise HTTPException(status_code=401, detail="Admin authentication required")
 
     # Search for user with matching email
     user = db.query(User).filter(User.email == email).first()
@@ -386,22 +346,13 @@ async def delete_user_by_email(
 @router.post("/delete-by-emails", status_code=200)
 async def delete_users_by_emails(
     emails: List[str] = Body(..., embed=True),
-    authorization: Optional[str] = Header(None),
+    current_user: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db),
 ):
     """
     Delete multiple customer users by email addresses (hard delete).
     Requires admin authentication.
-
-    Request Body:
-    - emails: List of email addresses to delete
     """
-    # Verify admin token
-    if authorization:
-        token = authorization.replace("Bearer ", "")
-        verify_token(token)
-    else:
-        raise HTTPException(status_code=401, detail="Admin authentication required")
 
     # Search for users with matching emails
     users = db.query(User).filter(User.email.in_(emails)).all()
@@ -436,7 +387,7 @@ async def delete_users_by_emails(
 # ============================================================================
 
 @router.get("/{user_id}", response_model=AdminUserResponse)
-async def get_admin_user(user_id: str, db: Session = Depends(get_db)):
+async def get_admin_user(user_id: str, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Get detailed information about a specific admin user
 
@@ -460,7 +411,7 @@ async def get_admin_user(user_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/{user_id}", response_model=AdminUserResponse)
-async def update_admin_user(user_id: str, req: AdminUserUpdateRequest, db: Session = Depends(get_db)):
+async def update_admin_user(user_id: str, req: AdminUserUpdateRequest, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Update an admin user
 
@@ -505,7 +456,7 @@ async def update_admin_user(user_id: str, req: AdminUserUpdateRequest, db: Sessi
 
 
 @router.delete("/{user_id}", status_code=204)
-async def delete_admin_user(user_id: str, db: Session = Depends(get_db)):
+async def delete_admin_user(user_id: str, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Delete an admin user (hard delete)
 

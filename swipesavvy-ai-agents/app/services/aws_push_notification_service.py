@@ -205,10 +205,10 @@ class AWSPushNotificationService:
             }
 
         except ClientError as e:
-            logger.error(f"Failed to update endpoint: {e}")
+            logger.error(f"Failed to update endpoint: {str(e)}")
             return {
                 "success": False,
-                "error": str(e)
+                "error": "Operation failed"
             }
 
     async def unregister_device(self, endpoint_arn: str) -> Dict[str, Any]:
@@ -227,8 +227,8 @@ class AWSPushNotificationService:
             logger.info(f"Device unregistered: {endpoint_arn}")
             return {"success": True, "status": "unregistered"}
         except ClientError as e:
-            logger.error(f"Failed to unregister device: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Failed to unregister device: {str(e)}")
+            return {"success": False, "error": "Operation failed"}
 
     # ========================================================================
     # SEND PUSH NOTIFICATIONS
@@ -467,8 +467,8 @@ class AWSPushNotificationService:
             return {"success": True, "topic_arn": topic_arn}
 
         except ClientError as e:
-            logger.error(f"Failed to create topic: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Failed to create topic: {str(e)}")
+            return {"success": False, "error": "Operation failed"}
 
     async def subscribe_to_topic(self, topic_arn: str, endpoint_arn: str) -> Dict[str, Any]:
         """Subscribe a device endpoint to a topic for broadcast notifications."""
@@ -486,8 +486,8 @@ class AWSPushNotificationService:
             return {"success": True, "subscription_arn": subscription_arn}
 
         except ClientError as e:
-            logger.error(f"Failed to subscribe to topic: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Failed to subscribe to topic: {str(e)}")
+            return {"success": False, "error": "Operation failed"}
 
     async def publish_to_topic(
         self,
@@ -526,8 +526,8 @@ class AWSPushNotificationService:
             }
 
         except ClientError as e:
-            logger.error(f"Failed to publish to topic: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Failed to publish to topic: {str(e)}")
+            return {"success": False, "error": "Operation failed"}
 
     # ========================================================================
     # NOTIFICATION TEMPLATES

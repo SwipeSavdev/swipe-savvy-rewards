@@ -4,11 +4,13 @@ Marketing AI API Endpoints
 Provides REST API access to the enhanced Marketing AI behavioral learning system.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import List, Optional, Union, Dict
 from datetime import datetime, timezone
 import logging
+
+from app.core.auth import verify_token_string
 
 from ..services.marketing_ai_behavioral_learning import (
     get_enhanced_marketing_service
@@ -17,7 +19,16 @@ from ..services.marketing_ai import get_marketing_ai_service
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/marketing-ai", tags=["Marketing AI"])
+
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Extract and verify JWT token from Authorization header."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/marketing-ai", tags=["Marketing AI"], dependencies=[Depends(require_auth)])
 
 
 # ============================================================================
@@ -77,9 +88,10 @@ async def health_check():
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
+        logger.error(f"Marketing AI health check failed: {str(e)}")
         return {
             "status": "unhealthy",
-            "error": str(e),
+            "error": "Service unavailable",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
@@ -109,7 +121,7 @@ async def analyze_user_behavior(request: UserAnalysisRequest):
         }
     except Exception as e:
         logger.error(f"Error analyzing user {request.user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/analyze/user/{user_id}")
@@ -127,7 +139,7 @@ async def get_user_analysis(user_id: str):
         }
     except Exception as e:
         logger.error(f"Error analyzing user {user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/promotions/personalized")
@@ -157,7 +169,7 @@ async def get_personalized_promotions(request: PromotionRequest):
         }
     except Exception as e:
         logger.error(f"Error generating promotions for {request.user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/promotions/user/{user_id}")
@@ -176,7 +188,7 @@ async def get_user_promotions(user_id: str, max_count: int = Query(default=5, ge
         }
     except Exception as e:
         logger.error(f"Error getting promotions for {user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/feedback/conversion")
@@ -205,7 +217,7 @@ async def record_conversion_feedback(request: ConversionFeedbackRequest):
         }
     except Exception as e:
         logger.error(f"Error recording conversion feedback: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/segments/{segment_type}/insights")
@@ -233,7 +245,7 @@ async def get_segment_insights(segment_type: str):
         }
     except Exception as e:
         logger.error(f"Error getting segment insights for {segment_type}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/analyze/bulk")
@@ -256,10 +268,11 @@ async def bulk_analyze_users(request: BulkAnalysisRequest):
                     "analysis": analysis
                 })
             except Exception as e:
+                logger.error(f"Error analyzing user {user_id} in bulk: {str(e)}")
                 results.append({
                     "user_id": user_id,
                     "success": False,
-                    "error": str(e)
+                    "error": "Analysis failed"
                 })
 
         successful = [r for r in results if r["success"]]
@@ -284,7 +297,7 @@ async def bulk_analyze_users(request: BulkAnalysisRequest):
         }
     except Exception as e:
         logger.error(f"Error in bulk analysis: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/patterns/available")
@@ -420,7 +433,7 @@ async def ai_generate_campaign(request: CampaignCreateRequest):
         }
     except Exception as e:
         logger.error(f"Error creating campaign: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/run-analysis-cycle")
@@ -445,7 +458,7 @@ async def run_analysis_cycle():
         }
     except Exception as e:
         logger.error(f"Error running analysis cycle: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/campaigns/analytics")
@@ -462,7 +475,7 @@ async def get_campaign_analytics(campaign_id: Optional[str] = Query(default=None
         }
     except Exception as e:
         logger.error(f"Error getting campaign analytics: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/setup-database")
@@ -487,7 +500,7 @@ async def setup_database_tables():
         }
     except Exception as e:
         logger.error(f"Error setting up database: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ============================================================================

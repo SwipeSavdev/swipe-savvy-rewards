@@ -4,7 +4,7 @@ Admin Portal - Support Tickets Management Routes
 Endpoints for managing support tickets in the admin portal
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
@@ -13,9 +13,21 @@ import logging
 
 from app.database import get_db
 from app.models import SupportTicket as SupportTicketModel, AdminUser
+from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-support"])
+
+
+# SECURITY: Require authentication for all admin support endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/admin", tags=["admin-support"], dependencies=[Depends(require_auth)])
 
 # Error message constants
 SUPPORT_TICKET_NOT_FOUND = "Support ticket not found"
@@ -105,7 +117,7 @@ async def create_support_ticket(
     except Exception as e:
         logger.error(f"Error creating support ticket: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to create support ticket: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create support ticket")
 
 
 @router.get("/support/tickets")

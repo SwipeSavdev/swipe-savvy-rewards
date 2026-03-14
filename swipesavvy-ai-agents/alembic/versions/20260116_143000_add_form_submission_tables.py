@@ -1,7 +1,7 @@
 """add_form_submission_tables
 
 Revision ID: f9g8h7i6j5k4
-Revises: add_kyc_tables_and_user_fields
+Revises: b7c8d9e0f1a2
 Create Date: 2026-01-16 14:30:00.000000
 
 Adds tables for contact form and demo request submissions.
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'f9g8h7i6j5k4'
-down_revision = 'add_kyc_tables_and_user_fields'
+down_revision = 'b7c8d9e0f1a2'
 branch_labels = None
 depends_on = None
 

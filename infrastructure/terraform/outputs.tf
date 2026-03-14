@@ -18,11 +18,13 @@ output "private_subnet_ids" {
 output "alb_dns_name" {
   description = "ALB DNS name"
   value       = module.alb.dns_name
+  sensitive   = true
 }
 
 output "alb_zone_id" {
   description = "ALB Zone ID for Route 53 alias"
   value       = module.alb.zone_id
+  sensitive   = true
 }
 
 output "rds_endpoint" {
@@ -57,16 +59,16 @@ output "sns_topic_arn" {
   value       = aws_sns_topic.alerts.arn
 }
 
-# Connection strings for application (do not expose in logs)
-output "database_url" {
-  description = "Full database connection URL"
-  value       = "postgresql://${var.db_username}:${var.db_password}@${module.rds.endpoint}:${module.rds.port}/${var.db_name}"
+# Connection strings — retrieve credentials from Secrets Manager at runtime
+output "database_url_secret_arn" {
+  description = "Secrets Manager ARN for database connection URL"
+  value       = aws_secretsmanager_secret.database_url.arn
   sensitive   = true
 }
 
-output "redis_url" {
-  description = "Full Redis connection URL"
-  value       = "redis://${module.elasticache.endpoint}:${module.elasticache.port}"
+output "redis_url_secret_arn" {
+  description = "Secrets Manager ARN for Redis connection URL"
+  value       = aws_secretsmanager_secret.redis_url.arn
   sensitive   = true
 }
 
@@ -84,6 +86,7 @@ output "route53_name_servers" {
 output "acm_certificate_arn_output" {
   description = "ACM certificate ARN"
   value       = var.domain_name != "" && var.create_acm_certificate ? module.acm[0].certificate_arn : var.acm_certificate_arn
+  sensitive   = true
 }
 
 # Production URLs
@@ -96,4 +99,5 @@ output "production_urls" {
     app     = "https://app.${var.domain_name}"
     website = "https://www.${var.domain_name}"
   } : {}
+  sensitive = true
 }

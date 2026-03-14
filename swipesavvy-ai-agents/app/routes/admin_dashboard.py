@@ -4,35 +4,19 @@ Admin Dashboard Routes
 Provides dashboard overview, analytics, and key metrics for the admin portal.
 """
 
-from fastapi import APIRouter, HTTPException, status, Header, Depends
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel
-from typing import Optional, Union, Dict, Any
+from typing import Union, Dict, Any
 from datetime import datetime, timedelta, timezone
 import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
 from app.models import User, Merchant, WalletTransaction, SupportTicket, AdminUser, AICampaign
-import jwt
-import os
+from app.core.auth import verify_jwt_token
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/admin", tags=["admin-dashboard"])
-
-# Configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
-ALGORITHM = "HS256"
-
-def verify_token(token: str) -> dict:
-    """Verify JWT token from Authorization header."""
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
-        )
 
 # ============================================================================
 # Pydantic Models
@@ -72,22 +56,13 @@ class AnalyticsOverview(BaseModel):
 
 @router.get("/dashboard/overview", response_model=DashboardOverview)
 async def get_dashboard_overview(
-    authorization: Optional[str] = Header(None),
+    current_user: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db)
 ):
     """
     Get dashboard overview with key metrics and recent activity.
-    
-    Queries aggregated metrics from database including:
-    - Total users (active and inactive)
-    - Total transactions
-    - Total revenue
-    - Growth metrics
+    Requires admin authentication.
     """
-    # Token is optional in demo mode, but validate if provided
-    if authorization:
-        token = authorization.replace("Bearer ", "")
-        verify_token(token)
     
     try:
         # Get actual counts from database using raw SQL (to avoid model/schema mismatch)
@@ -183,7 +158,7 @@ async def get_dashboard_overview(
         )
 
 @router.get("/analytics/overview", response_model=AnalyticsOverview)
-async def get_analytics_overview(db: Session = Depends(get_db)):
+async def get_analytics_overview(current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Get high-level analytics overview from database.
     """
@@ -220,7 +195,7 @@ async def get_analytics_overview(db: Session = Depends(get_db)):
         )
 
 @router.get("/analytics/transactions")
-async def get_transactions_chart(days: int = 30, db: Session = Depends(get_db)):
+async def get_transactions_chart(days: int = 30, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Get transaction volume data for charting from database.
     
@@ -259,7 +234,7 @@ async def get_transactions_chart(days: int = 30, db: Session = Depends(get_db)):
         }
 
 @router.get("/analytics/revenue")
-async def get_revenue_chart(days: int = 30, db: Session = Depends(get_db)):
+async def get_revenue_chart(days: int = 30, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Get revenue data for charting from database.
     
@@ -296,7 +271,7 @@ async def get_revenue_chart(days: int = 30, db: Session = Depends(get_db)):
         }
 
 @router.get("/analytics/funnel/onboarding")
-async def get_onboarding_funnel(db: Session = Depends(get_db)):
+async def get_onboarding_funnel(current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Get onboarding funnel metrics from database.
     
@@ -324,7 +299,7 @@ async def get_onboarding_funnel(db: Session = Depends(get_db)):
         return {"funnel": []}
 
 @router.get("/analytics/cohort/retention")
-async def get_cohort_retention(cohort_week: str = None, db: Session = Depends(get_db)):
+async def get_cohort_retention(cohort_week: str = None, current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Get weekly cohort retention data from database.
     
@@ -350,7 +325,7 @@ async def get_cohort_retention(cohort_week: str = None, db: Session = Depends(ge
         return {"cohort": cohort_week or "2025-W01", "retention": []}
 
 @router.get("/support/stats")
-async def get_support_stats(db: Session = Depends(get_db)):
+async def get_support_stats(current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Get support dashboard statistics from database.
     """
@@ -406,7 +381,7 @@ async def get_support_stats(db: Session = Depends(get_db)):
 # ============================================================================
 
 @router.post("/seed-sample-data")
-async def seed_sample_data(db: Session = Depends(get_db)):
+async def seed_sample_data(current_user: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     """
     Seed the database with sample data for demo purposes.
     Creates sample users, merchants, transactions, and support tickets.
@@ -601,4 +576,4 @@ async def seed_sample_data(db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error seeding sample data: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to seed sample data: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to seed sample data")

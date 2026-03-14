@@ -154,7 +154,7 @@ async def register_device(
     
     except Exception as e:
         logger.error(f"Device registration error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/unregister-device/{device_id}", response_model=NotificationResponse)
@@ -194,7 +194,7 @@ async def unregister_device(
     
     except Exception as e:
         logger.error(f"Device unregistration error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 # ============================================
@@ -251,7 +251,7 @@ async def update_preferences(
     
     except Exception as e:
         logger.error(f"Preference update error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.get("/preferences", response_model=NotificationResponse)
@@ -290,7 +290,7 @@ async def get_preferences(
     
     except Exception as e:
         logger.error(f"Preference retrieval error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 # ============================================
@@ -349,7 +349,7 @@ async def get_notification_history(
         raise
     except Exception as e:
         logger.error(f"Notification history error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 # ============================================
@@ -406,7 +406,7 @@ async def send_test_notification(
     
     except Exception as e:
         logger.error(f"Test notification error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 # ============================================
@@ -448,7 +448,7 @@ async def mark_notification_as_read(
     
     except Exception as e:
         logger.error(f"Mark as read error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/send-event", response_model=NotificationResponse)
@@ -501,7 +501,7 @@ async def send_event_notification(
         raise
     except Exception as e:
         logger.error(f"Event notification error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 # ============================================
@@ -561,7 +561,7 @@ async def sns_register_device(
         return result
         
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad request")
     except Exception as e:
         logger.error(f"Device registration failed: {str(e)}")
         raise HTTPException(

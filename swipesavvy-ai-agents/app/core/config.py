@@ -35,9 +35,10 @@ class Settings:
         "http://192.168.1.142:3000",
         "http://192.168.1.142:5173",
         "http://192.168.1.142:5174",
+        "https://docs.swipesavvy.com",
     ]
     
-    # Override for production
+    # Override for production — HTTPS only, no plain HTTP origins
     if ENVIRONMENT == "production":
         CORS_ORIGINS = [
             # Production domains
@@ -47,18 +48,12 @@ class Settings:
             "https://admin.swipesavvy.com",
             "https://wallet.swipesavvy.com",
             "https://app.swipesavvy.com",
-            # Current AWS IP (temporary until DNS propagates)
-            "http://54.224.8.14",
-            "http://54.224.8.14:5173",
-            "http://54.224.8.14:3001",
-            "http://54.224.8.14:8000",
+            "https://docs.swipesavvy.com",
         ]
     
-    # Database
-    DATABASE_URL = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost/swipesavvy_dev"
-    )
+    # Database — default is for local development only
+    _DEFAULT_DATABASE_URL = "postgresql://postgres:postgres@localhost/swipesavvy_dev"
+    DATABASE_URL = os.getenv("DATABASE_URL", _DEFAULT_DATABASE_URL)
     
     # JWT - No default value, must be provided
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -100,6 +95,7 @@ class Settings:
     def __init__(self):
         """Initialize and validate configuration on startup"""
         self._validate_environment()
+        self._validate_production_config()
         self._validate_jwt_config()
         self._set_debug_mode()
     
@@ -113,6 +109,16 @@ class Settings:
             )
         logger.info(f"✓ Environment: {self.ENVIRONMENT}")
     
+    def _validate_production_config(self):
+        """Ensure production does not run with insecure defaults"""
+        if self.ENVIRONMENT == "production":
+            if self.DATABASE_URL == self._DEFAULT_DATABASE_URL:
+                raise ValueError(
+                    "DATABASE_URL must be explicitly configured in production. "
+                    "The default local development database URL is not allowed."
+                )
+            logger.info("✓ Production configuration validated")
+
     def _validate_jwt_config(self):
         """Ensure JWT secret is secure and properly configured"""
         if not self.JWT_SECRET_KEY:
@@ -149,17 +155,14 @@ class Settings:
 
         if self.ENVIRONMENT == "production":
             return [
-                # Main production domains
+                # Main production domains — HTTPS only
                 "https://www.swipesavvy.com",
                 "https://swipesavvy.com",
                 "https://api.swipesavvy.com",
                 "https://admin.swipesavvy.com",
                 "https://wallet.swipesavvy.com",
                 "https://app.swipesavvy.com",
-                # Temporary AWS IP access
-                "http://54.224.8.14",
-                "http://54.224.8.14:5173",
-                "http://54.224.8.14:3001",
+                "https://docs.swipesavvy.com",
             ]
 
         elif self.ENVIRONMENT == "staging":

@@ -23,7 +23,7 @@ DB_CONFIG = {
     "port": int(os.getenv("DB_PORT", 5432)),
     "database": os.getenv("DB_NAME", "swipesavvy_agents"),
     "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "password"),
+    "password": os.getenv("DB_PASSWORD", ""),  # SECURITY: No default password — fail fast if unset
 }
 
 

@@ -4,7 +4,9 @@
 # ==========================================
 # Stage 1: Builder
 # ==========================================
-FROM python:3.11-slim as builder
+# TODO: Pin to digest for supply chain security
+# SECURITY: Use digest pinning in production: python:3.11-slim@sha256:<digest>
+FROM --platform=linux/amd64 python:3.11-slim AS builder
 
 WORKDIR /app
 
@@ -26,7 +28,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # ==========================================
 # Stage 2: Production
 # ==========================================
-FROM python:3.11-slim as production
+# SECURITY: Use digest pinning in production: python:3.11-slim@sha256:<digest>
+FROM --platform=linux/amd64 python:3.11-slim AS production
 
 # Metadata
 LABEL maintainer="SwipeSavvy Engineering <engineering@swipesavvy.com>"

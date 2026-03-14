@@ -12,7 +12,7 @@ import os
 from typing import Optional, List
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -20,8 +20,19 @@ from app.database import get_db
 from app.models import User, UserKYCDocument
 from app.routes.user_auth import get_current_user
 from app.services.kyc_service import KYCService, DocumentType
+from app.core.auth import verify_token_string
 
-router = APIRouter(prefix="/api/v1/kyc", tags=["User KYC"])
+
+# SECURITY: Require authentication for all KYC endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/kyc", tags=["User KYC"], dependencies=[Depends(require_auth)])
 
 kyc_service = KYCService()
 
@@ -172,7 +183,7 @@ async def upload_document(
         }
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.get("/documents")
@@ -272,7 +283,7 @@ async def start_identity_verification(
     """
     Start identity verification flow.
 
-    Returns link token for Plaid IDV or similar provider.
+    Returns session token for identity verification (Connect Financial — pending integration).
     """
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -299,9 +310,9 @@ async def complete_identity_verification(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Complete identity verification after Plaid IDV flow.
+    Complete identity verification flow.
 
-    Called after user completes the Plaid IDV UI.
+    Called after user completes the identity verification UI (Connect Financial — pending integration).
     """
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -319,9 +330,10 @@ async def run_ofac_screening(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Run OFAC/Sanctions screening.
+    Run sanctions screening.
 
     Typically run automatically during signup, but can be requested manually.
+    STUB: Awaiting Connect Financial sanctions screening API.
     """
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")

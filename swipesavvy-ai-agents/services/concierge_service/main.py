@@ -631,7 +631,7 @@ Guidelines:
         
     except Exception as e:
         logger.error(f"Error generating response: {e}")
-        yield f"data: {json.dumps({'type': 'error', 'content': f'Error: {str(e)}'})}\n\n"
+        yield f"data: {json.dumps({'type': 'error', 'content': 'An error occurred processing your request.'})}\n\n"
         yield "data: [DONE]\n\n"
 
 @app.post("/api/v1/chat")

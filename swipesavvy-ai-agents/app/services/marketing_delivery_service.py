@@ -217,6 +217,12 @@ class MarketingDeliveryService:
         results["completed_at"] = datetime.utcnow().isoformat()
         return results
 
+    @staticmethod
+    def _escape_html(text: str) -> str:
+        """Escape HTML special characters to prevent injection"""
+        import html
+        return html.escape(str(text)) if text else ""
+
     def _build_email_html(self, content: CampaignContent, recipient: CampaignRecipient) -> str:
         """Build HTML email content for marketing campaign"""
         offer_section = ""
@@ -224,8 +230,8 @@ class MarketingDeliveryService:
             offer_section = f"""
             <div style="background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
                 <p style="margin: 0; font-size: 14px; opacity: 0.9;">EXCLUSIVE OFFER</p>
-                <p style="margin: 10px 0; font-size: 32px; font-weight: bold;">{content.offer_value}</p>
-                {f'<p style="margin: 0; font-size: 14px;">Use code: <strong>{content.offer_code}</strong></p>' if content.offer_code else ''}
+                <p style="margin: 10px 0; font-size: 32px; font-weight: bold;">{self._escape_html(content.offer_value)}</p>
+                {f'<p style="margin: 0; font-size: 14px;">Use code: <strong>{self._escape_html(content.offer_code)}</strong></p>' if content.offer_code else ''}
             </div>
             """
 
@@ -250,16 +256,16 @@ class MarketingDeliveryService:
         <body>
             <div class="container">
                 <div class="header">
-                    <h1 style="margin: 0;">{content.headline}</h1>
+                    <h1 style="margin: 0;">{self._escape_html(content.headline)}</h1>
                 </div>
                 <div class="content">
-                    <p>Hi {recipient.name},</p>
-                    <p>{content.description}</p>
+                    <p>Hi {self._escape_html(recipient.name)},</p>
+                    <p>{self._escape_html(content.description)}</p>
 
                     {offer_section}
 
                     <p style="text-align: center;">
-                        <a href="{content.cta_link}" class="button">{content.cta_text}</a>
+                        <a href="{self._escape_html(content.cta_link)}" class="button">{self._escape_html(content.cta_text)}</a>
                     </p>
 
                     {expiry_text}

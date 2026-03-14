@@ -5,7 +5,7 @@ Endpoints for merchant onboarding with Fiserv AccessOne North Boarding API integ
 Supports the refactored 4-step wizard with 26 essential fields and multiple owners.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File, Form, Header
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -29,9 +29,21 @@ from app.services.field_derivation_service import (
     OwnerInfo
 )
 from app.services.aba_lookup_service import lookup_routing_number, validate_routing_number
+from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/admin/merchants", tags=["admin-merchant-onboarding"])
+
+
+# SECURITY: Require authentication for all merchant onboarding endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/admin/merchants", tags=["admin-merchant-onboarding"], dependencies=[Depends(require_auth)])
 
 
 # ============================================================================
@@ -738,7 +750,7 @@ async def submit_to_fiserv(
     except Exception as e:
         logger.error(f"Error submitting to Fiserv: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to submit to Fiserv: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to submit to Fiserv")
 
 
 @router.get("/{merchant_id}/onboarding/status")

@@ -11,7 +11,10 @@ from datetime import datetime
 from typing import List, Dict, Any
 from enum import Enum
 import sys
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Import get_db from main module
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -268,7 +271,8 @@ async def list_users(
         result = service.list_users(limit, offset, status)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error listing users: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/audit-logs")
 async def get_audit_logs(
@@ -315,7 +319,8 @@ async def get_audit_logs(
         result = service.get_audit_logs(event_type, user_id, limit, offset)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting audit logs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/settings")
 async def update_system_settings(
@@ -355,7 +360,8 @@ async def update_system_settings(
         result = service.update_system_settings(settings)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error updating system settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/users/{user_id}/reset-password")
 async def reset_user_password(
@@ -384,7 +390,8 @@ async def reset_user_password(
         result = service.reset_user_password(user_id, None)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error resetting user password: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/health")
 async def get_system_health(
@@ -425,7 +432,8 @@ async def get_system_health(
         result = service.get_system_health()
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting system health: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # ============================================================================
 # SETUP FUNCTION

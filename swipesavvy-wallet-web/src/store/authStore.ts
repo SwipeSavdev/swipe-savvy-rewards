@@ -4,6 +4,12 @@ import { authApi } from '../services/api'
 import type { User } from '../types/api'
 
 const TOKEN_KEY = 'wallet_auth_token'
+const REFRESH_TOKEN_KEY = 'wallet_refresh_token'
+
+interface PendingOtp {
+  userId: string
+  email: string
+}
 
 interface AuthState {
   user: User | null
@@ -11,9 +17,13 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
+  pendingOtp: PendingOtp | null
 
   // Actions
   login: (email: string, password: string) => Promise<void>
+  verifyOtp: (code: string) => Promise<void>
+  resendOtp: () => Promise<void>
+  cancelOtp: () => void
   logout: () => void
   register: (name: string, email: string, password: string) => Promise<void>
   fetchProfile: () => Promise<void>
@@ -31,40 +41,92 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      pendingOtp: null,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null })
         try {
           const response = await authApi.login({ email, password })
-          localStorage.setItem(TOKEN_KEY, response.token)
-          set({
-            user: response.user,
-            token: response.token,
-            isAuthenticated: true,
-            isLoading: false,
-          })
+          if (response.otp_required && response.user_id) {
+            set({
+              pendingOtp: { userId: response.user_id, email },
+              isLoading: false,
+            })
+          } else {
+            set({ isLoading: false })
+          }
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Login failed'
+          const message = error instanceof Error
+            ? error.message
+            : (error as { message?: string })?.message || 'Login failed'
           set({ error: message, isLoading: false })
           throw error
         }
       },
 
+      verifyOtp: async (code: string) => {
+        const { pendingOtp } = get()
+        if (!pendingOtp) return
+
+        set({ isLoading: true, error: null })
+        try {
+          const response = await authApi.verifyLoginOtp(pendingOtp.userId, code)
+          localStorage.setItem(TOKEN_KEY, response.access_token)
+          if (response.refresh_token) {
+            localStorage.setItem(REFRESH_TOKEN_KEY, response.refresh_token)
+          }
+          set({
+            user: response.user,
+            token: response.access_token,
+            isAuthenticated: true,
+            isLoading: false,
+            pendingOtp: null,
+          })
+        } catch (error) {
+          const message = error instanceof Error
+            ? error.message
+            : (error as { message?: string })?.message || 'Verification failed'
+          set({ error: message, isLoading: false })
+          throw error
+        }
+      },
+
+      resendOtp: async () => {
+        const { pendingOtp } = get()
+        if (!pendingOtp) return
+
+        set({ isLoading: true, error: null })
+        try {
+          await authApi.resendLoginOtp(pendingOtp.userId)
+          set({ isLoading: false })
+        } catch (error) {
+          const message = error instanceof Error
+            ? error.message
+            : (error as { message?: string })?.message || 'Failed to resend code'
+          set({ error: message, isLoading: false })
+        }
+      },
+
+      cancelOtp: () => {
+        set({ pendingOtp: null, error: null })
+      },
+
       logout: () => {
         authApi.logout()
         localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(REFRESH_TOKEN_KEY)
         set({
           user: null,
           token: null,
           isAuthenticated: false,
           error: null,
+          pendingOtp: null,
         })
       },
 
       register: async (_name: string, _email: string, _password: string) => {
         set({ isLoading: true, error: null })
         try {
-          // Registration endpoint would be added to authApi when needed
           throw new Error('Registration not implemented')
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Registration failed'
@@ -97,10 +159,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       refreshToken: async () => {
-        // Token refresh is handled automatically in apiClient
-        // This is a placeholder for manual refresh if needed
         try {
-          // Fetch profile to verify token is valid
           const user = await authApi.getCurrentUser()
           set({ user })
         } catch {

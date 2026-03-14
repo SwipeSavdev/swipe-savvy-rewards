@@ -20,8 +20,9 @@ from fastapi import APIRouter, HTTPException, Depends, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.database import get_db, SessionLocal
 from app.core.auth import verify_token_string
+from app.models import FISCard
 from app.services.fis_card_service import (
     get_fis_card_service,
     FISCardService
@@ -75,6 +76,33 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"}
         )
+
+
+# =============================================================================
+# CARD OWNERSHIP VERIFICATION (PCI DSS 7.2.1)
+# =============================================================================
+
+def verify_card_ownership(card_id: str, user_id: str) -> None:
+    """
+    Verify the authenticated user owns the specified card.
+    Raises 403 if the card does not belong to the user, 404 if card not found.
+    """
+    db = SessionLocal()
+    try:
+        card = db.query(FISCard).filter(
+            (FISCard.id == card_id) | (FISCard.fis_card_id == card_id)
+        ).first()
+
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+
+        if str(card.user_id) != str(user_id):
+            logger.warning(
+                f"Card ownership violation: user {user_id} attempted to access card {card_id} owned by {card.user_id}"
+            )
+            raise HTTPException(status_code=403, detail="Access denied")
+    finally:
+        db.close()
 
 
 # =============================================================================
@@ -278,6 +306,7 @@ async def get_card(
     card_service: FISCardService = Depends(get_fis_card_service)
 ):
     """Get card details."""
+    verify_card_ownership(card_id, user_id)
     response = await card_service.get_card(card_id)
 
     if not response.success:
@@ -292,15 +321,46 @@ async def get_card(
     }
 
 
+# NOTE: This endpoint should also be rate-limited (e.g., 3 requests per minute
+# per user) to mitigate brute-force attempts against the step-up verification.
+# Apply a rate limiter middleware or decorator in production.
 @router.get("/{card_id}/sensitive")
 async def get_card_sensitive_data(
     card_id: str,
     include_pan: bool = Query(False),
     include_cvv: bool = Query(False),
+    verification_code: Optional[str] = Query(None, description="PIN or OTP for step-up authentication"),
     user_id: str = Depends(require_auth),
-    card_service: FISCardService = Depends(get_fis_card_service)
+    card_service: FISCardService = Depends(get_fis_card_service),
+    pin_service: FISPinService = Depends(get_fis_pin_service)
 ):
-    """Get sensitive card data (PAN, CVV) - requires additional security."""
+    """Get sensitive card data (PAN, CVV) - requires step-up authentication."""
+    verify_card_ownership(card_id, user_id)
+
+    # Step-up authentication: require PIN or verification code before
+    # revealing PAN/CVV (PCI DSS 8.3.1 - MFA for sensitive operations)
+    if not verification_code:
+        raise HTTPException(
+            status_code=403,
+            detail="Step-up authentication required to view card details"
+        )
+
+    # Validate the PIN/verification code against FIS
+    pin_result = await pin_service.validate_pin(
+        card_id=card_id,
+        pin=verification_code,
+        operation="view_sensitive_data"
+    )
+    if not pin_result.success:
+        logger.warning(
+            f"Step-up auth failed for sensitive data access: "
+            f"user={user_id}, card={card_id}"
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Step-up authentication failed. Invalid PIN or verification code."
+        )
+
     response = await card_service.get_card_sensitive_data(
         card_id=card_id,
         include_pan=include_pan,
@@ -312,6 +372,11 @@ async def get_card_sensitive_data(
             status_code=400,
             detail=response.error_message or "Failed to get sensitive data"
         )
+
+    logger.info(
+        f"Sensitive card data accessed: user={user_id}, card={card_id}, "
+        f"pan={'yes' if include_pan else 'no'}, cvv={'yes' if include_cvv else 'no'}"
+    )
 
     return {
         "success": True,
@@ -327,6 +392,7 @@ async def activate_card(
     card_service: FISCardService = Depends(get_fis_card_service)
 ):
     """Activate a card."""
+    verify_card_ownership(card_id, user_id)
     response = await card_service.activate_card(
         card_id=card_id,
         last_four=request.last_four,
@@ -354,6 +420,7 @@ async def replace_card(
     card_service: FISCardService = Depends(get_fis_card_service)
 ):
     """Replace a card (lost, stolen, damaged, expired)."""
+    verify_card_ownership(card_id, user_id)
     response = await card_service.replace_card(
         card_id=card_id,
         reason=request.reason,
@@ -382,6 +449,7 @@ async def cancel_card(
     card_service: FISCardService = Depends(get_fis_card_service)
 ):
     """Cancel/close a card permanently."""
+    verify_card_ownership(card_id, user_id)
     response = await card_service.cancel_card(
         card_id=card_id,
         reason=request.reason
@@ -406,6 +474,7 @@ async def get_shipping_status(
     card_service: FISCardService = Depends(get_fis_card_service)
 ):
     """Get shipping status for a physical card."""
+    verify_card_ownership(card_id, user_id)
     response = await card_service.get_shipping_status(card_id)
 
     if not response.success:
@@ -432,6 +501,7 @@ async def lock_card(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Lock a card (temporary freeze)."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.lock_card(
         card_id=card_id,
         reason=request.reason
@@ -456,6 +526,7 @@ async def unlock_card(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Unlock a card."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.unlock_card(card_id)
 
     if not response.success:
@@ -478,6 +549,7 @@ async def freeze_card(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Freeze a card (for suspected fraud)."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.freeze_card(
         card_id=card_id,
         reason=request.reason or "user_request"
@@ -502,6 +574,7 @@ async def unfreeze_card(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Unfreeze a card."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.unfreeze_card(card_id)
 
     if not response.success:
@@ -523,6 +596,7 @@ async def get_all_controls(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Get all card controls."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.get_all_controls(card_id)
 
     if not response.success:
@@ -548,6 +622,7 @@ async def get_spending_limits(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Get current spending limits."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.get_spending_limits(card_id)
 
     if not response.success:
@@ -570,6 +645,7 @@ async def set_spending_limits(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Set spending limits."""
+    verify_card_ownership(card_id, user_id)
     limits = SpendingLimits(
         daily_limit=Decimal(str(request.daily_limit)) if request.daily_limit else None,
         weekly_limit=Decimal(str(request.weekly_limit)) if request.weekly_limit else None,
@@ -598,6 +674,7 @@ async def remove_spending_limits(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Remove all spending limits."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.remove_spending_limits(card_id)
 
     if not response.success:
@@ -624,6 +701,7 @@ async def set_channel_controls(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Set channel controls (ATM, POS, eCommerce, etc.)."""
+    verify_card_ownership(card_id, user_id)
     controls = ChannelControls(
         atm_enabled=request.atm_enabled,
         pos_enabled=request.pos_enabled,
@@ -653,6 +731,7 @@ async def enable_international(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Enable international transactions."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.enable_international(card_id)
 
     if not response.success:
@@ -674,6 +753,7 @@ async def disable_international(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Disable international transactions."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.disable_international(card_id)
 
     if not response.success:
@@ -700,6 +780,7 @@ async def set_merchant_controls(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Set merchant category controls."""
+    verify_card_ownership(card_id, user_id)
     controls = MerchantControls(
         blocked_mcc_codes=request.blocked_mcc_codes,
         allowed_mcc_codes=request.allowed_mcc_codes
@@ -727,6 +808,7 @@ async def block_merchant_category(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Block a merchant category by name."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.block_merchant_category(
         card_id=card_id,
         category=request.category
@@ -752,6 +834,7 @@ async def unblock_merchant_category(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Unblock a merchant category by name."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.unblock_merchant_category(
         card_id=card_id,
         category=request.category
@@ -781,6 +864,7 @@ async def set_geo_controls(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Set geographic controls."""
+    verify_card_ownership(card_id, user_id)
     controls = GeoControls(
         allowed_countries=request.allowed_countries,
         blocked_countries=request.blocked_countries
@@ -808,6 +892,7 @@ async def block_country(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Block a specific country."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.block_country(
         card_id=card_id,
         country_code=request.country_code
@@ -833,6 +918,7 @@ async def unblock_country(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Unblock a specific country."""
+    verify_card_ownership(card_id, user_id)
     response = await controls_service.unblock_country(
         card_id=card_id,
         country_code=request.country_code
@@ -862,6 +948,7 @@ async def set_alert_preferences(
     controls_service: FISCardControlsService = Depends(get_fis_card_controls_service)
 ):
     """Set alert preferences."""
+    verify_card_ownership(card_id, user_id)
     from app.services.fis_card_controls_service import AlertPreferences as AlertPrefs
 
     preferences = AlertPrefs(
@@ -897,6 +984,7 @@ async def set_pin(
     pin_service: FISPinService = Depends(get_fis_pin_service)
 ):
     """Set initial PIN."""
+    verify_card_ownership(card_id, user_id)
     response = await pin_service.set_pin(
         card_id=card_id,
         pin=request.pin
@@ -922,6 +1010,7 @@ async def change_pin(
     pin_service: FISPinService = Depends(get_fis_pin_service)
 ):
     """Change existing PIN."""
+    verify_card_ownership(card_id, user_id)
     response = await pin_service.change_pin(
         card_id=card_id,
         current_pin=request.current_pin,
@@ -948,6 +1037,7 @@ async def reset_pin(
     pin_service: FISPinService = Depends(get_fis_pin_service)
 ):
     """Reset forgotten PIN."""
+    verify_card_ownership(card_id, user_id)
     response = await pin_service.reset_pin(
         card_id=card_id,
         verification_method=request.verification_method,
@@ -975,6 +1065,7 @@ async def validate_pin(
     pin_service: FISPinService = Depends(get_fis_pin_service)
 ):
     """Validate PIN for sensitive operations."""
+    verify_card_ownership(card_id, user_id)
     response = await pin_service.validate_pin(
         card_id=card_id,
         pin=request.pin,
@@ -1000,6 +1091,7 @@ async def get_pin_status(
     pin_service: FISPinService = Depends(get_fis_pin_service)
 ):
     """Get PIN status."""
+    verify_card_ownership(card_id, user_id)
     response = await pin_service.get_pin_status(card_id)
 
     if not response.success:
@@ -1021,6 +1113,7 @@ async def unlock_pin(
     pin_service: FISPinService = Depends(get_fis_pin_service)
 ):
     """Unlock a locked PIN."""
+    verify_card_ownership(card_id, user_id)
     response = await pin_service.unlock_pin(card_id)
 
     if not response.success:
@@ -1042,6 +1135,7 @@ async def request_pin_reset_otp(
     pin_service: FISPinService = Depends(get_fis_pin_service)
 ):
     """Request OTP for PIN reset."""
+    verify_card_ownership(card_id, user_id)
     response = await pin_service.request_pin_reset_otp(card_id)
 
     if not response.success:

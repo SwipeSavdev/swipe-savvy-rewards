@@ -51,6 +51,10 @@ function getApiBaseUrl(): string {
 const TOKEN_KEY = 'admin_auth_token'
 const USER_KEY = 'admin_user'
 
+// NOTE: For maximum security, tokens should be stored in httpOnly cookies set by the server.
+// sessionStorage is used as a client-side improvement over sessionStorage — tokens are cleared
+// when the browser tab closes, reducing the window of exposure to XSS attacks.
+
 // ============================================================================
 // Type Definitions
 // ============================================================================
@@ -256,7 +260,7 @@ function handleError(error: any): ApiError {
 
 async function fetchApi(endpoint: string, options: RequestInit = {}, retries = 3): Promise<any> {
   for (let attempt = 0; attempt < retries; attempt++) {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const token = sessionStorage.getItem(TOKEN_KEY)
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> | undefined),
@@ -280,7 +284,7 @@ async function fetchApi(endpoint: string, options: RequestInit = {}, retries = 3
 
       // Handle 401 - Token expired, try to refresh
       if (response.status === 401) {
-        const storedToken = localStorage.getItem(TOKEN_KEY)
+        const storedToken = sessionStorage.getItem(TOKEN_KEY)
         if (storedToken) {
           try {
             const refreshResponse = await fetch(`${getApiBaseUrl()}/api/v1/admin/auth/refresh`, {
@@ -291,7 +295,7 @@ async function fetchApi(endpoint: string, options: RequestInit = {}, retries = 3
 
             if (refreshResponse.ok) {
               const data = await refreshResponse.json()
-              localStorage.setItem(TOKEN_KEY, data.token)
+              sessionStorage.setItem(TOKEN_KEY, data.token)
               clearTimeout(timeoutId)
               apiLoadingState.stopLoading()
               
@@ -300,8 +304,8 @@ async function fetchApi(endpoint: string, options: RequestInit = {}, retries = 3
             }
           } catch (error) {
             // Refresh failed - redirect to login
-            localStorage.removeItem(TOKEN_KEY)
-            localStorage.removeItem(USER_KEY)
+            sessionStorage.removeItem(TOKEN_KEY)
+            sessionStorage.removeItem(USER_KEY)
             if (typeof window !== 'undefined') {
               window.location.href = '/login'
             }
@@ -388,8 +392,8 @@ export const authApi = {
 
       console.log('[AuthAPI] Login success:', data)
       const token = data.token || data.session?.token
-      localStorage.setItem(TOKEN_KEY, token)
-      localStorage.setItem(USER_KEY, JSON.stringify(data.session.user))
+      sessionStorage.setItem(TOKEN_KEY, token)
+      sessionStorage.setItem(USER_KEY, JSON.stringify(data.session.user))
 
       return data
     } catch (error: any) {
@@ -402,8 +406,8 @@ export const authApi = {
   async logout() {
     try {
       await fetchApi('/api/v1/admin/auth/logout', { method: 'POST' })
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
+      sessionStorage.removeItem(TOKEN_KEY)
+      sessionStorage.removeItem(USER_KEY)
       return { success: true }
     } catch (error) {
       throw handleError(error)
@@ -412,7 +416,7 @@ export const authApi = {
 
   async refreshToken() {
     try {
-      const token = localStorage.getItem(TOKEN_KEY)
+      const token = sessionStorage.getItem(TOKEN_KEY)
       if (!token) throw new Error('No token available')
 
       const data = await fetchApi('/api/v1/admin/auth/refresh', {
@@ -420,7 +424,7 @@ export const authApi = {
         body: JSON.stringify({ token }),
       })
 
-      localStorage.setItem(TOKEN_KEY, data.token)
+      sessionStorage.setItem(TOKEN_KEY, data.token)
       return data
     } catch (error) {
       throw handleError(error)
@@ -436,11 +440,11 @@ export const authApi = {
   },
 
   getStoredToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY)
+    return sessionStorage.getItem(TOKEN_KEY)
   },
 
   getStoredUser() {
-    const user = localStorage.getItem(USER_KEY)
+    const user = sessionStorage.getItem(USER_KEY)
     return user ? JSON.parse(user) : null
   },
 }
@@ -746,7 +750,7 @@ export const merchantsApi = {
         method: 'POST',
         body: formData,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
+          Authorization: `Bearer ${sessionStorage.getItem(TOKEN_KEY)}`,
         },
       }).then((r) => r.json())
     } catch (error) {
@@ -1736,7 +1740,7 @@ export const settingsApi = {
         method: 'POST',
         body: formData,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
+          Authorization: `Bearer ${sessionStorage.getItem(TOKEN_KEY)}`,
         },
       }).then((r) => r.json())
     } catch (error) {
@@ -1750,7 +1754,7 @@ export const settingsApi = {
         method: 'POST',
         body: formData,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
+          Authorization: `Bearer ${sessionStorage.getItem(TOKEN_KEY)}`,
         },
       }).then((r) => r.json())
     } catch (error) {
@@ -2159,7 +2163,7 @@ export const aiConciergeApi = {
       context?: Record<string, unknown>
     }
   ): AsyncGenerator<AIConciergeEvent> {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const token = sessionStorage.getItem(TOKEN_KEY)
 
     const response = await fetch(`${getApiBaseUrl()}/api/v1/ai-concierge/agentic`, {
       method: 'POST',
@@ -2343,15 +2347,15 @@ export const apiClient = {
 // ============================================================================
 
 export function isAuthenticated(): boolean {
-  return Boolean(localStorage.getItem(TOKEN_KEY))
+  return Boolean(sessionStorage.getItem(TOKEN_KEY))
 }
 
 export function logout() {
-  localStorage.removeItem(TOKEN_KEY)
-  localStorage.removeItem(USER_KEY)
+  sessionStorage.removeItem(TOKEN_KEY)
+  sessionStorage.removeItem(USER_KEY)
 }
 
 export function getAuthHeader() {
-  const token = localStorage.getItem(TOKEN_KEY)
+  const token = sessionStorage.getItem(TOKEN_KEY)
   return token ? { Authorization: `Bearer ${token}` } : {}
 }

@@ -1,8 +1,8 @@
 """
 Payment API Routes for SwipeSavvy
 
-Endpoints for payment processing, subscriptions, refunds, and payment history.
-Integrates with Authorize.Net for secure payment handling.
+NOTE: SwipeSavvy does not process in-app payments. These endpoints exist for
+merchant reward settlement and administrative operations only.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Body
@@ -127,7 +127,7 @@ async def create_payment_intent(
     
     except Exception as e:
         logger.error(f"Failed to create payment intent: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/confirm", response_model=dict)
@@ -172,7 +172,7 @@ async def confirm_payment(
         raise
     except Exception as e:
         logger.error(f"Failed to confirm payment: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/{payment_id}/refund", response_model=dict)
@@ -219,7 +219,7 @@ async def refund_payment(
         raise
     except Exception as e:
         logger.error(f"Failed to refund payment: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.get("/history", response_model=dict)
@@ -253,7 +253,7 @@ async def get_payment_history(
     
     except Exception as e:
         logger.error(f"Failed to retrieve payment history: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.get("/{payment_id}", response_model=dict)
@@ -295,7 +295,7 @@ async def get_payment(
         raise
     except Exception as e:
         logger.error(f"Failed to retrieve payment: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 # ============================================
@@ -347,7 +347,7 @@ async def create_subscription(
         raise
     except Exception as e:
         logger.error(f"Failed to create subscription: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/subscriptions/{subscription_id}/cancel", response_model=dict)
@@ -392,7 +392,7 @@ async def cancel_subscription(
         raise
     except Exception as e:
         logger.error(f"Failed to cancel subscription: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.get("/subscriptions/user/{user_id}", response_model=dict)
@@ -431,4 +431,4 @@ async def get_user_subscription(
         raise
     except Exception as e:
         logger.error(f"Failed to retrieve subscription: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")

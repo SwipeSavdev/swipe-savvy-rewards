@@ -3,19 +3,24 @@ KYC Service - Identity Verification and Document Processing
 
 Handles:
 - Document upload and verification
-- Identity verification via Plaid IDV
-- OFAC/Sanctions screening
+- Identity verification (stub — awaiting Connect Financial APIs)
+- Sanctions screening (stub — awaiting Connect Financial APIs)
 - KYC tier management
+
+NOTE: Identity verification and sanctions screening are currently stub implementations.
+The actual provider APIs will be supplied by our program manager (Connect Financial).
+These stubs return pending_review status and queue submissions for manual review.
 """
 
+import logging
 import os
-import re
-import boto3
 import hashlib
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy.orm import Session
 
@@ -73,11 +78,13 @@ class KYCService:
     def __init__(self):
         self.s3_bucket = os.getenv("S3_KYC_BUCKET", "swipesavvy-kyc-documents")
         self.s3_region = os.getenv("AWS_REGION", "us-east-1")
-        self.plaid_client_id = os.getenv("PLAID_CLIENT_ID")
-        self.plaid_secret = os.getenv("PLAID_SECRET")
-        self.plaid_env = os.getenv("PLAID_ENV", "sandbox")
+
+        # Connect Financial IDV credentials (awaiting API access from program manager)
+        self.connect_financial_api_url = os.getenv("CONNECT_FINANCIAL_API_URL", "")
+        self.connect_financial_api_key = os.getenv("CONNECT_FINANCIAL_API_KEY", "")
 
         # Initialize S3 client
+        import boto3
         self.s3_client = boto3.client(
             's3',
             region_name=self.s3_region,
@@ -271,8 +278,8 @@ class KYCService:
         """
         Verify a KYC document.
 
-        For production, this would integrate with an IDV provider.
-        For now, implements basic validation.
+        STUB: Awaiting Connect Financial IDV API for automated verification.
+        Currently performs basic file validation only.
         """
         verification_result = {
             "verified": False,
@@ -289,9 +296,9 @@ class KYCService:
         else:
             verification_result["checks"].append("file_size_valid")
 
-        # In production, call IDV provider here
-        # For now, simulate successful verification
-        if auto_verify or not verification_result["errors"]:
+        # STUB: Connect Financial IDV API will provide automated document verification
+        # For now, simulate successful basic validation (manual review still required)
+        if not verification_result["errors"]:
             verification_result["verified"] = True
             document.status = "verified"
             document.verified_at = datetime.utcnow()
@@ -311,35 +318,28 @@ class KYCService:
         user: User
     ) -> Dict[str, Any]:
         """
-        Initiate identity verification flow using Plaid IDV.
+        Initiate identity verification flow.
 
-        Returns link token for Plaid IDV UI.
+        STUB: Awaiting Connect Financial IDV API from program manager.
+        Returns a demo session token for UI flow demonstration.
         """
-        if not self.plaid_client_id or not self.plaid_secret:
-            # Development mode - simulate
-            return {
-                "success": True,
-                "link_token": "simulated-link-token",
-                "simulated": True
-            }
+        if self.connect_financial_api_url and self.connect_financial_api_key:
+            # TODO: Implement Connect Financial IDV API call when credentials are provided
+            # POST {self.connect_financial_api_url}/v1/idv/sessions
+            logger.info("Connect Financial IDV API configured but not yet implemented")
 
-        # In production, call Plaid IDV API
-        # https://plaid.com/docs/api/identity-verification/
-        try:
-            # TODO: Implement actual Plaid IDV integration
-            # plaid_client.identity_verification_create(...)
+        # Stub response for demonstration
+        demo_session_id = f"cf_idv_demo_{str(uuid4())[:8]}"
+        logger.info(f"IDV stub: Created demo session {demo_session_id} for user {user.id}")
 
-            return {
-                "success": True,
-                "link_token": "plaid-link-token-here",
-                "expiration": (datetime.utcnow() + timedelta(hours=1)).isoformat()
-            }
-
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+        return {
+            "success": True,
+            "session_id": demo_session_id,
+            "provider": "connect_financial",
+            "status": "demo_mode",
+            "message": "Identity verification is in demo mode. Connect Financial APIs pending integration.",
+            "expiration": (datetime.utcnow() + timedelta(hours=1)).isoformat()
+        }
 
     async def complete_identity_verification(
         self,
@@ -348,39 +348,37 @@ class KYCService:
         idv_session_id: str
     ) -> Dict[str, Any]:
         """
-        Complete identity verification after Plaid IDV flow.
+        Complete identity verification.
 
-        Retrieves results from Plaid and updates user KYC status.
+        STUB: Awaiting Connect Financial IDV API from program manager.
+        All submissions are queued for manual review.
         """
-        # In production, retrieve results from Plaid
-        # For now, simulate successful verification
+        # IDV provider not configured — queue for manual review
+        logger.warning("Connect Financial IDV API not yet integrated — verification queued for manual review")
         verification_result = {
-            "verified": True,
-            "status": "success",
+            "verified": False,
+            "status": "pending_review",
+            "provider": "connect_financial",
             "checks": {
-                "selfie_check": "passed",
-                "document_check": "passed",
-                "watchlist_screening": "clear"
+                "selfie_check": "pending",
+                "document_check": "pending",
+                "watchlist_screening": "pending"
             }
         }
 
-        # Update user
+        # Update user — do NOT auto-approve or upgrade tier
         user.identity_verification_id = idv_session_id
-        user.identity_verification_status = "verified"
-        user.kyc_status = KYCStatus.APPROVED.value
-        user.kyc_verified_at = datetime.utcnow()
-        user.kyc_tier = KYCTier.TIER2.value  # Upgrade to tier 2
+        user.identity_verification_status = "pending_review"
+        user.kyc_status = KYCStatus.IN_REVIEW.value
 
         # Log history
         history = UserKYCHistory(
             user_id=user.id,
-            action="identity_verified",
+            action="identity_verification_submitted",
             verification_type="identity",
-            verification_provider="plaid",
-            previous_tier=KYCTier.TIER1.value,
-            new_tier=KYCTier.TIER2.value,
+            verification_provider="connect_financial",
             previous_status="in_review",
-            new_status=KYCStatus.APPROVED.value,
+            new_status=KYCStatus.IN_REVIEW.value,
             verification_result=verification_result
         )
         db.add(history)
@@ -393,15 +391,16 @@ class KYCService:
             "limits": self.get_tier_limits(user.kyc_tier)
         }
 
-    async def run_ofac_screening(
+    async def run_sanctions_screening(
         self,
         db: Session,
         user: User
     ) -> OFACScreeningResult:
         """
-        Run OFAC/Sanctions screening on user.
+        Run sanctions screening on user.
 
-        In production, this would call an OFAC screening API.
+        STUB: Awaiting Connect Financial sanctions screening API from program manager.
+        All screenings return pending_review and require manual compliance review.
         """
         # Check if recent screening exists
         recent = db.query(OFACScreeningResult).filter(
@@ -413,20 +412,22 @@ class KYCService:
         if recent:
             return recent
 
-        # Run new screening
-        # In production, call OFAC API (e.g., ComplyAdvantage, Dow Jones, etc.)
+        # STUB: Connect Financial sanctions screening API pending integration
+        logger.warning("Connect Financial sanctions screening API not yet integrated — screening queued for manual review")
         screening = OFACScreeningResult(
             id=uuid4(),
             user_id=user.id,
-            screening_type="ofac",
-            provider="internal",  # Would be actual provider in production
-            status="clear",
-            match_score=0.0,
+            screening_type="sanctions",
+            provider="connect_financial",
+            status="pending_review",
+            match_score=None,
             matches=[],
             raw_response={
                 "screened_at": datetime.utcnow().isoformat(),
                 "name_checked": user.name,
-                "result": "no_match"
+                "result": "pending_review",
+                "provider": "connect_financial",
+                "note": "Awaiting Connect Financial API integration"
             }
         )
 
@@ -435,16 +436,19 @@ class KYCService:
         # Log history
         history = UserKYCHistory(
             user_id=user.id,
-            action="ofac_screening",
+            action="sanctions_screening",
             verification_type="sanctions",
-            verification_provider="ofac",
-            verification_result={"status": "clear"}
+            verification_provider="connect_financial",
+            verification_result={"status": "pending_review"}
         )
         db.add(history)
 
         db.commit()
 
         return screening
+
+    # Keep backward-compatible alias
+    run_ofac_screening = run_sanctions_screening
 
     async def request_tier_upgrade(
         self,
@@ -528,8 +532,8 @@ class KYCService:
             UserKYCDocument.user_id == user.id
         ).all()
 
-        # Get latest OFAC screening
-        ofac_result = db.query(OFACScreeningResult).filter(
+        # Get latest sanctions screening
+        screening_result = db.query(OFACScreeningResult).filter(
             OFACScreeningResult.user_id == user.id
         ).order_by(OFACScreeningResult.created_at.desc()).first()
 
@@ -558,7 +562,7 @@ class KYCService:
                 }
                 for doc in documents
             ],
-            "ofac_status": ofac_result.status if ofac_result else "pending",
+            "screening_status": screening_result.status if screening_result else "pending",
             "next_tier": self._get_next_tier(user.kyc_tier),
             "history": [
                 {

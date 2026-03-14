@@ -5,6 +5,7 @@ JWT token generation, verification, and user authentication.
 """
 
 import jwt
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import HTTPException, Depends
@@ -36,6 +37,9 @@ def create_access_token(user_id: str, expires_delta: Optional[timedelta] = None)
         "user_id": str(user_id),
         "exp": expire,
         "iat": datetime.now(timezone.utc),
+        "jti": secrets.token_hex(16),
+        "iss": "swipesavvy",
+        "aud": "user-api",
     }
     
     try:
@@ -67,7 +71,9 @@ def verify_token_string(token: str) -> str:
         payload = jwt.decode(
             token,
             settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
+            algorithms=[settings.JWT_ALGORITHM],
+            issuer="swipesavvy",
+            audience="user-api"
         )
         user_id: str = payload.get("user_id") or payload.get("sub")
         if user_id is None:

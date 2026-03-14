@@ -8,11 +8,12 @@ from fastapi import APIRouter, HTTPException, status, Depends, Header, Request
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from passlib.context import CryptContext
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+import bcrypt
 import jwt
 import os
+import secrets
 import json
 import logging
 from sqlalchemy.orm import Session
@@ -21,91 +22,50 @@ from app.models import AdminUser
 
 logger = logging.getLogger(__name__)
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a hash"""
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password: str) -> str:
-    """Hash a password"""
-    return pwd_context.hash(password)
-
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(prefix="/api/v1/admin/auth", tags=["admin-auth"])
 
-# Configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+# Configuration — accept either JWT_SECRET_KEY or JWT_SECRET for compatibility
+SECRET_KEY = os.getenv("JWT_SECRET_KEY") or os.getenv("JWT_SECRET")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 BEARER_PREFIX = "Bearer "
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
-# Demo user email constants
-ADMIN_EMAIL = "admin@swipesavvy.com"
-SUPPORT_EMAIL = "support@swipesavvy.com"
-OPS_EMAIL = "ops@swipesavvy.com"
-
 # ============================================================================
-# Demo Users Loading (From Environment Only)
+# Demo Users Loading (From Environment Only — PCI DSS 2.2.2)
 # ============================================================================
 
 def load_demo_users():
-    """Load demo users from environment, not source code"""
-    
-    # Only load demo users in development/testing
+    """Load demo users from DEMO_USERS environment variable only.
+
+    SECURITY: Demo credentials must NEVER be hardcoded in source code.
+    Set the DEMO_USERS env var as a JSON string in development environments.
+    See .env.example for the expected format.
+
+    Passwords are hashed with bcrypt at load time so they are never compared
+    in plaintext at login (OWASP A02).
+    """
     if ENVIRONMENT not in ["development", "testing"]:
-        logger.warning(f"Demo users disabled in {ENVIRONMENT} environment")
         return {}
-    
-    # Load from environment variable
-    demo_users_json = os.getenv("DEMO_USERS", "{}")
+
+    demo_users_json = os.getenv("DEMO_USERS")
+    if not demo_users_json:
+        logger.info("No DEMO_USERS env var set — demo login disabled")
+        return {}
+
     try:
-        if demo_users_json == "{}":
-            # Default development users
-            logger.info("Using default development demo users from environment")
-            DEMO_USERS = {
-                ADMIN_EMAIL: {
-                    "id": "demo-admin-1",
-                    "name": "Admin User",
-                    "email": ADMIN_EMAIL,
-                    "password": "TempPassword123!",
-                    "role": "admin",
-                    "status": "active"
-                },
-                SUPPORT_EMAIL: {
-                    "id": "demo-support-1",
-                    "name": "Support User",
-                    "email": SUPPORT_EMAIL,
-                    "password": "TempPassword456!",
-                    "role": "support",
-                    "status": "active"
-                },
-                OPS_EMAIL: {
-                    "id": "demo-ops-1",
-                    "name": "Operations User",
-                    "email": OPS_EMAIL,
-                    "password": "TempPassword789!",
-                    "role": "operator",
-                    "status": "active"
-                },
-                "jason@valiantpayments.com": {
-                    "id": "super-admin-1",
-                    "name": "Jason Mayoral",
-                    "email": "jason@valiantpayments.com",
-                    "password": "Valipay2@23!$!",
-                    "role": "super_admin",
-                    "status": "active"
-                }
-            }
-        else:
-            DEMO_USERS = json.loads(demo_users_json)
-            logger.info(f"Loaded {len(DEMO_USERS)} demo users from DEMO_USERS environment variable")
-        
-        return DEMO_USERS
+        users = json.loads(demo_users_json)
+        # Hash plaintext passwords at load time
+        for email, user_data in users.items():
+            if "password" in user_data:
+                raw_pw = user_data["password"].encode("utf-8")[:72]
+                user_data["password_hash"] = bcrypt.hashpw(raw_pw, bcrypt.gensalt()).decode("utf-8")
+                del user_data["password"]  # Remove plaintext from memory
+        logger.info(f"Loaded {len(users)} demo users from DEMO_USERS environment variable")
+        return users
     except json.JSONDecodeError:
         logger.error("DEMO_USERS environment variable is not valid JSON")
         return {}
@@ -114,33 +74,20 @@ def load_demo_users():
 # Load demo users at startup
 DEMO_USERS = load_demo_users()
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 # ============================================================================
-# Pydantic Models with Validation
+# Pydantic Models
 # ============================================================================
 
 class LoginRequest(BaseModel):
-    email: EmailStr  # Validates email format
+    email: EmailStr
     password: str
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "email": "admin@swipesavvy.com",
-                "password": "Admin123!"
-            }
-        }
 
     def __init__(self, **data):
         super().__init__(**data)
-        # Additional validation
         if not self.password or len(self.password.strip()) == 0:
             raise ValueError('Password cannot be empty')
         if len(self.password) < 6:
             raise ValueError('Password must be at least 6 characters')
-        # bcrypt has a 72-byte limit, truncate if necessary
         if len(self.password.encode('utf-8')) > 72:
             raise ValueError('Password exceeds maximum length')
 
@@ -167,9 +114,7 @@ class TokenRefreshResponse(BaseModel):
 # ============================================================================
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password."""
-    import bcrypt
-    # Truncate password to 72 bytes for bcrypt compatibility
+    """Verify a plain password against a bcrypt hash."""
     truncated_password = plain_password.encode('utf-8')[:72]
     try:
         return bcrypt.checkpw(truncated_password, hashed_password.encode('utf-8'))
@@ -178,11 +123,12 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 def get_password_hash(password: str) -> str:
-    """Hash a plain password."""
-    import bcrypt
-    # Truncate password to 72 bytes for bcrypt compatibility
+    """Hash a plain password with bcrypt."""
     truncated_password = password.encode('utf-8')[:72]
     return bcrypt.hashpw(truncated_password, bcrypt.gensalt()).decode('utf-8')
+
+# SECURITY: Admin token blacklist (mirrors user_auth.py pattern)
+_admin_token_blacklist: dict[str, float] = {}
 
 # ============================================================================
 # Token Management
@@ -192,7 +138,7 @@ def create_access_token(user_id: str, user_email: str, role: str, expires_delta:
     """Create a JWT access token."""
     if expires_delta is None:
         expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+
     expire = datetime.now(timezone.utc) + expires_delta
     payload = {
         "user_id": user_id,
@@ -200,144 +146,38 @@ def create_access_token(user_id: str, user_email: str, role: str, expires_delta:
         "role": role,
         "exp": expire,
         "iat": datetime.now(timezone.utc),
-        "type": "access"
+        "type": "access",
+        "jti": secrets.token_hex(16),
+        "iss": "swipesavvy",
+        "aud": "admin-api"
     }
-    
+
     encoded_jwt = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt, expire.isoformat()
+
+def is_admin_token_blacklisted(jti: str) -> bool:
+    """Check if an admin token's JTI has been revoked."""
+    if jti in _admin_token_blacklist:
+        if _admin_token_blacklist[jti] > datetime.now(timezone.utc).timestamp():
+            return True
+        # Expired entry, clean up
+        _admin_token_blacklist.pop(jti, None)
+    return False
+
 
 def verify_token(token: str) -> dict:
     """Verify and decode a JWT token."""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired"
+        payload = jwt.decode(
+            token, SECRET_KEY, algorithms=[ALGORITHM],
+            issuer="swipesavvy", audience="admin-api"
         )
-    except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
-        )
-
-
-
-@router.post("/refresh", response_model=TokenRefreshResponse)
-async def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db)):
-    """
-    Refresh an access token.
-    
-    Validates the existing token and issues a new one.
-    """
-    payload = verify_token(req.token)
-    
-    # Verify user still exists and is active
-    user = db.query(AdminUser).filter(AdminUser.id == payload["user_id"]).first()
-    if not user or user.status != "active":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or not active"
-        )
-    
-    # Create new token
-    token, expires_at = create_access_token(
-        user_id=payload["user_id"],
-        user_email=payload["email"],
-        role=payload["role"]
-    )
-    
-    return TokenRefreshResponse(
-        token=token,
-        expires_at=expires_at
-    )
-
-@router.post("/logout")
-async def logout():
-    """
-    Logout endpoint.
-    
-    In production, invalidate token in a blacklist or database.
-    Frontend should delete the token from localStorage.
-    """
-    return {
-        "success": True,
-        "message": "Logged out successfully"
-    }
-
-@router.get("/me")
-async def get_current_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
-    """
-    Get current authenticated user info.
-    
-    Expects Authorization header: "Bearer {token}"
-    """
-    if not authorization or not authorization.startswith(BEARER_PREFIX):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No token provided"
-        )
-    
-    token = authorization.replace(BEARER_PREFIX, "")
-    payload = verify_token(token)
-    
-    user = db.query(AdminUser).filter(AdminUser.id == payload["user_id"]).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    return UserInfo(
-        id=str(user.id),
-        name=user.full_name,
-        email=user.email,
-        role=user.role
-    )
-
-# ============================================================================
-# Demo Endpoints (for testing)
-# ============================================================================
-
-@router.get("/demo-credentials")
-async def get_demo_credentials(db: Session = Depends(get_db)):
-    """
-    Get demo credentials from database.
-    **Only available in development mode.**
-    """
-    if os.getenv("ENV") == "production":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not available in production"
-        )
-    
-    # Retrieve demo users from database
-    demo_users = db.query(AdminUser).filter(
-        AdminUser.email.in_([
-            ADMIN_EMAIL,
-            SUPPORT_EMAIL,
-            OPS_EMAIL
-        ])
-    ).all()
-    
-    return {
-        "note": "Use the credentials created in the database to login",
-        "demo_users": [
-            {
-                "id": str(user.id),
-                "email": user.email,
-                "name": user.full_name,
-                "role": user.role,
-                "status": user.status
-            }
-            for user in demo_users
-        ]
-    }
-
-    """Verify and decode a JWT token."""
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        jti = payload.get("jti")
+        if jti and is_admin_token_blacklisted(jti):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been revoked"
+            )
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -355,31 +195,27 @@ async def get_demo_credentials(db: Session = Depends(get_db)):
 # ============================================================================
 
 @router.post("/login", response_model=LoginResponse)
-@limiter.limit("5/minute")  # Rate limit: 5 attempts per minute
+@limiter.limit("5/minute")
 async def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
     """
     Admin login endpoint with rate limiting.
 
     **Rate limit:** 5 attempts per minute per IP
     **Validates:** Email format, password not empty
-
-    **Demo credentials (dev/test only):**
-    - Email: admin@swipesavvy.com
-    - Password: TempPassword123!
-
     **In production:** Query database with hashed password verification
     """
-    # Email validation is done by EmailStr in LoginRequest
-    # Additional password validation is done in LoginRequest.__init__
-
     user_data = None
     email_lower = req.email.lower()
 
-    # First check demo users (only in dev/test environments)
+    # First check demo users (only in dev/test environments, loaded from env var)
     demo_user = DEMO_USERS.get(email_lower)
-    if demo_user and demo_user["password"] == req.password:
-        user_data = demo_user
-        logger.info(f"Demo user login: {req.email}")
+    if demo_user and demo_user.get("password_hash"):
+        try:
+            if bcrypt.checkpw(req.password.encode("utf-8")[:72], demo_user["password_hash"].encode("utf-8")):
+                user_data = demo_user
+                logger.info(f"Demo user login: {req.email}")
+        except Exception as e:
+            logger.error(f"Demo user password verification error: {e}")
 
     # If no demo user found, check database
     if not user_data:
@@ -392,7 +228,6 @@ async def login(req: LoginRequest, request: Request, db: Session = Depends(get_d
                 "role": db_user.role,
                 "status": db_user.status
             }
-            # Update last login
             db_user.last_login = datetime.utcnow()
             db.commit()
             logger.info(f"Database user login: {req.email}")
@@ -411,7 +246,6 @@ async def login(req: LoginRequest, request: Request, db: Session = Depends(get_d
             detail="User account is not active"
         )
 
-    # Create token
     token, expires_at = create_access_token(
         user_id=user_data["id"],
         user_email=user_data["email"],
@@ -438,41 +272,84 @@ async def login(req: LoginRequest, request: Request, db: Session = Depends(get_d
 async def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db)):
     """
     Refresh an access token.
-    
+
     Validates the existing token and issues a new one.
+    Verifies the user still exists and is active.
+    Blacklists the old token's JTI to prevent replay attacks.
     """
     payload = verify_token(req.token)
-    
-    # Create new token
+
+    # SECURITY: Reject replayed refresh tokens (OWASP A07)
+    old_jti = payload.get("jti")
+    if old_jti and is_admin_token_blacklisted(old_jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has already been used"
+        )
+
+    user = db.query(AdminUser).filter(AdminUser.id == payload["user_id"]).first()
+    if not user or user.status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or not active"
+        )
+
+    # SECURITY: Blacklist old token JTI before issuing new one (replay prevention)
+    jti = payload.get("jti")
+    exp = payload.get("exp", 0)
+    if jti:
+        _admin_token_blacklist[jti] = exp
+
     token, expires_at = create_access_token(
         user_id=payload["user_id"],
         user_email=payload["email"],
         role=payload["role"]
     )
-    
+
     return TokenRefreshResponse(
         token=token,
         expires_at=expires_at
     )
 
 @router.post("/logout")
-async def logout():
+async def logout(authorization: Optional[str] = Header(None)):
     """
     Logout endpoint.
-    
-    In production, invalidate token in a blacklist or database.
-    Frontend should delete the token from localStorage.
+
+    Invalidates the token by adding its JTI to a blacklist.
+    Frontend should also delete the token from localStorage.
     """
+    # SECURITY: Blacklist the token so it cannot be reused (OWASP A07)
+    if authorization and authorization.startswith(BEARER_PREFIX):
+        token = authorization.replace(BEARER_PREFIX, "")
+        try:
+            payload = jwt.decode(
+                token, SECRET_KEY, algorithms=[ALGORITHM],
+                issuer="swipesavvy", audience="admin-api"
+            )
+            jti = payload.get("jti")
+            exp = payload.get("exp", 0)
+            if jti:
+                _admin_token_blacklist[jti] = exp
+                # Prune expired entries
+                now = datetime.utcnow().timestamp()
+                expired = [k for k, v in _admin_token_blacklist.items() if v < now]
+                for k in expired:
+                    _admin_token_blacklist.pop(k, None)
+        except (jwt.InvalidTokenError, jwt.DecodeError):
+            pass  # Token already invalid — logout succeeds anyway
+
     return {
         "success": True,
         "message": "Logged out successfully"
     }
 
+
 @router.get("/me")
-async def get_current_user(authorization: Optional[str] = Header(None)):
+async def get_current_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
     """
     Get current authenticated user info.
-    
+
     Expects Authorization header: "Bearer {token}"
     """
     if not authorization or not authorization.startswith(BEARER_PREFIX):
@@ -480,60 +357,23 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No token provided"
         )
-    
+
     token = authorization.replace(BEARER_PREFIX, "")
     payload = verify_token(token)
-    
-    user = DEMO_USERS.get(payload["email"])
+
+    user = db.query(AdminUser).filter(AdminUser.id == payload["user_id"]).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     return UserInfo(
-        id=user["id"],
-        name=user["name"],
-        email=user["email"],
-        role=user["role"]
+        id=str(user.id),
+        name=user.full_name,
+        email=user.email,
+        role=user.role
     )
-
-# ============================================================================
-# Demo Endpoints (for testing)
-# ============================================================================
-
-@router.get("/demo-credentials")
-async def get_demo_credentials():
-    """
-    Get demo credentials for testing.
-    **Only available in development mode.**
-    """
-    if os.getenv("ENV") == "production":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not available in production"
-        )
-    
-    return {
-        "credentials": [
-            {
-                "email": "admin@swipesavvy.com",
-                "password": "Admin123!",
-                "role": "super_admin"
-            },
-            {
-                "email": "support@swipesavvy.com",
-                "password": "Support123!",
-                "role": "support"
-            },
-            {
-                "email": "ops@swipesavvy.com",
-                "password": "Ops123!",
-                "role": "admin"
-            }
-        ]
-    }
-
 
 # ============================================================================
 # Initial Setup Endpoint (One-time use)
@@ -553,16 +393,18 @@ async def setup_initial_admin(req: SetupRequest, db: Session = Depends(get_db)):
     Requires a setup key that matches the JWT_SECRET_KEY first 16 chars.
     Can only be used if no admin users exist in the database.
     """
-    # Verify setup key (first 16 chars of JWT secret)
-    expected_key = (SECRET_KEY or "")[:16]
-    if req.setup_key != expected_key:
+    # SECURITY: Use a dedicated setup key, not derived from JWT secret (OWASP A04)
+    setup_secret = os.getenv("ADMIN_SETUP_KEY", "")
+    if not setup_secret:
+        logger.error("ADMIN_SETUP_KEY not set — admin setup endpoint disabled")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Setup not configured")
+    if req.setup_key != setup_secret:
         logger.warning("Invalid setup key attempted")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid setup key"
         )
 
-    # Check if admin users already exist
     existing_count = db.query(AdminUser).filter(AdminUser.role.in_(['admin', 'super_admin'])).count()
     if existing_count > 0:
         raise HTTPException(
@@ -570,14 +412,12 @@ async def setup_initial_admin(req: SetupRequest, db: Session = Depends(get_db)):
             detail="Admin users already exist. This endpoint can only be used for initial setup."
         )
 
-    # Validate password length
     if len(req.password) < 8:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Password must be at least 8 characters"
         )
 
-    # Create admin user
     from uuid import uuid4
     password_hash = get_password_hash(req.password)
 
@@ -612,16 +452,18 @@ async def reset_admin_password(req: ResetPasswordRequest, db: Session = Depends(
     """
     Reset admin password. Requires setup key for security.
     """
-    # Verify setup key (first 16 chars of JWT secret)
-    expected_key = (SECRET_KEY or "")[:16]
-    if req.setup_key != expected_key:
+    # SECURITY: Use a dedicated setup key, not derived from JWT secret (OWASP A04)
+    setup_secret = os.getenv("ADMIN_SETUP_KEY", "")
+    if not setup_secret:
+        logger.error("ADMIN_SETUP_KEY not set — admin setup endpoint disabled")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Setup not configured")
+    if req.setup_key != setup_secret:
         logger.warning("Invalid setup key for password reset")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid setup key"
         )
 
-    # Find user
     user = db.query(AdminUser).filter(AdminUser.email == req.email.lower()).first()
     if not user:
         raise HTTPException(
@@ -629,14 +471,12 @@ async def reset_admin_password(req: ResetPasswordRequest, db: Session = Depends(
             detail="User not found"
         )
 
-    # Validate password
     if len(req.new_password) < 8:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Password must be at least 8 characters"
         )
 
-    # Update password
     user.password_hash = get_password_hash(req.new_password)
     db.commit()
 

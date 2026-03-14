@@ -1,7 +1,7 @@
 """Add FIS Global Payment One card management tables
 
 Revision ID: 9a3c5d7e8f12
-Revises: 20260116_143000_add_form_submission_tables
+Revises: f9g8h7i6j5k4
 Create Date: 2026-01-21 10:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '9a3c5d7e8f12'
-down_revision = '20260116_143000_add_form_submission_tables'
+down_revision = 'f9g8h7i6j5k4'
 branch_labels = None
 depends_on = None
 

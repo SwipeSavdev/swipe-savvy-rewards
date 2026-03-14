@@ -1,0 +1,7412 @@
+openapi: 3.0.3
+info:
+  title: SwipeSavvy Backend API
+  description: |
+    Multi-service backend API for SwipeSavvy Mobile Wallet — a fintech platform providing
+    card issuance (FIS), payments (Authorize.Net), KYC, rewards, real-time chat, and admin management.
+
+    ## Authentication
+    Most endpoints require a JWT Bearer token obtained via `POST /api/v1/auth/login` + `POST /api/v1/auth/verify-login-otp`.
+
+    | Token | Lifetime | Purpose |
+    |-------|----------|---------|
+    | Access Token | 24 hours | Authorize API requests |
+    | Refresh Token | 30 days | Obtain new access tokens |
+
+    ## Environments
+    Use the server selector above to switch between Production, Staging, and Development.
+  version: 1.0.0
+  contact:
+    name: SwipeSavvy Engineering
+    email: engineering@swipesavvy.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://54.224.8.14:8000
+    description: Production (AWS EC2)
+  - url: https://api.swipesavvy.com
+    description: Production (Domain)
+  - url: http://localhost:8000
+    description: Development (Local)
+
+tags:
+  - name: Auth
+    description: User authentication, signup, login, OTP, password reset
+  - name: KYC
+    description: KYC verification, documents, identity, OFAC screening
+  - name: Accounts
+    description: User accounts, transactions, linked banks, analytics
+  - name: FIS Cards
+    description: FIS card issuance, activation, replacement, cancellation
+  - name: Card Controls
+    description: Card lock/unlock, limits, channels, geo, alerts, PIN
+  - name: Card Transactions
+    description: Card transaction history, analytics, disputes
+  - name: Payments
+    description: Payment processing, refunds, subscriptions
+  - name: Wallet
+    description: Wallet balance, transactions, payment methods, transfers
+  - name: Rewards
+    description: Rewards points, boosts, goals, budgets, preferences
+  - name: Notifications
+    description: Push notifications, device registration, SNS
+  - name: Chat
+    description: Real-time chat via WebSocket and REST
+  - name: Feature Flags
+    description: Feature flag CRUD, toggle, mobile flags
+  - name: Admin Auth
+    description: Admin authentication and session management
+  - name: Admin Dashboard
+    description: Admin dashboard, analytics, and metrics
+  - name: Admin Users
+    description: Admin user management
+  - name: Admin Merchants
+    description: Admin merchant management
+  - name: Admin Support
+    description: Admin support ticket management
+  - name: Admin Feature Flags
+    description: Admin feature flag management
+  - name: Admin AI Campaigns
+    description: Admin AI campaign management
+  - name: Admin Audit Logs
+    description: Admin audit log viewing
+  - name: Admin Settings
+    description: Admin platform settings
+  - name: Admin RBAC
+    description: Admin roles, policies, permissions
+  - name: Admin Charities
+    description: Admin charity management
+  - name: Admin Chat Dashboard
+    description: Admin chat session monitoring
+  - name: FIS Fraud
+    description: Fraud reports, alerts, travel notices, risk scores
+  - name: FIS Digital Wallet
+    description: Apple Pay, Google Pay, Samsung Pay provisioning
+  - name: FIS Webhooks
+    description: Inbound webhook events from FIS
+  - name: Preferred Merchants
+    description: Merchant discovery, deals, subscriptions
+  - name: Marketing
+    description: Campaign management, AI copy, optimization
+  - name: Marketing AI
+    description: Behavioral analysis, personalized promotions
+  - name: Support
+    description: Customer support ticket system
+  - name: Location
+    description: Geocoding, routing, geofencing, device tracking
+  - name: AI Concierge
+    description: Employee AI chat assistant
+  - name: Website Concierge
+    description: Public website AI chat
+  - name: Website Forms
+    description: Contact, demo request, sales inquiry forms
+  - name: Push Notifications
+    description: In-app notification management
+  - name: Health
+    description: Health and readiness probes
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token from login flow
+    AdminAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Admin JWT token from admin login
+    WebhookSignature:
+      type: apiKey
+      in: header
+      name: X-FIS-Signature
+      description: FIS webhook signature verification
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        phone:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        email_verified:
+          type: boolean
+        phone_verified:
+          type: boolean
+        kyc_tier:
+          type: string
+          enum: [none, tier1, tier2, tier3]
+        created_at:
+          type: string
+          format: date-time
+        last_login:
+          type: string
+          format: date-time
+
+    TokenPair:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+          example: 86400
+
+    Card:
+      type: object
+      properties:
+        card_id:
+          type: string
+        card_type:
+          type: string
+          enum: [virtual, physical]
+        last_four:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, locked, frozen, cancelled, pending_activation]
+        expiry_date:
+          type: string
+        cardholder_name:
+          type: string
+        nickname:
+          type: string
+        is_primary:
+          type: boolean
+        is_locked:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        card_id:
+          type: string
+        transaction_type:
+          type: string
+          enum: [purchase, refund, withdrawal, deposit, transfer, fee]
+        amount:
+          type: number
+          format: float
+        currency:
+          type: string
+          example: USD
+        merchant_name:
+          type: string
+        merchant_category:
+          type: string
+        mcc_code:
+          type: string
+        status:
+          type: string
+          enum: [completed, pending, declined, reversed]
+        channel:
+          type: string
+          enum: [pos, ecommerce, atm, contactless]
+        created_at:
+          type: string
+          format: date-time
+        description:
+          type: string
+        category:
+          type: string
+        is_international:
+          type: boolean
+
+    ShippingAddress:
+      type: object
+      required: [street, city, state, zip_code, country]
+      properties:
+        street:
+          type: string
+        street2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        country:
+          type: string
+          example: US
+
+    FeatureFlag:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        rollout_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        environment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ChatSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum: [active, closed]
+        initiator_id:
+          type: string
+        assigned_agent_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        total_messages:
+          type: integer
+        unread_count:
+          type: integer
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        chat_session_id:
+          type: string
+        sender_id:
+          type: string
+        message_type:
+          type: string
+          enum: [text, image, file, typing, system, notification]
+        content:
+          type: string
+        status:
+          type: string
+          enum: [sent, delivered, read]
+        created_at:
+          type: string
+          format: date-time
+
+paths:
+  # ═══════════════════════════════════════════
+  # HEALTH
+  # ═══════════════════════════════════════════
+  /health:
+    get:
+      tags: [Health]
+      operationId: healthCheck
+      summary: Liveness probe
+      responses:
+        '200':
+          description: API is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /ready:
+    get:
+      tags: [Health]
+      operationId: readinessCheck
+      summary: Readiness probe (checks DB connectivity)
+      responses:
+        '200':
+          description: Service is ready
+        '503':
+          description: Service not ready
+
+  # ═══════════════════════════════════════════
+  # AUTH (13 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/auth/signup:
+    post:
+      tags: [Auth]
+      operationId: signup
+      summary: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, first_name, last_name, phone, date_of_birth, street_address, city, state, zip_code, ssn_last4, terms_accepted]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+                  description: "Must contain uppercase, lowercase, digit, and special character"
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                phone:
+                  type: string
+                  description: "10-20 digits"
+                date_of_birth:
+                  type: string
+                  format: date
+                  description: "Must be 18+"
+                street_address:
+                  type: string
+                city:
+                  type: string
+                state:
+                  type: string
+                zip_code:
+                  type: string
+                ssn_last4:
+                  type: string
+                  pattern: '^\d{4}$'
+                terms_accepted:
+                  type: boolean
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                  message:
+                    type: string
+                  verification_required:
+                    type: boolean
+        '400':
+          description: Validation error
+        '409':
+          description: Email already registered
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Login with email and password (triggers OTP)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  otp_required:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Invalid credentials
+        '423':
+          description: Account locked
+
+  /api/v1/auth/verify-login-otp:
+    post:
+      tags: [Auth]
+      operationId: verifyLoginOtp
+      summary: Verify OTP to complete login and receive tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, code]
+              properties:
+                user_id:
+                  type: string
+                code:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+      responses:
+        '200':
+          description: Tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '400':
+          description: Invalid or expired OTP
+
+  /api/v1/auth/verify-email:
+    post:
+      tags: [Auth]
+      operationId: verifyEmail
+      summary: Verify email address with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Email verified
+        '400':
+          description: Invalid or expired token
+
+  /api/v1/auth/verify-phone:
+    post:
+      tags: [Auth]
+      operationId: verifyPhone
+      summary: Verify phone number with OTP code
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+      responses:
+        '200':
+          description: Phone verified
+        '400':
+          description: Invalid code
+
+  /api/v1/auth/resend-login-otp:
+    post:
+      tags: [Auth]
+      operationId: resendLoginOtp
+      summary: Resend login OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id:
+                  type: string
+      responses:
+        '200':
+          description: OTP resent
+
+  /api/v1/auth/resend-verification:
+    post:
+      tags: [Auth]
+      operationId: resendVerification
+      summary: Resend email or phone verification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type]
+              properties:
+                type:
+                  type: string
+                  enum: [email, phone]
+      responses:
+        '200':
+          description: Verification resent
+
+  /api/v1/auth/forgot-password:
+    post:
+      tags: [Auth]
+      operationId: forgotPassword
+      summary: Request password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset email sent (always returns 200)
+
+  /api/v1/auth/reset-password:
+    post:
+      tags: [Auth]
+      operationId: resetPassword
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, new_password]
+              properties:
+                token:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Password reset
+        '400':
+          description: Invalid token
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: New tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Invalid refresh token
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      summary: Get current user profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Not authenticated
+
+  /api/v1/auth/check-email:
+    post:
+      tags: [Auth]
+      operationId: checkEmail
+      summary: Check if email is available
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Availability result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: boolean
+
+  /api/v1/auth/check-phone:
+    post:
+      tags: [Auth]
+      operationId: checkPhone
+      summary: Check if phone number is available
+      parameters:
+        - in: query
+          name: phone
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Availability result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: boolean
+
+  # ═══════════════════════════════════════════
+  # KYC (11 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/kyc/status:
+    get:
+      tags: [KYC]
+      operationId: getKycStatus
+      summary: Get current KYC verification status
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: KYC status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kyc_tier:
+                    type: string
+                  kyc_status:
+                    type: string
+                  email_verified:
+                    type: boolean
+                  phone_verified:
+                    type: boolean
+                  identity_verified:
+                    type: boolean
+                  documents_submitted:
+                    type: integer
+                  documents_approved:
+                    type: integer
+
+  /api/v1/kyc/limits:
+    get:
+      tags: [KYC]
+      operationId: getKycLimits
+      summary: Get transaction limits for current KYC tier
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: KYC limits
+
+  /api/v1/kyc/check-limit:
+    post:
+      tags: [KYC]
+      operationId: checkKycLimit
+      summary: Check if a transaction amount is within KYC limits
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount:
+                  type: number
+                  format: float
+      responses:
+        '200':
+          description: Limit check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  allowed:
+                    type: boolean
+                  remaining_daily:
+                    type: number
+                  remaining_monthly:
+                    type: number
+
+  /api/v1/kyc/documents/upload:
+    post:
+      tags: [KYC]
+      operationId: uploadKycDocument
+      summary: Upload a KYC document
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [document_type, file]
+              properties:
+                document_type:
+                  type: string
+                  enum: [drivers_license, passport, state_id, ssn_card, utility_bill, bank_statement, selfie]
+                document_subtype:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+                  description: "JPEG, PNG, HEIC, or PDF. 10KB-10MB."
+      responses:
+        '200':
+          description: Document uploaded
+        '400':
+          description: Invalid file
+
+  /api/v1/kyc/documents:
+    get:
+      tags: [KYC]
+      operationId: listKycDocuments
+      summary: List uploaded KYC documents
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Document list
+
+  /api/v1/kyc/documents/{document_id}:
+    delete:
+      tags: [KYC]
+      operationId: deleteKycDocument
+      summary: Delete a pending KYC document
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: document_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document deleted
+        '404':
+          description: Document not found
+
+  /api/v1/kyc/upgrade:
+    post:
+      tags: [KYC]
+      operationId: requestKycUpgrade
+      summary: Request KYC tier upgrade
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_tier]
+              properties:
+                target_tier:
+                  type: string
+                  enum: [tier1, tier2, tier3]
+      responses:
+        '200':
+          description: Upgrade requirements
+
+  /api/v1/kyc/identity/start:
+    post:
+      tags: [KYC]
+      operationId: startIdentityVerification
+      summary: Start Plaid IDV identity verification
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Plaid link token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  link_token:
+                    type: string
+                  session_id:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+
+  /api/v1/kyc/identity/complete:
+    post:
+      tags: [KYC]
+      operationId: completeIdentityVerification
+      summary: Complete identity verification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_id]
+              properties:
+                session_id:
+                  type: string
+      responses:
+        '200':
+          description: Verification result
+
+  /api/v1/kyc/screening/ofac:
+    post:
+      tags: [KYC]
+      operationId: runOfacScreening
+      summary: Run OFAC sanctions screening
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Screening result
+
+  /api/v1/kyc/requirements/{tier}:
+    get:
+      tags: [KYC]
+      operationId: getKycTierRequirements
+      summary: Get requirements for a specific KYC tier
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: tier
+          required: true
+          schema:
+            type: string
+            enum: [tier1, tier2, tier3]
+      responses:
+        '200':
+          description: Tier requirements
+
+  # ═══════════════════════════════════════════
+  # ACCOUNTS & TRANSACTIONS (9 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/accounts:
+    get:
+      tags: [Accounts]
+      operationId: listAccounts
+      summary: Get all user accounts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Account list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    type:
+                      type: string
+                    balance:
+                      type: number
+                    currency:
+                      type: string
+
+  /api/v1/accounts/{account_id}/balance:
+    get:
+      tags: [Accounts]
+      operationId: getAccountBalance
+      summary: Get account balance
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: account_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account balance
+
+  /api/v1/transactions:
+    get:
+      tags: [Accounts]
+      operationId: listTransactions
+      summary: Get transaction history
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Transaction list
+
+  /api/v1/banks/linked:
+    get:
+      tags: [Accounts]
+      operationId: listLinkedBanks
+      summary: Get linked bank accounts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Linked banks
+
+  /api/v1/banks/plaid-link:
+    post:
+      tags: [Accounts]
+      operationId: createPlaidLink
+      summary: Create a Plaid Link token for bank linking
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Plaid link token
+
+  /api/v1/analytics:
+    get:
+      tags: [Accounts]
+      operationId: getAnalytics
+      summary: Get spending analytics and insights
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Analytics data
+
+  /api/v1/cards:
+    get:
+      tags: [Accounts]
+      operationId: listSimpleCards
+      summary: Get linked payment cards
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Card list
+    post:
+      tags: [Accounts]
+      operationId: addSimpleCard
+      summary: Add a payment card
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cardNumber, expiryDate, holderName]
+              properties:
+                cardNumber:
+                  type: string
+                expiryDate:
+                  type: string
+                holderName:
+                  type: string
+      responses:
+        '200':
+          description: Card added
+
+  # ═══════════════════════════════════════════
+  # FIS CARD ISSUANCE (9 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/fis/cards/issue/virtual:
+    post:
+      tags: [FIS Cards]
+      operationId: issueVirtualCard
+      summary: Issue a new virtual card
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cardholder_name]
+              properties:
+                cardholder_name:
+                  type: string
+                nickname:
+                  type: string
+                set_as_primary:
+                  type: boolean
+      responses:
+        '200':
+          description: Virtual card issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+
+  /api/v1/fis/cards/issue/physical:
+    post:
+      tags: [FIS Cards]
+      operationId: issuePhysicalCard
+      summary: Issue a new physical card
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cardholder_name, shipping_address]
+              properties:
+                cardholder_name:
+                  type: string
+                shipping_address:
+                  $ref: '#/components/schemas/ShippingAddress'
+                expedited:
+                  type: boolean
+                nickname:
+                  type: string
+                set_as_primary:
+                  type: boolean
+      responses:
+        '200':
+          description: Physical card issued
+
+  /api/v1/fis/cards:
+    get:
+      tags: [FIS Cards]
+      operationId: listFisCards
+      summary: List all FIS cards
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Card list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Card'
+
+  /api/v1/fis/cards/{card_id}:
+    get:
+      tags: [FIS Cards]
+      operationId: getFisCard
+      summary: Get card details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+        '404':
+          description: Card not found
+    delete:
+      tags: [FIS Cards]
+      operationId: cancelFisCard
+      summary: Cancel and close a card
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Card cancelled
+
+  /api/v1/fis/cards/{card_id}/sensitive:
+    get:
+      tags: [FIS Cards]
+      operationId: getCardSensitiveData
+      summary: Get sensitive card data (PAN, CVV)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: include_pan
+          schema:
+            type: boolean
+        - in: query
+          name: include_cvv
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Sensitive card data
+
+  /api/v1/fis/cards/{card_id}/activate:
+    post:
+      tags: [FIS Cards]
+      operationId: activateCard
+      summary: Activate a card
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [last_four]
+              properties:
+                last_four:
+                  type: string
+                activation_code:
+                  type: string
+      responses:
+        '200':
+          description: Card activated
+
+  /api/v1/fis/cards/{card_id}/replace:
+    post:
+      tags: [FIS Cards]
+      operationId: replaceCard
+      summary: Request card replacement
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  enum: [lost, stolen, damaged, expired]
+                shipping_address:
+                  $ref: '#/components/schemas/ShippingAddress'
+                expedited:
+                  type: boolean
+      responses:
+        '200':
+          description: Replacement initiated
+
+  /api/v1/fis/cards/{card_id}/shipping:
+    get:
+      tags: [FIS Cards]
+      operationId: getCardShipping
+      summary: Get card shipping status
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Shipping status
+
+  # ═══════════════════════════════════════════
+  # CARD CONTROLS (25 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/fis/cards/{card_id}/lock:
+    post:
+      tags: [Card Controls]
+      operationId: lockCard
+      summary: Lock a card
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Card locked
+
+  /api/v1/fis/cards/{card_id}/unlock:
+    post:
+      tags: [Card Controls]
+      operationId: unlockCard
+      summary: Unlock a card
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card unlocked
+
+  /api/v1/fis/cards/{card_id}/freeze:
+    post:
+      tags: [Card Controls]
+      operationId: freezeCard
+      summary: Freeze a card (fraud suspected)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Card frozen
+
+  /api/v1/fis/cards/{card_id}/unfreeze:
+    post:
+      tags: [Card Controls]
+      operationId: unfreezeCard
+      summary: Unfreeze a card
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card unfrozen
+
+  /api/v1/fis/cards/{card_id}/controls:
+    get:
+      tags: [Card Controls]
+      operationId: getCardControls
+      summary: Get all card controls summary
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card controls
+
+  /api/v1/fis/cards/{card_id}/limits:
+    get:
+      tags: [Card Controls]
+      operationId: getSpendingLimits
+      summary: Get card spending limits
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Spending limits
+    put:
+      tags: [Card Controls]
+      operationId: updateSpendingLimits
+      summary: Update card spending limits
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                daily_limit:
+                  type: number
+                weekly_limit:
+                  type: number
+                monthly_limit:
+                  type: number
+                per_transaction_limit:
+                  type: number
+      responses:
+        '200':
+          description: Limits updated
+    delete:
+      tags: [Card Controls]
+      operationId: removeSpendingLimits
+      summary: Remove all spending limits
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Limits removed
+
+  /api/v1/fis/cards/{card_id}/controls/channels:
+    put:
+      tags: [Card Controls]
+      operationId: updateChannelControls
+      summary: Update channel controls (ATM, POS, e-commerce, etc.)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                atm_enabled:
+                  type: boolean
+                pos_enabled:
+                  type: boolean
+                ecommerce_enabled:
+                  type: boolean
+                contactless_enabled:
+                  type: boolean
+                international_enabled:
+                  type: boolean
+      responses:
+        '200':
+          description: Channel controls updated
+
+  /api/v1/fis/cards/{card_id}/controls/international/enable:
+    post:
+      tags: [Card Controls]
+      operationId: enableInternational
+      summary: Enable international transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: International enabled
+
+  /api/v1/fis/cards/{card_id}/controls/international/disable:
+    post:
+      tags: [Card Controls]
+      operationId: disableInternational
+      summary: Disable international transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: International disabled
+
+  /api/v1/fis/cards/{card_id}/controls/merchants:
+    put:
+      tags: [Card Controls]
+      operationId: updateMerchantControls
+      summary: Update merchant category controls
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                blocked_mcc_codes:
+                  type: array
+                  items:
+                    type: string
+                allowed_mcc_codes:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Merchant controls updated
+
+  /api/v1/fis/cards/{card_id}/controls/merchants/block:
+    post:
+      tags: [Card Controls]
+      operationId: blockMerchantCategory
+      summary: Block a merchant category
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category]
+              properties:
+                category:
+                  type: string
+      responses:
+        '200':
+          description: Category blocked
+
+  /api/v1/fis/cards/{card_id}/controls/merchants/unblock:
+    post:
+      tags: [Card Controls]
+      operationId: unblockMerchantCategory
+      summary: Unblock a merchant category
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category]
+              properties:
+                category:
+                  type: string
+      responses:
+        '200':
+          description: Category unblocked
+
+  /api/v1/fis/cards/{card_id}/controls/geo:
+    put:
+      tags: [Card Controls]
+      operationId: updateGeoControls
+      summary: Update geographic controls
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allowed_countries:
+                  type: array
+                  items:
+                    type: string
+                blocked_countries:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Geo controls updated
+
+  /api/v1/fis/cards/{card_id}/controls/geo/block:
+    post:
+      tags: [Card Controls]
+      operationId: blockCountry
+      summary: Block transactions from a country
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [country_code]
+              properties:
+                country_code:
+                  type: string
+      responses:
+        '200':
+          description: Country blocked
+
+  /api/v1/fis/cards/{card_id}/controls/geo/unblock:
+    post:
+      tags: [Card Controls]
+      operationId: unblockCountry
+      summary: Unblock transactions from a country
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [country_code]
+              properties:
+                country_code:
+                  type: string
+      responses:
+        '200':
+          description: Country unblocked
+
+  /api/v1/fis/cards/{card_id}/alerts:
+    put:
+      tags: [Card Controls]
+      operationId: updateAlertPreferences
+      summary: Update card alert preferences
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                alert_on_transaction:
+                  type: boolean
+                alert_on_decline:
+                  type: boolean
+                alert_on_international:
+                  type: boolean
+                alert_threshold:
+                  type: number
+      responses:
+        '200':
+          description: Alert preferences updated
+
+  /api/v1/fis/cards/{card_id}/pin/set:
+    post:
+      tags: [Card Controls]
+      operationId: setPin
+      summary: Set card PIN
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pin]
+              properties:
+                pin:
+                  type: string
+                  pattern: '^\d{4}$'
+      responses:
+        '200':
+          description: PIN set
+
+  /api/v1/fis/cards/{card_id}/pin/change:
+    put:
+      tags: [Card Controls]
+      operationId: changePin
+      summary: Change card PIN
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_pin, new_pin]
+              properties:
+                current_pin:
+                  type: string
+                  pattern: '^\d{4}$'
+                new_pin:
+                  type: string
+                  pattern: '^\d{4}$'
+      responses:
+        '200':
+          description: PIN changed
+
+  /api/v1/fis/cards/{card_id}/pin/reset:
+    post:
+      tags: [Card Controls]
+      operationId: resetPin
+      summary: Reset PIN via verification
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [verification_method, verification_data, new_pin]
+              properties:
+                verification_method:
+                  type: string
+                  enum: [otp, security_questions]
+                verification_data:
+                  type: object
+                new_pin:
+                  type: string
+                  pattern: '^\d{4}$'
+      responses:
+        '200':
+          description: PIN reset
+
+  /api/v1/fis/cards/{card_id}/pin/validate:
+    post:
+      tags: [Card Controls]
+      operationId: validatePin
+      summary: Validate PIN for sensitive operations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pin, operation]
+              properties:
+                pin:
+                  type: string
+                operation:
+                  type: string
+      responses:
+        '200':
+          description: PIN valid
+
+  /api/v1/fis/cards/{card_id}/pin/status:
+    get:
+      tags: [Card Controls]
+      operationId: getPinStatus
+      summary: Get PIN status
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PIN status
+
+  /api/v1/fis/cards/{card_id}/pin/unlock:
+    post:
+      tags: [Card Controls]
+      operationId: unlockPin
+      summary: Unlock PIN after too many failed attempts
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PIN unlocked
+
+  /api/v1/fis/cards/{card_id}/pin/reset/otp:
+    post:
+      tags: [Card Controls]
+      operationId: sendPinResetOtp
+      summary: Send OTP for PIN reset
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OTP sent
+
+  # ═══════════════════════════════════════════
+  # CARD TRANSACTIONS (13 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/fis/cards/{card_id}/transactions:
+    get:
+      tags: [Card Transactions]
+      operationId: getCardTransactions
+      summary: Get card transactions with filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: min_amount
+          schema:
+            type: number
+        - in: query
+          name: max_amount
+          schema:
+            type: number
+        - in: query
+          name: transaction_type
+          schema:
+            type: string
+            enum: [purchase, refund, withdrawal, deposit, transfer, fee]
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [completed, pending, declined]
+        - in: query
+          name: channel
+          schema:
+            type: string
+            enum: [pos, ecommerce, atm, contactless]
+        - in: query
+          name: merchant_name
+          schema:
+            type: string
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+            default: 25
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Paginated transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Transaction'
+                      pagination:
+                        $ref: '#/components/schemas/PaginationMeta'
+
+  /api/v1/fis/cards/{card_id}/transactions/recent:
+    get:
+      tags: [Card Transactions]
+      operationId: getRecentTransactions
+      summary: Get recent transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+      responses:
+        '200':
+          description: Recent transactions
+
+  /api/v1/fis/cards/{card_id}/transactions/pending:
+    get:
+      tags: [Card Transactions]
+      operationId: getPendingTransactions
+      summary: Get pending (not yet posted) transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pending transactions
+
+  /api/v1/fis/cards/{card_id}/transactions/{transaction_id}:
+    get:
+      tags: [Card Transactions]
+      operationId: getTransactionDetails
+      summary: Get transaction details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: transaction_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction details
+
+  /api/v1/fis/cards/{card_id}/transactions/summary:
+    get:
+      tags: [Card Transactions]
+      operationId: getTransactionSummary
+      summary: Get transaction summary for a date range
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: start_date
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: end_date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Transaction summary
+
+  /api/v1/fis/cards/{card_id}/transactions/categories:
+    get:
+      tags: [Card Transactions]
+      operationId: getTransactionsByCategory
+      summary: Get spending breakdown by category
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: start_date
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: end_date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Category breakdown
+
+  /api/v1/fis/cards/{card_id}/transactions/merchants:
+    get:
+      tags: [Card Transactions]
+      operationId: getTransactionsByMerchant
+      summary: Get spending breakdown by merchant
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: start_date
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: end_date
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Merchant breakdown
+
+  /api/v1/fis/cards/{card_id}/transactions/{transaction_id}/notes:
+    post:
+      tags: [Card Transactions]
+      operationId: addTransactionNote
+      summary: Add a note to a transaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: transaction_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [note]
+              properties:
+                note:
+                  type: string
+      responses:
+        '200':
+          description: Note added
+
+  /api/v1/fis/cards/{card_id}/transactions/{transaction_id}/category:
+    put:
+      tags: [Card Transactions]
+      operationId: categorizeTransaction
+      summary: Categorize a transaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: transaction_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category]
+              properties:
+                category:
+                  type: string
+      responses:
+        '200':
+          description: Transaction categorized
+
+  /api/v1/fis/cards/{card_id}/transactions/{transaction_id}/dispute:
+    post:
+      tags: [Card Transactions]
+      operationId: initiateDispute
+      summary: Initiate a transaction dispute
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: transaction_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, description]
+              properties:
+                reason:
+                  type: string
+                  enum: [unauthorized, duplicate, not_received, defective, incorrect_amount, other]
+                description:
+                  type: string
+                expected_credit_amount:
+                  type: number
+                supporting_documents:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+      responses:
+        '200':
+          description: Dispute initiated
+
+  /api/v1/fis/cards/{card_id}/disputes:
+    get:
+      tags: [Card Transactions]
+      operationId: listDisputes
+      summary: List card disputes
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [open, in_review, resolved, denied]
+      responses:
+        '200':
+          description: Dispute list
+
+  /api/v1/fis/cards/{card_id}/disputes/{dispute_id}:
+    get:
+      tags: [Card Transactions]
+      operationId: getDisputeDetails
+      summary: Get dispute details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: dispute_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dispute details
+
+  /api/v1/fis/cards/{card_id}/disputes/{dispute_id}/documents:
+    post:
+      tags: [Card Transactions]
+      operationId: addDisputeDocument
+      summary: Add document to a dispute
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: dispute_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [document_url, document_type]
+              properties:
+                document_url:
+                  type: string
+                  format: uri
+                document_type:
+                  type: string
+      responses:
+        '200':
+          description: Document added
+
+  # ═══════════════════════════════════════════
+  # PAYMENTS (8 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/payments/create-intent:
+    post:
+      tags: [Payments]
+      operationId: createPaymentIntent
+      summary: Create a payment intent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount:
+                  type: number
+                  minimum: 0.01
+                currency:
+                  type: string
+                  default: USD
+                description:
+                  type: string
+                merchant_id:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Payment intent created
+
+  /api/v1/payments/confirm:
+    post:
+      tags: [Payments]
+      operationId: confirmPayment
+      summary: Confirm a payment
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: payment_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment_method_id]
+              properties:
+                payment_method_id:
+                  type: string
+      responses:
+        '200':
+          description: Payment confirmed
+
+  /api/v1/payments/{payment_id}/refund:
+    post:
+      tags: [Payments]
+      operationId: refundPayment
+      summary: Refund a payment
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: payment_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Refund issued
+
+  /api/v1/payments/history:
+    get:
+      tags: [Payments]
+      operationId: getPaymentHistory
+      summary: Get payment history
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Payment history
+
+  /api/v1/payments/{payment_id}:
+    get:
+      tags: [Payments]
+      operationId: getPaymentDetails
+      summary: Get payment details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: payment_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment details
+
+  /api/v1/payments/subscriptions:
+    post:
+      tags: [Payments]
+      operationId: createSubscription
+      summary: Create a subscription
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan, payment_method_id]
+              properties:
+                plan:
+                  type: string
+                  enum: [starter, pro, enterprise]
+                payment_method_id:
+                  type: string
+      responses:
+        '200':
+          description: Subscription created
+
+  /api/v1/payments/subscriptions/{subscription_id}/cancel:
+    post:
+      tags: [Payments]
+      operationId: cancelSubscription
+      summary: Cancel a subscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: subscription_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: reason
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscription cancelled
+
+  /api/v1/payments/subscriptions/user/{user_id}:
+    get:
+      tags: [Payments]
+      operationId: getUserSubscription
+      summary: Get user's active subscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Active subscription
+
+  # ═══════════════════════════════════════════
+  # WALLET & TRANSFERS (7 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/wallet/balance:
+    get:
+      tags: [Wallet]
+      operationId: getWalletBalance
+      summary: Get wallet balance
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Wallet balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: number
+                  pending:
+                    type: number
+                  currency:
+                    type: string
+
+  /api/v1/wallet/transactions:
+    get:
+      tags: [Wallet]
+      operationId: getWalletTransactions
+      summary: Get wallet transaction history
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Wallet transactions
+
+  /api/v1/wallet/payment-methods:
+    get:
+      tags: [Wallet]
+      operationId: getPaymentMethods
+      summary: Get wallet payment methods
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Payment methods
+
+  /api/v1/wallet/add-money:
+    post:
+      tags: [Wallet]
+      operationId: addMoney
+      summary: Add money to wallet
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: amount
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: paymentMethodId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Money added
+
+  /api/v1/wallet/withdraw:
+    post:
+      tags: [Wallet]
+      operationId: withdrawMoney
+      summary: Withdraw money from wallet
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: amount
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: paymentMethodId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Withdrawal initiated
+
+  /api/v1/transfers:
+    post:
+      tags: [Wallet]
+      operationId: submitTransfer
+      summary: Transfer money to another user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recipientId, recipientName, amount, fundingSourceId]
+              properties:
+                recipientId:
+                  type: string
+                recipientName:
+                  type: string
+                amount:
+                  type: number
+                currency:
+                  type: string
+                  default: USD
+                fundingSourceId:
+                  type: string
+                memo:
+                  type: string
+                type:
+                  type: string
+      responses:
+        '200':
+          description: Transfer submitted
+
+  /api/v1/transfers/recipients:
+    get:
+      tags: [Wallet]
+      operationId: getTransferRecipients
+      summary: Get transfer recipients
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Recipient list
+
+  # ═══════════════════════════════════════════
+  # REWARDS, GOALS, BUDGETS (12 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/rewards/points:
+    get:
+      tags: [Rewards]
+      operationId: getRewardsPoints
+      summary: Get rewards points balance and tier
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Points balance
+
+  /api/v1/rewards/boosts:
+    get:
+      tags: [Rewards]
+      operationId: getRewardsBoosts
+      summary: Get available rewards boosts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Available boosts
+
+  /api/v1/rewards/donate:
+    post:
+      tags: [Rewards]
+      operationId: donateRewardsPoints
+      summary: Donate rewards points to charity
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: amount
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Donation confirmed
+
+  /api/v1/rewards/leaderboard:
+    get:
+      tags: [Rewards]
+      operationId: getRewardsLeaderboard
+      summary: Get rewards leaderboard
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Leaderboard
+
+  /api/v1/goals:
+    get:
+      tags: [Rewards]
+      operationId: listGoals
+      summary: List savings goals
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Goals list
+    post:
+      tags: [Rewards]
+      operationId: createGoal
+      summary: Create a savings goal
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, targetAmount, category]
+              properties:
+                name:
+                  type: string
+                targetAmount:
+                  type: number
+                deadline:
+                  type: string
+                  format: date
+                category:
+                  type: string
+                icon:
+                  type: string
+                color:
+                  type: string
+      responses:
+        '200':
+          description: Goal created
+
+  /api/v1/goals/{goal_id}:
+    put:
+      tags: [Rewards]
+      operationId: updateGoal
+      summary: Update a savings goal
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: goal_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentAmount:
+                  type: number
+                targetAmount:
+                  type: number
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Goal updated
+    delete:
+      tags: [Rewards]
+      operationId: deleteGoal
+      summary: Delete a savings goal
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: goal_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Goal deleted
+
+  /api/v1/budgets:
+    get:
+      tags: [Rewards]
+      operationId: listBudgets
+      summary: List budgets
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Budget list
+    post:
+      tags: [Rewards]
+      operationId: createBudget
+      summary: Create a budget
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category, budgetAmount]
+              properties:
+                category:
+                  type: string
+                budgetAmount:
+                  type: number
+                period:
+                  type: string
+                  default: monthly
+                color:
+                  type: string
+                icon:
+                  type: string
+      responses:
+        '200':
+          description: Budget created
+
+  /api/v1/user/preferences:
+    get:
+      tags: [Rewards]
+      operationId: getUserPreferences
+      summary: Get user preferences
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User preferences
+    put:
+      tags: [Rewards]
+      operationId: updateUserPreferences
+      summary: Update user preferences
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                darkMode:
+                  type: boolean
+                notificationsEnabled:
+                  type: boolean
+                biometricsEnabled:
+                  type: boolean
+      responses:
+        '200':
+          description: Preferences updated
+
+  # ═══════════════════════════════════════════
+  # NOTIFICATIONS (12 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/notifications/register-device:
+    post:
+      tags: [Notifications]
+      operationId: registerDevice
+      summary: Register device for push notifications
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_token]
+              properties:
+                device_token:
+                  type: string
+                device_type:
+                  type: string
+                  default: ios
+                device_name:
+                  type: string
+      responses:
+        '200':
+          description: Device registered
+
+  /api/v1/notifications/unregister-device/{device_id}:
+    post:
+      tags: [Notifications]
+      operationId: unregisterDevice
+      summary: Unregister a device
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: device_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Device unregistered
+
+  /api/v1/notifications/preferences:
+    get:
+      tags: [Notifications]
+      operationId: getNotificationPreferences
+      summary: Get notification preferences
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Notification preferences
+    post:
+      tags: [Notifications]
+      operationId: updateNotificationPreferences
+      summary: Update notification preferences
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_notifications:
+                  type: boolean
+                campaign_notifications:
+                  type: boolean
+                support_notifications:
+                  type: boolean
+                security_notifications:
+                  type: boolean
+                feature_notifications:
+                  type: boolean
+      responses:
+        '200':
+          description: Preferences updated
+
+  /api/v1/notifications/history:
+    get:
+      tags: [Notifications]
+      operationId: getNotificationHistory
+      summary: Get notification history
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: notification_type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification history
+
+  /api/v1/notifications/mark-as-read/{notification_id}:
+    post:
+      tags: [Notifications]
+      operationId: markNotificationRead
+      summary: Mark notification as read
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: notification_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Marked as read
+
+  /api/v1/notifications/send-event:
+    post:
+      tags: [Notifications]
+      operationId: sendEventNotification
+      summary: Send event-based notification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_type]
+              properties:
+                event_type:
+                  type: string
+                event_data:
+                  type: object
+      responses:
+        '200':
+          description: Notification sent
+
+  /api/v1/notifications/test:
+    post:
+      tags: [Notifications]
+      operationId: sendTestNotification
+      summary: Send test notification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, body]
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Test notification sent
+
+  /api/v1/notifications/sns/register-device:
+    post:
+      tags: [Notifications]
+      operationId: snsRegisterDevice
+      summary: Register device with AWS SNS
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_token, device_type]
+              properties:
+                device_token:
+                  type: string
+                device_type:
+                  type: string
+                  enum: [ios, android]
+                device_name:
+                  type: string
+      responses:
+        '200':
+          description: SNS endpoint created
+
+  /api/v1/notifications/sns/send:
+    post:
+      tags: [Notifications]
+      operationId: snsSendNotification
+      summary: Send notification via AWS SNS
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [endpoint_arn, title, body]
+              properties:
+                endpoint_arn:
+                  type: string
+                title:
+                  type: string
+                body:
+                  type: string
+                data:
+                  type: object
+                badge:
+                  type: integer
+                sound:
+                  type: string
+      responses:
+        '200':
+          description: Notification sent
+
+  /api/v1/notifications/sns/unregister/{endpoint_arn}:
+    delete:
+      tags: [Notifications]
+      operationId: snsUnregisterDevice
+      summary: Unregister SNS endpoint
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: endpoint_arn
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Endpoint removed
+
+  /api/v1/notifications/sns/status/{endpoint_arn}:
+    get:
+      tags: [Notifications]
+      operationId: snsGetEndpointStatus
+      summary: Get SNS endpoint status
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: endpoint_arn
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Endpoint status
+
+  # ═══════════════════════════════════════════
+  # CHAT (10 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/chat/sessions:
+    post:
+      tags: [Chat]
+      operationId: createChatSession
+      summary: Create a chat session
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                assigned_agent_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatSession'
+
+  /api/v1/chat/sessions/{session_id}:
+    get:
+      tags: [Chat]
+      operationId: getChatSession
+      summary: Get chat session details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session details
+        '403':
+          description: Not a participant
+
+  /api/v1/chat/sessions/{session_id}/messages:
+    get:
+      tags: [Chat]
+      operationId: getChatMessages
+      summary: Get session messages
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Message list
+
+  /api/v1/chat/sessions/{session_id}/mark-read:
+    post:
+      tags: [Chat]
+      operationId: markChatMessagesRead
+      summary: Mark messages as read
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [up_to_message_id]
+              properties:
+                up_to_message_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Messages marked read
+
+  /api/v1/chat/sessions/{session_id}/close:
+    post:
+      tags: [Chat]
+      operationId: closeChatSession
+      summary: Close a chat session
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session closed
+
+  /api/v1/chat/sessions/{session_id}/participants:
+    get:
+      tags: [Chat]
+      operationId: getChatParticipants
+      summary: Get session participants
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Participant list
+
+  /api/v1/chat/block:
+    post:
+      tags: [Chat]
+      operationId: blockChatUser
+      summary: Block a user from chat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [blocked_user_id]
+              properties:
+                blocked_user_id:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: User blocked
+
+  /api/v1/chat/unblock:
+    post:
+      tags: [Chat]
+      operationId: unblockChatUser
+      summary: Unblock a user
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: blocked_user_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User unblocked
+
+  /api/v1/chat/ws-stats:
+    get:
+      tags: [Chat]
+      operationId: getChatWsStats
+      summary: Get WebSocket statistics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: WebSocket stats
+
+  # ═══════════════════════════════════════════
+  # FEATURE FLAGS (8 endpoints)
+  # ═══════════════════════════════════════════
+  /api/feature-flags:
+    post:
+      tags: [Feature Flags]
+      operationId: createFeatureFlag
+      summary: Create a feature flag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                enabled:
+                  type: boolean
+                  default: false
+                rollout_percentage:
+                  type: integer
+                  default: 0
+                environment:
+                  type: string
+                  default: development
+      responses:
+        '200':
+          description: Flag created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/FeatureFlag'
+    get:
+      tags: [Feature Flags]
+      operationId: listFeatureFlags
+      summary: List all feature flags
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: enabled_only
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Flag list
+
+  /api/feature-flags/{flag_id}:
+    get:
+      tags: [Feature Flags]
+      operationId: getFeatureFlag
+      summary: Get feature flag by ID
+      parameters:
+        - in: path
+          name: flag_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flag details
+    put:
+      tags: [Feature Flags]
+      operationId: updateFeatureFlag
+      summary: Update a feature flag
+      parameters:
+        - in: path
+          name: flag_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                enabled:
+                  type: boolean
+                rollout_percentage:
+                  type: integer
+      responses:
+        '200':
+          description: Flag updated
+    delete:
+      tags: [Feature Flags]
+      operationId: deleteFeatureFlag
+      summary: Delete a feature flag
+      parameters:
+        - in: path
+          name: flag_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flag deleted
+
+  /api/feature-flags/name/{flag_name}:
+    get:
+      tags: [Feature Flags]
+      operationId: getFeatureFlagByName
+      summary: Get feature flag by name
+      parameters:
+        - in: path
+          name: flag_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flag details
+
+  /api/feature-flags/{flag_id}/toggle:
+    patch:
+      tags: [Feature Flags]
+      operationId: toggleFeatureFlag
+      summary: Toggle feature flag on/off
+      parameters:
+        - in: path
+          name: flag_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: enabled
+          required: true
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Flag toggled
+
+  /api/feature-flags/mobile/active:
+    get:
+      tags: [Feature Flags]
+      operationId: getMobileActiveFlags
+      summary: Get active flags for mobile app
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Active mobile flags
+
+  # ═══════════════════════════════════════════
+  # ADMIN AUTH (7 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/auth/login:
+    post:
+      tags: [Admin Auth]
+      operationId: adminLogin
+      summary: Admin login (rate limited 5/min/IP)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Admin session
+        '401':
+          description: Invalid credentials
+        '429':
+          description: Rate limit exceeded
+
+  /api/v1/admin/auth/refresh:
+    post:
+      tags: [Admin Auth]
+      operationId: adminRefresh
+      summary: Refresh admin token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: New token
+
+  /api/v1/admin/auth/logout:
+    post:
+      tags: [Admin Auth]
+      operationId: adminLogout
+      summary: Admin logout
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Logged out
+
+  /api/v1/admin/auth/me:
+    get:
+      tags: [Admin Auth]
+      operationId: adminGetProfile
+      summary: Get admin profile
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Admin profile
+
+  /api/v1/admin/auth/setup-admin:
+    post:
+      tags: [Admin Auth]
+      operationId: setupAdmin
+      summary: Initial admin setup (requires setup key)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [setup_key, email, password, full_name]
+              properties:
+                setup_key:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                full_name:
+                  type: string
+      responses:
+        '200':
+          description: Admin created
+
+  /api/v1/admin/auth/reset-password:
+    post:
+      tags: [Admin Auth]
+      operationId: adminResetPassword
+      summary: Reset admin password (requires setup key)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [setup_key, email, new_password]
+              properties:
+                setup_key:
+                  type: string
+                email:
+                  type: string
+                new_password:
+                  type: string
+      responses:
+        '200':
+          description: Password reset
+
+  /api/v1/admin/auth/demo-credentials:
+    get:
+      tags: [Admin Auth]
+      operationId: getDemoCredentials
+      summary: Get demo credentials (dev only)
+      responses:
+        '200':
+          description: Demo credentials
+
+  # ═══════════════════════════════════════════
+  # ADMIN DASHBOARD (8 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/dashboard/overview:
+    get:
+      tags: [Admin Dashboard]
+      operationId: adminDashboardOverview
+      summary: Get dashboard overview metrics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Dashboard metrics
+
+  /api/v1/admin/analytics/overview:
+    get:
+      tags: [Admin Dashboard]
+      operationId: adminAnalyticsOverview
+      summary: Get analytics overview
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Analytics overview
+
+  /api/v1/admin/analytics/transactions:
+    get:
+      tags: [Admin Dashboard]
+      operationId: adminTransactionAnalytics
+      summary: Get transaction analytics
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: days
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 90
+      responses:
+        '200':
+          description: Transaction analytics
+
+  /api/v1/admin/analytics/revenue:
+    get:
+      tags: [Admin Dashboard]
+      operationId: adminRevenueAnalytics
+      summary: Get revenue analytics
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: days
+          schema:
+            type: integer
+            default: 30
+      responses:
+        '200':
+          description: Revenue analytics
+
+  /api/v1/admin/analytics/funnel/onboarding:
+    get:
+      tags: [Admin Dashboard]
+      operationId: adminOnboardingFunnel
+      summary: Get onboarding funnel analytics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Funnel data
+
+  /api/v1/admin/analytics/cohort/retention:
+    get:
+      tags: [Admin Dashboard]
+      operationId: adminCohortRetention
+      summary: Get cohort retention analytics
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: cohort_week
+          schema:
+            type: string
+            description: "ISO week format (e.g. 2025-W01)"
+      responses:
+        '200':
+          description: Retention data
+
+  /api/v1/admin/support/stats:
+    get:
+      tags: [Admin Dashboard]
+      operationId: adminSupportStats
+      summary: Get support statistics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Support stats
+
+  /api/v1/admin/seed-sample-data:
+    post:
+      tags: [Admin Dashboard]
+      operationId: seedSampleData
+      summary: Seed sample data (dev only)
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Sample data seeded
+
+  # ═══════════════════════════════════════════
+  # ADMIN USERS (10 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/users:
+    get:
+      tags: [Admin Users]
+      operationId: adminListUsers
+      summary: List users with filtering
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+            maximum: 100
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, invited, suspended]
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User list
+    post:
+      tags: [Admin Users]
+      operationId: adminCreateUser
+      summary: Create/invite a user
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, name]
+              properties:
+                email:
+                  type: string
+                name:
+                  type: string
+                phone:
+                  type: string
+                invite:
+                  type: boolean
+      responses:
+        '200':
+          description: User created
+
+  /api/v1/admin/users/stats/overview:
+    get:
+      tags: [Admin Users]
+      operationId: adminUserStats
+      summary: Get user statistics overview
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: User stats
+
+  /api/v1/admin/users/customer/{user_id}/otp:
+    get:
+      tags: [Admin Users]
+      operationId: adminGetCustomerOtp
+      summary: Get customer OTP (dev only)
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer OTP
+
+  /api/v1/admin/users/by-phone/{phone}:
+    delete:
+      tags: [Admin Users]
+      operationId: adminDeleteUserByPhone
+      summary: Delete user by phone number
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: phone
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted
+
+  /api/v1/admin/users/by-email/{email}:
+    delete:
+      tags: [Admin Users]
+      operationId: adminDeleteUserByEmail
+      summary: Delete user by email
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted
+
+  /api/v1/admin/users/delete-by-emails:
+    post:
+      tags: [Admin Users]
+      operationId: adminBulkDeleteByEmails
+      summary: Bulk delete users by email
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [emails]
+              properties:
+                emails:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Users deleted
+
+  /api/v1/admin/users/{user_id}:
+    get:
+      tags: [Admin Users]
+      operationId: adminGetUser
+      summary: Get admin user details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+    put:
+      tags: [Admin Users]
+      operationId: adminUpdateUser
+      summary: Update admin user
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                role:
+                  type: string
+                department:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '200':
+          description: User updated
+    delete:
+      tags: [Admin Users]
+      operationId: adminDeleteUser
+      summary: Delete admin user
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted
+
+  # ═══════════════════════════════════════════
+  # ADMIN MERCHANTS (7 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/merchants:
+    get:
+      tags: [Admin Merchants]
+      operationId: adminListMerchants
+      summary: List merchants
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Merchant list
+    post:
+      tags: [Admin Merchants]
+      operationId: adminCreateMerchant
+      summary: Create a merchant
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, category]
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                description:
+                  type: string
+                address:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                website:
+                  type: string
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+      responses:
+        '200':
+          description: Merchant created
+
+  /api/v1/admin/merchants/{merchant_id}:
+    get:
+      tags: [Admin Merchants]
+      operationId: adminGetMerchant
+      summary: Get merchant details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: merchant_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Merchant details
+    put:
+      tags: [Admin Merchants]
+      operationId: adminUpdateMerchant
+      summary: Update merchant
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: merchant_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+      responses:
+        '200':
+          description: Merchant updated
+    delete:
+      tags: [Admin Merchants]
+      operationId: adminDeleteMerchant
+      summary: Delete merchant
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: merchant_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Merchant deleted
+
+  /api/v1/admin/merchants/{merchant_id}/status:
+    put:
+      tags: [Admin Merchants]
+      operationId: adminUpdateMerchantStatus
+      summary: Update merchant status
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: merchant_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          required: true
+          schema:
+            type: string
+            enum: [active, inactive, suspended]
+      responses:
+        '200':
+          description: Status updated
+
+  /api/v1/admin/merchants/stats/overview:
+    get:
+      tags: [Admin Merchants]
+      operationId: adminMerchantStats
+      summary: Get merchant statistics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Merchant stats
+
+  # ═══════════════════════════════════════════
+  # ADMIN SUPPORT TICKETS (6 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/support/tickets:
+    post:
+      tags: [Admin Support]
+      operationId: adminCreateTicket
+      summary: Create support ticket
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject, description, priority]
+              properties:
+                subject:
+                  type: string
+                description:
+                  type: string
+                priority:
+                  type: string
+                  enum: [low, medium, high, critical]
+                customer_id:
+                  type: string
+                category:
+                  type: string
+      responses:
+        '200':
+          description: Ticket created
+    get:
+      tags: [Admin Support]
+      operationId: adminListTickets
+      summary: List support tickets
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [open, in_progress, resolved, closed]
+        - in: query
+          name: priority
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket list
+
+  /api/v1/admin/support/tickets/{ticket_id}:
+    get:
+      tags: [Admin Support]
+      operationId: adminGetTicket
+      summary: Get ticket details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket details
+
+  /api/v1/admin/support/tickets/{ticket_id}/status:
+    put:
+      tags: [Admin Support]
+      operationId: adminUpdateTicketStatus
+      summary: Update ticket status
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status updated
+
+  /api/v1/admin/support/tickets/{ticket_id}/assign:
+    post:
+      tags: [Admin Support]
+      operationId: adminAssignTicket
+      summary: Assign ticket to agent
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: agent_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket assigned
+
+  # ═══════════════════════════════════════════
+  # ADMIN FEATURE FLAGS (8 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/feature-flags:
+    post:
+      tags: [Admin Feature Flags]
+      operationId: adminCreateFlag
+      summary: Create admin feature flag
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                enabled:
+                  type: boolean
+                rollout_percentage:
+                  type: integer
+                category:
+                  type: string
+      responses:
+        '200':
+          description: Flag created
+    get:
+      tags: [Admin Feature Flags]
+      operationId: adminListFlags
+      summary: List admin feature flags
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+        - in: query
+          name: enabled
+          schema:
+            type: boolean
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flag list
+
+  /api/v1/admin/feature-flags/{flag_id}:
+    get:
+      tags: [Admin Feature Flags]
+      operationId: adminGetFlag
+      summary: Get flag details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: flag_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flag details
+    put:
+      tags: [Admin Feature Flags]
+      operationId: adminUpdateFlag
+      summary: Update flag
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: flag_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                enabled:
+                  type: boolean
+                rollout_percentage:
+                  type: integer
+      responses:
+        '200':
+          description: Flag updated
+    delete:
+      tags: [Admin Feature Flags]
+      operationId: adminDeleteFlag
+      summary: Delete flag
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: flag_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flag deleted
+
+  /api/v1/admin/feature-flags/{flag_id}/toggle:
+    put:
+      tags: [Admin Feature Flags]
+      operationId: adminToggleFlag
+      summary: Toggle flag on/off
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: flag_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled:
+                  type: boolean
+      responses:
+        '200':
+          description: Flag toggled
+
+  /api/v1/admin/feature-flags/{flag_id}/rollout:
+    put:
+      tags: [Admin Feature Flags]
+      operationId: adminUpdateRollout
+      summary: Update flag rollout percentage
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: flag_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rollout_percentage]
+              properties:
+                rollout_percentage:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+      responses:
+        '200':
+          description: Rollout updated
+
+  /api/v1/admin/feature-flags/stats/overview:
+    get:
+      tags: [Admin Feature Flags]
+      operationId: adminFlagStats
+      summary: Get feature flag statistics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Flag stats
+
+  # ═══════════════════════════════════════════
+  # ADMIN AI CAMPAIGNS (4 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/ai-campaigns:
+    get:
+      tags: [Admin AI Campaigns]
+      operationId: adminListCampaigns
+      summary: List AI campaigns
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: campaign_type
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaign list
+
+  /api/v1/admin/ai-campaigns/{campaign_id}:
+    get:
+      tags: [Admin AI Campaigns]
+      operationId: adminGetCampaign
+      summary: Get campaign details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: campaign_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaign details
+
+  /api/v1/admin/ai-campaigns/{campaign_id}/status:
+    put:
+      tags: [Admin AI Campaigns]
+      operationId: adminUpdateCampaignStatus
+      summary: Update campaign status
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: campaign_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          required: true
+          schema:
+            type: string
+            enum: [active, paused, cancelled, completed]
+      responses:
+        '200':
+          description: Status updated
+
+  /api/v1/admin/ai-campaigns/stats/overview:
+    get:
+      tags: [Admin AI Campaigns]
+      operationId: adminCampaignStats
+      summary: Get campaign statistics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Campaign stats
+
+  # ═══════════════════════════════════════════
+  # ADMIN AUDIT LOGS (3 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/audit-logs:
+    get:
+      tags: [Admin Audit Logs]
+      operationId: adminListAuditLogs
+      summary: List audit logs
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+        - in: query
+          name: action
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: user_id
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audit log list
+
+  /api/v1/admin/audit-logs/{log_id}:
+    get:
+      tags: [Admin Audit Logs]
+      operationId: adminGetAuditLog
+      summary: Get audit log details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: log_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Log details
+
+  /api/v1/admin/audit-logs/stats/overview:
+    get:
+      tags: [Admin Audit Logs]
+      operationId: adminAuditLogStats
+      summary: Get audit log statistics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Audit stats
+
+  # ═══════════════════════════════════════════
+  # ADMIN SETTINGS (13 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/settings:
+    get:
+      tags: [Admin Settings]
+      operationId: adminGetAllSettings
+      summary: Get all platform settings
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: All settings
+    put:
+      tags: [Admin Settings]
+      operationId: adminUpdateAllSettings
+      summary: Update platform settings
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Settings updated
+
+  /api/v1/admin/settings/categories/list:
+    get:
+      tags: [Admin Settings]
+      operationId: adminListSettingCategories
+      summary: List setting categories
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Category list
+
+  /api/v1/admin/settings/{category}:
+    get:
+      tags: [Admin Settings]
+      operationId: adminGetSettingCategory
+      summary: Get settings by category
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: category
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category settings
+    put:
+      tags: [Admin Settings]
+      operationId: adminUpdateSettingCategory
+      summary: Update settings by category
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: category
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Settings updated
+
+  /api/v1/admin/settings/reset/{category}:
+    post:
+      tags: [Admin Settings]
+      operationId: adminResetSettingCategory
+      summary: Reset category to defaults
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: category
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Settings reset
+
+  /api/v1/admin/settings/{category}/{key}:
+    get:
+      tags: [Admin Settings]
+      operationId: adminGetSetting
+      summary: Get a specific setting
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: category
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Setting value
+    put:
+      tags: [Admin Settings]
+      operationId: adminUpdateSetting
+      summary: Update a specific setting
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: category
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              properties:
+                value: {}
+      responses:
+        '200':
+          description: Setting updated
+
+  /api/v1/admin/settings/branding/images:
+    get:
+      tags: [Admin Settings]
+      operationId: adminGetBrandingImages
+      summary: Get branding images
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Branding images
+
+  /api/v1/admin/settings/branding/images/file/{filename}:
+    get:
+      tags: [Admin Settings]
+      operationId: adminGetBrandingImage
+      summary: Get branding image file
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: filename
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image file
+
+  /api/v1/admin/settings/branding/upload:
+    post:
+      tags: [Admin Settings]
+      operationId: adminUploadBranding
+      summary: Upload branding image
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, type]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                type:
+                  type: string
+                  enum: [logo, favicon, banner]
+      responses:
+        '200':
+          description: Image uploaded
+
+  /api/v1/admin/settings/branding/images/{image_id}:
+    delete:
+      tags: [Admin Settings]
+      operationId: adminDeleteBrandingImage
+      summary: Delete branding image
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: image_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image deleted
+
+  /api/v1/admin/settings/seed:
+    post:
+      tags: [Admin Settings]
+      operationId: adminSeedSettings
+      summary: Seed default settings
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Settings seeded
+
+  # ═══════════════════════════════════════════
+  # ADMIN RBAC (20 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/roles:
+    get:
+      tags: [Admin RBAC]
+      operationId: adminListRoles
+      summary: List all roles
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Role list
+    post:
+      tags: [Admin RBAC]
+      operationId: adminCreateRole
+      summary: Create a role
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                permissions:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Role created
+
+  /api/v1/admin/roles/{role_id}:
+    get:
+      tags: [Admin RBAC]
+      operationId: adminGetRole
+      summary: Get role details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: role_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Role details
+    put:
+      tags: [Admin RBAC]
+      operationId: adminUpdateRole
+      summary: Update a role
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: role_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                permissions:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Role updated
+    delete:
+      tags: [Admin RBAC]
+      operationId: adminDeleteRole
+      summary: Delete a role
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: role_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Role deleted
+
+  /api/v1/admin/policies:
+    get:
+      tags: [Admin RBAC]
+      operationId: adminListPolicies
+      summary: List all policies
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Policy list
+    post:
+      tags: [Admin RBAC]
+      operationId: adminCreatePolicy
+      summary: Create a policy
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, resource, actions]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                resource:
+                  type: string
+                actions:
+                  type: array
+                  items:
+                    type: string
+                conditions:
+                  type: object
+      responses:
+        '200':
+          description: Policy created
+
+  /api/v1/admin/policies/{policy_id}:
+    get:
+      tags: [Admin RBAC]
+      operationId: adminGetPolicy
+      summary: Get policy details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: policy_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Policy details
+    put:
+      tags: [Admin RBAC]
+      operationId: adminUpdatePolicy
+      summary: Update a policy
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: policy_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                resource:
+                  type: string
+                actions:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Policy updated
+    delete:
+      tags: [Admin RBAC]
+      operationId: adminDeletePolicy
+      summary: Delete a policy
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: policy_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Policy deleted
+
+  /api/v1/admin/permissions:
+    get:
+      tags: [Admin RBAC]
+      operationId: adminListPermissions
+      summary: List all permissions
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Permission list
+    post:
+      tags: [Admin RBAC]
+      operationId: adminCreatePermission
+      summary: Create a permission
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Permission created
+
+  /api/v1/admin/permissions/{permission_id}:
+    get:
+      tags: [Admin RBAC]
+      operationId: adminGetPermission
+      summary: Get permission details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: permission_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission details
+    delete:
+      tags: [Admin RBAC]
+      operationId: adminDeletePermission
+      summary: Delete a permission
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: permission_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission deleted
+
+  /api/v1/admin/rbac/stats:
+    get:
+      tags: [Admin RBAC]
+      operationId: adminRbacStats
+      summary: Get RBAC statistics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: RBAC stats
+
+  /api/v1/admin/rbac/migrate:
+    post:
+      tags: [Admin RBAC]
+      operationId: adminRbacMigrate
+      summary: Migrate RBAC data
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Migration complete
+
+  /api/v1/admin/rbac/seed:
+    post:
+      tags: [Admin RBAC]
+      operationId: adminRbacSeed
+      summary: Seed RBAC defaults
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: RBAC seeded
+
+  /api/v1/admin/users/create:
+    post:
+      tags: [Admin RBAC]
+      operationId: adminRbacCreateUser
+      summary: Create admin user with RBAC
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, full_name, role]
+              properties:
+                email:
+                  type: string
+                full_name:
+                  type: string
+                role:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Admin user created
+
+  /api/v1/admin/users/seed-admin:
+    post:
+      tags: [Admin RBAC]
+      operationId: adminSeedAdmin
+      summary: Seed default admin user
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Admin seeded
+
+  /api/v1/admin/users/reset-admin-password:
+    post:
+      tags: [Admin RBAC]
+      operationId: adminResetAdminPassword
+      summary: Reset admin password
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, new_password]
+              properties:
+                email:
+                  type: string
+                new_password:
+                  type: string
+      responses:
+        '200':
+          description: Password reset
+
+  # ═══════════════════════════════════════════
+  # ADMIN CHARITIES (7 endpoints)
+  # ═══════════════════════════════════════════
+  /charities:
+    get:
+      tags: [Admin Charities]
+      operationId: listCharities
+      summary: List charities
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, pending, rejected]
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Charity list
+    post:
+      tags: [Admin Charities]
+      operationId: createCharity
+      summary: Create a charity
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, category]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                website:
+                  type: string
+                ein:
+                  type: string
+                logo_url:
+                  type: string
+      responses:
+        '200':
+          description: Charity created
+
+  /charities/{charity_id}:
+    get:
+      tags: [Admin Charities]
+      operationId: getCharity
+      summary: Get charity details
+      parameters:
+        - in: path
+          name: charity_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Charity details
+    put:
+      tags: [Admin Charities]
+      operationId: updateCharity
+      summary: Update charity
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: charity_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+      responses:
+        '200':
+          description: Charity updated
+    delete:
+      tags: [Admin Charities]
+      operationId: deleteCharity
+      summary: Delete charity
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: charity_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Charity deleted
+
+  /charities/{charity_id}/approve:
+    post:
+      tags: [Admin Charities]
+      operationId: approveCharity
+      summary: Approve a charity
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: charity_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Charity approved
+
+  /charities/{charity_id}/reject:
+    post:
+      tags: [Admin Charities]
+      operationId: rejectCharity
+      summary: Reject a charity
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: charity_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: notes
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Charity rejected
+
+  # ═══════════════════════════════════════════
+  # ADMIN CHAT DASHBOARD (11 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/admin/chat-dashboard/overview:
+    get:
+      tags: [Admin Chat Dashboard]
+      operationId: chatDashboardOverview
+      summary: Get chat dashboard overview
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: time_range_hours
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: Dashboard overview
+
+  /api/v1/admin/chat-dashboard/agent-performance:
+    get:
+      tags: [Admin Chat Dashboard]
+      operationId: chatAgentPerformance
+      summary: Get agent performance metrics
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: query
+          name: agent_id
+          schema:
+            type: string
+        - in: query
+          name: time_range_hours
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: Agent performance
+
+  /api/v1/admin/chat-dashboard/active-sessions:
+    get:
+      tags: [Admin Chat Dashboard]
+      operationId: chatActiveSessions
+      summary: Get active chat sessions
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Active sessions
+
+  /api/v1/admin/chat-dashboard/waiting-sessions:
+    get:
+      tags: [Admin Chat Dashboard]
+      operationId: chatWaitingSessions
+      summary: Get waiting chat sessions
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Waiting sessions
+
+  /api/v1/admin/chat-dashboard/satisfaction:
+    get:
+      tags: [Admin Chat Dashboard]
+      operationId: chatSatisfaction
+      summary: Get chat satisfaction metrics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Satisfaction metrics
+
+  /api/v1/admin/chat-dashboard/message-analytics:
+    get:
+      tags: [Admin Chat Dashboard]
+      operationId: chatMessageAnalytics
+      summary: Get message analytics
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Message analytics
+
+  /api/v1/admin/chat-dashboard/sessions/{session_id}/assign:
+    post:
+      tags: [Admin Chat Dashboard]
+      operationId: chatAssignSession
+      summary: Assign session to agent
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agent_id]
+              properties:
+                agent_id:
+                  type: string
+      responses:
+        '200':
+          description: Session assigned
+
+  /api/v1/admin/chat-dashboard/sessions/{session_id}/transfer:
+    post:
+      tags: [Admin Chat Dashboard]
+      operationId: chatTransferSession
+      summary: Transfer session to another agent
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_agent_id]
+              properties:
+                target_agent_id:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Session transferred
+
+  /api/v1/admin/chat-dashboard/sessions/{session_id}/transcript:
+    get:
+      tags: [Admin Chat Dashboard]
+      operationId: chatGetTranscript
+      summary: Get session transcript
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session transcript
+
+  /api/v1/admin/chat-dashboard/health:
+    get:
+      tags: [Admin Chat Dashboard]
+      operationId: chatDashboardHealth
+      summary: Chat dashboard health check
+      responses:
+        '200':
+          description: Service healthy
+
+  # ═══════════════════════════════════════════
+  # WEBSITE FORMS (3 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/contact:
+    post:
+      tags: [Website Forms]
+      operationId: submitContactForm
+      summary: Submit contact form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, message]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                message:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Form submitted
+
+  /api/v1/demo-request:
+    post:
+      tags: [Website Forms]
+      operationId: submitDemoRequest
+      summary: Submit demo request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, company]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                company:
+                  type: string
+                phone:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Demo request submitted
+
+  /api/v1/sales-inquiry:
+    post:
+      tags: [Website Forms]
+      operationId: submitSalesInquiry
+      summary: Submit sales inquiry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                company:
+                  type: string
+                phone:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Inquiry submitted
+
+  # ═══════════════════════════════════════════
+  # AI CONCIERGE (3 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/ai-concierge/chat:
+    post:
+      tags: [AI Concierge]
+      operationId: aiConciergeChat
+      summary: Chat with AI concierge (streaming)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                session_id:
+                  type: string
+                context:
+                  type: object
+      responses:
+        '200':
+          description: Streaming chat response
+
+  /api/v1/ai-concierge/agentic-chat:
+    post:
+      tags: [AI Concierge]
+      operationId: aiConciergeAgenticChat
+      summary: Agentic chat with tool use (streaming)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                session_id:
+                  type: string
+      responses:
+        '200':
+          description: Streaming agentic response
+
+  /api/v1/ai-concierge/approve-action:
+    post:
+      tags: [AI Concierge]
+      operationId: aiConciergeApproveAction
+      summary: Approve a pending AI action
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action_id, approved]
+              properties:
+                action_id:
+                  type: string
+                approved:
+                  type: boolean
+      responses:
+        '200':
+          description: Action approved/denied
+
+  # ═══════════════════════════════════════════
+  # WEBSITE CONCIERGE (2 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/website-concierge/chat:
+    post:
+      tags: [Website Concierge]
+      operationId: websiteConciergeChat
+      summary: Public website chat (streaming)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                session_id:
+                  type: string
+      responses:
+        '200':
+          description: Streaming chat response
+
+  /api/v1/website-concierge/health:
+    get:
+      tags: [Website Concierge]
+      operationId: websiteConciergeHealth
+      summary: Website concierge health check
+      responses:
+        '200':
+          description: Service healthy
+
+  # ═══════════════════════════════════════════
+  # FIS FRAUD & SECURITY (15 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/fis/fraud/reports:
+    get:
+      tags: [FIS Fraud]
+      operationId: listFraudReports
+      summary: List fraud reports
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Fraud report list
+    post:
+      tags: [FIS Fraud]
+      operationId: createFraudReport
+      summary: Report suspected fraud
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [card_id, transaction_id, reason]
+              properties:
+                card_id:
+                  type: string
+                transaction_id:
+                  type: string
+                reason:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Report created
+
+  /api/v1/fis/fraud/reports/{report_id}:
+    get:
+      tags: [FIS Fraud]
+      operationId: getFraudReport
+      summary: Get fraud report details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: report_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report details
+    put:
+      tags: [FIS Fraud]
+      operationId: updateFraudReport
+      summary: Update fraud report
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: report_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Report updated
+
+  /api/v1/fis/alerts:
+    get:
+      tags: [FIS Fraud]
+      operationId: listFraudAlerts
+      summary: List fraud alerts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Alert list
+
+  /api/v1/fis/alerts/{alert_id}:
+    get:
+      tags: [FIS Fraud]
+      operationId: getFraudAlert
+      summary: Get fraud alert details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: alert_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert details
+
+  /api/v1/fis/alerts/{alert_id}/acknowledge:
+    post:
+      tags: [FIS Fraud]
+      operationId: acknowledgeFraudAlert
+      summary: Acknowledge a fraud alert
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: alert_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert acknowledged
+
+  /api/v1/fis/alerts/{alert_id}/dismiss:
+    post:
+      tags: [FIS Fraud]
+      operationId: dismissFraudAlert
+      summary: Dismiss a fraud alert
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: alert_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Alert dismissed
+
+  /api/v1/fis/fraud/travel-notices:
+    get:
+      tags: [FIS Fraud]
+      operationId: listTravelNotices
+      summary: List travel notices
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Travel notice list
+    post:
+      tags: [FIS Fraud]
+      operationId: createTravelNotice
+      summary: Create a travel notice
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [destinations, start_date, end_date]
+              properties:
+                destinations:
+                  type: array
+                  items:
+                    type: string
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                card_ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Travel notice created
+
+  /api/v1/fis/fraud/travel-notices/{notice_id}:
+    get:
+      tags: [FIS Fraud]
+      operationId: getTravelNotice
+      summary: Get travel notice details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: notice_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notice details
+    put:
+      tags: [FIS Fraud]
+      operationId: updateTravelNotice
+      summary: Update travel notice
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: notice_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                destinations:
+                  type: array
+                  items:
+                    type: string
+                end_date:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Notice updated
+    delete:
+      tags: [FIS Fraud]
+      operationId: deleteTravelNotice
+      summary: Cancel travel notice
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: notice_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notice cancelled
+
+  /api/v1/fis/fraud/risk-score:
+    get:
+      tags: [FIS Fraud]
+      operationId: getRiskScore
+      summary: Get user risk score
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Risk score
+
+  # ═══════════════════════════════════════════
+  # FIS DIGITAL WALLET (14 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/fis/cards/{card_id}/wallet/apple-pay/provision:
+    post:
+      tags: [FIS Digital Wallet]
+      operationId: provisionApplePay
+      summary: Provision card for Apple Pay
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_id, certificates]
+              properties:
+                device_id:
+                  type: string
+                certificates:
+                  type: array
+                  items:
+                    type: string
+                nonce:
+                  type: string
+                nonce_signature:
+                  type: string
+      responses:
+        '200':
+          description: Provisioning data
+
+  /api/v1/fis/cards/{card_id}/wallet/google-pay/provision:
+    post:
+      tags: [FIS Digital Wallet]
+      operationId: provisionGooglePay
+      summary: Provision card for Google Pay
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_id, device_type]
+              properties:
+                device_id:
+                  type: string
+                device_type:
+                  type: string
+                wallet_account_id:
+                  type: string
+      responses:
+        '200':
+          description: Provisioning data
+
+  /api/v1/fis/cards/{card_id}/wallet/samsung-pay/provision:
+    post:
+      tags: [FIS Digital Wallet]
+      operationId: provisionSamsungPay
+      summary: Provision card for Samsung Pay
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_id]
+              properties:
+                device_id:
+                  type: string
+                wallet_user_id:
+                  type: string
+      responses:
+        '200':
+          description: Provisioning data
+
+  /api/v1/fis/cards/{card_id}/wallet/status:
+    get:
+      tags: [FIS Digital Wallet]
+      operationId: getWalletProvisioningStatus
+      summary: Get digital wallet provisioning status
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provisioning status for all wallets
+
+  /api/v1/fis/cards/{card_id}/wallet/tokens:
+    get:
+      tags: [FIS Digital Wallet]
+      operationId: listWalletTokens
+      summary: List wallet tokens for a card
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token list
+
+  /api/v1/fis/cards/{card_id}/wallet/tokens/{token_id}:
+    get:
+      tags: [FIS Digital Wallet]
+      operationId: getWalletToken
+      summary: Get wallet token details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: token_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token details
+    delete:
+      tags: [FIS Digital Wallet]
+      operationId: revokeWalletToken
+      summary: Revoke a wallet token
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: token_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token revoked
+
+  /api/v1/fis/cards/{card_id}/wallet/tokens/{token_id}/suspend:
+    post:
+      tags: [FIS Digital Wallet]
+      operationId: suspendWalletToken
+      summary: Suspend a wallet token
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: token_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token suspended
+
+  /api/v1/fis/cards/{card_id}/wallet/tokens/{token_id}/resume:
+    post:
+      tags: [FIS Digital Wallet]
+      operationId: resumeWalletToken
+      summary: Resume a suspended wallet token
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: card_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: token_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token resumed
+
+  # ═══════════════════════════════════════════
+  # FIS WEBHOOKS (3 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/webhooks/fis:
+    post:
+      tags: [FIS Webhooks]
+      operationId: receiveFisWebhook
+      summary: Receive FIS webhook events
+      security:
+        - WebhookSignature: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_type:
+                  type: string
+                event_data:
+                  type: object
+                timestamp:
+                  type: string
+      responses:
+        '200':
+          description: Webhook processed
+
+  /api/v1/webhooks/fis/test:
+    post:
+      tags: [FIS Webhooks]
+      operationId: testFisWebhook
+      summary: Test webhook endpoint
+      security:
+        - AdminAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_type:
+                  type: string
+      responses:
+        '200':
+          description: Test processed
+
+  /api/v1/webhooks/fis/events:
+    get:
+      tags: [FIS Webhooks]
+      operationId: listFisWebhookEvents
+      summary: List supported webhook event types
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Event type list
+
+  # ═══════════════════════════════════════════
+  # LOCATION SERVICES (16 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/location/geocode:
+    post:
+      tags: [Location]
+      operationId: geocodeAddress
+      summary: Geocode an address to coordinates
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address]
+              properties:
+                address:
+                  type: string
+      responses:
+        '200':
+          description: Geocoding result
+
+  /api/v1/location/reverse-geocode:
+    post:
+      tags: [Location]
+      operationId: reverseGeocode
+      summary: Reverse geocode coordinates to address
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [latitude, longitude]
+              properties:
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+      responses:
+        '200':
+          description: Reverse geocoding result
+
+  /api/v1/location/nearby:
+    get:
+      tags: [Location]
+      operationId: searchNearby
+      summary: Search nearby places
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: latitude
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: longitude
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: radius
+          schema:
+            type: number
+        - in: query
+          name: category
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Nearby places
+
+  /api/v1/location/route:
+    post:
+      tags: [Location]
+      operationId: calculateRoute
+      summary: Calculate route between points
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [origin, destination]
+              properties:
+                origin:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+                destination:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+                mode:
+                  type: string
+                  enum: [driving, walking, cycling]
+      responses:
+        '200':
+          description: Route details
+
+  /api/v1/location/geofences:
+    get:
+      tags: [Location]
+      operationId: listGeofences
+      summary: List geofences
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Geofence list
+    post:
+      tags: [Location]
+      operationId: createGeofence
+      summary: Create a geofence
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, center, radius]
+              properties:
+                name:
+                  type: string
+                center:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+                radius:
+                  type: number
+                  description: Radius in meters
+      responses:
+        '200':
+          description: Geofence created
+
+  /api/v1/location/geofences/{geofence_id}:
+    get:
+      tags: [Location]
+      operationId: getGeofence
+      summary: Get geofence details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: geofence_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Geofence details
+    put:
+      tags: [Location]
+      operationId: updateGeofence
+      summary: Update a geofence
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: geofence_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                radius:
+                  type: number
+      responses:
+        '200':
+          description: Geofence updated
+    delete:
+      tags: [Location]
+      operationId: deleteGeofence
+      summary: Delete a geofence
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: geofence_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Geofence deleted
+
+  /api/v1/location/geofences/{geofence_id}/check:
+    post:
+      tags: [Location]
+      operationId: checkGeofence
+      summary: Check if point is inside geofence
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: geofence_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [latitude, longitude]
+              properties:
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+      responses:
+        '200':
+          description: Check result
+
+  /api/v1/location/device/track:
+    post:
+      tags: [Location]
+      operationId: trackDeviceLocation
+      summary: Update device location
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [latitude, longitude]
+              properties:
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+                accuracy:
+                  type: number
+                speed:
+                  type: number
+      responses:
+        '200':
+          description: Location tracked
+
+  /api/v1/location/device/history:
+    get:
+      tags: [Location]
+      operationId: getDeviceLocationHistory
+      summary: Get device location history
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Location history
+
+  /api/v1/location/merchants/nearby:
+    get:
+      tags: [Location]
+      operationId: getNearbyMerchants
+      summary: Find nearby SwipeSavvy merchants
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: latitude
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: longitude
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: radius
+          schema:
+            type: number
+        - in: query
+          name: category
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Nearby merchants
+
+  # ═══════════════════════════════════════════
+  # PREFERRED MERCHANTS & DEALS (12 endpoints)
+  # ═══════════════════════════════════════════
+  /api/merchants/search:
+    get:
+      tags: [Preferred Merchants]
+      operationId: searchMerchants
+      summary: Search merchants
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: latitude
+          schema:
+            type: number
+        - in: query
+          name: longitude
+          schema:
+            type: number
+        - in: query
+          name: radius
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Merchant results
+
+  /api/merchants/{merchant_id}:
+    get:
+      tags: [Preferred Merchants]
+      operationId: getMerchantPublic
+      summary: Get merchant details (public)
+      parameters:
+        - in: path
+          name: merchant_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Merchant details
+
+  /api/merchants/{merchant_id}/deals:
+    get:
+      tags: [Preferred Merchants]
+      operationId: getMerchantDeals
+      summary: Get merchant deals and offers
+      parameters:
+        - in: path
+          name: merchant_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Merchant deals
+
+  /api/merchants/deals:
+    get:
+      tags: [Preferred Merchants]
+      operationId: listAllDeals
+      summary: List all active deals
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [newest, expiring, popular]
+      responses:
+        '200':
+          description: Deal list
+
+  /api/merchants/preferred:
+    get:
+      tags: [Preferred Merchants]
+      operationId: getPreferredMerchants
+      summary: Get user's preferred merchants
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Preferred merchants
+    post:
+      tags: [Preferred Merchants]
+      operationId: addPreferredMerchant
+      summary: Add a preferred merchant
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [merchant_id]
+              properties:
+                merchant_id:
+                  type: string
+      responses:
+        '200':
+          description: Merchant added
+
+  /api/merchants/preferred/{merchant_id}:
+    delete:
+      tags: [Preferred Merchants]
+      operationId: removePreferredMerchant
+      summary: Remove a preferred merchant
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: merchant_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Merchant removed
+
+  /api/merchants/categories:
+    get:
+      tags: [Preferred Merchants]
+      operationId: getMerchantCategories
+      summary: List merchant categories
+      responses:
+        '200':
+          description: Category list
+
+  /api/merchants/featured:
+    get:
+      tags: [Preferred Merchants]
+      operationId: getFeaturedMerchants
+      summary: Get featured merchants
+      responses:
+        '200':
+          description: Featured merchants
+
+  /merchants/deals/subscribe:
+    post:
+      tags: [Preferred Merchants]
+      operationId: subscribeToDealAlerts
+      summary: Subscribe to deal alerts
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                categories:
+                  type: array
+                  items:
+                    type: string
+                merchant_ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Subscribed
+
+  # ═══════════════════════════════════════════
+  # MARKETING (15 endpoints)
+  # ═══════════════════════════════════════════
+  /api/marketing/campaigns:
+    get:
+      tags: [Marketing]
+      operationId: listMarketingCampaigns
+      summary: List marketing campaigns
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Campaign list
+    post:
+      tags: [Marketing]
+      operationId: createMarketingCampaign
+      summary: Create a marketing campaign
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type]
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [email, push, sms, in_app]
+                target_segment:
+                  type: string
+                content:
+                  type: object
+                schedule:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Campaign created
+
+  /api/marketing/campaigns/{campaign_id}:
+    get:
+      tags: [Marketing]
+      operationId: getMarketingCampaign
+      summary: Get campaign details
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: campaign_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaign details
+    put:
+      tags: [Marketing]
+      operationId: updateMarketingCampaign
+      summary: Update campaign
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: campaign_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Campaign updated
+    delete:
+      tags: [Marketing]
+      operationId: deleteMarketingCampaign
+      summary: Delete campaign
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: campaign_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaign deleted
+
+  /api/marketing/campaigns/{campaign_id}/send:
+    post:
+      tags: [Marketing]
+      operationId: sendMarketingCampaign
+      summary: Send/execute a campaign
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: campaign_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaign sent
+
+  /api/marketing/campaigns/{campaign_id}/analytics:
+    get:
+      tags: [Marketing]
+      operationId: getCampaignAnalytics
+      summary: Get campaign performance analytics
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: campaign_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaign analytics
+
+  /api/marketing/segments:
+    get:
+      tags: [Marketing]
+      operationId: listMarketingSegments
+      summary: List audience segments
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Segment list
+    post:
+      tags: [Marketing]
+      operationId: createMarketingSegment
+      summary: Create an audience segment
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, criteria]
+              properties:
+                name:
+                  type: string
+                criteria:
+                  type: object
+      responses:
+        '200':
+          description: Segment created
+
+  /api/marketing/ai/generate-copy:
+    post:
+      tags: [Marketing]
+      operationId: generateMarketingCopy
+      summary: AI-generate marketing copy
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt, type]
+              properties:
+                prompt:
+                  type: string
+                type:
+                  type: string
+                  enum: [email, push, sms, social]
+                tone:
+                  type: string
+      responses:
+        '200':
+          description: Generated copy
+
+  /api/marketing/analytics/overview:
+    get:
+      tags: [Marketing]
+      operationId: getMarketingAnalyticsOverview
+      summary: Get marketing analytics overview
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Marketing analytics
+
+  # ═══════════════════════════════════════════
+  # MARKETING AI / BEHAVIORAL (17 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/marketing-ai/user-analysis/{user_id}:
+    get:
+      tags: [Marketing AI]
+      operationId: getUserBehavioralAnalysis
+      summary: Get user behavioral analysis
+      security:
+        - AdminAuth: []
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Behavioral analysis
+
+  /api/v1/marketing-ai/promotions/personalized:
+    get:
+      tags: [Marketing AI]
+      operationId: getPersonalizedPromotions
+      summary: Get personalized promotions for user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Personalized promotions
+
+  /api/v1/marketing-ai/promotions/generate:
+    post:
+      tags: [Marketing AI]
+      operationId: generateAIPromotions
+      summary: AI-generate targeted promotions
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_segment]
+              properties:
+                target_segment:
+                  type: string
+                budget:
+                  type: number
+                goals:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Generated promotions
+
+  /api/v1/marketing-ai/campaigns/generate:
+    post:
+      tags: [Marketing AI]
+      operationId: generateAICampaign
+      summary: AI-generate a full campaign
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [objective]
+              properties:
+                objective:
+                  type: string
+                target_audience:
+                  type: string
+                channels:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Generated campaign
+
+  /api/v1/marketing-ai/tracking/events:
+    post:
+      tags: [Marketing AI]
+      operationId: trackMarketingEvent
+      summary: Track user marketing event
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_type]
+              properties:
+                event_type:
+                  type: string
+                event_data:
+                  type: object
+      responses:
+        '200':
+          description: Event tracked
+
+  /api/v1/marketing-ai/segments/smart:
+    get:
+      tags: [Marketing AI]
+      operationId: getSmartSegments
+      summary: Get AI-generated smart segments
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Smart segments
+
+  /api/v1/marketing-ai/insights:
+    get:
+      tags: [Marketing AI]
+      operationId: getMarketingInsights
+      summary: Get AI marketing insights
+      security:
+        - AdminAuth: []
+      responses:
+        '200':
+          description: Marketing insights
+
+  # ═══════════════════════════════════════════
+  # SUPPORT (CUSTOMER) (8 endpoints)
+  # ═══════════════════════════════════════════
+  /api/support/tickets:
+    get:
+      tags: [Support]
+      operationId: customerListTickets
+      summary: List customer's support tickets
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ticket list
+    post:
+      tags: [Support]
+      operationId: customerCreateTicket
+      summary: Create a support ticket
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject, description]
+              properties:
+                subject:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                priority:
+                  type: string
+                  enum: [low, medium, high]
+      responses:
+        '200':
+          description: Ticket created
+
+  /api/support/tickets/{ticket_id}:
+    get:
+      tags: [Support]
+      operationId: customerGetTicket
+      summary: Get ticket details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket details
+
+  /api/support/tickets/{ticket_id}/messages:
+    get:
+      tags: [Support]
+      operationId: customerGetTicketMessages
+      summary: Get ticket messages
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket messages
+    post:
+      tags: [Support]
+      operationId: customerAddTicketMessage
+      summary: Add message to ticket
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Message added
+
+  /api/support/tickets/{ticket_id}/close:
+    post:
+      tags: [Support]
+      operationId: customerCloseTicket
+      summary: Close a support ticket
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket closed
+
+  /api/support/tickets/{ticket_id}/escalate:
+    post:
+      tags: [Support]
+      operationId: customerEscalateTicket
+      summary: Escalate a support ticket
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Ticket escalated
+
+  /api/support/verify:
+    post:
+      tags: [Support]
+      operationId: verifyCustomerIdentity
+      summary: Verify customer identity for support
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [verification_type]
+              properties:
+                verification_type:
+                  type: string
+                verification_data:
+                  type: object
+      responses:
+        '200':
+          description: Verification result
+
+  # ═══════════════════════════════════════════
+  # PUSH NOTIFICATIONS - IN-APP (11 endpoints)
+  # ═══════════════════════════════════════════
+  /api/v1/push-notifications/register:
+    post:
+      tags: [Push Notifications]
+      operationId: pushRegisterDevice
+      summary: Register device for push notifications
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_token, platform]
+              properties:
+                device_token:
+                  type: string
+                platform:
+                  type: string
+                  enum: [ios, android]
+                app_version:
+                  type: string
+      responses:
+        '200':
+          description: Device registered
+
+  /api/v1/push-notifications/send:
+    post:
+      tags: [Push Notifications]
+      operationId: pushSendNotification
+      summary: Send push notification to user
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, title, body]
+              properties:
+                user_id:
+                  type: string
+                title:
+                  type: string
+                body:
+                  type: string
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Notification sent
+
+  /api/v1/push-notifications/broadcast:
+    post:
+      tags: [Push Notifications]
+      operationId: pushBroadcast
+      summary: Broadcast push notification to all users
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, body]
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+                data:
+                  type: object
+                segment:
+                  type: string
+      responses:
+        '200':
+          description: Broadcast sent
+
+  /api/v1/push-notifications/in-app:
+    get:
+      tags: [Push Notifications]
+      operationId: getInAppNotifications
+      summary: Get in-app notifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: unread_only
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Notification list
+    post:
+      tags: [Push Notifications]
+      operationId: createInAppNotification
+      summary: Create in-app notification
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, title, body]
+              properties:
+                user_id:
+                  type: string
+                title:
+                  type: string
+                body:
+                  type: string
+                type:
+                  type: string
+                action_url:
+                  type: string
+      responses:
+        '200':
+          description: Notification created
+
+  /api/v1/push-notifications/in-app/{notification_id}/read:
+    post:
+      tags: [Push Notifications]
+      operationId: markInAppRead
+      summary: Mark in-app notification as read
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: notification_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Marked as read
+
+  /api/v1/push-notifications/in-app/read-all:
+    post:
+      tags: [Push Notifications]
+      operationId: markAllInAppRead
+      summary: Mark all in-app notifications as read
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: All marked read
+
+  /api/v1/push-notifications/in-app/{notification_id}:
+    delete:
+      tags: [Push Notifications]
+      operationId: deleteInAppNotification
+      summary: Delete an in-app notification
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: notification_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification deleted
+
+  /api/v1/push-notifications/unread-count:
+    get:
+      tags: [Push Notifications]
+      operationId: getUnreadCount
+      summary: Get unread notification count
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Unread count

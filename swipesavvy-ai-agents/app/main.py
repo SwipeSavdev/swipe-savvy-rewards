@@ -70,18 +70,25 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 # Security Middleware Stack
 # ============================================================================
 
-# Trusted Host Middleware - only in production with custom domain
-# Disabled for now while using IP address instead of domain
-# if settings.ENVIRONMENT == "production":
-#     app.add_middleware(
-#         TrustedHostMiddleware,
-#         allowed_hosts=[
-#             "api.swipesavvy.com",
-#             "api-staging.swipesavvy.com",
-#             "54.224.8.14",
-#             "localhost",
-#         ]
-#     )
+# Trusted Host Middleware (PCI DSS 6.4.1)
+if settings.ENVIRONMENT == "production":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=[
+            "api.swipesavvy.com",
+            "api-staging.swipesavvy.com",
+        ]
+    )
+elif settings.ENVIRONMENT in ("development", "testing"):
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=[
+            "api.swipesavvy.com",
+            "api-staging.swipesavvy.com",
+            "localhost",
+            "127.0.0.1",
+        ]
+    )
 
 # CORS Middleware with environment-specific settings
 app.add_middleware(
@@ -155,19 +162,17 @@ async def readiness_check():
         # Check database connectivity
         db = SessionLocal()
         db_status = "ok"
-        db_error = None
-        
+
         try:
             # Use parameterized query for safety and clarity
             db.execute(text("SELECT 1"))
         except Exception as e:
             logger.error(f"Database check failed: {str(e)}")
             db_status = "failed"
-            db_error = str(e)
         finally:
             # CRITICAL: Always close connection to prevent pool leak
             db.close()
-        
+
         if db_status == "failed":
             return JSONResponse(
                 status_code=503,
@@ -175,7 +180,7 @@ async def readiness_check():
                     "status": "not_ready",
                     "checks": {
                         "database": "failed",
-                        "reason": db_error
+                        "reason": "Service check failed"
                     }
                 }
             )
@@ -193,7 +198,7 @@ async def readiness_check():
             status_code=503,
             content={
                 "status": "not_ready",
-                "reason": str(e)
+                "reason": "Service check failed"
             }
         )
 

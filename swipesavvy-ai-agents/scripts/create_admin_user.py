@@ -10,6 +10,7 @@ Usage:
 """
 
 import os
+import secrets
 import sys
 from pathlib import Path
 
@@ -31,7 +32,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Admin user details
 ADMIN_EMAIL = "admin@swipesavvy.com"
-ADMIN_PASSWORD = "SwipeSavvy2026!"
+ADMIN_PASSWORD = secrets.token_urlsafe(16)
 ADMIN_NAME = "SwipeSavvy Admin"
 ADMIN_ROLE = "super_admin"
 
@@ -84,10 +85,10 @@ def create_admin_user():
             conn.commit()
             print(f"Created new admin user: {ADMIN_EMAIL}")
 
-    print(f"\nAdmin credentials:")
+    print("\nAdmin user created successfully.")
     print(f"  Email: {ADMIN_EMAIL}")
-    print(f"  Password: {ADMIN_PASSWORD}")
     print(f"  Role: {ADMIN_ROLE}")
+    print("  NOTE: Password was auto-generated. Reset it via the admin password-reset flow.")
 
 if __name__ == "__main__":
     create_admin_user()

@@ -224,11 +224,30 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
+  otp_required?: boolean
+  verification_required?: boolean
+  message?: string
+  user_id?: string
+  user?: User
+  dev_otp_code?: string
+}
+
+export interface VerifyOtpRequest {
+  user_id: string
+  code: string
+}
+
+export interface VerifyOtpResponse {
+  success: boolean
+  access_token: string
+  refresh_token: string
+  token_type: string
+  expires_in: number
   user: User
-  token: string
-  refreshToken?: string
 }
 
 export interface RefreshTokenResponse {
-  token: string
+  access_token: string
+  refresh_token: string
+  expires_in: number
 }

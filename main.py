@@ -15,7 +15,7 @@ This server provides APIs for:
 import os
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
@@ -138,18 +138,28 @@ app = FastAPI(
 # CORS MIDDLEWARE
 # ═════════════════════════════════════════════════════════════════════════════
 
+# SECURITY: Environment-aware CORS — no wildcard with credentials (OWASP A05)
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+_CORS_ORIGINS_DEV = [
+    "http://localhost:3000",      # Admin Portal
+    "http://localhost:5173",      # Admin Portal (Vite)
+    "http://localhost:8080",      # Mobile Web
+    "http://localhost:8081",      # Expo Metro
+    "http://192.168.1.142:3000",  # Admin Portal (Network)
+    "http://192.168.1.142:5173",  # Admin Portal (Network)
+    "http://192.168.1.142:8081",  # Expo Metro (Network)
+]
+
+_CORS_ORIGINS_PROD = [
+    "https://app.swipesavvy.com",
+    "https://admin.swipesavvy.com",
+    "https://wallet.swipesavvy.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",      # Admin Portal
-        "http://localhost:5173",      # Admin Portal (Vite)
-        "http://localhost:8080",      # Mobile Web
-        "http://localhost:8081",      # Expo Metro
-        "http://192.168.1.142:3000",  # Admin Portal (Network)
-        "http://192.168.1.142:5173",  # Admin Portal (Network)
-        "http://192.168.1.142:8081",  # Expo Metro (Network)
-        "*"                            # Allow all for development
-    ],
+    allow_origins=_CORS_ORIGINS_DEV if ENVIRONMENT == "development" else _CORS_ORIGINS_PROD,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -174,9 +184,9 @@ async def health_check(db: Session = Depends(get_db)):
             "version": "1.0.0"
         }
     except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
         return {
             "status": "unhealthy",
-            "error": str(e),
             "timestamp": str(__import__('datetime').datetime.now())
         }
 
@@ -187,7 +197,8 @@ async def phase4_health(db: Session = Depends(get_db)):
         db.execute(text("SELECT COUNT(*) FROM campaign_analytics_daily LIMIT 1"))
         return {"status": "ok", "phase4": "ready"}
     except Exception as e:
-        return {"status": "ok", "phase4": "tables_not_ready", "note": str(e)}
+        logger.error(f"Phase 4 health check failed: {str(e)}")
+        return {"status": "ok", "phase4": "tables_not_ready"}
 
 # ═════════════════════════════════════════════════════════════════════════════
 # ROOT ENDPOINT
@@ -208,11 +219,6 @@ async def root():
             "ab_testing": "/api/ab-tests/*",
             "optimization": "/api/optimize/*",
         },
-        "database": {
-            "host": DB_HOST,
-            "port": DB_PORT,
-            "name": DB_NAME
-        },
         "documentation": "Available at /docs (Swagger UI) or /redoc (ReDoc)"
     }
 
@@ -232,8 +238,11 @@ async def admin_login(request: LoginRequest):
     Admin authentication endpoint
     For development: accepts any credentials and returns mock token
     """
+    # SECURITY: Block mock auth in production (OWASP A07)
+    if ENVIRONMENT not in ("development", "testing"):
+        raise HTTPException(status_code=404, detail="Not found")
+
     # Simple mock authentication for development
-    # In production, this should verify credentials against database
     return {
         "token": "mock-jwt-token-" + str(int(__import__('datetime').datetime.now().timestamp())),
         "session": {
@@ -261,6 +270,10 @@ async def mobile_login(request: LoginRequest):
     Mobile app authentication endpoint
     For development: accepts any credentials and returns mock token with OTP verification required
     """
+    # SECURITY: Block mock auth in production (OWASP A07)
+    if ENVIRONMENT not in ("development", "testing"):
+        raise HTTPException(status_code=404, detail="Not found")
+
     # Generate mock user ID
     user_id = "user_" + str(int(__import__('datetime').datetime.now().timestamp()))
 
@@ -287,6 +300,10 @@ async def wallet_login(request: LoginRequest):
     Wallet web app authentication endpoint
     For development: accepts any credentials and returns mock token directly (no OTP required)
     """
+    # SECURITY: Block mock auth in production (OWASP A07)
+    if ENVIRONMENT not in ("development", "testing"):
+        raise HTTPException(status_code=404, detail="Not found")
+
     import datetime
 
     # Generate mock user ID and token
@@ -315,6 +332,10 @@ async def mobile_signup(request: dict):
     Mobile app signup endpoint
     For development: accepts signup data and returns mock response
     """
+    # SECURITY: Block mock auth in production (OWASP A07)
+    if ENVIRONMENT not in ("development", "testing"):
+        raise HTTPException(status_code=404, detail="Not found")
+
     # Generate mock user ID
     user_id = "user_" + str(int(__import__('datetime').datetime.now().timestamp()))
     
@@ -339,6 +360,10 @@ async def verify_login_otp(request: dict):
     Verify OTP code and complete authentication
     For development: accepts any 6-digit code
     """
+    # SECURITY: Block mock auth in production (OWASP A07)
+    if ENVIRONMENT not in ("development", "testing"):
+        raise HTTPException(status_code=404, detail="Not found")
+
     user_id = request.get("user_id", "")
     code = request.get("code", "")
     
@@ -375,6 +400,10 @@ async def resend_login_otp(request: dict):
     Resend OTP code
     For development: always returns success
     """
+    # SECURITY: Block mock auth in production (OWASP A07)
+    if ENVIRONMENT not in ("development", "testing"):
+        raise HTTPException(status_code=404, detail="Not found")
+
     user_id = request.get("user_id", "")
     
     return {
@@ -435,7 +464,8 @@ async def get_campaigns_count(db: Session = Depends(get_db)):
         count = result.scalar() or 0
         return {"campaigns_count": count, "status": "ok"}
     except Exception as e:
-        return {"campaigns_count": 0, "status": "error", "error": str(e)}
+        logger.error(f"Campaign count query failed: {str(e)}")
+        return {"campaigns_count": 0, "status": "error"}
 
 @app.get("/api/analytics/health")
 async def analytics_health(db: Session = Depends(get_db)):
@@ -444,7 +474,8 @@ async def analytics_health(db: Session = Depends(get_db)):
         db.execute(text("SELECT 1 FROM campaign_analytics_daily LIMIT 1"))
         return {"analytics": "ready", "data_available": True}
     except Exception as e:
-        return {"analytics": "initializing", "data_available": False, "note": str(e)}
+        logger.error(f"Analytics health check failed: {str(e)}")
+        return {"analytics": "initializing", "data_available": False}
 
 @app.get("/api/ab-tests/count")
 async def get_ab_tests_count(db: Session = Depends(get_db)):
@@ -454,7 +485,8 @@ async def get_ab_tests_count(db: Session = Depends(get_db)):
         count = result.scalar() or 0
         return {"ab_tests_count": count, "status": "ok"}
     except Exception as e:
-        return {"ab_tests_count": 0, "status": "error", "error": str(e)}
+        logger.error(f"AB tests count query failed: {str(e)}")
+        return {"ab_tests_count": 0, "status": "error"}
 
 @app.get("/api/optimize/affinity/summary")
 async def get_affinity_summary(db: Session = Depends(get_db)):
@@ -477,7 +509,8 @@ async def get_affinity_summary(db: Session = Depends(get_db)):
             "status": "ok"
         }
     except Exception as e:
-        return {"status": "error", "error": str(e)}
+        logger.error(f"Affinity summary query failed: {str(e)}")
+        return {"status": "error"}
 
 # ═════════════════════════════════════════════════════════════════════════════
 # STARTUP EVENT

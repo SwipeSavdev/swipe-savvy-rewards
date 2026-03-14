@@ -1,5 +1,9 @@
 -- SwipeSavvy Demo Data Seed Script
 -- Populates all three databases with sample data
+--
+-- Default passwords (bcrypt 12 rounds):
+--   Admin accounts: AdminPassword123!
+--   User accounts:  TestPassword123!
 
 -- ============================================
 -- swipesavvy_dev Database - Seed Data
@@ -7,23 +11,23 @@
 
 -- Insert Admin Users
 INSERT INTO admin_users (email, password_hash, full_name, role, department, permissions, status) VALUES
-('admin@swipesavvy.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Admin User', 'admin', 'Executive', ARRAY['all'], 'active'),
-('support@swipesavvy.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Support Manager', 'support_manager', 'Support', ARRAY['view_users', 'view_support', 'view_reports'], 'active'),
-('finance@swipesavvy.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Finance Officer', 'admin', 'Finance', ARRAY['view_merchants', 'view_transactions', 'view_reports'], 'active'),
-('ops@swipesavvy.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Operations Lead', 'admin', 'Operations', ARRAY['view_all', 'manage_systems'], 'active'),
-('analyst@swipesavvy.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Data Analyst', 'analyst', 'Analytics', ARRAY['view_reports', 'view_analytics'], 'active')
+('admin@swipesavvy.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Admin User', 'admin', 'Executive', ARRAY['all'], 'active'),
+('support@swipesavvy.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Support Manager', 'support_manager', 'Support', ARRAY['view_users', 'view_support', 'view_reports'], 'active'),
+('finance@swipesavvy.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Finance Officer', 'admin', 'Finance', ARRAY['view_merchants', 'view_transactions', 'view_reports'], 'active'),
+('ops@swipesavvy.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Operations Lead', 'admin', 'Operations', ARRAY['view_all', 'manage_systems'], 'active'),
+('analyst@swipesavvy.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Data Analyst', 'analyst', 'Analytics', ARRAY['view_reports', 'view_analytics'], 'active')
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert Regular Users
 INSERT INTO users (email, password_hash, name, status, role) VALUES
-('john.doe@example.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'John Doe', 'active', 'user'),
-('jane.smith@example.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Jane Smith', 'active', 'user'),
-('merchant1@business.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Mike Johnson', 'active', 'merchant'),
-('merchant2@business.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Sarah Williams', 'active', 'merchant'),
-('support.agent@swipesavvy.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Support Agent', 'active', 'support'),
-('customer@gmail.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Alice Brown', 'active', 'user'),
-('inactive.user@example.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Bob Martin', 'inactive', 'user'),
-('suspended@example.com', '$2b$12$5YhkPOEBvDBWP2EPw3Nt7.5K8Z5M6nPd9sKw8qKf9vVzJ7Q4GhMfa', 'Charlie Brown', 'suspended', 'user')
+('john.doe@example.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'John Doe', 'active', 'user'),
+('jane.smith@example.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Jane Smith', 'active', 'user'),
+('merchant1@business.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Mike Johnson', 'active', 'merchant'),
+('merchant2@business.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Sarah Williams', 'active', 'merchant'),
+('support.agent@swipesavvy.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Support Agent', 'active', 'support'),
+('customer@gmail.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Alice Brown', 'active', 'user'),
+('inactive.user@example.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Bob Martin', 'inactive', 'user'),
+('suspended@example.com', '$2b$12$03EhlOmlrwuTJ11Kzxbnxen0RtrUmoRaLQVfeLR4uSMXPghDs40K.', 'Charlie Brown', 'suspended', 'user')
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert Merchants

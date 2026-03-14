@@ -26,7 +26,6 @@ RUN npm ci --production
 # Copy built assets from builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/build ./build
-COPY . .
 
 # Expose Expo dev server ports
 EXPOSE 8081
@@ -36,6 +35,9 @@ EXPOSE 19001
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:8081', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
+
+# Run as non-root user
+USER node
 
 # Start Expo dev server
 CMD ["npm", "start"]

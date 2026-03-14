@@ -95,6 +95,9 @@
     return { results: (json.results || []), used: "mcp" };
   }
 
+  // SECURITY: Sanitize text to prevent XSS in search results (OWASP A03)
+  function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
   function renderResults(items){
     const wrap = $("support-results");
     if (!wrap) return;
@@ -103,17 +106,17 @@
       return;
     }
     wrap.innerHTML = items.map((r)=>{
-      const tags = (r.tags||[]).slice(0,6).map(t=>`<span class="badge green">${t}</span>`).join(" ");
-      const src = r.source ? `<span class="badge yellow">${r.source}</span>` : "";
+      const tags = (r.tags||[]).slice(0,6).map(t=>`<span class="badge green">${esc(t)}</span>`).join(" ");
+      const src = r.source ? `<span class="badge yellow">${esc(r.source)}</span>` : "";
       const score = (typeof r.score === "number") ? `${Math.round(r.score*100)}%` : "";
       const meta = `<div class="meta">${src} ${score ? `<span class="badge">Relevance ${score}</span>` : ""} ${tags}</div>`;
-      const url = r.url || "#";
+      const url = r.url ? encodeURI(r.url) : "#";
       return `
         <div class="result">
           <div class="top">
             <div>
-              <div class="title">${r.title || "Untitled"}</div>
-              <div class="snippet">${r.snippet || ""}</div>
+              <div class="title">${esc(r.title || "Untitled")}</div>
+              <div class="snippet">${esc(r.snippet || "")}</div>
               ${meta}
               <a class="open" href="${url}">Open</a>
             </div>
@@ -131,10 +134,10 @@
       return;
     }
     const top = items.slice(0, 3);
-    const bullets = top.map(r=>`<li><b>${r.title}</b> — ${r.snippet || ""}</li>`).join("");
+    const bullets = top.map(r=>`<li><b>${esc(r.title)}</b> — ${esc(r.snippet || “”)}</li>`).join(“”);
     box.innerHTML = `
       <b>Savvy AI Digest</b>
-      <p>Based on your search for <b>“${q}”</b>, here are the most relevant help items:</p>
+      <p>Based on your search for <b>”${esc(q)}”</b>, here are the most relevant help items:</p>
       <ul>${bullets}</ul>
       <p>Tip: refine with keywords like <b>refund</b>, <b>inventory</b>, <b>reporting</b>, <b>devices</b>, <b>offline</b>, <b>BOPIS</b>.</p>
     `;

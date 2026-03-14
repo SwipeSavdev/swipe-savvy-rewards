@@ -5,7 +5,7 @@
 
 # LLM & AI Frameworks
 together==1.3.0
-openai==1.6.0
+openai>=1.30.0
 sentence-transformers==2.2.2
 tiktoken==0.5.2
 
@@ -19,7 +19,7 @@ pinecone-client==3.0.2
 pgvector==0.2.2
 
 # Web Framework
-fastapi==0.104.1
+fastapi>=0.109.1
 uvicorn==0.24.0
 pydantic==2.5.2
 pydantic-settings==2.1.0
@@ -31,16 +31,16 @@ spacy==3.7.2
 
 # Utilities
 python-dotenv==1.0.0
-requests==2.31.0
+requests>=2.32.0
 httpx==0.25.2
 
 # Monitoring & Logging
-sentry-sdk==1.38.0
+sentry-sdk>=2.0.0
 python-json-logger==2.0.7
 
 # Authentication & Crypto
 pyjwt==2.8.1
-cryptography==41.0.7
+cryptography>=43.0.0
 
 # Rate Limiting
 slowapi==0.1.9

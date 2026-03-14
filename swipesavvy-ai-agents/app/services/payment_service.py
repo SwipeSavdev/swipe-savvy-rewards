@@ -1,14 +1,16 @@
 """
 Payment Service - Authorize.Net Integration for SwipeSavvy
 
-Handles payment processing, subscriptions, refunds, and payment profile management.
-Integrates with Authorize.Net API for secure payment processing.
+NOTE: SwipeSavvy does not process in-app payments. This service exists for
+merchant reward settlement and administrative operations only.
+It is NOT exposed to end users in the mobile app.
 """
 
 from typing import Optional, Dict, Any, List
 from decimal import Decimal
 from uuid import UUID, uuid4
 from datetime import datetime, timedelta, timezone
+import os
 import requests
 import json
 from sqlalchemy.orm import Session
@@ -22,6 +24,7 @@ logger = logging.getLogger(__name__)
 PAYMENT_NOT_FOUND = "Payment not found"
 SUBSCRIPTION_NOT_FOUND = "Subscription not found"
 USER_NOT_FOUND = "User not found"
+PAYMENT_PROCESSING_FAILED = "Payment processing failed. Please try again."
 
 
 class AuthorizeNetService:
@@ -31,8 +34,11 @@ class AuthorizeNetService:
         """Initialize payment service with Authorize.Net credentials"""
         self.api_login_id = api_login_id
         self.transaction_key = transaction_key
-        self.base_url = "https://apitest.authorize.net/xml/v1/request.api"  # Sandbox
-        # For production: "https://api.authorize.net/xml/v1/request.api"
+        environment = os.getenv("ENVIRONMENT", "development")
+        if environment == "production":
+            self.base_url = "https://api.authorize.net/xml/v1/request.api"
+        else:
+            self.base_url = "https://apitest.authorize.net/xml/v1/request.api"
     
     def _build_request_headers(self) -> Dict[str, str]:
         """Build request headers for Authorize.Net"""
@@ -84,7 +90,7 @@ class AuthorizeNetService:
                 merchant_id=merchant_id,
                 amount=Decimal(str(amount)),
                 currency=currency,
-                stripe_payment_intent_id=f"auth_pending_{str(uuid4())[:8]}",  # Temp ID
+                stripe_payment_intent_id=f"auth_pending_{str(uuid4())[:8]}",  # Legacy column name — stores Authorize.Net pending ID
                 status="pending",
                 payment_method="authorize_net",
                 description=description,
@@ -108,7 +114,7 @@ class AuthorizeNetService:
         except Exception as e:
             db.rollback()
             logger.error(f"Payment creation failed: {str(e)}")
-            raise
+            raise Exception(PAYMENT_PROCESSING_FAILED)
     
     def confirm_payment(
         self,
@@ -132,11 +138,16 @@ class AuthorizeNetService:
             Confirmed payment details
         """
         try:
+            # PCI DSS compliance: Raw card data should not be handled server-side.
+            # This endpoint is for administrative/settlement use only — not exposed to end users.
+            logger.warning("SECURITY: Raw card data received server-side. This endpoint is for admin/settlement use only.")
+
             # Get payment from database
             payment = db.query(Payment).filter(Payment.id == payment_id).first()
             if not payment:
                 raise ValueError(PAYMENT_NOT_FOUND)
-            
+
+            # Never log card details
             # Build Authorize.Net transaction request
             request_payload = {
                 "createTransactionRequest": {
@@ -196,7 +207,7 @@ class AuthorizeNetService:
         except Exception as e:
             db.rollback()
             logger.error(f"Payment confirmation failed: {str(e)}")
-            raise
+            raise Exception(PAYMENT_PROCESSING_FAILED)
     
     def refund_payment(
         self,
@@ -274,7 +285,7 @@ class AuthorizeNetService:
         except Exception as e:
             db.rollback()
             logger.error(f"Refund failed: {str(e)}")
-            raise
+            raise Exception(PAYMENT_PROCESSING_FAILED)
     
     def get_payment_history(
         self,

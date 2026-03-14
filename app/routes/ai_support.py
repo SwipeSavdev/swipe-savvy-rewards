@@ -84,8 +84,8 @@ async def analyze_issue(request: IssueRequest):
             "data": result
         }
     except Exception as e:
-        logger.error(f"Error analyzing issue: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error analyzing issue: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/search-documentation")
@@ -109,8 +109,8 @@ async def search_documentation(request: DocumentationSearchRequest):
             "count": len(results)
         }
     except Exception as e:
-        logger.error(f"Error searching documentation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error searching documentation: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/find-similar-issues")
@@ -135,8 +135,8 @@ async def find_similar_issues(request: SimilarIssuesRequest):
             "issues": results
         }
     except Exception as e:
-        logger.error(f"Error finding similar issues: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error finding similar issues: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/record-resolution")
@@ -172,8 +172,8 @@ async def record_resolution(request: ResolutionRecordRequest):
             "issue_id": request.issue_id
         }
     except Exception as e:
-        logger.error(f"Error recording resolution: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error recording resolution: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/statistics")
@@ -191,8 +191,8 @@ async def get_statistics():
             "data": stats
         }
     except Exception as e:
-        logger.error(f"Error getting statistics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting statistics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/health")
@@ -212,8 +212,8 @@ async def support_health():
             "total_issues_recorded": stats["statistics"]["total_issues_resolved"]
         }
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Health check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/batch-analyze")
@@ -239,8 +239,8 @@ async def batch_analyze_issues(issues: List[IssueRequest]):
             "analyses": results
         }
     except Exception as e:
-        logger.error(f"Error in batch analysis: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error in batch analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/patterns")
@@ -259,8 +259,8 @@ async def get_learning_patterns():
             "total_patterns": len(patterns)
         }
     except Exception as e:
-        logger.error(f"Error getting patterns: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting patterns: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/learning-logs")
@@ -282,5 +282,5 @@ async def get_learning_logs(limit: Optional[int] = 20):
             "total_logs": len(logs)
         }
     except Exception as e:
-        logger.error(f"Error getting learning logs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting learning logs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")

@@ -48,16 +48,16 @@ jobs:
     if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all' || github.event.inputs.platform == ''
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde8c81c89c3166c0 # v4.2.0
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Setup EAS
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@4c46170b83e4fef84de66eee1d73bae4b09edbc0 # v8.0.2
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
@@ -82,16 +82,16 @@ jobs:
     if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all' || github.event.inputs.platform == ''
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde8c81c89c3166c0 # v4.2.0
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Setup EAS
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@4c46170b83e4fef84de66eee1d73bae4b09edbc0 # v8.0.2
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
@@ -110,6 +110,10 @@ jobs:
         if: (github.event.inputs.submit == 'true' || github.ref == 'refs/heads/main') && github.event.inputs.profile == 'production'
         run: eas submit --platform android --latest --non-interactive
 
+      - name: Cleanup secrets
+        if: always()
+        run: rm -f google-service-account.json
+
   notify-success:
     name: Notify on Success
     runs-on: ubuntu-latest
@@ -118,7 +122,7 @@ jobs:
     steps:
       - name: Send Slack notification
         if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
         with:
           payload: |
             {
@@ -145,7 +149,7 @@ jobs:
     steps:
       - name: Send Slack notification
         if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
         with:
           payload: |
             {

@@ -268,7 +268,7 @@ export function useRealtimeDashboard() {
     const manager = getDashboardWebSocketManager();
     managerRef.current = manager;
 
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     if (token) {
       manager.connect(token).catch((error) => {
         console.error('Failed to connect to dashboard WebSocket:', error);
@@ -305,7 +305,7 @@ export function useRealtimeData<T = any>(
     const manager = getDashboardWebSocketManager();
 
     if (!manager.isConnected()) {
-      const token = localStorage.getItem('authToken');
+      const token = sessionStorage.getItem('authToken');
       if (token) {
         manager.connect(token).catch((err) => {
           setError(`Failed to connect: ${err.message}`);

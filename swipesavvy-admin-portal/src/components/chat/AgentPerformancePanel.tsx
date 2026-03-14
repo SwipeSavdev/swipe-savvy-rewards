@@ -26,7 +26,7 @@ const AgentPerformancePanel: React.FC<Props> = ({ timeRangeHours, agentId }) => 
     const fetchAgentPerformance = async () => {
       try {
         setIsLoading(true);
-        const token = localStorage.getItem('authToken');
+        const token = sessionStorage.getItem('authToken');
         const params = new URLSearchParams({
           time_range_hours: timeRangeHours.toString(),
           ...(agentId && { agent_id: agentId }),

@@ -81,15 +81,15 @@ resource "aws_db_parameter_group" "main" {
     apply_method = "pending-reboot"
   }
 
-  # Logging (dynamic)
+  # Logging (dynamic) — PCI DSS 10.2 requires logging all SQL statements
   parameter {
     name  = "log_statement"
-    value = "ddl"
+    value = "all"
   }
 
   parameter {
     name  = "log_min_duration_statement"
-    value = "1000" # Log queries taking > 1 second
+    value = "0" # Log all queries regardless of duration (PCI DSS compliance)
   }
 
   # Performance (static - requires reboot)

@@ -15,7 +15,7 @@ import os
 import time
 from typing import Optional, Dict, Any, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from together import Together
@@ -24,9 +24,21 @@ from app.config.ai_roles import (
     build_role_aware_prompt,
     get_max_transaction_amount,
 )
+from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/ai-concierge", tags=["ai-concierge"])
+
+
+# SECURITY: Require authentication for all AI concierge endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/ai-concierge", tags=["ai-concierge"], dependencies=[Depends(require_auth)])
 
 # SSE stream terminator
 SSE_DONE = "data: [DONE]\n\n"
@@ -266,4 +278,4 @@ async def approve_action(approval_key: str):
         return {"success": True, "message": f"Action approved: {approval_key}"}
     except Exception as e:
         logger.error(f"Approval failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")

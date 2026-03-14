@@ -15,12 +15,24 @@ import json
 import os
 from pydantic import BaseModel
 
+from fastapi import Depends, Header
 from app.services.marketing_ai import get_marketing_ai_service
 from app.scheduler.marketing_jobs import schedule_marketing_analysis_now, schedule_campaign_cleanup_now
+from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/marketing", tags=["marketing"])
+
+# SECURITY: Require authentication for all marketing endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/marketing", tags=["marketing"], dependencies=[Depends(require_auth)])
 
 # Database configuration
 DB_CONFIG = {
@@ -28,7 +40,7 @@ DB_CONFIG = {
     "port": int(os.getenv("DB_PORT", 5432)),
     "database": os.getenv("DB_NAME", "swipesavvy_agents"),
     "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "password"),
+    "password": os.getenv("DB_PASSWORD", ""),  # SECURITY: No default password — fail fast if unset
 }
 
 
@@ -102,7 +114,7 @@ async def list_campaigns(
     
     except Exception as e:
         logger.error(f"Error listing campaigns: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/campaigns/{campaign_id}")
@@ -167,7 +179,7 @@ async def get_campaign(campaign_id: int) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"Error getting campaign: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/segments")
@@ -221,7 +233,7 @@ async def list_user_segments(
     
     except Exception as e:
         logger.error(f"Error listing segments: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/segments/{pattern}")
@@ -278,7 +290,7 @@ async def get_segment_details(pattern: str) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"Error getting segment details: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/analytics")
@@ -357,7 +369,7 @@ async def get_marketing_analytics() -> Dict[str, Any]:
     
     except Exception as e:
         logger.error(f"Error getting analytics: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/campaigns/manual")
@@ -410,7 +422,7 @@ async def create_manual_campaign(
     
     except Exception as e:
         logger.error(f"Error creating campaign: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.put("/campaigns/{campaign_id}")
@@ -496,7 +508,7 @@ async def update_campaign(
         raise
     except Exception as e:
         logger.error(f"Error updating campaign: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/campaigns/{campaign_id}/publish")
@@ -545,7 +557,7 @@ async def publish_campaign(campaign_id: str) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"Error publishing campaign: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/analysis/run-now")
@@ -556,7 +568,7 @@ async def trigger_analysis() -> Dict[str, Any]:
         return result
     except Exception as e:
         logger.error(f"Error triggering analysis: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/cleanup/run-now")
@@ -567,7 +579,7 @@ async def trigger_cleanup() -> Dict[str, Any]:
         return result
     except Exception as e:
         logger.error(f"Error triggering cleanup: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/status")
@@ -606,7 +618,7 @@ async def get_marketing_status() -> Dict[str, Any]:
     
     except Exception as e:
         logger.error(f"Error getting status: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ===== AI MARKETING ENHANCED ENDPOINTS =====
@@ -664,7 +676,7 @@ async def generate_campaign_copy(request: GenerateCopyRequest) -> Dict[str, Any]
         return result
     except Exception as e:
         logger.error(f"Error generating campaign copy: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/ai/audience-insights")
@@ -685,7 +697,7 @@ async def get_audience_insights(request: AudienceInsightsRequest) -> Dict[str, A
         return result
     except Exception as e:
         logger.error(f"Error getting audience insights: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/ai/optimize")
@@ -714,7 +726,7 @@ async def optimize_campaign(request: OptimizeCampaignRequest) -> Dict[str, Any]:
         return result
     except Exception as e:
         logger.error(f"Error optimizing campaign: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/ai/performance-analysis")
@@ -735,5 +747,5 @@ async def analyze_performance(request: PerformanceAnalysisRequest) -> Dict[str, 
         return result
     except Exception as e:
         logger.error(f"Error analyzing performance: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 

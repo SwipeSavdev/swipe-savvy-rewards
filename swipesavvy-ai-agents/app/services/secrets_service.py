@@ -119,12 +119,12 @@ class SecretsService:
             'webhook_secret': secret.get('STRIPE_WEBHOOK_SECRET') or os.getenv('STRIPE_WEBHOOK_SECRET'),
         }
 
-    def get_plaid_credentials(self) -> Dict[str, str]:
-        """Get Plaid bank linking credentials"""
-        secret = self.get_secret(f"{SECRET_PREFIX}/banking/plaid")
+    def get_connect_financial_credentials(self) -> Dict[str, str]:
+        """Get Connect Financial IDV/screening credentials (program manager)"""
+        secret = self.get_secret(f"{SECRET_PREFIX}/kyc/connect_financial")
         return {
-            'client_id': secret.get('PLAID_CLIENT_ID') or os.getenv('PLAID_CLIENT_ID'),
-            'secret': secret.get('PLAID_SECRET') or os.getenv('PLAID_SECRET'),
+            'api_url': secret.get('CONNECT_FINANCIAL_API_URL') or os.getenv('CONNECT_FINANCIAL_API_URL'),
+            'api_key': secret.get('CONNECT_FINANCIAL_API_KEY') or os.getenv('CONNECT_FINANCIAL_API_KEY'),
         }
 
     def get_fis_credentials(self) -> Dict[str, str]:

@@ -464,6 +464,28 @@ class PaymentMethod(Base):
     )
 
 
+class PointsLedger(Base):
+    """Immutable ledger for all points transactions (earn, redeem, donate, expire, adjust)."""
+    __tablename__ = "points_ledger"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
+    transaction_type = Column(String(50), nullable=False)  # earn, redeem, donate, expire, adjust
+    points = Column(Integer, nullable=False)  # positive for earn, negative for redeem/donate
+    balance_after = Column(Integer, nullable=False)  # running balance after this transaction
+    description = Column(String(500))
+    reference_type = Column(String(50))  # wallet_transaction, boost, promotion, manual
+    reference_id = Column(String(255))  # ID of the source record
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    user = relationship("User", backref="points_ledger_entries")
+
+    __table_args__ = (
+        CheckConstraint("transaction_type IN ('earn', 'redeem', 'donate', 'expire', 'adjust')"),
+    )
+
+
 # ============================================
 # Phase 10: Advanced Features Models
 # ============================================
@@ -1319,6 +1341,8 @@ __all__ = [
     # Form models
     "ContactFormSubmission",
     "DemoRequestSubmission",
+    # Points Ledger
+    "PointsLedger",
     # FIS Global Card Management models
     "FISCard",
     "FISCardControl",

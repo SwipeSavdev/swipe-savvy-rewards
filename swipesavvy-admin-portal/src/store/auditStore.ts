@@ -38,7 +38,7 @@ const generateAuditId = () => `audit_${Date.now()}_${Math.random().toString(36).
 // Get current user info from auth store (if available)
 const getCurrentUser = () => {
   try {
-    const authData = localStorage.getItem('swipesavvy-auth')
+    const authData = sessionStorage.getItem('swipesavvy-auth')
     if (authData) {
       const parsed = JSON.parse(authData)
       return {

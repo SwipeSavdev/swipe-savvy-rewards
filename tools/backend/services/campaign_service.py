@@ -13,7 +13,10 @@ from typing import List, Optional, Dict, Any
 from decimal import Decimal
 from enum import Enum
 import sys
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Import get_db from main module
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -217,7 +220,8 @@ async def list_campaigns(
         result = service.list_campaigns(status, limit, offset)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error listing campaigns: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("")
 async def create_campaign(
@@ -269,9 +273,10 @@ async def create_campaign(
         )
         return result
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid input: {str(e)}")
+        raise HTTPException(status_code=400, detail="Invalid input format")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error creating campaign: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{campaign_id}")
 async def get_campaign(
@@ -303,7 +308,8 @@ async def get_campaign(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting campaign: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.put("/{campaign_id}")
 async def update_campaign(
@@ -343,7 +349,8 @@ async def update_campaign(
         result = service.update_campaign(campaign_id, **updates)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error updating campaign: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.delete("/{campaign_id}")
 async def delete_campaign(
@@ -371,7 +378,8 @@ async def delete_campaign(
             "status": "archived"
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error deleting campaign: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/{campaign_id}/launch")
 async def launch_campaign(
@@ -395,7 +403,8 @@ async def launch_campaign(
         result = service.launch_campaign(campaign_id)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error launching campaign: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/{campaign_id}/pause")
 async def pause_campaign(
@@ -418,7 +427,8 @@ async def pause_campaign(
         result = service.pause_campaign(campaign_id)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error pausing campaign: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # ============================================================================
 # SETUP FUNCTION

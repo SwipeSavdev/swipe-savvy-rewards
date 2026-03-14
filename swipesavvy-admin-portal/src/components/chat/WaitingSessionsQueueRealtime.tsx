@@ -31,7 +31,7 @@ const WaitingSessionsQueueRealtime: React.FC = () => {
     const fetchWaitingSessions = async () => {
       try {
         setIsLoading(true);
-        const token = localStorage.getItem('authToken');
+        const token = sessionStorage.getItem('authToken');
         const response = await apiClient.get(
           '/api/v1/admin/chat-dashboard/waiting-sessions',
           { headers: { Authorization: `Bearer ${token}` } }

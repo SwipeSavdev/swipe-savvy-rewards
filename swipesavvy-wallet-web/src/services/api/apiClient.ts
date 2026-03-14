@@ -70,7 +70,7 @@ async function refreshAccessToken(): Promise<string | null> {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify({ refresh_token: refreshToken }),
     })
 
     if (!response.ok) {
@@ -78,8 +78,11 @@ async function refreshAccessToken(): Promise<string | null> {
     }
 
     const data = await response.json()
-    setToken(data.token)
-    return data.token
+    setToken(data.access_token)
+    if (data.refresh_token) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token)
+    }
+    return data.access_token
   } catch {
     clearTokens()
     return null

@@ -4,7 +4,7 @@ Admin Charity Management Routes
 Provides CRUD operations for charity onboarding management.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from pydantic import BaseModel, EmailStr
@@ -14,8 +14,19 @@ from uuid import UUID
 
 from app.database import get_db
 from app.models import Charity
+from app.core.auth import verify_token_string
 
-router = APIRouter(tags=["Admin Charities"])
+
+# SECURITY: Require authentication for all admin charity endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(tags=["Admin Charities"], dependencies=[Depends(require_auth)])
 
 
 # ============================================

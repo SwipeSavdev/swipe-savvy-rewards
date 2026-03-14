@@ -171,8 +171,8 @@ class AWSLocationService:
             return {"success": True, "results": results}
 
         except ClientError as e:
-            logger.error(f"Geocoding error: {e}")
-            return {"success": False, "error": str(e), "results": []}
+            logger.error(f"Geocoding error: {str(e)}")
+            return {"success": False, "error": "Location service error", "results": []}
 
     async def reverse_geocode(
         self,
@@ -242,8 +242,8 @@ class AWSLocationService:
             return {"success": True, "results": results}
 
         except ClientError as e:
-            logger.error(f"Reverse geocoding error: {e}")
-            return {"success": False, "error": str(e), "results": []}
+            logger.error(f"Reverse geocoding error: {str(e)}")
+            return {"success": False, "error": "Location service error", "results": []}
 
     # ========================================================================
     # PLACE SEARCH
@@ -361,8 +361,8 @@ class AWSLocationService:
             return {"success": True, "results": results}
 
         except ClientError as e:
-            logger.error(f"Nearby search error: {e}")
-            return {"success": False, "error": str(e), "results": []}
+            logger.error(f"Nearby search error: {str(e)}")
+            return {"success": False, "error": "Location service error", "results": []}
 
     async def search_places(
         self,
@@ -433,8 +433,8 @@ class AWSLocationService:
             return {"success": True, "results": results}
 
         except ClientError as e:
-            logger.error(f"Place search error: {e}")
-            return {"success": False, "error": str(e), "results": []}
+            logger.error(f"Place search error: {str(e)}")
+            return {"success": False, "error": "Location service error", "results": []}
 
     # ========================================================================
     # ROUTE CALCULATION
@@ -572,8 +572,8 @@ class AWSLocationService:
             }
 
         except ClientError as e:
-            logger.error(f"Route calculation error: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Route calculation error: {str(e)}")
+            return {"success": False, "error": "Location service error"}
 
     # ========================================================================
     # GEOFENCING
@@ -635,8 +635,8 @@ class AWSLocationService:
             }
 
         except ClientError as e:
-            logger.error(f"Geofence creation error: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Geofence creation error: {str(e)}")
+            return {"success": False, "error": "Location service error"}
 
     async def create_polygon_geofence(
         self,
@@ -685,8 +685,8 @@ class AWSLocationService:
             }
 
         except ClientError as e:
-            logger.error(f"Polygon geofence creation error: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Polygon geofence creation error: {str(e)}")
+            return {"success": False, "error": "Location service error"}
 
     async def delete_geofence(self, geofence_id: str) -> Dict[str, Any]:
         """Delete a geofence."""
@@ -702,8 +702,8 @@ class AWSLocationService:
             return {"success": True, "geofence_id": geofence_id}
 
         except ClientError as e:
-            logger.error(f"Geofence deletion error: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Geofence deletion error: {str(e)}")
+            return {"success": False, "error": "Location service error"}
 
     async def list_geofences(self, max_results: int = 100) -> Dict[str, Any]:
         """List all geofences in the collection."""
@@ -742,8 +742,8 @@ class AWSLocationService:
             return {"success": True, "geofences": geofences}
 
         except ClientError as e:
-            logger.error(f"List geofences error: {e}")
-            return {"success": False, "error": str(e), "geofences": []}
+            logger.error(f"List geofences error: {str(e)}")
+            return {"success": False, "error": "Location service error", "geofences": []}
 
     async def evaluate_geofences(
         self,
@@ -795,8 +795,8 @@ class AWSLocationService:
             }
 
         except ClientError as e:
-            logger.error(f"Geofence evaluation error: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Geofence evaluation error: {str(e)}")
+            return {"success": False, "error": "Location service error"}
 
     # ========================================================================
     # DEVICE TRACKING
@@ -860,8 +860,8 @@ class AWSLocationService:
             }
 
         except ClientError as e:
-            logger.error(f"Position update error: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Position update error: {str(e)}")
+            return {"success": False, "error": "Location service error"}
 
     async def get_device_position(self, device_id: str) -> Dict[str, Any]:
         """Get the latest position for a device."""
@@ -894,8 +894,8 @@ class AWSLocationService:
         except ClientError as e:
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
                 return {"success": False, "error": "Device not found"}
-            logger.error(f"Get position error: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Get position error: {str(e)}")
+            return {"success": False, "error": "Location service error"}
 
     async def get_device_position_history(
         self,
@@ -962,8 +962,8 @@ class AWSLocationService:
             }
 
         except ClientError as e:
-            logger.error(f"Position history error: {e}")
-            return {"success": False, "error": str(e), "positions": []}
+            logger.error(f"Position history error: {str(e)}")
+            return {"success": False, "error": "Location service error", "positions": []}
 
     # ========================================================================
     # UTILITY METHODS

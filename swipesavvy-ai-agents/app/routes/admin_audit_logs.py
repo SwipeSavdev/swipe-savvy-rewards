@@ -4,14 +4,27 @@ Admin Portal - Audit Logs Management Routes
 Endpoints for viewing audit logs in the admin portal
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 import logging
 
+from app.core.auth import verify_token_string
+
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-audit"])
+
+
+# SECURITY: Require authentication for all admin audit log endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/admin", tags=["admin-audit"], dependencies=[Depends(require_auth)])
 
 # Demo Audit Logs Data
 DEMO_AUDIT_LOGS = [

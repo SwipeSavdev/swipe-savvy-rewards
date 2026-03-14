@@ -1,14 +1,25 @@
 """Feature Flag API routes for admin portal."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 from app.database import get_db
 from app.models import FeatureFlag
+from app.core.auth import verify_token_string
 from datetime import datetime, timezone
 
-router = APIRouter(prefix="/api/feature-flags", tags=["feature-flags"])
+
+# SECURITY: Require authentication for all feature flag endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/feature-flags", tags=["feature-flags"], dependencies=[Depends(require_auth)])
 
 # Error message constants
 FEATURE_FLAG_NOT_FOUND = "Feature flag not found"

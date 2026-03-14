@@ -109,7 +109,7 @@ interface MerchantDeal {
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 async function fetchApi(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('admin_auth_token')
+  const token = sessionStorage.getItem('admin_auth_token')
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> || {}),

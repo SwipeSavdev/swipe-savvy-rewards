@@ -57,6 +57,10 @@ variable "tags" {
   default = {}
 }
 
+# Data sources for scoping IAM policies
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+
 # Get latest Amazon Linux 2023 AMI
 data "aws_ami" "amazon_linux_2023" {
   most_recent = true
@@ -117,14 +121,14 @@ resource "aws_iam_role_policy" "app" {
           "ssm:GetParameters",
           "ssm:GetParametersByPath"
         ]
-        Resource = "arn:aws:ssm:*:*:parameter/${var.name_prefix}/*"
+        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.name_prefix}/*"
       },
       {
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = "arn:aws:secretsmanager:*:*:secret:${var.name_prefix}/*"
+        Resource = "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.name_prefix}/*"
       },
       {
         Effect = "Allow"
@@ -132,7 +136,7 @@ resource "aws_iam_role_policy" "app" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "*"
+        Resource = "arn:aws:logs:*:*:log-group:${var.name_prefix}*"
       }
     ]
   })

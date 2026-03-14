@@ -12,7 +12,7 @@ This module integrates with AWS SNS for push notifications
 and provides in-app notification functionality.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import Optional, Dict, Any, List
@@ -21,10 +21,21 @@ from datetime import datetime
 import logging
 
 from app.database import get_db
+from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/push-notifications", tags=["push-notifications"])
+
+# SECURITY: Require authentication for all push notification endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/push-notifications", tags=["push-notifications"], dependencies=[Depends(require_auth)])
 
 # Initialize services
 aws_push_service = None
@@ -180,7 +191,7 @@ async def register_device(
         raise
     except Exception as e:
         logger.error(f"Device registration error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/unregister-device", response_model=NotificationResponse)
@@ -210,7 +221,7 @@ async def unregister_device(
 
     except Exception as e:
         logger.error(f"Device unregistration error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 # ============================================================================
@@ -265,7 +276,7 @@ async def send_push_notification(
         raise
     except Exception as e:
         logger.error(f"Push notification error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/send-broadcast", response_model=NotificationResponse)
@@ -306,7 +317,7 @@ async def send_broadcast_notification(
 
     except Exception as e:
         logger.error(f"Broadcast notification error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 # ============================================================================
@@ -370,7 +381,7 @@ async def create_in_app_notification(
 
     except Exception as e:
         logger.error(f"In-app notification error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.get("/in-app", response_model=NotificationResponse)
@@ -428,7 +439,7 @@ async def get_in_app_notifications(
 
     except Exception as e:
         logger.error(f"Get notifications error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.get("/in-app/unread-count", response_model=NotificationResponse)
@@ -455,7 +466,7 @@ async def get_unread_count(
 
     except Exception as e:
         logger.error(f"Get unread count error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/in-app/{notification_id}/read", response_model=NotificationResponse)
@@ -484,7 +495,7 @@ async def mark_notification_read(
         raise
     except Exception as e:
         logger.error(f"Mark as read error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/in-app/read-all", response_model=NotificationResponse)
@@ -513,7 +524,7 @@ async def mark_all_read(
 
     except Exception as e:
         logger.error(f"Mark all read error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.delete("/in-app/{notification_id}", response_model=NotificationResponse)
@@ -542,7 +553,7 @@ async def delete_notification(
         raise
     except Exception as e:
         logger.error(f"Delete notification error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.delete("/in-app", response_model=NotificationResponse)
@@ -571,4 +582,4 @@ async def clear_all_notifications(
 
     except Exception as e:
         logger.error(f"Clear notifications error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Bad request")

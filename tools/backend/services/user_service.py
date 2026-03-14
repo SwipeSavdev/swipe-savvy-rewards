@@ -10,7 +10,10 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 import sys
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Import get_db from main module
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -212,7 +215,8 @@ async def get_user_profile(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting user profile: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{user_id}/accounts")
 async def get_user_accounts(
@@ -245,7 +249,8 @@ async def get_user_accounts(
             "count": len(result)
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting user accounts: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{user_id}/transactions")
 async def get_user_transactions(
@@ -286,7 +291,8 @@ async def get_user_transactions(
         result = service.get_user_transactions(user_id, limit, offset)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting user transactions: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{user_id}/rewards")
 async def get_user_rewards(
@@ -320,7 +326,8 @@ async def get_user_rewards(
         result = service.get_user_rewards(user_id)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting user rewards: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{user_id}/analytics/spending")
 async def get_user_spending_analytics(
@@ -357,7 +364,8 @@ async def get_user_spending_analytics(
         result = service.get_user_spending_analytics(user_id, days)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting spending analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # ============================================================================
 # SETUP FUNCTION

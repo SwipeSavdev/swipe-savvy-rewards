@@ -3,12 +3,16 @@ node_modules/
 .pnp
 .pnp.js
 
-# Environment variables
+# Environment variables (NEVER commit actual env files — PCI DSS 2.2.2)
 .env
 .env.local
+.env.development
+.env.staging
+.env.production
 .env.development.local
 .env.test.local
 .env.production.local
+.env.staging.local
 .env.*.local
 
 # Secrets (DO NOT COMMIT)

@@ -45,7 +45,7 @@ async def chat(request: ConversationRequest):
         return ConversationResponse(response=response)
     except Exception as e:
         logger.error(f"Error processing request: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/api/v1/status")
 async def status():

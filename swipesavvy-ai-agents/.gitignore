@@ -37,9 +37,13 @@ env/
 *~
 .DS_Store
 
-# Environment variables
+# Environment variables (NEVER commit actual env files — PCI DSS 2.2.2)
 .env
+.env.*
 .env.local
+.env.development
+.env.staging
+.env.production
 .env.*.local
 
 # Logs

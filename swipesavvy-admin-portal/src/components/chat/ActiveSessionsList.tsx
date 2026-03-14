@@ -37,7 +37,7 @@ const ActiveSessionsList: React.FC<Props> = ({
     const fetchSessions = async () => {
       try {
         setIsLoading(true);
-        const token = localStorage.getItem('authToken');
+        const token = sessionStorage.getItem('authToken');
         const response = await apiClient.get(
           `/api/v1/admin/chat-dashboard/active-sessions?limit=${limit}`,
           { headers: { Authorization: `Bearer ${token}` } }

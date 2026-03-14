@@ -23,7 +23,7 @@ const CustomerSatisfactionMetrics: React.FC<Props> = ({ timeRangeHours }) => {
     const fetchSatisfaction = async () => {
       try {
         setIsLoading(true);
-        const token = localStorage.getItem('authToken');
+        const token = sessionStorage.getItem('authToken');
         const response = await apiClient.get(
           `/api/v1/admin/chat-dashboard/satisfaction?time_range_hours=${timeRangeHours}`,
           { headers: { Authorization: `Bearer ${token}` } }

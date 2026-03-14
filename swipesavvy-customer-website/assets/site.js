@@ -596,7 +596,12 @@ document.addEventListener('DOMContentLoaded', function(){
     if (!chat) return null;
     const div = document.createElement('div');
     div.className = 'msg ' + kind;
-    div.innerHTML = html;
+    // SECURITY: Sanitize HTML to prevent XSS from AI responses (OWASP A03)
+    if (typeof DOMPurify !== 'undefined') {
+      div.innerHTML = DOMPurify.sanitize(html, {ALLOWED_TAGS: ['b','i','em','strong','a','p','br','ul','ol','li','code','pre','span'], ALLOWED_ATTR: ['href','class','target']});
+    } else {
+      div.textContent = html.replace(/<[^>]*>/g, '');
+    }
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
     return div;

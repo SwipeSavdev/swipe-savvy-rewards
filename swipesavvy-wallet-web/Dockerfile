@@ -2,6 +2,7 @@
 # Multi-stage build for optimized production image
 
 # Build stage
+# SECURITY: Use digest pinning in production: node:20-alpine@sha256:<digest>
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -19,6 +20,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
+# SECURITY: Use digest pinning in production: nginx:1.25-alpine@sha256:<digest>
 FROM nginx:1.25-alpine
 
 # Install curl for health checks

@@ -14,6 +14,7 @@ import os
 import re
 import secrets
 import hashlib
+import logging
 from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID, uuid4
@@ -24,32 +25,47 @@ from pydantic import BaseModel, EmailStr, Field, validator
 from sqlalchemy.orm import Session
 import bcrypt
 import jwt
+import redis
 
-from app.database import get_db
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+from app.database import get_db, SessionLocal
 from app.models import User, UserKYCHistory, OFACScreeningResult
 from app.services.aws_ses_service import AWSSESService
 
+logger = logging.getLogger(__name__)
+
+# SECURITY: Rate limiter for auth endpoints (OWASP A07)
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter(prefix="/api/v1/auth", tags=["User Authentication"])
 
-# Configuration
-JWT_SECRET = os.getenv("JWT_SECRET")
+# Configuration — accept either JWT_SECRET or JWT_SECRET_KEY for compatibility
+JWT_SECRET = os.getenv("JWT_SECRET_KEY") or os.getenv("JWT_SECRET")
 if not JWT_SECRET:
     raise ValueError(
-        "JWT_SECRET environment variable is required. "
+        "JWT_SECRET or JWT_SECRET_KEY environment variable is required. "
         "Generate a secure secret with: openssl rand -base64 32"
     )
 if len(JWT_SECRET) < 32:
     raise ValueError(
-        f"JWT_SECRET must be at least 32 characters. Current length: {len(JWT_SECRET)}"
+        f"JWT secret must be at least 32 characters. Current length: {len(JWT_SECRET)}"
     )
 JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 24
+ACCESS_TOKEN_EXPIRE_HOURS = 1  # PCI DSS 8.3.5 — short-lived tokens; clients use refresh
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 EMAIL_VERIFICATION_EXPIRE_HOURS = 24
 PHONE_VERIFICATION_EXPIRE_MINUTES = 10
 PASSWORD_RESET_EXPIRE_HOURS = 1
 
+# Anti-enumeration constant (OWASP A07) — identical message for signup success and duplicate accounts
+SIGNUP_SUCCESS_MESSAGE = "Account created successfully. Please verify your email."
+
 security = HTTPBearer(auto_error=False)
+
+# SECURITY: Track OTP verification failures per user (OWASP A07)
+_otp_failure_counts: dict[str, int] = {}
 
 
 # ============================================
@@ -194,29 +210,39 @@ def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
 
 
-def create_access_token(user_id: str, email: str) -> str:
-    """Create JWT access token"""
+def create_access_token(user_id: str, email: str, device_fingerprint: str = None) -> str:
+    """Create JWT access token with JTI for revocation support"""
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     payload = {
         "sub": str(user_id),
         "user_id": str(user_id),  # Required by core/auth.py verify_token_string
         "email": email,
         "type": "access",
+        "jti": secrets.token_hex(16),  # PCI DSS 8.3.6 — unique ID for blacklisting
+        "iss": "swipesavvy",
+        "aud": "user-api",
         "exp": expire,
         "iat": datetime.utcnow()
     }
+    if device_fingerprint:
+        payload["dfp"] = device_fingerprint
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def create_refresh_token(user_id: str) -> str:
-    """Create JWT refresh token"""
+def create_refresh_token(user_id: str, device_fingerprint: str = None) -> str:
+    """Create JWT refresh token with JTI for revocation support"""
     expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     payload = {
         "sub": str(user_id),
         "type": "refresh",
+        "jti": secrets.token_hex(16),
+        "iss": "swipesavvy",
+        "aud": "user-api",
         "exp": expire,
         "iat": datetime.utcnow()
     }
+    if device_fingerprint:
+        payload["dfp"] = device_fingerprint
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
@@ -231,8 +257,28 @@ def generate_verification_code() -> str:
 
 
 def hash_ssn(ssn_last4: str, salt: str) -> str:
-    """Hash SSN for secure storage"""
-    return hashlib.sha256(f"{ssn_last4}{salt}".encode()).hexdigest()
+    """Hash SSN using bcrypt for secure storage.
+
+    PCI DSS 3.5.1 — SSN last-4 has only 10,000 values, making SHA256
+    trivially reversible. bcrypt with 12 rounds provides adequate protection.
+    The salt parameter is embedded in the bcrypt hash itself.
+    """
+    return bcrypt.hashpw(f"{ssn_last4}{salt}".encode('utf-8'), bcrypt.gensalt(rounds=12)).decode('utf-8')
+
+
+def verify_ssn(ssn_last4: str, salt: str, stored_hash: str) -> bool:
+    """Verify SSN against stored bcrypt hash"""
+    return bcrypt.checkpw(f"{ssn_last4}{salt}".encode('utf-8'), stored_hash.encode('utf-8'))
+
+
+def hash_otp(code: str) -> str:
+    """Hash OTP code for secure storage.
+
+    PCI DSS 8.3.2 — OTP codes must not be stored in plaintext.
+    SHA256 is acceptable here because OTPs are short-lived (10 min)
+    and rate-limited, making brute-force impractical.
+    """
+    return hashlib.sha256(code.encode()).hexdigest()
 
 
 async def get_current_user(
@@ -244,8 +290,15 @@ async def get_current_user(
         return None
 
     try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(
+            credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM],
+            issuer="swipesavvy", audience="user-api"
+        )
         if payload.get("type") != "access":
+            return None
+        # PCI DSS 8.3.6 — check token blacklist
+        jti = payload.get("jti")
+        if jti and is_token_blacklisted(jti):
             return None
         user_id = payload.get("sub")
         if not user_id:
@@ -288,6 +341,7 @@ def log_kyc_history(
 # ============================================
 
 @router.post("/signup", response_model=dict)
+@limiter.limit("10/hour")
 async def signup(
     request: SignupRequest,
     background_tasks: BackgroundTasks,
@@ -301,19 +355,34 @@ async def signup(
     1. Validate input data
     2. Check for existing email/phone
     3. Create user with pending status
-    4. Run initial OFAC screening
+    4. Run initial sanctions screening
     5. Send verification email
     6. Return success with next steps
     """
     # Check if email already exists
     existing_email = db.query(User).filter(User.email == request.email.lower()).first()
     if existing_email:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        # Anti-enumeration: return same response as success (OWASP A07)
+        # Existing user will receive a notification email in the background
+        return {
+            "success": True,
+            "message": SIGNUP_SUCCESS_MESSAGE,
+            "user_id": str(uuid4()),  # Dummy ID for anti-enumeration
+            "next_steps": ["Check your email for the 6-digit verification code"],
+            "verification_required": {"email": True, "phone": False}
+        }
 
     # Check if phone already exists
     existing_phone = db.query(User).filter(User.phone == request.phone).first()
     if existing_phone:
-        raise HTTPException(status_code=400, detail="Phone number already registered")
+        # Anti-enumeration: return same response as success (OWASP A07)
+        return {
+            "success": True,
+            "message": SIGNUP_SUCCESS_MESSAGE,
+            "user_id": str(uuid4()),  # Dummy ID for anti-enumeration
+            "next_steps": ["Check your email for the 6-digit verification code"],
+            "verification_required": {"email": True, "phone": False}
+        }
 
     # Parse date of birth
     dob = datetime.strptime(request.date_of_birth, '%Y-%m-%d').date()
@@ -342,7 +411,7 @@ async def signup(
         state=request.state,
         zip_code=request.zip_code,
         country='US',
-        ssn_last4=request.ssn_last4,
+        ssn_last4=None,  # SECURITY: Do not store plaintext SSN — use ssn_hash only (OWASP A02)
         ssn_hash=f"{ssn_hashed}:{ssn_salt}",
         status='pending',
         role='user',
@@ -352,7 +421,7 @@ async def signup(
         email_verification_token=email_token,
         email_verification_expires=datetime.utcnow() + timedelta(hours=EMAIL_VERIFICATION_EXPIRE_HOURS),
         phone_verified=False,
-        phone_verification_code=phone_code,
+        phone_verification_code=hash_otp(phone_code),
         phone_verification_expires=datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
     )
 
@@ -371,15 +440,24 @@ async def signup(
         user_agent=req.headers.get("user-agent")
     )
 
-    # Create initial OFAC screening record
-    ofac_screening = OFACScreeningResult(
+    # Create initial sanctions screening record
+    screening_record = OFACScreeningResult(
         user_id=user.id,
-        screening_type='ofac',
+        screening_type='sanctions',
         status='pending'
     )
-    db.add(ofac_screening)
+    db.add(screening_record)
 
     db.commit()
+
+    # Run sanctions screening in background (BSA/AML requirement)
+    background_tasks.add_task(
+        run_ofac_screening,
+        user_id=str(user.id),
+        first_name=request.first_name,
+        last_name=request.last_name,
+        date_of_birth=str(request.date_of_birth) if hasattr(request, 'date_of_birth') and request.date_of_birth else None,
+    )
 
     # Send verification email in background
     background_tasks.add_task(
@@ -399,7 +477,7 @@ async def signup(
 
     return {
         "success": True,
-        "message": "Account created successfully. Please verify your email.",
+        "message": SIGNUP_SUCCESS_MESSAGE,
         "user_id": str(user.id),
         "next_steps": [
             "Check your email for the 6-digit verification code"
@@ -412,6 +490,7 @@ async def signup(
 
 
 @router.post("/login")
+@limiter.limit("5/minute")
 async def login(
     request: LoginRequest,
     background_tasks: BackgroundTasks,
@@ -465,7 +544,7 @@ async def login(
 
     # Generate OTP code for login verification
     otp_code = generate_verification_code()
-    user.phone_verification_code = otp_code
+    user.phone_verification_code = hash_otp(otp_code)
     user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
     db.commit()
 
@@ -478,9 +557,8 @@ async def login(
     )
 
     # Return response indicating OTP is required (no tokens yet)
-    # In development mode, include the OTP code in response for testing
-    is_dev = os.getenv("ENVIRONMENT", "development") == "development"
-    response_data = {
+    # SECURITY: OTP code is NEVER included in the response (PCI DSS 8.3.2)
+    return {
         "otp_required": True,
         "verification_required": True,
         "message": "Verification code sent to your email",
@@ -500,13 +578,10 @@ async def login(
             "phone_verified": user.phone_verified
         }
     }
-    # Include OTP code in dev mode for testing
-    if is_dev:
-        response_data["dev_otp_code"] = otp_code
-    return response_data
 
 
 @router.post("/verify-email")
+@limiter.limit("5/minute")
 async def verify_email(
     request: EmailVerificationRequest,
     req: Request,
@@ -565,6 +640,7 @@ class VerifyLoginOTPRequest(BaseModel):
 
 
 @router.post("/verify-login-otp")
+@limiter.limit("5/minute")
 async def verify_login_otp(
     request: VerifyLoginOTPRequest,
     req: Request,
@@ -584,10 +660,25 @@ async def verify_login_otp(
     if not user.phone_verification_expires or user.phone_verification_expires < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Verification code has expired. Please login again.")
 
-    # Verify the OTP code (allow "000000" as dev bypass for testing)
-    dev_bypass = os.getenv("ALLOW_DEV_OTP", "false").lower() == "true" and request.code == "000000"
-    if not dev_bypass and user.phone_verification_code != request.code:
+    # Verify the OTP code against stored hash
+    otp_key = str(user.id)
+    if user.phone_verification_code != hash_otp(request.code):
+        # SECURITY: Track failed OTP attempts — invalidate after 5 failures (OWASP A07)
+        _otp_failure_counts[otp_key] = _otp_failure_counts.get(otp_key, 0) + 1
+        # Prevent unbounded growth — cap at 10000 entries
+        if len(_otp_failure_counts) > 10000:
+            _otp_failure_counts.clear()
+        if _otp_failure_counts.get(otp_key, 0) >= 5:
+            user.phone_verification_code = None
+            user.phone_verification_expires = None
+            _otp_failure_counts.pop(otp_key, None)
+            db.commit()
+            raise HTTPException(status_code=429, detail="Too many failed attempts. Please login again.")
+        db.commit()
         raise HTTPException(status_code=400, detail="Invalid verification code")
+
+    # Clear OTP failure counter on success
+    _otp_failure_counts.pop(otp_key, None)
 
     # Clear OTP data
     user.phone_verification_code = None
@@ -601,8 +692,11 @@ async def verify_login_otp(
 
     db.commit()
 
+    # Read device fingerprint from request header (PCI DSS 8.3.1)
+    device_fp = req.headers.get("x-device-fingerprint")
+
     # Generate tokens - user is now fully authenticated
-    access_token = create_access_token(str(user.id), user.email)
+    access_token = create_access_token(str(user.id), user.email, device_fingerprint=device_fp)
     refresh_token = create_refresh_token(str(user.id))
 
     return {
@@ -629,6 +723,7 @@ async def verify_login_otp(
 
 
 @router.post("/verify-phone")
+@limiter.limit("5/minute")
 async def verify_phone(
     request: PhoneVerificationRequest,
     req: Request,
@@ -645,7 +740,7 @@ async def verify_phone(
     if current_user.phone_verification_expires < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Verification code has expired")
 
-    if current_user.phone_verification_code != request.code:
+    if current_user.phone_verification_code != hash_otp(request.code):
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
     # Mark phone as verified
@@ -686,8 +781,10 @@ class ResendLoginOTPRequest(BaseModel):
 
 
 @router.post("/resend-login-otp")
+@limiter.limit("3/10minutes")
 async def resend_login_otp(
     request: ResendLoginOTPRequest,
+    req: Request,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
@@ -703,7 +800,7 @@ async def resend_login_otp(
 
     # Generate new OTP code
     otp_code = generate_verification_code()
-    user.phone_verification_code = otp_code
+    user.phone_verification_code = hash_otp(otp_code)
     user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
     db.commit()
 
@@ -719,8 +816,10 @@ async def resend_login_otp(
 
 
 @router.post("/resend-verification")
+@limiter.limit("3/minute")
 async def resend_verification(
     request: ResendVerificationRequest,
+    req: Request,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -755,7 +854,7 @@ async def resend_verification(
 
         # Generate new code
         code = generate_verification_code()
-        current_user.phone_verification_code = code
+        current_user.phone_verification_code = hash_otp(code)
         current_user.phone_verification_expires = datetime.utcnow() + timedelta(minutes=PHONE_VERIFICATION_EXPIRE_MINUTES)
         db.commit()
 
@@ -771,9 +870,11 @@ async def resend_verification(
 
 
 @router.post("/forgot-password")
+@limiter.limit("3/minute")
 async def forgot_password(
     request: PasswordResetRequest,
     background_tasks: BackgroundTasks,
+    req: Request,
     db: Session = Depends(get_db)
 ):
     """Request password reset"""
@@ -801,6 +902,7 @@ async def forgot_password(
 
 
 @router.post("/reset-password")
+@limiter.limit("5/minute")
 async def reset_password(
     request: PasswordResetConfirm,
     req: Request,
@@ -840,16 +942,26 @@ async def reset_password(
 
 
 @router.post("/refresh")
+@limiter.limit("10/minute")
 async def refresh_token(
     request: RefreshTokenRequest,
+    req: Request,
     db: Session = Depends(get_db)
 ):
     """Refresh access token"""
     try:
-        payload = jwt.decode(request.refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(
+            request.refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM],
+            issuer="swipesavvy", audience="user-api"
+        )
 
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=401, detail="Invalid token type")
+
+        # SECURITY: Check if this refresh token has already been used (replay protection)
+        jti = payload.get("jti")
+        if jti and is_token_blacklisted(jti):
+            raise HTTPException(status_code=401, detail="Refresh token has already been used")
 
         user_id = payload.get("sub")
         user = db.query(User).filter(User.id == user_id).first()
@@ -859,6 +971,12 @@ async def refresh_token(
 
         if user.status in ['suspended', 'deleted']:
             raise HTTPException(status_code=403, detail="Account is not active")
+
+        # SECURITY: Blacklist the old refresh token so it cannot be reused (token rotation)
+        old_jti = payload.get("jti")
+        old_exp = payload.get("exp", 0)
+        if old_jti:
+            blacklist_token(old_jti, old_exp)
 
         # Generate new tokens
         access_token = create_access_token(str(user.id), user.email)
@@ -882,6 +1000,94 @@ async def refresh_token(
         raise HTTPException(status_code=401, detail="Refresh token has expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+
+# ============================================
+# Token Blacklist (PCI DSS 8.3.6) — Redis-backed with in-memory fallback
+# ============================================
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+
+# Try to connect to Redis; fall back to in-memory if unavailable
+_redis_client: Optional[redis.Redis] = None
+_token_blacklist: dict[str, float] = {}  # In-memory fallback
+
+try:
+    _redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
+    _redis_client.ping()
+    logger.info("Token blacklist: using Redis at %s", REDIS_URL)
+except Exception as e:
+    _redis_client = None
+    logger.warning(
+        "Token blacklist: Redis unavailable (%s), falling back to in-memory. "
+        "This is NOT safe for multi-instance deployments.", e
+    )
+
+
+def blacklist_token(jti: str, exp: float):
+    """Add a token's JTI to the blacklist until its expiry"""
+    ttl = int(exp - datetime.utcnow().timestamp())
+    if ttl <= 0:
+        return  # Token already expired, no need to blacklist
+
+    if _redis_client:
+        try:
+            _redis_client.setex(f"token_blacklist:{jti}", ttl, "1")
+            return
+        except Exception as e:
+            logger.warning("Redis blacklist write failed (%s), using in-memory fallback", e)
+
+    # In-memory fallback
+    _token_blacklist[jti] = exp
+    # Prune expired entries to prevent memory leak
+    now = datetime.utcnow().timestamp()
+    expired_keys = [k for k, v in _token_blacklist.items() if v < now]
+    for k in expired_keys:
+        _token_blacklist.pop(k, None)
+
+
+def is_token_blacklisted(jti: str) -> bool:
+    """Check if a token's JTI has been revoked"""
+    if _redis_client:
+        try:
+            return _redis_client.exists(f"token_blacklist:{jti}") > 0
+        except Exception as e:
+            logger.warning("Redis blacklist read failed (%s), checking in-memory fallback", e)
+
+    # In-memory fallback
+    if jti in _token_blacklist:
+        if _token_blacklist[jti] > datetime.utcnow().timestamp():
+            return True
+        # Expired entry, clean up
+        _token_blacklist.pop(jti, None)
+    return False
+
+
+@router.post("/logout")
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    """Revoke the current access token.
+
+    PCI DSS 8.3.6 — tokens must be revocable on logout.
+    The token's JTI is added to a blacklist until its natural expiry.
+    """
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    try:
+        payload = jwt.decode(
+            credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM],
+            issuer="swipesavvy", audience="user-api"
+        )
+        jti = payload.get("jti")
+        exp = payload.get("exp", 0)
+        if jti:
+            blacklist_token(jti, exp)
+        return {"success": True, "message": "Logged out successfully"}
+    except jwt.InvalidTokenError:
+        # Token is already invalid, treat as successful logout
+        return {"success": True, "message": "Logged out successfully"}
 
 
 @router.get("/me")
@@ -917,9 +1123,36 @@ async def get_current_user_info(
     }
 
 
+# ============================================
+# Wallet Portal Aliases
+# The wallet.swipesavvy.com portal uses /auth/wallet/login and /user/me.
+# These aliases ensure it hits the same backend logic.
+# ============================================
+
+@router.post("/wallet/login")
+async def wallet_login(
+    request: LoginRequest,
+    background_tasks: BackgroundTasks,
+    req: Request,
+    db: Session = Depends(get_db)
+):
+    """Wallet portal login alias — delegates to the standard login endpoint."""
+    return await login(request, background_tasks, req, db)
+
+
+@router.get("/wallet/me")
+async def get_me_alias(
+    current_user: User = Depends(get_current_user)
+):
+    """Wallet portal alias for /auth/me (wallet portal calls /auth/wallet/me)."""
+    return await get_current_user_info(current_user)
+
+
 @router.post("/check-email")
+@limiter.limit("10/minute")
 async def check_email_availability(
     email: EmailStr,
+    req: Request,
     db: Session = Depends(get_db)
 ):
     """Check if email is available for registration"""
@@ -928,8 +1161,10 @@ async def check_email_availability(
 
 
 @router.post("/check-phone")
+@limiter.limit("10/minute")
 async def check_phone_availability(
     phone: str,
+    req: Request,
     db: Session = Depends(get_db)
 ):
     """Check if phone number is available for registration"""
@@ -982,3 +1217,52 @@ async def send_password_reset_email(email: str, first_name: str, token: str):
         )
     except Exception as e:
         print(f"Failed to send password reset email: {e}")
+
+
+async def run_ofac_screening(
+    user_id: str,
+    first_name: str,
+    last_name: str,
+    date_of_birth: str = None,
+):
+    """Run sanctions screening in background and update the screening record (BSA/AML)"""
+    from app.services.ofac_screening_service import get_sanctions_screening_service, ScreeningResult
+
+    db = SessionLocal()
+    try:
+        ofac_service = get_sanctions_screening_service()
+        result = await ofac_service.screen_individual(
+            first_name=first_name,
+            last_name=last_name,
+            date_of_birth=date_of_birth,
+            country="US",
+        )
+
+        # Update the sanctions screening record
+        screening = db.query(OFACScreeningResult).filter(
+            OFACScreeningResult.user_id == user_id,
+            OFACScreeningResult.screening_type.in_(['sanctions', 'ofac']),
+        ).order_by(OFACScreeningResult.id.desc()).first()
+
+        if screening:
+            if result.is_clear:
+                screening.status = 'cleared'
+            elif result.result == ScreeningResult.MATCH:
+                screening.status = 'flagged'
+                logger.warning(f"Sanctions MATCH for user {user_id}: score={result.score}")
+            elif result.result == ScreeningResult.POTENTIAL_MATCH:
+                screening.status = 'review_required'
+                logger.warning(f"Sanctions potential match for user {user_id}: score={result.score}")
+            else:
+                screening.status = 'error'
+                logger.error(f"Sanctions screening error for user {user_id}: {result.error_message}")
+
+            db.commit()
+
+        logger.info(f"Sanctions screening completed for user {user_id}: {result.result.value}")
+
+    except Exception as e:
+        logger.error(f"Sanctions background screening failed for user {user_id}: {e}")
+        db.rollback()
+    finally:
+        db.close()

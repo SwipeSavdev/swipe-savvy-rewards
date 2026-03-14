@@ -1,5 +1,5 @@
 # Multi-stage build for RAG Service
-FROM python:3.9-slim as base
+FROM python:3.9-slim AS builder
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -9,14 +9,25 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Install system dependencies
+# Install build dependencies (gcc only needed for compilation)
 RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for caching
 COPY services/rag-service/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# Production stage
+FROM python:3.9-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /app
+
+# Copy installed Python packages from builder
+COPY --from=builder /install /usr/local
 
 # Copy shared modules
 COPY shared/ ./shared/

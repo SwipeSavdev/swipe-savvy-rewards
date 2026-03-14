@@ -35,7 +35,7 @@ const DashboardOverviewRealtime: React.FC<Props> = ({ timeRangeHours, loading: _
     const fetchOverview = async () => {
       try {
         setIsLoading(true);
-        const token = localStorage.getItem('authToken');
+        const token = sessionStorage.getItem('authToken');
         const response = await apiClient.get(
           `/api/v1/admin/chat-dashboard/overview?time_range_hours=${timeRangeHours}`,
           { headers: { Authorization: `Bearer ${token}` } }

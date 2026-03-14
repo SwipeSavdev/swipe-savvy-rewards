@@ -11,6 +11,7 @@ from typing import Optional, List
 import jwt
 import hashlib
 import secrets
+import os
 from enum import Enum
 
 # Error message constants
@@ -132,7 +133,7 @@ class User:
 class AuthService:
     """Authentication service for JWT token management"""
 
-    def __init__(self, secret_key: str = "your-secret-key", algorithm: str = "HS256"):
+    def __init__(self, secret_key: str, algorithm: str = "HS256"):
         self.secret_key = secret_key
         self.algorithm = algorithm
         self.access_token_expire_minutes = 30
@@ -235,8 +236,10 @@ class UserService:
         if not user:
             raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
 
+        # SECURITY: Allowlist of updatable fields to prevent mass assignment (OWASP A01)
+        ALLOWED_UPDATE_FIELDS = {"first_name", "last_name", "phone_number", "email"}
         for key, value in kwargs.items():
-            if hasattr(user, key) and key != "password_hash":
+            if key in ALLOWED_UPDATE_FIELDS and hasattr(user, key):
                 setattr(user, key, value)
 
         user.updated_at = datetime.now(timezone.utc)
@@ -267,7 +270,12 @@ class UserService:
 # ==================== Dependencies ====================
 
 security = HTTPBearer()
-auth_service = AuthService()
+# SECURITY: AuthService requires an explicit secret key — no hardcoded default (OWASP A07)
+_jwt_secret = os.environ.get("JWT_SECRET_KEY", os.environ.get("JWT_SECRET", ""))
+if not _jwt_secret:
+    import warnings
+    warnings.warn("JWT_SECRET_KEY not set — AuthService will reject all tokens", stacklevel=1)
+auth_service = AuthService(secret_key=_jwt_secret)
 user_service = UserService()
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:

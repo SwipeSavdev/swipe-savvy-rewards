@@ -19,14 +19,7 @@ terraform {
     }
   }
 
-  # Remote state configuration (uncomment for production)
-  # backend "s3" {
-  #   bucket         = "swipesavvy-terraform-state"
-  #   key            = "prod/terraform.tfstate"
-  #   region         = "us-east-1"
-  #   encrypt        = true
-  #   dynamodb_table = "swipesavvy-terraform-locks"
-  # }
+  # Remote state backend is configured in backend.tf
 }
 
 provider "aws" {
@@ -95,10 +88,19 @@ resource "aws_security_group" "alb" {
   }
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "To app instances on API port"
+    from_port       = 8000
+    to_port         = 8000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id]
+  }
+
+  egress {
+    description     = "To app instances on admin portal port"
+    from_port       = 5173
+    to_port         = 5173
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id]
   }
 
   tags = merge(local.common_tags, {
@@ -127,19 +129,38 @@ resource "aws_security_group" "app" {
     security_groups = [aws_security_group.alb.id]
   }
 
-  ingress {
-    description = "SSH from bastion (if needed)"
-    from_port   = 22
-    to_port     = 22
+  # SSH access removed — use SSM Session Manager for shell access
+
+  egress {
+    description = "HTTPS to AWS APIs and external services"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "PostgreSQL to RDS"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.rds.id]
+  }
+
+  egress {
+    description     = "Redis to ElastiCache"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.redis.id]
+  }
+
+  egress {
+    description = "DNS resolution"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = [var.vpc_cidr]
   }
 
   tags = merge(local.common_tags, {
@@ -160,12 +181,7 @@ resource "aws_security_group" "rds" {
     security_groups = [aws_security_group.app.id]
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # RDS does not require outbound internet access — no egress rules
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-rds-sg"
@@ -185,12 +201,7 @@ resource "aws_security_group" "redis" {
     security_groups = [aws_security_group.app.id]
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # ElastiCache does not require outbound internet access — no egress rules
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-redis-sg"
@@ -281,6 +292,17 @@ module "alb" {
   tags = local.common_tags
 }
 
+# AWS WAF (PCI DSS 6.4.2)
+module "waf" {
+  source = "./modules/waf"
+
+  name_prefix = local.name_prefix
+  alb_arn     = module.alb.arn
+  rate_limit  = 2000  # 2000 requests per 5-minute window per IP
+
+  tags = local.common_tags
+}
+
 # Route 53 DNS Records (created after ALB)
 module "dns" {
   source = "./modules/dns"
@@ -293,6 +315,73 @@ module "dns" {
   existing_zone_id   = local.route53_zone_id
 
   tags = local.common_tags
+}
+
+# AWS Secrets Manager — secrets referenced by EC2 instances at runtime
+resource "aws_secretsmanager_secret" "database_url" {
+  name        = "${local.name_prefix}/database-url"
+  description = "PostgreSQL connection string"
+  tags        = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "database_url" {
+  secret_id     = aws_secretsmanager_secret.database_url.id
+  secret_string = module.rds.connection_string
+}
+
+resource "aws_secretsmanager_secret" "redis_url" {
+  name        = "${local.name_prefix}/redis-url"
+  description = "Redis connection string"
+  tags        = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "redis_url" {
+  secret_id     = aws_secretsmanager_secret.redis_url.id
+  secret_string = module.elasticache.connection_string
+}
+
+resource "aws_secretsmanager_secret" "together_api_key" {
+  name        = "${local.name_prefix}/together-api-key"
+  description = "Together.AI API key"
+  tags        = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "together_api_key" {
+  secret_id     = aws_secretsmanager_secret.together_api_key.id
+  secret_string = var.together_api_key
+}
+
+resource "aws_secretsmanager_secret" "sendgrid_api_key" {
+  name        = "${local.name_prefix}/sendgrid-api-key"
+  description = "SendGrid API key"
+  tags        = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "sendgrid_api_key" {
+  secret_id     = aws_secretsmanager_secret.sendgrid_api_key.id
+  secret_string = var.sendgrid_api_key
+}
+
+resource "aws_secretsmanager_secret" "twilio_account_sid" {
+  name        = "${local.name_prefix}/twilio-account-sid"
+  description = "Twilio Account SID"
+  tags        = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "twilio_account_sid" {
+  secret_id     = aws_secretsmanager_secret.twilio_account_sid.id
+  secret_string = var.twilio_account_sid
+}
+
+resource "aws_secretsmanager_secret" "twilio_auth_token" {
+  name        = "${local.name_prefix}/twilio-auth-token"
+  description = "Twilio Auth Token"
+  tags        = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "twilio_auth_token" {
+  secret_id     = aws_secretsmanager_secret.twilio_auth_token.id
+  secret_string = var.twilio_auth_token
 }
 
 # EC2 Auto Scaling Group
@@ -313,15 +402,19 @@ module "ec2" {
 
   key_name           = var.ec2_key_name
 
-  # Environment variables for application
+  # Non-secret environment variables for application
   environment_variables = {
-    ENVIRONMENT        = var.environment
-    DATABASE_URL       = module.rds.connection_string
-    REDIS_URL          = module.elasticache.connection_string
-    TOGETHER_API_KEY   = var.together_api_key
-    SENDGRID_API_KEY   = var.sendgrid_api_key
-    TWILIO_ACCOUNT_SID = var.twilio_account_sid
-    TWILIO_AUTH_TOKEN  = var.twilio_auth_token
+    ENVIRONMENT = var.environment
+  }
+
+  # Secret ARNs — the application retrieves these at runtime via AWS Secrets Manager SDK
+  secrets_manager_arns = {
+    DATABASE_URL       = aws_secretsmanager_secret.database_url.arn
+    REDIS_URL          = aws_secretsmanager_secret.redis_url.arn
+    TOGETHER_API_KEY   = aws_secretsmanager_secret.together_api_key.arn
+    SENDGRID_API_KEY   = aws_secretsmanager_secret.sendgrid_api_key.arn
+    TWILIO_ACCOUNT_SID = aws_secretsmanager_secret.twilio_account_sid.arn
+    TWILIO_AUTH_TOKEN  = aws_secretsmanager_secret.twilio_auth_token.arn
   }
 
   tags = local.common_tags
@@ -409,9 +502,82 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
   tags = local.common_tags
 }
 
+# Security-focused CloudWatch Alarms
+
+# ALB 4XX errors — indicator of brute force or unauthorized access attempts
+resource "aws_cloudwatch_metric_alarm" "alb_4xx_errors" {
+  alarm_name          = "${local.name_prefix}-alb-4xx-errors"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "HTTPCode_ELB_4XX_Count"
+  namespace           = "AWS/ApplicationELB"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 100
+  alarm_description   = "High rate of 4XX errors - possible brute force or unauthorized access attempts"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    LoadBalancer = module.alb.arn_suffix
+  }
+
+  tags = local.common_tags
+}
+
+# WAF blocked requests — indicator of active attack
+resource "aws_cloudwatch_metric_alarm" "waf_blocked_requests" {
+  alarm_name          = "${local.name_prefix}-waf-blocked"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "BlockedRequests"
+  namespace           = "AWS/WAFV2"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 50
+  alarm_description   = "High rate of WAF-blocked requests - possible attack"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    WebACL = module.waf.web_acl_name
+    Region = var.aws_region
+    Rule   = "ALL"
+  }
+
+  tags = local.common_tags
+}
+
+# RDS authentication failures — detect database credential attacks
+resource "aws_cloudwatch_log_metric_filter" "rds_auth_failures" {
+  name           = "${local.name_prefix}-rds-auth-failures"
+  pattern        = "\"FATAL:  password authentication failed\""
+  log_group_name = "/aws/rds/cluster/${local.name_prefix}/postgresql"
+
+  metric_transformation {
+    name      = "RDSAuthFailures"
+    namespace = "SwipeSavvy/Security"
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "rds_auth_failures" {
+  alarm_name          = "${local.name_prefix}-rds-auth-failures"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "RDSAuthFailures"
+  namespace           = "SwipeSavvy/Security"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 5
+  alarm_description   = "Multiple RDS authentication failures detected"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+
+  tags = local.common_tags
+}
+
 # SNS Topic for alerts
 resource "aws_sns_topic" "alerts" {
-  name = "${local.name_prefix}-alerts"
+  name              = "${local.name_prefix}-alerts"
+  kms_master_key_id = "alias/aws/sns"
 
   tags = local.common_tags
 }

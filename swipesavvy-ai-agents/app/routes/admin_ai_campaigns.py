@@ -4,7 +4,7 @@ Admin Portal - AI Campaigns Management Routes
 Endpoints for managing AI marketing campaigns in the admin portal
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta, timezone
@@ -12,9 +12,21 @@ import logging
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import AICampaign as AICampaignModel
+from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-ai-campaigns"])
+
+
+# SECURITY: Require authentication for all admin AI campaign endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/admin", tags=["admin-ai-campaigns"], dependencies=[Depends(require_auth)])
 
 class CampaignResponse(BaseModel):
     id: str

@@ -5,7 +5,7 @@ Endpoints for managing platform settings in the admin portal
 Settings are persisted to the database.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Header
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -19,13 +19,23 @@ import shutil
 
 from app.database import get_db
 from app.models import Setting
+from app.core.auth import verify_token_string
 
 # Directory for storing uploaded branding images
 BRANDING_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "branding")
 os.makedirs(BRANDING_UPLOAD_DIR, exist_ok=True)
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-settings"])
+
+
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/admin", tags=["admin-settings"], dependencies=[Depends(require_auth)])
 
 # Default Settings (used for initialization)
 DEFAULT_SETTINGS = {
@@ -232,6 +242,11 @@ async def get_branding_image_file(filename: str):
     try:
         file_path = os.path.join(BRANDING_UPLOAD_DIR, filename)
 
+        # SECURITY: Prevent path traversal (OWASP A01)
+        real_path = os.path.realpath(file_path)
+        if not real_path.startswith(os.path.realpath(BRANDING_UPLOAD_DIR)):
+            raise HTTPException(status_code=400, detail="Invalid filename")
+
         if not os.path.exists(file_path):
             raise HTTPException(status_code=404, detail="Image not found")
 
@@ -264,13 +279,19 @@ async def upload_branding_image(
 ) -> Dict[str, Any]:
     """Upload a branding image (logo, favicon, or banner)"""
     try:
-        # Validate file type
-        allowed_types = ["image/png", "image/jpeg", "image/svg+xml", "image/x-icon", "image/gif", "image/webp"]
+        # Validate file type (SVG excluded — can contain JavaScript / XSS payloads)
+        allowed_types = ["image/png", "image/jpeg", "image/x-icon", "image/gif", "image/webp"]
         if file.content_type not in allowed_types:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid file type. Allowed: {', '.join(allowed_types)}"
             )
+
+        # Read file content to check size
+        content = await file.read()
+        if len(content) > 5 * 1024 * 1024:  # 5MB limit
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB.")
+        await file.seek(0)  # Reset file position for later read
 
         # Validate image type
         valid_image_types = ["logo", "favicon", "banner"]
@@ -330,7 +351,7 @@ async def upload_branding_image(
         raise
     except Exception as e:
         logger.error(f"Error uploading branding image: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to upload image")
 
 
 @router.delete("/settings/branding/images/{image_id}")
@@ -381,7 +402,7 @@ async def delete_branding_image(image_id: str, db: Session = Depends(get_db)) ->
         raise
     except Exception as e:
         logger.error(f"Error deleting branding image: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete image")
 
 
 # ============================================================================
@@ -529,7 +550,7 @@ async def update_all_settings(request: Dict[str, Any], db: Session = Depends(get
     except Exception as e:
         logger.error(f"Error updating settings: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to update settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update settings")
 
 
 @router.post("/settings/reset/{category}")
@@ -611,4 +632,4 @@ async def seed_default_settings(db: Session = Depends(get_db)) -> Dict[str, Any]
     except Exception as e:
         logger.error(f"Error seeding settings: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to seed settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to seed settings")

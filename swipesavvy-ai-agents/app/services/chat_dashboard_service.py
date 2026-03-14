@@ -105,7 +105,7 @@ class ChatDashboardService:
         except Exception as e:
             logger.error(f"Error getting session stats: {str(e)}", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Service error",
                 "total_sessions": 0,
                 "active_sessions": 0,
                 "generated_at": datetime.utcnow().isoformat()
@@ -336,7 +336,7 @@ class ChatDashboardService:
         
         except Exception as e:
             logger.error(f"Error getting customer satisfaction: {str(e)}", exc_info=True)
-            return {"error": str(e), "total_rated": 0}
+            return {"error": "Service error", "total_rated": 0}
     
     @staticmethod
     def get_message_analytics(db: Session, time_range_hours: int = 24) -> Dict[str, Any]:
@@ -421,7 +421,7 @@ class ChatDashboardService:
         
         except Exception as e:
             logger.error(f"Error getting message analytics: {str(e)}", exc_info=True)
-            return {"error": str(e)}
+            return {"error": "Service error"}
     
     @staticmethod
     def assign_session_to_agent(
@@ -576,4 +576,4 @@ class ChatDashboardService:
         
         except Exception as e:
             logger.error(f"Error getting transcript: {str(e)}", exc_info=True)
-            return {"error": str(e)}
+            return {"error": "Service error"}

@@ -17,7 +17,10 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import os
 import sys
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Add parent directory for imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -161,7 +164,8 @@ async def health():
                     "chunks": kb_chunks
                 }
         except Exception as e:
-            health_data["database_error"] = str(e)
+            logger.error(f"RAG database health check failed: {str(e)}")
+            health_data["database_error"] = "Connection failed"
     
     return health_data
 

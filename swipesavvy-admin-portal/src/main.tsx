@@ -4,8 +4,8 @@ import App from './App'
 import './styles/globals.css'
 
 // Clear potentially problematic storage
-localStorage.removeItem('admin_auth_token')
-localStorage.removeItem('admin_user')
+sessionStorage.removeItem('admin_auth_token')
+sessionStorage.removeItem('admin_user')
 
 // Global error handling with detailed logging
 window.addEventListener('error', (event) => {

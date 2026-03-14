@@ -23,7 +23,7 @@ const MessageAnalytics: React.FC<Props> = ({ timeRangeHours }) => {
     const fetchAnalytics = async () => {
       try {
         setIsLoading(true);
-        const token = localStorage.getItem('authToken');
+        const token = sessionStorage.getItem('authToken');
         const response = await apiClient.get(
           `/api/v1/admin/chat-dashboard/message-analytics?time_range_hours=${timeRangeHours}`,
           { headers: { Authorization: `Bearer ${token}` } }

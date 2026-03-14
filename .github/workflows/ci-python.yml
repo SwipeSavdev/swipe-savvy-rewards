@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Python Version Check
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: '3.11.8'
       
@@ -48,10 +48,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Dependency Validation
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: '3.11.8'
       
@@ -79,10 +79,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Linting & Type Checking
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: '3.11.8'
           cache: 'pip'
@@ -138,10 +138,10 @@ jobs:
           - 6379:6379
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: '3.11.8'
           cache: 'pip'
@@ -166,7 +166,7 @@ jobs:
       
       - name: Upload coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8ce4e4b7845b535820d5 # v4.6.0
         with:
           name: python-coverage
           path: swipesavvy-ai-agents/htmlcov/
@@ -176,10 +176,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Security Audit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: '3.11.8'
           cache: 'pip'
@@ -192,14 +192,14 @@ jobs:
       - name: Run Safety check
         working-directory: swipesavvy-ai-agents
         run: |
-          python -m safety check -r requirements-pinned.txt --json > safety-report.json 2>&1 || true
-          python -m safety check -r requirements-pinned.txt | head -20 || true
-      
+          python -m safety check -r requirements-pinned.txt --json > safety-report.json 2>&1
+          python -m safety check -r requirements-pinned.txt | head -20
+
       - name: Run Bandit security scan
         working-directory: swipesavvy-ai-agents
         run: |
-          python -m bandit -r app/ -f json -o bandit-report.json 2>&1 || true
-          python -m bandit -r app/ 2>&1 | head -20 || true
+          python -m bandit -r app/ -f json -o bandit-report.json 2>&1
+          python -m bandit -r app/ 2>&1 | head -20
 
   summary:
     runs-on: ubuntu-latest

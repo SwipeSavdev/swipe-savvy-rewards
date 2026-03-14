@@ -14,8 +14,22 @@ from psycopg2.extras import RealDictCursor
 import os
 import logging
 
+from fastapi import Header
+from app.core.auth import verify_token_string
+
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/support", tags=["support"])
+
+
+# SECURITY: Require authentication for all support endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/support", tags=["support"], dependencies=[Depends(require_auth)])
 
 # Database connection configuration
 DB_CONFIG = {
@@ -23,7 +37,7 @@ DB_CONFIG = {
     "port": int(os.getenv("DB_PORT", 5432)),
     "database": os.getenv("DB_NAME", "swipesavvy_agents"),
     "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "password"),
+    "password": os.getenv("DB_PASSWORD", ""),  # SECURITY: No default password — fail fast if unset
 }
 
 

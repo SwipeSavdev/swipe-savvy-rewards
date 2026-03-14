@@ -53,8 +53,8 @@ async def lookup_user_handler(
             }
         }
     except Exception as e:
-        logger.error(f"User lookup failed: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"User lookup failed: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 async def lookup_transaction_handler(
@@ -102,8 +102,8 @@ async def lookup_transaction_handler(
         else:
             return {"success": False, "error": "Provide transaction_id or user_email"}
     except Exception as e:
-        logger.error(f"Transaction lookup failed: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Transaction lookup failed: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 async def lookup_merchant_handler(
@@ -134,8 +134,8 @@ async def lookup_merchant_handler(
             }
         }
     except Exception as e:
-        logger.error(f"Merchant lookup failed: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Merchant lookup failed: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 # ============================================================================
@@ -171,8 +171,8 @@ async def create_support_ticket_handler(
             "message": f"Support ticket {ticket_id} created successfully with {priority} priority.",
         }
     except Exception as e:
-        logger.error(f"Failed to create ticket: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Failed to create ticket: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 async def update_support_ticket_handler(
@@ -202,8 +202,8 @@ async def update_support_ticket_handler(
             "message": f"Ticket {ticket_id} updated: {', '.join(f'{k}={v}' for k, v in updates.items())}",
         }
     except Exception as e:
-        logger.error(f"Failed to update ticket: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Failed to update ticket: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 async def add_ticket_note_handler(
@@ -228,8 +228,8 @@ async def add_ticket_note_handler(
             "message": f"{'Internal note' if internal else 'Public note'} added to ticket {ticket_id}.",
         }
     except Exception as e:
-        logger.error(f"Failed to add note: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Failed to add note: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 # ============================================================================
@@ -273,8 +273,8 @@ async def process_refund_handler(
             "message": f"Refund of ${amount:.2f} processed successfully. Refund ID: {refund_id}",
         }
     except Exception as e:
-        logger.error(f"Refund processing failed: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Refund processing failed: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 # ============================================================================
@@ -308,8 +308,8 @@ async def get_analytics_handler(
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
-        logger.error(f"Analytics fetch failed: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Analytics fetch failed: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 async def get_merchant_analytics_handler(
@@ -335,8 +335,8 @@ async def get_merchant_analytics_handler(
             },
         }
     except Exception as e:
-        logger.error(f"Merchant analytics failed: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Merchant analytics failed: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 # ============================================================================
@@ -362,8 +362,8 @@ async def toggle_feature_flag_handler(
             "message": f"Feature flag '{flag_key}' is now {'ENABLED' if enabled else 'DISABLED'}.",
         }
     except Exception as e:
-        logger.error(f"Feature flag toggle failed: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Feature flag toggle failed: {str(e)}")
+        return {"success": False, "error": "Action failed"}
 
 
 # ============================================================================

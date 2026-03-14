@@ -223,7 +223,7 @@ resource "aws_flow_log" "main" {
 
 resource "aws_cloudwatch_log_group" "flow_log" {
   name              = "/aws/vpc/${var.name_prefix}-flow-logs"
-  retention_in_days = 30
+  retention_in_days = 365  # PCI DSS 10.7 requires 1 year retention
 
   tags = var.tags
 }
@@ -260,7 +260,10 @@ resource "aws_iam_role_policy" "flow_log" {
         "logs:DescribeLogStreams"
       ]
       Effect   = "Allow"
-      Resource = "*"
+      Resource = [
+        aws_cloudwatch_log_group.flow_log.arn,
+        "${aws_cloudwatch_log_group.flow_log.arn}:*"
+      ]
     }]
   })
 }

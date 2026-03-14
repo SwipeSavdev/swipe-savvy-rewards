@@ -12,8 +12,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from passlib.context import CryptContext
 import logging
+import secrets
 
 from app.database import get_db
+from app.core.auth import verify_jwt_token
 from app.models import Role, Policy, Permission, AdminUser
 
 # Password hashing
@@ -155,7 +157,8 @@ async def list_roles(
     per_page: int = Query(25, ge=1, le=100),
     status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: str = Depends(verify_jwt_token)
 ):
     """List all roles with pagination and filtering"""
     try:
@@ -206,7 +209,7 @@ async def list_roles(
 
 
 @router.get("/roles/{role_id}", response_model=RoleResponse)
-async def get_role(role_id: str, db: Session = Depends(get_db)):
+async def get_role(role_id: str, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Get a specific role by ID"""
     try:
         role = db.query(Role).filter(Role.id == role_id).first()
@@ -235,7 +238,7 @@ async def get_role(role_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/roles", response_model=RoleResponse, status_code=201)
-async def create_role(request: RoleCreateRequest, db: Session = Depends(get_db)):
+async def create_role(request: RoleCreateRequest, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Create a new role"""
     try:
         # Check if role name already exists
@@ -277,7 +280,7 @@ async def create_role(request: RoleCreateRequest, db: Session = Depends(get_db))
 
 
 @router.put("/roles/{role_id}", response_model=RoleResponse)
-async def update_role(role_id: str, request: RoleUpdateRequest, db: Session = Depends(get_db)):
+async def update_role(role_id: str, request: RoleUpdateRequest, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Update a role"""
     try:
         role = db.query(Role).filter(Role.id == role_id).first()
@@ -325,7 +328,7 @@ async def update_role(role_id: str, request: RoleUpdateRequest, db: Session = De
 
 
 @router.delete("/roles/{role_id}", status_code=204)
-async def delete_role(role_id: str, db: Session = Depends(get_db)):
+async def delete_role(role_id: str, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Delete a role"""
     try:
         role = db.query(Role).filter(Role.id == role_id).first()
@@ -362,7 +365,8 @@ async def list_policies(
     status: Optional[str] = Query(None),
     resource: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: str = Depends(verify_jwt_token)
 ):
     """List all policies with pagination and filtering"""
     try:
@@ -416,7 +420,7 @@ async def list_policies(
 
 
 @router.get("/policies/{policy_id}", response_model=PolicyResponse)
-async def get_policy(policy_id: str, db: Session = Depends(get_db)):
+async def get_policy(policy_id: str, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Get a specific policy by ID"""
     try:
         policy = db.query(Policy).filter(Policy.id == policy_id).first()
@@ -446,7 +450,7 @@ async def get_policy(policy_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/policies", response_model=PolicyResponse, status_code=201)
-async def create_policy(request: PolicyCreateRequest, db: Session = Depends(get_db)):
+async def create_policy(request: PolicyCreateRequest, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Create a new policy"""
     try:
         # Check if policy name already exists
@@ -498,7 +502,7 @@ async def create_policy(request: PolicyCreateRequest, db: Session = Depends(get_
 
 
 @router.put("/policies/{policy_id}", response_model=PolicyResponse)
-async def update_policy(policy_id: str, request: PolicyUpdateRequest, db: Session = Depends(get_db)):
+async def update_policy(policy_id: str, request: PolicyUpdateRequest, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Update a policy"""
     try:
         policy = db.query(Policy).filter(Policy.id == policy_id).first()
@@ -557,7 +561,7 @@ async def update_policy(policy_id: str, request: PolicyUpdateRequest, db: Sessio
 
 
 @router.delete("/policies/{policy_id}", status_code=204)
-async def delete_policy(policy_id: str, db: Session = Depends(get_db)):
+async def delete_policy(policy_id: str, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Delete a policy"""
     try:
         policy = db.query(Policy).filter(Policy.id == policy_id).first()
@@ -589,7 +593,8 @@ async def list_permissions(
     category: Optional[str] = Query(None),
     resource: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: str = Depends(verify_jwt_token)
 ):
     """List all permissions with pagination and filtering"""
     try:
@@ -639,7 +644,7 @@ async def list_permissions(
 
 
 @router.get("/permissions/{permission_id}", response_model=PermissionResponse)
-async def get_permission(permission_id: str, db: Session = Depends(get_db)):
+async def get_permission(permission_id: str, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Get a specific permission by ID"""
     try:
         permission = db.query(Permission).filter(Permission.id == permission_id).first()
@@ -665,7 +670,7 @@ async def get_permission(permission_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/permissions", response_model=PermissionResponse, status_code=201)
-async def create_permission(request: PermissionCreateRequest, db: Session = Depends(get_db)):
+async def create_permission(request: PermissionCreateRequest, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Create a new permission"""
     try:
         # Generate permission name from resource and action
@@ -710,7 +715,7 @@ async def create_permission(request: PermissionCreateRequest, db: Session = Depe
 
 
 @router.delete("/permissions/{permission_id}", status_code=204)
-async def delete_permission(permission_id: str, db: Session = Depends(get_db)):
+async def delete_permission(permission_id: str, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Delete a permission"""
     try:
         permission = db.query(Permission).filter(Permission.id == permission_id).first()
@@ -736,7 +741,7 @@ async def delete_permission(permission_id: str, db: Session = Depends(get_db)):
 # ============================================================================
 
 @router.get("/rbac/stats")
-async def get_rbac_stats(db: Session = Depends(get_db)):
+async def get_rbac_stats(db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Get RBAC statistics overview"""
     try:
         total_roles = db.query(Role).count()
@@ -770,7 +775,7 @@ async def get_rbac_stats(db: Session = Depends(get_db)):
 # ============================================================================
 
 @router.post("/rbac/migrate")
-async def migrate_rbac_tables(db: Session = Depends(get_db)):
+async def migrate_rbac_tables(db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Create RBAC tables if they don't exist"""
     try:
         from app.database import engine, Base
@@ -786,11 +791,11 @@ async def migrate_rbac_tables(db: Session = Depends(get_db)):
         }
     except Exception as e:
         logger.error(f"Error creating RBAC tables: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to create RBAC tables: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create RBAC tables")
 
 
 @router.post("/rbac/seed")
-async def seed_rbac_data(db: Session = Depends(get_db)):
+async def seed_rbac_data(db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Seed default roles, policies, and permissions"""
     try:
         # Check if already seeded
@@ -943,7 +948,7 @@ async def seed_rbac_data(db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error seeding RBAC data: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to seed RBAC data: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to seed RBAC data")
 
 
 # ============================================================================
@@ -972,7 +977,7 @@ class AdminUserResponse(BaseModel):
 
 
 @router.post("/users/create", response_model=AdminUserResponse, status_code=201)
-async def create_admin_user(req: CreateAdminUserRequest, db: Session = Depends(get_db)):
+async def create_admin_user(req: CreateAdminUserRequest, db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Create a new admin user"""
     try:
         # Check if user already exists
@@ -1015,11 +1020,11 @@ async def create_admin_user(req: CreateAdminUserRequest, db: Session = Depends(g
     except Exception as e:
         logger.error(f"Error creating admin user: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to create admin user: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create admin user")
 
 
 @router.post("/users/seed-admin")
-async def seed_default_admin(db: Session = Depends(get_db)):
+async def seed_default_admin(db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Create a default admin user if none exists"""
     try:
         # Check if any admin exists
@@ -1028,7 +1033,8 @@ async def seed_default_admin(db: Session = Depends(get_db)):
             return {"message": "Admin user already exists", "created": False, "email": existing.email}
 
         # Create default admin
-        password_hash = pwd_context.hash("SwipeSavvy2025!")
+        temp_password = secrets.token_urlsafe(16)
+        password_hash = pwd_context.hash(temp_password)
 
         user = AdminUser(
             email="admin@swipesavvy.com",
@@ -1050,17 +1056,16 @@ async def seed_default_admin(db: Session = Depends(get_db)):
             "message": "Default admin user created",
             "created": True,
             "email": "admin@swipesavvy.com",
-            "password": "SwipeSavvy2025!",
-            "note": "Please change this password immediately after first login"
+            "password_note": "A temporary password has been set. Use the forgot-password flow to set a new one."
         }
     except Exception as e:
         logger.error(f"Error seeding admin user: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to seed admin user: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to seed admin user")
 
 
 @router.post("/users/reset-admin-password")
-async def reset_admin_password(db: Session = Depends(get_db)):
+async def reset_admin_password(db: Session = Depends(get_db), current_user: str = Depends(verify_jwt_token)):
     """Reset the admin user's password to a known value"""
     try:
         user = db.query(AdminUser).filter(AdminUser.email == 'admin@swipesavvy.com').first()
@@ -1068,7 +1073,7 @@ async def reset_admin_password(db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Admin user not found")
 
         # Reset password
-        new_password = "SwipeSavvy2025!"
+        new_password = secrets.token_urlsafe(16)
         user.password_hash = pwd_context.hash(new_password)
         user.status = 'active'
         user.updated_at = datetime.now(timezone.utc)
@@ -1079,12 +1084,11 @@ async def reset_admin_password(db: Session = Depends(get_db)):
         return {
             "message": "Admin password reset successfully",
             "email": "admin@swipesavvy.com",
-            "password": new_password,
-            "note": "Please change this password immediately after login"
+            "password_note": "A temporary password has been set. Use the forgot-password flow to set a new one."
         }
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error resetting admin password: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to reset admin password: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to reset admin password")

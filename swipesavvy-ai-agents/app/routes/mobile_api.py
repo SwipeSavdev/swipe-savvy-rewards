@@ -16,8 +16,6 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from uuid import UUID, uuid4
 from decimal import Decimal
-import random
-
 from fastapi import APIRouter, HTTPException, Depends, Query, Header
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -245,69 +243,59 @@ def get_current_user_id(authorization: Optional[str] = Header(None)) -> Optional
 
 
 def generate_spending_categories(user_id: str, db: Session) -> List[SpendingCategoryResponse]:
-    """Generate spending categories from user transactions"""
-    categories = [
-        {"category": "Food & Dining", "color": "#FF6B6B", "icon": "restaurant"},
-        {"category": "Shopping", "color": "#4ECDC4", "icon": "shopping-bag"},
-        {"category": "Transportation", "color": "#45B7D1", "icon": "car"},
-        {"category": "Entertainment", "color": "#96CEB4", "icon": "film"},
-        {"category": "Bills & Utilities", "color": "#FFEAA7", "icon": "file-text"},
-        {"category": "Healthcare", "color": "#DDA0DD", "icon": "heart"},
-        {"category": "Other", "color": "#95A5A6", "icon": "more-horizontal"},
-    ]
+    """Generate spending categories from user transactions.
 
-    # Get real transaction data if available
+    Returns actual transaction data grouped by description/category.
+    Returns empty list with data_source='unavailable' when no data exists.
+    """
+    # Map known descriptions to display categories with colors
+    category_config = {
+        "Food & Dining": {"color": "#FF6B6B"},
+        "Shopping": {"color": "#4ECDC4"},
+        "Transportation": {"color": "#45B7D1"},
+        "Entertainment": {"color": "#96CEB4"},
+        "Bills & Utilities": {"color": "#FFEAA7"},
+        "Healthcare": {"color": "#DDA0DD"},
+        "Other": {"color": "#95A5A6"},
+    }
+
     try:
         result = db.execute(text("""
-            SELECT description, SUM(amount) as total, COUNT(*) as count
+            SELECT
+                COALESCE(category, 'Other') as cat,
+                SUM(amount) as total,
+                COUNT(*) as count
             FROM wallet_transactions
             WHERE user_id = :user_id
             AND transaction_type IN ('payment', 'withdrawal')
             AND created_at > NOW() - INTERVAL '30 days'
-            GROUP BY description
+            GROUP BY COALESCE(category, 'Other')
+            ORDER BY total DESC
         """), {"user_id": user_id}).fetchall()
 
-        total_spent = sum(row[1] for row in result) if result else 0
+        total_spent = sum(float(row[1]) for row in result) if result else 0
     except Exception:
         total_spent = 0
         result = []
 
-    # Generate category breakdown
-    if total_spent > 0:
+    if total_spent > 0 and result:
         spending = []
-        remaining = total_spent
-        for i, cat in enumerate(categories[:-1]):
-            # Distribute spending across categories
-            pct = random.uniform(0.05, 0.30) if i < len(categories) - 2 else 0.1
-            amount = min(remaining * pct, remaining)
-            remaining -= amount
+        for row in result:
+            cat_name = row[0]
+            amount = float(row[1])
+            count = int(row[2])
+            color = category_config.get(cat_name, category_config["Other"])["color"]
             spending.append(SpendingCategoryResponse(
-                category=cat["category"],
+                category=cat_name,
                 amount=round(amount, 2),
                 percentage=round((amount / total_spent) * 100, 1),
-                color=cat["color"],
-                transactions=random.randint(3, 15)
+                color=color,
+                transactions=count
             ))
-        # Add remaining to "Other"
-        spending.append(SpendingCategoryResponse(
-            category="Other",
-            amount=round(remaining, 2),
-            percentage=round((remaining / total_spent) * 100, 1),
-            color="#95A5A6",
-            transactions=random.randint(1, 5)
-        ))
         return spending
     else:
-        # Return sample data if no transactions
-        return [
-            SpendingCategoryResponse(category="Food & Dining", amount=450.00, percentage=30.0, color="#FF6B6B", transactions=28),
-            SpendingCategoryResponse(category="Shopping", amount=315.00, percentage=21.0, color="#4ECDC4", transactions=12),
-            SpendingCategoryResponse(category="Transportation", amount=225.00, percentage=15.0, color="#45B7D1", transactions=18),
-            SpendingCategoryResponse(category="Entertainment", amount=195.00, percentage=13.0, color="#96CEB4", transactions=8),
-            SpendingCategoryResponse(category="Bills & Utilities", amount=180.00, percentage=12.0, color="#FFEAA7", transactions=5),
-            SpendingCategoryResponse(category="Healthcare", amount=90.00, percentage=6.0, color="#DDA0DD", transactions=3),
-            SpendingCategoryResponse(category="Other", amount=45.00, percentage=3.0, color="#95A5A6", transactions=6),
-        ]
+        # No transaction data available — return empty list
+        return []
 
 
 # ============================================================================
@@ -332,6 +320,16 @@ async def get_accounts(
         """), {"user_id": user_id}).fetchone()
         checking_balance = float(result[0]) if result and result[0] else 0
 
+        # Query savings account balance separately
+        savings_result = db.execute(text("""
+            SELECT
+                COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'refund') THEN amount ELSE 0 END), 0) -
+                COALESCE(SUM(CASE WHEN transaction_type IN ('withdrawal', 'payment', 'transfer') THEN amount ELSE 0 END), 0) as balance
+            FROM wallet_transactions
+            WHERE user_id = :user_id AND status = 'completed' AND account_type = 'savings'
+        """), {"user_id": user_id}).fetchone()
+        savings_balance = float(savings_result[0]) if savings_result and savings_result[0] else 0
+
         return [
             AccountResponse(
                 id="acc_checking_1",
@@ -344,15 +342,15 @@ async def get_accounts(
                 id="acc_savings_1",
                 name="Savings",
                 type="savings",
-                balance=round(checking_balance * 1.1, 2),  # Savings is typically higher
+                balance=round(savings_balance, 2),
                 currency="USD"
             ),
         ]
     except Exception as e:
         logger.error(f"Error getting accounts: {e}")
         return [
-            AccountResponse(id="acc_checking_1", name="Checking", type="checking", balance=4250.25, currency="USD"),
-            AccountResponse(id="acc_savings_1", name="Savings", type="savings", balance=4500.25, currency="USD"),
+            AccountResponse(id="acc_checking_1", name="Checking", type="checking", balance=0.00, currency="USD"),
+            AccountResponse(id="acc_savings_1", name="Savings", type="savings", balance=0.00, currency="USD"),
         ]
 
 
@@ -365,22 +363,25 @@ async def get_account_balance(
     """Get specific account balance (requires authentication)"""
 
     try:
-        if user_id and "checking" in account_id:
-            result = db.execute(text("""
-                SELECT
-                    COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'refund') THEN amount ELSE 0 END), 0) -
-                    COALESCE(SUM(CASE WHEN transaction_type IN ('withdrawal', 'payment', 'transfer') THEN amount ELSE 0 END), 0) as balance
-                FROM wallet_transactions
-                WHERE user_id = :user_id AND status = 'completed'
-            """), {"user_id": user_id}).fetchone()
-            balance = float(result[0]) if result and result[0] else 4250.25
-        else:
-            balance = 4500.25 if "savings" in account_id else 4250.25
+        account_type_filter = ""
+        if "savings" in account_id:
+            account_type_filter = "AND account_type = 'savings'"
+        elif "checking" in account_id:
+            account_type_filter = "AND (account_type = 'checking' OR account_type IS NULL)"
+
+        result = db.execute(text(f"""
+            SELECT
+                COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'refund') THEN amount ELSE 0 END), 0) -
+                COALESCE(SUM(CASE WHEN transaction_type IN ('withdrawal', 'payment', 'transfer') THEN amount ELSE 0 END), 0) as balance
+            FROM wallet_transactions
+            WHERE user_id = :user_id AND status = 'completed' {account_type_filter}
+        """), {"user_id": user_id}).fetchone()
+        balance = float(result[0]) if result and result[0] else 0.00
 
         return {"balance": round(balance, 2)}
     except Exception as e:
         logger.error(f"Error getting account balance: {e}")
-        return {"balance": 4250.25}
+        return {"balance": 0.00}
 
 
 # ============================================================================
@@ -477,15 +478,19 @@ async def get_linked_banks(
     ]
 
 
-@router.post("/banks/plaid-link")
-async def initiate_plaid_link(
+@router.post("/banks/link")
+async def initiate_bank_link(
     user_id: str = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Generate Plaid Link token for bank connection (requires authentication)"""
-    # In production, this would call Plaid API to get a link token
+    """Generate bank link token for bank connection (requires authentication).
+
+    STUB: Awaiting Connect Financial bank linking API from program manager.
+    """
     return {
-        "plaidLink": f"plaid_link_token_{uuid4()}",
+        "linkToken": f"cf_bank_link_{uuid4()}",
+        "provider": "connect_financial",
+        "status": "demo_mode",
         "expiration": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
     }
 
@@ -521,7 +526,7 @@ async def get_wallet_balance(
     except Exception as e:
         logger.error(f"Error getting wallet balance: {e}")
 
-    return WalletBalanceResponse(available=2847.50, pending=125.00, currency="USD")
+    return WalletBalanceResponse(available=0.00, pending=0.00, currency="USD")
 
 
 @router.get("/wallet/transactions", response_model=List[WalletTransactionResponse])
@@ -716,7 +721,10 @@ async def get_rewards_points(
     """Get user's rewards points (requires authentication)"""
 
     try:
-        # Calculate points from transactions (e.g., 1 point per $1 spent)
+        # TODO: Points should be tracked in a dedicated points_ledger table
+        # with entries for earned, redeemed, donated, and expired points.
+        # Currently calculated on-the-fly from transaction SUM which does not
+        # account for redeemed or donated points.
         result = db.execute(text("""
             SELECT COALESCE(SUM(amount), 0) as total_spent
             FROM wallet_transactions
@@ -725,21 +733,34 @@ async def get_rewards_points(
             AND status = 'completed'
         """), {"user_id": user_id}).fetchone()
 
+        # Query actual donated points if a points_ledger table exists
+        donated = 0
+        try:
+            donated_result = db.execute(text("""
+                SELECT COALESCE(SUM(points), 0) as total_donated
+                FROM points_ledger
+                WHERE user_id = :user_id AND type = 'donation'
+            """), {"user_id": user_id}).fetchone()
+            donated = int(float(donated_result[0])) if donated_result and donated_result[0] else 0
+        except Exception:
+            # points_ledger table may not exist yet
+            pass
+
         if result:
             points = int(float(result[0]) * 2)  # 2 points per dollar
             tier = "Gold" if points > 10000 else "Silver" if points > 5000 else "Bronze"
             tier_progress = min((points % 5000) / 50, 100)
 
             return RewardsPointsResponse(
-                available=points,
-                donated=int(points * 0.1),  # 10% donated
+                available=points - donated,
+                donated=donated,
                 tier=tier,
                 tierProgress=int(tier_progress)
             )
     except Exception as e:
         logger.error(f"Error getting rewards points: {e}")
 
-    return RewardsPointsResponse(available=12450, donated=3200, tier="Silver", tierProgress=68)
+    return RewardsPointsResponse(available=0, donated=0, tier="Bronze", tierProgress=0)
 
 
 @router.get("/rewards/boosts", response_model=List[BoostResponse])
@@ -748,6 +769,9 @@ async def get_boosts(
     db: Session = Depends(get_db)
 ):
     """Get available reward boosts (requires authentication)"""
+    # NOTE: Boosts are currently hardcoded. These should be stored in a
+    # database table (e.g., reward_boosts) or loaded from a configuration
+    # service so they can be managed dynamically without code deploys.
     return [
         BoostResponse(id="boost_1", title="2× points on Fuel", subtitle="Activate • valid this week",
                      icon="gas-cylinder", percent="+2%", active=True),
@@ -768,10 +792,53 @@ async def donate_points(
 ):
     """Donate reward points to charity (requires authentication)"""
 
-    # In production, would deduct from user's points balance
+    try:
+        # Calculate current points balance from transactions
+        result = db.execute(text("""
+            SELECT COALESCE(SUM(amount), 0) as total_spent
+            FROM wallet_transactions
+            WHERE user_id = :user_id
+            AND transaction_type IN ('payment', 'transfer')
+            AND status = 'completed'
+        """), {"user_id": user_id}).fetchone()
+
+        current_points = int(float(result[0]) * 2) if result and result[0] else 0
+
+        # Subtract any previously donated points
+        try:
+            donated_result = db.execute(text("""
+                SELECT COALESCE(SUM(points), 0) as total_donated
+                FROM points_ledger
+                WHERE user_id = :user_id AND type = 'donation'
+            """), {"user_id": user_id}).fetchone()
+            previously_donated = int(float(donated_result[0])) if donated_result and donated_result[0] else 0
+            current_points -= previously_donated
+        except Exception:
+            pass
+
+        if amount > current_points:
+            raise HTTPException(status_code=400, detail="Insufficient points")
+
+        # Record the donation in points_ledger if table exists
+        try:
+            db.execute(text("""
+                INSERT INTO points_ledger (id, user_id, points, type, description, created_at)
+                VALUES (:id, :user_id, :points, 'donation', 'Donated to Local Food Bank', NOW())
+            """), {"id": str(uuid4()), "user_id": user_id, "points": amount})
+            db.commit()
+        except Exception:
+            db.rollback()
+
+        new_balance = current_points - amount
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error donating points: {e}")
+        new_balance = 0
+
     return {
         "success": True,
-        "newBalance": 12450 - amount,
+        "newBalance": new_balance,
         "cause": "Local Food Bank",
         "donationId": str(uuid4())
     }
@@ -853,28 +920,57 @@ async def get_analytics(
     spending_categories = generate_spending_categories(user_id, db)
     total_expenses = sum(cat.amount for cat in spending_categories)
 
-    # Calculate income (deposits)
-    total_income = total_expenses * 2.3  # Assume income is ~2.3x expenses
+    # Query actual income (deposits) from the database
+    total_income = 0.0
+    try:
+        income_result = db.execute(text("""
+            SELECT COALESCE(SUM(amount), 0) as total_income
+            FROM wallet_transactions
+            WHERE user_id = :user_id
+            AND transaction_type IN ('deposit', 'refund')
+            AND status = 'completed'
+            AND created_at > NOW() - INTERVAL '30 days'
+        """), {"user_id": user_id}).fetchone()
+        total_income = float(income_result[0]) if income_result and income_result[0] else 0.0
+    except Exception as e:
+        logger.error(f"Error querying income for analytics: {e}")
+
     total_savings = total_income - total_expenses
     savings_rate = (total_savings / total_income * 100) if total_income > 0 else 0
 
-    # Generate monthly trend
+    # Query actual monthly trend from the database
     monthly_trend = []
-    for i in range(6):
-        month = (datetime.now() - timedelta(days=30 * (5 - i))).strftime("%b")
-        monthly_trend.append({
-            "month": month,
-            "income": round(total_income * (0.9 + random.random() * 0.2), 2),
-            "expenses": round(total_expenses * (0.8 + random.random() * 0.4), 2),
-        })
+    try:
+        trend_result = db.execute(text("""
+            SELECT
+                TO_CHAR(created_at, 'Mon') as month,
+                COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'refund') THEN amount ELSE 0 END), 0) as income,
+                COALESCE(SUM(CASE WHEN transaction_type IN ('payment', 'withdrawal', 'transfer') THEN amount ELSE 0 END), 0) as expenses
+            FROM wallet_transactions
+            WHERE user_id = :user_id
+            AND status = 'completed'
+            AND created_at > NOW() - INTERVAL '6 months'
+            GROUP BY DATE_TRUNC('month', created_at), TO_CHAR(created_at, 'Mon')
+            ORDER BY DATE_TRUNC('month', created_at)
+        """), {"user_id": user_id}).fetchall()
+        for row in trend_result:
+            monthly_trend.append({
+                "month": row[0],
+                "income": round(float(row[1]), 2),
+                "expenses": round(float(row[2]), 2),
+            })
+    except Exception as e:
+        logger.error(f"Error querying monthly trend: {e}")
 
-    # Generate insights
-    insights = [
-        f"You're saving {round(savings_rate)}% of your income this month - great job!",
-        f"Food & Dining is your biggest expense at {spending_categories[0].percentage}%",
-        "Consider setting up automatic savings to reach your goals faster",
-        "Your spending is 12% lower than last month",
-    ]
+    # Generate insights based on actual data
+    insights = []
+    if total_income > 0:
+        insights.append(f"You're saving {round(savings_rate)}% of your income this month.")
+    if spending_categories:
+        top_cat = spending_categories[0]
+        insights.append(f"{top_cat.category} is your biggest expense at {top_cat.percentage}%.")
+    if not spending_categories and total_income == 0:
+        insights.append("No transaction data available for this period.")
 
     return AnalyticsResponse(
         totalIncome=round(total_income, 2),
@@ -1279,6 +1375,169 @@ async def add_card(
         db.rollback()
 
     return {"success": True, "cardId": card_id}
+
+
+# ============================================================================
+# Route Aliases (for cross-platform compatibility)
+# Mobile apps and wallet portal use slightly different paths for the same data.
+# These aliases ensure all clients work against the same backend.
+# ============================================================================
+
+@router.get("/user/me")
+async def get_user_me_alias(
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Wallet portal alias — returns same profile as /auth/me."""
+    from app.models import User as UserModel
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "name": user.name,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "phone": user.phone,
+        "status": user.status,
+        "role": user.role,
+        "kyc_tier": user.kyc_tier,
+        "kyc_status": user.kyc_status,
+        "email_verified": user.email_verified,
+        "phone_verified": user.phone_verified,
+        "address": {
+            "street": user.street_address,
+            "city": user.city,
+            "state": user.state,
+            "zip_code": user.zip_code,
+            "country": user.country
+        },
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+
+@router.put("/user/me")
+async def update_user_me_alias(
+    updates: dict,
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Wallet portal alias — update user profile."""
+    from app.models import User as UserModel
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    allowed_fields = {"name", "phone", "street_address", "city", "state", "zip_code"}
+    for field, value in updates.items():
+        if field in allowed_fields and hasattr(user, field):
+            setattr(user, field, value)
+    db.commit()
+    return {"success": True}
+
+
+# Savings-goals aliases (Android uses "savings-goals", backend canonical path is "goals")
+@router.get("/savings-goals")
+async def get_savings_goals_alias(
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Android alias for GET /goals."""
+    return await get_savings_goals(user_id=user_id, db=db)
+
+
+@router.post("/savings-goals")
+async def create_savings_goal_alias(
+    goal: CreateGoalRequest,
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Android alias for POST /goals."""
+    return await create_savings_goal(goal=goal, user_id=user_id, db=db)
+
+
+@router.delete("/savings-goals/{goal_id}")
+async def delete_savings_goal_alias(
+    goal_id: str,
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Android alias for DELETE /goals/{id}."""
+    return await delete_savings_goal(goal_id=goal_id, user_id=user_id, db=db)
+
+
+# Rewards summary alias (Android uses "rewards/summary", same data as "rewards/points")
+@router.get("/rewards/summary")
+async def get_rewards_summary_alias(
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Android alias for GET /rewards/points."""
+    return await get_rewards_points(user_id=user_id, db=db)
+
+
+# Spending analysis alias (Android uses "spending-analysis", same data as "analytics")
+@router.get("/spending-analysis")
+async def get_spending_analysis_alias(
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Android alias for GET /analytics."""
+    return await get_analytics(user_id=user_id, db=db)
+
+
+# Funding accounts alias (iOS uses "accounts/funding")
+@router.get("/accounts/funding")
+async def get_funding_accounts(
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """iOS alias — returns accounts formatted as funding sources for transfers."""
+    accounts = await get_accounts(user_id=user_id, db=db)
+    return [
+        {
+            "id": acc.id,
+            "name": acc.name,
+            "type": acc.type,
+            "balance": acc.balance,
+            "lastFour": acc.id[-4:],
+        }
+        for acc in accounts
+    ]
+
+
+# Transfer send/request aliases (mobile apps use /transfers/send and /transfers/request)
+@router.post("/transfers/send")
+async def send_transfer_alias(
+    transfer: TransferRequest,
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Mobile alias for POST /transfers (type=send)."""
+    transfer.type = "send"
+    return await submit_transfer(transfer=transfer, user_id=user_id, db=db)
+
+
+@router.post("/transfers/request")
+async def request_transfer_alias(
+    transfer: TransferRequest,
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Mobile alias for POST /transfers (type=request)."""
+    transfer.type = "request"
+    return await submit_transfer(transfer=transfer, user_id=user_id, db=db)
+
+
+# Funding accounts alias for transfers (Android uses /transfers/funding-accounts)
+@router.get("/transfers/funding-accounts")
+async def get_transfer_funding_accounts(
+    user_id: str = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Android alias — returns funding accounts for transfer screen."""
+    return await get_funding_accounts(user_id=user_id, db=db)
 
 
 # ============================================================================

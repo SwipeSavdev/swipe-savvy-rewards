@@ -33,7 +33,7 @@ DB_CONFIG = {
     "port": int(os.getenv("DB_PORT", 5432)),
     "database": os.getenv("DB_NAME", "swipesavvy_agents"),
     "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "password"),
+    "password": os.getenv("DB_PASSWORD", ""),  # SECURITY: No default password — fail fast if unset
 }
 
 # Together.AI Configuration
@@ -142,8 +142,8 @@ Format as JSON with keys: headline, description, cta, selling_points"""
                 "model": "meta-llama/Llama-3-70b-chat-hf"
             }
         except Exception as e:
-            logger.error(f"Error generating campaign copy: {e}")
-            return {"error": str(e)}
+            logger.error(f"Error generating campaign copy: {str(e)}")
+            return {"error": "Analysis failed"}
 
     async def get_audience_insights(
         self,
@@ -314,8 +314,8 @@ Format as JSON with keys: assessment, recommendations, ab_tests, expected_uplift
                 "optimization_suggestions": suggestions
             }
         except Exception as e:
-            logger.error(f"Error optimizing campaign: {e}")
-            return {"error": str(e)}
+            logger.error(f"Error optimizing campaign: {str(e)}")
+            return {"error": "Analysis failed"}
 
     async def analyze_performance(
         self,
@@ -388,8 +388,8 @@ Format as JSON with keys: executive_summary, highlights, concerns, insights, nex
                 "analyzed_at": datetime.utcnow().isoformat()
             }
         except Exception as e:
-            logger.error(f"Error analyzing performance: {e}")
-            return {"error": str(e)}
+            logger.error(f"Error analyzing performance: {str(e)}")
+            return {"error": "Analysis failed"}
 
 
 # Singleton instance

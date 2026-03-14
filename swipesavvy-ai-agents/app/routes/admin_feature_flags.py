@@ -4,7 +4,7 @@ Admin Portal - Feature Flags Management Routes
 Endpoints for managing feature flags in the admin portal
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends, Body
+from fastapi import APIRouter, HTTPException, Query, Depends, Body, Header
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
@@ -12,9 +12,21 @@ import logging
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import FeatureFlag as FeatureFlagModel
+from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/admin", tags=["admin-feature-flags"])
+
+
+# SECURITY: Require authentication for all admin feature flag endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/admin", tags=["admin-feature-flags"], dependencies=[Depends(require_auth)])
 
 # Error message constants
 FEATURE_FLAG_NOT_FOUND = "Feature flag not found"

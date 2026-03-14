@@ -1,3 +1,7 @@
+# WARNING: This module uses in-memory storage and is NOT suitable for production use.
+# All data is lost on restart, balance updates are not atomic (race conditions),
+# and there is no audit trail. Use database-backed services (e.g., Wallet/WalletTransaction
+# models via SQLAlchemy) for production financial operations.
 """
 Financial Transaction Models and Services
 Manages accounts, transactions, balances, and financial operations
@@ -102,8 +106,8 @@ class MonthlyAnalyticsResponse(BaseModel):
 
 # ==================== Database (Mock) ====================
 
-ACCOUNTS_DB = {}  # user_id -> [accounts]
-TRANSACTIONS_DB = {}  # transaction_id -> transaction
+ACCOUNTS_DB: dict = {}  # WARNING: In-memory only — data lost on restart. Use database-backed services for production.
+TRANSACTIONS_DB: dict = {}  # WARNING: In-memory only — data lost on restart. Use database-backed services for production.
 
 class AccountModel:
     """Account database model"""
@@ -140,7 +144,7 @@ class TransactionModel:
         self.type = transaction_type
         self.amount = amount
         self.description = description
-        self.status = TransactionStatus.COMPLETED
+        self.status = TransactionStatus.PENDING
         self.recipient_id = recipient_id
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
@@ -195,12 +199,21 @@ class AccountService:
 
     @staticmethod
     def update_balance(account_id: str, user_id: str, amount: Decimal) -> AccountModel:
-        """Update account balance"""
+        """Update account balance.
+
+        WARNING: This operation is NOT atomic. In-memory balance updates are
+        subject to race conditions under concurrent access. Use database-level
+        locking (e.g., SELECT ... FOR UPDATE) in production.
+        """
         account = AccountService.get_account(account_id, user_id)
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
 
-        account.balance += amount
+        new_balance = account.balance + Decimal(str(amount))
+        if new_balance < 0:
+            raise HTTPException(status_code=400, detail="Insufficient funds: balance cannot go negative")
+
+        account.balance = new_balance
         account.updated_at = datetime.utcnow()
         return account
 
@@ -228,6 +241,12 @@ class TransactionService:
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
 
+        # Check sufficient funds BEFORE creating the transaction
+        debit_types = [TransactionType.WITHDRAWAL, TransactionType.TRANSFER,
+                       TransactionType.FEE, TransactionType.INVESTMENT]
+        if transaction_type in debit_types and account.balance < amount:
+            raise HTTPException(status_code=400, detail="Insufficient funds")
+
         # Create transaction
         transaction = TransactionModel(
             user_id, account_id, transaction_type, amount, description, recipient_id, metadata
@@ -237,13 +256,7 @@ class TransactionService:
         # Update balance based on transaction type
         if transaction_type in [TransactionType.DEPOSIT, TransactionType.REWARD]:
             AccountService.update_balance(account_id, user_id, amount)
-        elif transaction_type in [TransactionType.WITHDRAWAL, TransactionType.TRANSFER, TransactionType.FEE]:
-            if account.balance < amount:
-                raise HTTPException(status_code=400, detail="Insufficient funds")
-            AccountService.update_balance(account_id, user_id, -amount)
-        elif transaction_type == TransactionType.INVESTMENT:
-            if account.balance < amount:
-                raise HTTPException(status_code=400, detail="Insufficient funds")
+        elif transaction_type in debit_types:
             AccountService.update_balance(account_id, user_id, -amount)
 
         return transaction

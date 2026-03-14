@@ -30,7 +30,7 @@ const ChatDashboardPage: React.FC = () => {
 
   // Validate user is authenticated
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     if (!token) {
       navigate('/login');
     }

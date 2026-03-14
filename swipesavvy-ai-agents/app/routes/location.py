@@ -12,7 +12,7 @@ Provides endpoints for:
 Uses AWS Location Service for all geospatial operations.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from typing import Optional, List, Tuple
 from pydantic import BaseModel, Field, validator
@@ -22,10 +22,21 @@ import logging
 from app.database import get_db
 from app.models import PreferredMerchant
 from sqlalchemy import and_
+from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/location", tags=["location"])
+
+# SECURITY: Require authentication for all location endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(prefix="/api/v1/location", tags=["location"], dependencies=[Depends(require_auth)])
 
 # Initialize service
 location_service = None
@@ -191,7 +202,7 @@ async def geocode_address(
         raise
     except Exception as e:
         logger.error(f"Geocode error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/reverse-geocode", response_model=LocationResponse)
@@ -232,7 +243,7 @@ async def reverse_geocode(
         raise
     except Exception as e:
         logger.error(f"Reverse geocode error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ============================================================================
@@ -281,7 +292,7 @@ async def search_nearby_places(
         raise
     except Exception as e:
         logger.error(f"Nearby search error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/search", response_model=LocationResponse)
@@ -324,7 +335,7 @@ async def search_places(
         raise
     except Exception as e:
         logger.error(f"Place search error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/nearby-merchants", response_model=LocationResponse)
@@ -444,7 +455,7 @@ async def get_nearby_merchants(
         raise
     except Exception as e:
         logger.error(f"Nearby merchants error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ============================================================================
@@ -507,7 +518,7 @@ async def calculate_route(
         raise
     except Exception as e:
         logger.error(f"Route calculation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/route-to-merchant", response_model=LocationResponse)
@@ -550,7 +561,7 @@ async def route_to_merchant(
         raise
     except Exception as e:
         logger.error(f"Route to merchant error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ============================================================================
@@ -597,7 +608,7 @@ async def create_geofence(
         raise
     except Exception as e:
         logger.error(f"Create geofence error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/geofence/polygon", response_model=LocationResponse)
@@ -640,7 +651,7 @@ async def create_polygon_geofence(
         raise
     except Exception as e:
         logger.error(f"Create polygon geofence error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/geofence/{geofence_id}", response_model=LocationResponse)
@@ -668,7 +679,7 @@ async def delete_geofence(
         raise
     except Exception as e:
         logger.error(f"Delete geofence error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/geofences", response_model=LocationResponse)
@@ -691,7 +702,7 @@ async def list_geofences(
 
     except Exception as e:
         logger.error(f"List geofences error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/geofence/evaluate", response_model=LocationResponse)
@@ -723,7 +734,7 @@ async def evaluate_geofences(
 
     except Exception as e:
         logger.error(f"Evaluate geofences error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ============================================================================
@@ -773,7 +784,7 @@ async def update_device_position(
         raise
     except Exception as e:
         logger.error(f"Update position error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/track/{device_id}", response_model=LocationResponse)
@@ -801,7 +812,7 @@ async def get_device_position(
         raise
     except Exception as e:
         logger.error(f"Get position error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/track/{device_id}/history", response_model=LocationResponse)
@@ -839,7 +850,7 @@ async def get_device_position_history(
 
     except Exception as e:
         logger.error(f"Get position history error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ============================================================================
@@ -884,4 +895,4 @@ async def calculate_distance(
 
     except Exception as e:
         logger.error(f"Calculate distance error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")

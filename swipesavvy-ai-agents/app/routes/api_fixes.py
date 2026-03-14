@@ -20,6 +20,7 @@ import re
 
 from app.database import get_db
 from app.models import User
+from app.core.auth import verify_token_string
 from app.models.notifications import NotificationHistory
 from app.models.forms import ContactFormSubmission, DemoRequestSubmission
 from sqlalchemy import func
@@ -129,21 +130,12 @@ BEARER_PREFIX = "Bearer "
 INVALID_TOKEN_MSG = "Invalid or expired token"
 
 
-def require_auth(authorization: Optional[str] = Header(None)):
-    """Require valid authorization header"""
-    if not authorization:
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Require valid authorization header with proper JWT validation"""
+    if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Authentication required")
-
-    if not authorization.startswith(BEARER_PREFIX):
-        raise HTTPException(status_code=401, detail="Invalid authorization format")
-
-    # In production, verify the JWT token here
-    # For now, just check that a token is present
-    token = authorization.replace(BEARER_PREFIX, "")
-    if len(token) < 10:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    return token
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
 
 
 def get_user_from_token(authorization: str, db: Session) -> Optional[User]:

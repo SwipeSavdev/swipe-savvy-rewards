@@ -6,7 +6,7 @@ Provides endpoints for:
 - Mobile: Fetching preferred merchants and deals for consumers
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
@@ -18,6 +18,7 @@ import math
 
 from app.database import get_db
 from app.models import PreferredMerchant, MerchantDeal, Merchant, MerchantSubscription
+from app.core.auth import verify_token_string
 
 # Subscription tier configuration
 SUBSCRIPTION_TIERS = {
@@ -79,7 +80,16 @@ SUBSCRIPTION_TIERS = {
 }
 
 logger = logging.getLogger(__name__)
-router = APIRouter(tags=["preferred-merchants"])
+# SECURITY: Require authentication for all preferred merchant endpoints (OWASP A01)
+def require_auth(authorization: Optional[str] = Header(None)) -> str:
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization.replace("Bearer ", "")
+    return verify_token_string(token)
+
+
+router = APIRouter(tags=["preferred-merchants"], dependencies=[Depends(require_auth)])
 
 
 # ============================================================================
@@ -456,7 +466,7 @@ async def create_preferred_merchant(
     except Exception as e:
         logger.error(f"Error creating preferred merchant: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/admin/preferred-merchants")
@@ -523,7 +533,7 @@ async def list_preferred_merchants_admin(
         }
     except Exception as e:
         logger.error(f"Error listing preferred merchants: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/admin/preferred-merchants/{pm_id}")
@@ -563,7 +573,7 @@ async def get_preferred_merchant_admin(
         raise
     except Exception as e:
         logger.error(f"Error getting preferred merchant: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.put("/api/v1/admin/preferred-merchants/{pm_id}")
@@ -597,7 +607,7 @@ async def update_preferred_merchant(
     except Exception as e:
         logger.error(f"Error updating preferred merchant: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/api/v1/admin/preferred-merchants/{pm_id}")
@@ -625,7 +635,7 @@ async def delete_preferred_merchant(
     except Exception as e:
         logger.error(f"Error deleting preferred merchant: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ============================================================================
@@ -682,7 +692,7 @@ async def create_deal(
     except Exception as e:
         logger.error(f"Error creating deal: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/admin/deals")
@@ -724,7 +734,7 @@ async def list_all_deals_admin(
         }
     except Exception as e:
         logger.error(f"Error listing deals: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.put("/api/v1/admin/deals/{deal_id}")
@@ -758,7 +768,7 @@ async def update_deal(
     except Exception as e:
         logger.error(f"Error updating deal: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/api/v1/admin/deals/{deal_id}")
@@ -784,7 +794,7 @@ async def delete_deal(
     except Exception as e:
         logger.error(f"Error deleting deal: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ============================================================================
@@ -892,7 +902,7 @@ async def get_preferred_merchants_consumer(
         }
     except Exception as e:
         logger.error(f"Error getting preferred merchants: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/merchants/preferred/{pm_id}")
@@ -940,7 +950,7 @@ async def get_preferred_merchant_consumer(
         raise
     except Exception as e:
         logger.error(f"Error getting merchant details: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/deals")
@@ -1019,7 +1029,7 @@ async def get_deals_consumer(
         }
     except Exception as e:
         logger.error(f"Error getting deals: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/deals/{deal_id}")
@@ -1056,7 +1066,7 @@ async def get_deal_details(
         raise
     except Exception as e:
         logger.error(f"Error getting deal details: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/deals/featured")
@@ -1089,7 +1099,7 @@ async def get_featured_deals(
         }
     except Exception as e:
         logger.error(f"Error getting featured deals: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/merchants/preferred/categories")
@@ -1107,7 +1117,7 @@ async def get_merchant_categories(
         }
     except Exception as e:
         logger.error(f"Error getting categories: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # ============================================================================
@@ -1246,7 +1256,7 @@ async def create_merchant_subscription(
     except Exception as e:
         logger.error(f"Error creating subscription: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/admin/subscriptions/{merchant_id}")
@@ -1276,7 +1286,7 @@ async def get_merchant_subscription(
         }
     except Exception as e:
         logger.error(f"Error getting subscription: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.put("/api/v1/admin/subscriptions/{merchant_id}")
@@ -1343,7 +1353,7 @@ async def update_merchant_subscription(
     except Exception as e:
         logger.error(f"Error updating subscription: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/api/v1/admin/subscriptions/{merchant_id}")
@@ -1378,7 +1388,7 @@ async def cancel_merchant_subscription(
     except Exception as e:
         logger.error(f"Error cancelling subscription: {e}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/v1/admin/subscriptions")
@@ -1415,4 +1425,4 @@ async def list_all_subscriptions(
         }
     except Exception as e:
         logger.error(f"Error listing subscriptions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
