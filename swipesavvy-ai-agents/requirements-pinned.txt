@@ -39,7 +39,7 @@ sentry-sdk>=2.0.0
 python-json-logger==2.0.7
 
 # Authentication & Crypto
-pyjwt==2.8.1
+pyjwt==2.12.0
 cryptography>=43.0.0
 
 # Rate Limiting
