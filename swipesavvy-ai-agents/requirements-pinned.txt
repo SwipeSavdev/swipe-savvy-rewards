@@ -21,7 +21,7 @@ pgvector==0.2.2
 # Web Framework
 fastapi>=0.109.1
 uvicorn==0.24.0
-pydantic==2.10.6
+pydantic==2.12.5
 pydantic-settings==2.7.1
 
 # Security & PII Detection
