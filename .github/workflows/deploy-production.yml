@@ -212,7 +212,7 @@ jobs:
       
       - name: Notify deployment success
         if: success()
-        uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 # v3.16.2
+        uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e # v3.19.0
         with:
           status: success
           text: '✅ Deployed ${{ needs.pre-deploy-checks.outputs.version }} to staging'
@@ -284,7 +284,7 @@ jobs:
       
       - name: Notify production deployment
         if: success()
-        uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 # v3.16.2
+        uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e # v3.19.0
         with:
           status: success
           text: '✅ Successfully deployed ${{ needs.pre-deploy-checks.outputs.version }} to production'
@@ -336,7 +336,7 @@ jobs:
           echo "🔄 Rollback initiated"
       
       - name: Notify rollback
-        uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 # v3.16.2
+        uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e # v3.19.0
         with:
           status: failure
           text: '⚠️ Rollback initiated for ${{ needs.pre-deploy-checks.outputs.version }}'
