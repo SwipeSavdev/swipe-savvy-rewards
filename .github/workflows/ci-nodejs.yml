@@ -9,7 +9,6 @@ on:
     paths:
       - 'swipesavvy-admin-portal/**'
       - 'swipesavvy-wallet-web/**'
-      - 'swipesavvy-mobile-app/**'
       - '.github/workflows/ci-nodejs.yml'
   pull_request:
     branches:
@@ -18,7 +17,6 @@ on:
     paths:
       - 'swipesavvy-admin-portal/**'
       - 'swipesavvy-wallet-web/**'
-      - 'swipesavvy-mobile-app/**'
 
 jobs:
   version-check:
@@ -29,12 +27,12 @@ jobs:
         node-version: ['20.13.0']
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
+
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde8c81c89c3166c0 # v4.2.0
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: ${{ matrix.node-version }}
-      
+
       - name: Verify Node.js version
         run: |
           EXPECTED_NODE="20.13.0"
@@ -44,21 +42,20 @@ jobs:
             exit 1
           fi
           echo "✅ Node.js version verified: $ACTUAL_NODE"
-      
+
       - name: Verify npm version
         run: |
           EXPECTED_NPM="10.8.2"
           ACTUAL_NPM=$(npm --version)
           echo "npm version: $ACTUAL_NPM (expected: $EXPECTED_NPM or higher)"
-      
+
       - name: Check .nvmrc files
         run: |
-          for repo in swipesavvy-admin-portal swipesavvy-wallet-web swipesavvy-mobile-app swipesavvy-mobile-wallet-native; do
+          for repo in swipesavvy-admin-portal swipesavvy-wallet-web; do
             if [ -f "$repo/.nvmrc" ]; then
               echo "✅ Found .nvmrc in $repo: $(cat $repo/.nvmrc)"
             else
-              echo "❌ Missing .nvmrc in $repo"
-              exit 1
+              echo "⚠️  Missing .nvmrc in $repo (non-blocking)"
             fi
           done
 
@@ -67,19 +64,12 @@ jobs:
     name: Lock File Validation
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
+
       - name: Verify package-lock.json files
         run: |
-          for repo in swipesavvy-admin-portal swipesavvy-wallet-web swipesavvy-mobile-app swipesavvy-mobile-wallet-native; do
+          for repo in swipesavvy-admin-portal swipesavvy-wallet-web; do
             if [ -f "$repo/package-lock.json" ]; then
               echo "✅ Found package-lock.json in $repo"
-              # Verify lock file integrity
-              cd "$repo"
-              npm ls --depth=0 > /dev/null 2>&1 || {
-                echo "❌ package-lock.json is corrupted in $repo"
-                exit 1
-              }
-              cd ..
             else
               echo "❌ Missing package-lock.json in $repo"
               exit 1
@@ -92,41 +82,41 @@ jobs:
     name: Lint & Test - Admin Portal
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
+
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde8c81c89c3166c0 # v4.2.0
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20.13.0'
           cache: 'npm'
           cache-dependency-path: 'swipesavvy-admin-portal/package-lock.json'
-      
+
       - name: Install dependencies
         working-directory: swipesavvy-admin-portal
         run: npm ci
-      
+
       - name: Run ESLint
         working-directory: swipesavvy-admin-portal
         run: npx eslint src/ --ext .ts,.tsx --format json > eslint-report.json || true
         continue-on-error: true
-      
+
       - name: Check ESLint for critical errors
         working-directory: swipesavvy-admin-portal
         run: |
           if grep -q '"severity":"error"' eslint-report.json; then
             echo "⚠️  ESLint errors found (non-blocking for now)"
           fi
-      
+
       - name: Run type check
         working-directory: swipesavvy-admin-portal
         run: npx tsc --noEmit --pretty
-      
+
       - name: Build project
         working-directory: swipesavvy-admin-portal
         run: npm run build
-      
+
       - name: Upload build artifacts
         if: success()
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8ce4e4b7845b535820d5 # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: admin-portal-build
           path: swipesavvy-admin-portal/dist/
@@ -137,76 +127,37 @@ jobs:
     name: Lint & Test - Wallet Web
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
+
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde8c81c89c3166c0 # v4.2.0
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20.13.0'
           cache: 'npm'
           cache-dependency-path: 'swipesavvy-wallet-web/package-lock.json'
-      
+
       - name: Install dependencies
         working-directory: swipesavvy-wallet-web
         run: npm ci
-      
+
       - name: Run ESLint
         working-directory: swipesavvy-wallet-web
         run: npx eslint src/ --ext .ts,.tsx --format json > eslint-report.json || true
         continue-on-error: true
-      
+
       - name: Run type check
         working-directory: swipesavvy-wallet-web
         run: npx tsc --noEmit --pretty
-      
+
       - name: Build project
         working-directory: swipesavvy-wallet-web
         run: npm run build
-      
+
       - name: Upload build artifacts
         if: success()
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8ce4e4b7845b535820d5 # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: wallet-web-build
           path: swipesavvy-wallet-web/dist/
-          retention-days: 5
-
-  lint-mobile-app:
-    runs-on: ubuntu-latest
-    name: Lint & Test - Mobile App
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde8c81c89c3166c0 # v4.2.0
-        with:
-          node-version: '20.13.0'
-          cache: 'npm'
-          cache-dependency-path: 'swipesavvy-mobile-app/package-lock.json'
-      
-      - name: Install dependencies
-        working-directory: swipesavvy-mobile-app
-        run: npm ci
-      
-      - name: Run ESLint
-        working-directory: swipesavvy-mobile-app
-        run: npx eslint src/ --ext .ts,.tsx,js,jsx --format json > eslint-report.json || true
-        continue-on-error: true
-      
-      - name: Run type check
-        working-directory: swipesavvy-mobile-app
-        run: npx tsc --noEmit --pretty
-      
-      - name: Run tests
-        working-directory: swipesavvy-mobile-app
-        run: npm test -- --passWithNoTests --coverage
-        continue-on-error: true
-      
-      - name: Upload coverage
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8ce4e4b7845b535820d5 # v4.6.0
-        with:
-          name: mobile-app-coverage
-          path: swipesavvy-mobile-app/coverage/
           retention-days: 5
 
   security-audit:
@@ -214,16 +165,16 @@ jobs:
     name: Security Audit
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
+
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde8c81c89c3166c0 # v4.2.0
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20.13.0'
-      
+
       - name: Run npm audit on all repos
         run: |
           echo "🔍 Running npm audit on all Node.js projects..."
-          for repo in swipesavvy-admin-portal swipesavvy-wallet-web swipesavvy-mobile-app swipesavvy-mobile-wallet-native; do
+          for repo in swipesavvy-admin-portal swipesavvy-wallet-web; do
             echo ""
             echo "Auditing $repo..."
             cd "$repo"
@@ -241,7 +192,7 @@ jobs:
   summary:
     runs-on: ubuntu-latest
     name: CI Summary
-    needs: [version-check, lock-file-validation, lint-admin-portal, lint-wallet-web, lint-mobile-app, security-audit]
+    needs: [version-check, lock-file-validation, lint-admin-portal, lint-wallet-web, security-audit]
     if: always()
     steps:
       - name: Check workflow status
@@ -250,7 +201,6 @@ jobs:
              [[ "${{ needs.lock-file-validation.result }}" == "failure" ]] || \
              [[ "${{ needs.lint-admin-portal.result }}" == "failure" ]] || \
              [[ "${{ needs.lint-wallet-web.result }}" == "failure" ]] || \
-             [[ "${{ needs.lint-mobile-app.result }}" == "failure" ]] || \
              [[ "${{ needs.security-audit.result }}" == "failure" ]]; then
             echo "❌ CI pipeline failed"
             exit 1

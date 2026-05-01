@@ -55,7 +55,7 @@ jobs:
       
       - name: Validate docker-compose.yml
         run: |
-          docker-compose config -f docker-compose.yml > /dev/null
+          docker compose -f docker-compose.yml config > /dev/null
           echo "✅ docker-compose.yml is valid"
       
       - name: Check service definitions
@@ -77,7 +77,7 @@ jobs:
             echo "⚠️ Missing .env.example"
           fi
           
-          for repo in swipesavvy-admin-portal swipesavvy-wallet-web swipesavvy-mobile-app swipesavvy-ai-agents; do
+          for repo in swipesavvy-admin-portal swipesavvy-wallet-web swipesavvy-ai-agents; do
             if [ -f "$repo/.env.example" ]; then
               echo "✅ Found .env.example in $repo"
             else

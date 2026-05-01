@@ -1,17 +1,9 @@
 name: EAS Build and Submit
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'app/**'
-      - 'src/**'
-      - 'components/**'
-      - 'assets/**'
-      - 'app.json'
-      - 'eas.json'
-      - 'package.json'
+  # Auto-trigger on push is intentionally disabled to avoid burning EAS build minutes
+  # on every commit and conflicting with manual CLI builds. Trigger this workflow
+  # manually via "Actions → EAS Build and Submit → Run workflow" when a build is needed.
   workflow_dispatch:
     inputs:
       platform:
@@ -51,7 +43,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde8c81c89c3166c0 # v4.2.0
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -85,7 +77,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde8c81c89c3166c0 # v4.2.0
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20'
           cache: 'npm'

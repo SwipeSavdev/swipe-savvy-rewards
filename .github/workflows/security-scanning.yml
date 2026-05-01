@@ -45,14 +45,14 @@ jobs:
           safety check --json > safety-report.json
       
       - name: Upload Bandit results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8ce4e4b7845b535820d5 # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         if: always()
         with:
           name: bandit-report
           path: swipesavvy-ai-agents/bandit-report.json
       
       - name: Upload Safety results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8ce4e4b7845b535820d5 # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         if: always()
         with:
           name: safety-report
@@ -112,7 +112,7 @@ jobs:
         run: safety check --file requirements-lock.txt --json > dependency-report.json || true
       
       - name: Upload dependency report
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8ce4e4b7845b535820d5 # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         if: always()
         with:
           name: dependency-report
@@ -146,7 +146,7 @@ jobs:
             --output-format=json > pylint-report.json || true
       
       - name: Upload Pylint results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8ce4e4b7845b535820d5 # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         if: always()
         with:
           name: pylint-report
@@ -171,7 +171,10 @@ jobs:
       - name: Check for hardcoded secrets
         run: |
           echo "Checking for hardcoded secrets..."
-          if grep -r "password.*=.*['\"]" --include="*.py" app services | grep -v "password_hash" | grep -v "get_password_hash"; then
+          # Match literal-string assignments only: password = "literal" / PASSWORD: "literal"
+          # Excludes env-var reads, function calls, f-strings, hashing utilities, URL paths.
+          if grep -rnE "^[[:space:]]*[A-Za-z_]*[Pp]assword[A-Za-z_]*[[:space:]]*=[[:space:]]*[\"'][^\"'$\\\\{][^\"']*[\"']" --include="*.py" app services \
+              | grep -vE "password_hash|get_password_hash|os\.getenv|os\.environ|getenv\(|getattr\(|settings\.|config\.|self\.|cls\.|return |\.encode|\.decode|\bf['\"]|@"; then
             echo "❌ ERROR: Hardcoded passwords detected!"
             exit 1
           fi

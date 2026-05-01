@@ -104,10 +104,14 @@ jobs:
     
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
+
+      - name: Lowercase repository name for ghcr.io
+        id: repo
+        run: echo "lower=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
-      
+
       - name: Log in to Docker Hub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
@@ -115,44 +119,44 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
         # continue-on-error: Docker Hub credentials may not be configured; GHCR is the primary registry
         continue-on-error: true
-      
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Build and push admin-portal image
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v6.14.0
         with:
           context: ./swipesavvy-admin-portal
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/admin-portal:${{ needs.pre-deploy-checks.outputs.version }}
-            ghcr.io/${{ github.repository }}/admin-portal:latest
+            ghcr.io/${{ steps.repo.outputs.lower }}/admin-portal:${{ needs.pre-deploy-checks.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.lower }}/admin-portal:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      
+
       - name: Build and push wallet-web image
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v6.14.0
         with:
           context: ./swipesavvy-wallet-web
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/wallet-web:${{ needs.pre-deploy-checks.outputs.version }}
-            ghcr.io/${{ github.repository }}/wallet-web:latest
+            ghcr.io/${{ steps.repo.outputs.lower }}/wallet-web:${{ needs.pre-deploy-checks.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.lower }}/wallet-web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      
+
       - name: Build and push ai-agents image
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v6.14.0
         with:
           context: ./swipesavvy-ai-agents
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/ai-agents:${{ needs.pre-deploy-checks.outputs.version }}
-            ghcr.io/${{ github.repository }}/ai-agents:latest
+            ghcr.io/${{ steps.repo.outputs.lower }}/ai-agents:${{ needs.pre-deploy-checks.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.lower }}/ai-agents:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

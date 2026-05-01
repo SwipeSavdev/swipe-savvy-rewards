@@ -87,8 +87,8 @@ class WalletWebSocketManager {
   private maxReconnectAttempts = 5
   private reconnectDelay = 3000
   private heartbeatInterval = 30000
-  private heartbeatTimer: NodeJS.Timeout | null = null
-  private reconnectTimer: NodeJS.Timeout | null = null
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null
+  private reconnectTimer: ReturnType<typeof setInterval> | null = null
   private isConnecting = false
   private isAuthenticated = false
 
