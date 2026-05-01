@@ -4,14 +4,16 @@ Authentication Utilities
 JWT token generation, verification, and user authentication.
 """
 
-import jwt
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+import jwt
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from app.core.config import settings
-import logging
 
 logger = logging.getLogger(__name__)
 

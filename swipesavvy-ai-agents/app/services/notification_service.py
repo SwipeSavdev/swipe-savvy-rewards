@@ -8,15 +8,16 @@ Integrations:
 - Push: Firebase Cloud Messaging (FCM)
 """
 
-import os
 import logging
-from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel, EmailStr
-from datetime import datetime
-from typing import Optional, List, Dict, Any
-from enum import Enum
+import os
 import secrets
 from abc import ABC, abstractmethod
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel, EmailStr
 
 logger = logging.getLogger(__name__)
 
@@ -131,16 +132,16 @@ class SendPushRequest(BaseModel):
 
 # ==================== Database Layer ====================
 
-from sqlalchemy.orm import Session
-from uuid import UUID as PyUUID
 import uuid
+from uuid import UUID as PyUUID
+
+from sqlalchemy.orm import Session
+
+from app.database import SessionLocal
 
 # Import SQLAlchemy models for database persistence
-from app.models.notifications import (
-    NotificationHistory as NotificationHistoryDB,
-    NotificationPreferences as NotificationPreferencesDB,
-)
-from app.database import SessionLocal
+from app.models.notifications import NotificationHistory as NotificationHistoryDB
+from app.models.notifications import NotificationPreferences as NotificationPreferencesDB
 
 
 def get_db_session() -> Session:
@@ -339,7 +340,7 @@ class SendGridEmailProvider(NotificationProvider):
             return True
 
         try:
-            from sendgrid.helpers.mail import Mail, Email, To, Content, HtmlContent
+            from sendgrid.helpers.mail import Content, Email, HtmlContent, Mail, To
 
             mail = Mail(
                 from_email=Email(self.from_email, self.from_name),
@@ -377,7 +378,7 @@ class SendGridEmailProvider(NotificationProvider):
             return True
 
         try:
-            from sendgrid.helpers.mail import Mail, Email, To
+            from sendgrid.helpers.mail import Email, Mail, To
 
             mail = Mail(
                 from_email=Email(self.from_email, self.from_name),

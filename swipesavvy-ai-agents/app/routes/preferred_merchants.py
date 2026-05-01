@@ -6,19 +6,20 @@ Provides endpoints for:
 - Mobile: Fetching preferred merchants and deals for consumers
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends, Header
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_
-from uuid import UUID
 import logging
 import math
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
-from app.database import get_db
-from app.models import PreferredMerchant, MerchantDeal, Merchant, MerchantSubscription
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import and_, or_
+from sqlalchemy.orm import Session, joinedload
+
 from app.core.auth import verify_token_string
+from app.database import get_db
+from app.models import Merchant, MerchantDeal, MerchantSubscription, PreferredMerchant
 
 # Subscription tier configuration
 SUBSCRIPTION_TIERS = {

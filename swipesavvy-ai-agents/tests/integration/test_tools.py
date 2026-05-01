@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "services"))
 
 from tools.account_tools import get_account_balance
-from tools.transaction_tools import get_transactions, get_transaction_details
+from tools.transaction_tools import get_transaction_details, get_transactions
 
 print("=" * 60)
 print("TEST 1: Get Account Balance")

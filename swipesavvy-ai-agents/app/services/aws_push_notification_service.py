@@ -10,12 +10,12 @@ Handles mobile push notifications using AWS SNS:
 This service manages device registration, token management, and notification delivery.
 """
 
-import os
 import json
 import logging
-from typing import Optional, Dict, Any, List
+import os
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 import boto3
 from botocore.exceptions import ClientError

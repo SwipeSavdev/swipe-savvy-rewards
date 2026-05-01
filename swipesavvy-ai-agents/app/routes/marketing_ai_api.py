@@ -4,16 +4,17 @@ Marketing AI API Endpoints
 Provides REST API access to the enhanced Marketing AI behavioral learning system.
 """
 
+import logging
+from datetime import datetime, timezone
+from typing import Dict, List, Optional, Union
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import List, Optional, Union, Dict
-from datetime import datetime, timezone
-import logging
 
 from app.core.auth import verify_token_string
 
-from ..services.marketing_ai_behavioral_learning import get_enhanced_marketing_service
 from ..services.marketing_ai import get_marketing_ai_service
+from ..services.marketing_ai_behavioral_learning import get_enhanced_marketing_service
 
 logger = logging.getLogger(__name__)
 
@@ -485,6 +486,7 @@ async def setup_database_tables():
     """
     try:
         import psycopg2
+
         from ..services.marketing_ai_behavioral_learning import (
             DB_CONFIG,
             setup_behavioral_learning_tables,

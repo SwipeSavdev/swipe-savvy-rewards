@@ -3,22 +3,22 @@ Comprehensive Test Suite for Bug Fixes
 Tests all 8 identified bugs to ensure fixes are working correctly
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, MagicMock
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 # Import app
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.main import app, readiness_check, health_check
 from app.database import Base, get_db
-
+from app.main import app, health_check, readiness_check
 
 # ============================================================================
 # FIXTURES
@@ -61,7 +61,7 @@ async def test_readiness_check_closes_connection_on_error(test_db):
     BUG #1: Verify that database connection is properly closed
     even when database check fails
     """
-    from sqlalchemy import text, event
+    from sqlalchemy import event, text
     from sqlalchemy.pool import Pool
 
     # Track connections

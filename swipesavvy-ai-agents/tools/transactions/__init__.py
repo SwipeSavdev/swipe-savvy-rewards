@@ -9,63 +9,56 @@ Available tools:
 - search_transactions: Search transactions by criteria
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 
 class TransactionNotFoundError(Exception):
     """Raised when transaction does not exist"""
+
     pass
 
 
-async def get_recent_transactions(
-    user_id: str,
-    limit: int = 10,
-    offset: int = 0
-) -> Dict[str, Any]:
+async def get_recent_transactions(user_id: str, limit: int = 10, offset: int = 0) -> Dict[str, Any]:
     """
     Get recent transactions for a user
-    
+
     Args:
         user_id: The user's unique identifier
         limit: Maximum number of transactions to return (default: 10, max: 50)
         offset: Number of transactions to skip for pagination
-        
+
     Returns:
         Dict containing:
             - transactions: List of transaction objects
             - total_count: Total number of transactions
             - has_more: Whether more transactions exist
-            
+
     Example:
         >>> result = await get_recent_transactions("user_123", limit=5)
         >>> for txn in result['transactions']:
         ...     print(f"{txn['date']}: {txn['merchant']} - ${txn['amount']}")
     """
     # TODO (Week 4): Implement actual API call
-    
-    return {
-        "transactions": [],
-        "total_count": 0,
-        "has_more": False
-    }
+
+    return {"transactions": [], "total_count": 0, "has_more": False}
 
 
 async def get_transaction_details(transaction_id: str) -> Dict[str, Any]:
     """
     Get detailed information for a specific transaction
-    
+
     Args:
         transaction_id: The transaction's unique identifier
-        
+
     Returns:
         Dict containing complete transaction details
-        
+
     Raises:
         TransactionNotFoundError: If transaction_id does not exist
     """
     # TODO (Week 4): Implement actual API call
-    
+
     return {
         "transaction_id": transaction_id,
         "status": "completed",
@@ -74,7 +67,7 @@ async def get_transaction_details(transaction_id: str) -> Dict[str, Any]:
         "merchant": "Unknown",
         "category": "other",
         "date": datetime.utcnow().isoformat(),
-        "description": "Transaction details not available"
+        "description": "Transaction details not available",
     }
 
 
@@ -86,11 +79,11 @@ async def search_transactions(
     category: Optional[str] = None,
     min_amount: Optional[float] = None,
     max_amount: Optional[float] = None,
-    limit: int = 20
+    limit: int = 20,
 ) -> Dict[str, Any]:
     """
     Search transactions by various criteria
-    
+
     Args:
         user_id: The user's unique identifier
         query: Text search in merchant name or description
@@ -100,7 +93,7 @@ async def search_transactions(
         min_amount: Minimum transaction amount
         max_amount: Maximum transaction amount
         limit: Maximum number of results to return
-        
+
     Returns:
         Dict containing:
             - transactions: List of matching transactions
@@ -108,7 +101,7 @@ async def search_transactions(
             - filters_applied: Summary of applied filters
     """
     # TODO (Week 4): Implement actual API call
-    
+
     return {
         "transactions": [],
         "total_count": 0,
@@ -117,6 +110,6 @@ async def search_transactions(
             "start_date": start_date,
             "end_date": end_date,
             "category": category,
-            "amount_range": f"${min_amount or 0} - ${max_amount or 'unlimited'}"
-        }
+            "amount_range": f"${min_amount or 0} - ${max_amount or 'unlimited'}",
+        },
     }

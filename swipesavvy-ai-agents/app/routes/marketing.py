@@ -5,23 +5,23 @@ Endpoints for managing marketing campaigns, viewing analytics,
 and managing user segmentation
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import Optional, Dict, Any, List
-from datetime import datetime
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import logging
 import json
+import logging
 import os
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import psycopg2
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
-from fastapi import Depends, Header
-from app.services.marketing_ai import get_marketing_ai_service
-from app.scheduler.marketing_jobs import (
-    schedule_marketing_analysis_now,
-    schedule_campaign_cleanup_now,
-)
 from app.core.auth import verify_token_string
+from app.scheduler.marketing_jobs import (
+    schedule_campaign_cleanup_now,
+    schedule_marketing_analysis_now,
+)
+from app.services.marketing_ai import get_marketing_ai_service
 
 logger = logging.getLogger(__name__)
 

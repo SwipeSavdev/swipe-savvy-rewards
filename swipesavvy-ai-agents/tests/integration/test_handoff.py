@@ -117,8 +117,9 @@ print("\n" + "=" * 60)
 print("TEST 7: Generate Handoff Messages")
 print("=" * 60)
 
-from handoff import HandoffTrigger
 from datetime import datetime
+
+from handoff import HandoffTrigger
 
 triggers = [
     HandoffTrigger("user_requested", 1.0, datetime.now().isoformat(), {}),

@@ -10,28 +10,27 @@ Handles:
 - Token refresh
 """
 
+import hashlib
+import logging
 import os
 import re
 import secrets
-import hashlib
-import logging
 from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr, Field, validator
-from sqlalchemy.orm import Session
 import bcrypt
 import jwt
 import redis
-
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, EmailStr, Field, validator
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from sqlalchemy.orm import Session
 
-from app.database import get_db, SessionLocal
-from app.models import User, UserKYCHistory, OFACScreeningResult
+from app.database import SessionLocal, get_db
+from app.models import OFACScreeningResult, User, UserKYCHistory
 from app.services.aws_ses_service import AWSSESService
 
 logger = logging.getLogger(__name__)
@@ -1225,7 +1224,7 @@ async def run_ofac_screening(
     date_of_birth: str = None,
 ):
     """Run sanctions screening in background and update the screening record (BSA/AML)"""
-    from app.services.ofac_screening_service import get_sanctions_screening_service, ScreeningResult
+    from app.services.ofac_screening_service import ScreeningResult, get_sanctions_screening_service
 
     db = SessionLocal()
     try:

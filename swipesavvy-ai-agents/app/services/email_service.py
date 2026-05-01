@@ -12,10 +12,10 @@ Uses AWS SES for email delivery (migrated from SMTP/SendGrid).
 This module provides backward compatibility with existing code.
 """
 
-import os
 import logging
-from typing import Optional
+import os
 from datetime import datetime
+from typing import Optional
 
 from app.services.aws_ses_service import AWSSESService, aws_ses_service
 

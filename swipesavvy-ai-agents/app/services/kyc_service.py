@@ -12,19 +12,19 @@ The actual provider APIs will be supplied by our program manager (Connect Financ
 These stubs return pending_review status and queue submissions for manual review.
 """
 
+import hashlib
 import logging
 import os
-import hashlib
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
-from uuid import UUID, uuid4
 from enum import Enum
+from typing import Any, Dict, List, Optional
+from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
 
 from sqlalchemy.orm import Session
 
-from app.models import User, UserKYCDocument, UserKYCHistory, OFACScreeningResult
+from app.models import OFACScreeningResult, User, UserKYCDocument, UserKYCHistory
 
 
 class KYCTier(str, Enum):

@@ -4,16 +4,18 @@ Admin Dashboard Routes
 Provides dashboard overview, analytics, and key metrics for the admin portal.
 """
 
-from fastapi import APIRouter, HTTPException, status, Depends
-from pydantic import BaseModel
-from typing import Union, Dict, Any
-from datetime import datetime, timedelta, timezone
 import logging
-from sqlalchemy.orm import Session
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Union
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import func
-from app.database import get_db
-from app.models import User, Merchant, WalletTransaction, SupportTicket, AdminUser, AICampaign
+from sqlalchemy.orm import Session
+
 from app.core.auth import verify_jwt_token
+from app.database import get_db
+from app.models import AdminUser, AICampaign, Merchant, SupportTicket, User, WalletTransaction
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/admin", tags=["admin-dashboard"])
@@ -421,8 +423,9 @@ async def seed_sample_data(
     Creates sample users, merchants, transactions, and support tickets.
     """
     import random
-    from uuid import uuid4
     from decimal import Decimal
+    from uuid import uuid4
+
     from passlib.context import CryptContext
     from sqlalchemy import text
 

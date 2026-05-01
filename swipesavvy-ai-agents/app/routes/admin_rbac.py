@@ -4,19 +4,20 @@ Admin Portal - Role-Based Access Control (RBAC) Routes
 Endpoints for managing roles, policies, and permissions in the admin portal
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from passlib.context import CryptContext
 import logging
 import secrets
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
-from app.database import get_db
+from fastapi import APIRouter, Depends, HTTPException, Query
+from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
 from app.core.auth import verify_jwt_token
-from app.models import Role, Policy, Permission, AdminUser
+from app.database import get_db
+from app.models import AdminUser, Permission, Policy, Role
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -839,7 +840,7 @@ async def migrate_rbac_tables(
 ):
     """Create RBAC tables if they don't exist"""
     try:
-        from app.database import engine, Base
+        from app.database import Base, engine
 
         # Create only the RBAC tables
         Role.__table__.create(bind=engine, checkfirst=True)

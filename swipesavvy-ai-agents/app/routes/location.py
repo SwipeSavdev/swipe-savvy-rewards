@@ -12,17 +12,18 @@ Provides endpoints for:
 Uses AWS Location Service for all geospatial operations.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
-from sqlalchemy.orm import Session
-from typing import Optional, List, Tuple
-from pydantic import BaseModel, Field, validator
-from datetime import datetime, timezone, timedelta
 import logging
+from datetime import datetime, timedelta, timezone
+from typing import List, Optional, Tuple
 
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from pydantic import BaseModel, Field, validator
+from sqlalchemy import and_
+from sqlalchemy.orm import Session
+
+from app.core.auth import verify_token_string
 from app.database import get_db
 from app.models import PreferredMerchant
-from sqlalchemy import and_
-from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ router = APIRouter(
 location_service = None
 
 try:
-    from app.services.aws_location_service import aws_location_service, TravelMode, DistanceUnit
+    from app.services.aws_location_service import DistanceUnit, TravelMode, aws_location_service
 
     location_service = aws_location_service
     logger.info("AWS Location Service initialized")
@@ -370,7 +371,7 @@ async def get_nearby_merchants(
         # Get merchants from database within the search radius
         # Using Haversine formula to calculate distance:
         # distance = 2 * R * asin(sqrt(sin²((lat2-lat1)/2) + cos(lat1) * cos(lat2) * sin²((lon2-lon1)/2)))
-        from math import radians, cos, sin, asin, sqrt
+        from math import asin, cos, radians, sin, sqrt
 
         def haversine_distance(lon1, lat1, lon2, lat2):
             """Calculate distance in km between two points"""

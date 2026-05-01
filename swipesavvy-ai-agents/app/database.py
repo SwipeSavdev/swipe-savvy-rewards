@@ -5,20 +5,18 @@ Handles SQLAlchemy setup, connection pooling, and session management
 for the SwipeSavvy backend. Also provides Redis cache integration.
 """
 
-import os
-from typing import Dict, Any
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.pool import QueuePool
 import logging
+import os
+from typing import Any, Dict
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import QueuePool
 
 logger = logging.getLogger(__name__)
 
 # Database URL - PostgreSQL for dev/production, SQLite for testing
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg2://localhost:5432/swipesavvy_dev"
-)
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://localhost:5432/swipesavvy_dev")
 
 # Check if using PostgreSQL
 if "postgresql" in DATABASE_URL:
@@ -26,12 +24,12 @@ if "postgresql" in DATABASE_URL:
     engine = create_engine(
         DATABASE_URL,
         poolclass=QueuePool,
-        pool_size=20,               # Number of persistent connections
-        max_overflow=40,            # Additional connections when pool is saturated
-        pool_pre_ping=True,         # Verify connections before using them
-        pool_recycle=3600,          # Recycle connections after 1 hour
-        pool_timeout=30,            # Wait 30 seconds for a connection
-        echo=False,                 # Set to True for SQL logging
+        pool_size=20,  # Number of persistent connections
+        max_overflow=40,  # Additional connections when pool is saturated
+        pool_pre_ping=True,  # Verify connections before using them
+        pool_recycle=3600,  # Recycle connections after 1 hour
+        pool_timeout=30,  # Wait 30 seconds for a connection
+        echo=False,  # Set to True for SQL logging
     )
     logger.info("✓ PostgreSQL connection pool configured: pool_size=20, max_overflow=40")
 else:
@@ -86,7 +84,7 @@ def get_health_status() -> Dict[str, Any]:
         status["database"] = {
             "status": "healthy",
             "connected": True,
-            "pool_size": engine.pool.size() if hasattr(engine.pool, 'size') else None,
+            "pool_size": engine.pool.size() if hasattr(engine.pool, "size") else None,
         }
     except Exception as e:
         status["database"] = {
@@ -98,6 +96,7 @@ def get_health_status() -> Dict[str, Any]:
     # Check Redis cache
     try:
         from app.services.cache_service import check_redis_health
+
         status["cache"] = check_redis_health()
     except ImportError:
         status["cache"] = {

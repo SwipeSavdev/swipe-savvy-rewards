@@ -3,15 +3,15 @@ Tests for input validation and sanitization in concierge service
 """
 
 import pytest
+
 from services.concierge_service.models import (
     ChatRequest,
-    SignupRequest,
-    LoginRequest,
-    TransactionRequest,
     CreateAccountRequest,
     InputSanitizer,
+    LoginRequest,
+    SignupRequest,
+    TransactionRequest,
 )
-
 
 # ============================================================================
 # Input Sanitizer Tests

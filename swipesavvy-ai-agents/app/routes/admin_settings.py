@@ -5,21 +5,22 @@ Endpoints for managing platform settings in the admin portal
 Settings are persisted to the database.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Header
+import json
+import logging
+import os
+import shutil
+import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
-from datetime import datetime
 from sqlalchemy.orm import Session
-import logging
-import json
-import os
-import uuid
-import shutil
 
+from app.core.auth import verify_token_string
 from app.database import get_db
 from app.models import Setting
-from app.core.auth import verify_token_string
 
 # Directory for storing uploaded branding images
 BRANDING_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "branding")

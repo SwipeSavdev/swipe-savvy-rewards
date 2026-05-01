@@ -15,9 +15,9 @@ When Connect Financial provides their API:
 
 import logging
 import os
-from typing import Optional
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 

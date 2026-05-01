@@ -9,18 +9,18 @@ Handles:
 """
 
 import os
-from typing import Optional, List
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, Header
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.core.auth import verify_token_string
 from app.database import get_db
 from app.models import User, UserKYCDocument
 from app.routes.user_auth import get_current_user
-from app.services.kyc_service import KYCService, DocumentType
-from app.core.auth import verify_token_string
+from app.services.kyc_service import DocumentType, KYCService
 
 
 # SECURITY: Require authentication for all KYC endpoints (OWASP A01)

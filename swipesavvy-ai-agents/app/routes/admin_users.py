@@ -4,19 +4,20 @@ This module provides endpoints for managing admin portal users AND customer user
 Includes user listing, creation, invitation, details, status updates, and deletion.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body, Depends
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-import bcrypt
-import secrets
 import logging
+import secrets
+from datetime import datetime, timezone
+from typing import List, Optional
 
+import bcrypt
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from pydantic import BaseModel, EmailStr
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.core.auth import verify_jwt_token
 from app.database import get_db
 from app.models import AdminUser, User
-from app.core.auth import verify_jwt_token
 
 logger = logging.getLogger(__name__)
 

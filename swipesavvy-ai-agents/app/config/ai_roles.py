@@ -5,7 +5,7 @@ Defines role-specific system prompts, tool access, and capabilities for each use
 The AI assistant adapts its behavior based on the signed-in employee's role and permissions.
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # Role configurations with system prompts and tool access
 ROLE_CONFIGS: Dict[str, Dict[str, Any]] = {
@@ -39,7 +39,6 @@ Remember: Your role is to assist SwipeSavvy employees, NOT end customers. This e
         "requires_approval": [],  # No approval required
         "can_approve_others": True,
     },
-
     "admin": {
         "display_name": "Administrator",
         "prompt_template": """You are Savvy AI, the intelligent support assistant for SwipeSavvy employees.
@@ -67,17 +66,24 @@ GUIDELINES FOR ASSISTING THIS EMPLOYEE:
 Remember: Your role is to assist SwipeSavvy employees, NOT end customers.
 """,
         "allowed_tools": [
-            "lookup_user", "lookup_merchant", "lookup_transaction",
-            "get_transaction_details", "create_support_ticket",
-            "update_support_ticket", "add_ticket_note",
-            "process_refund", "get_analytics", "get_merchant_analytics",
-            "toggle_feature_flag", "lookup_charity", "get_user_stats",
+            "lookup_user",
+            "lookup_merchant",
+            "lookup_transaction",
+            "get_transaction_details",
+            "create_support_ticket",
+            "update_support_ticket",
+            "add_ticket_note",
+            "process_refund",
+            "get_analytics",
+            "get_merchant_analytics",
+            "toggle_feature_flag",
+            "lookup_charity",
+            "get_user_stats",
         ],
         "max_transaction_amount": 10000,  # $10,000 limit
         "requires_approval": ["bulk_operations"],
         "can_approve_others": False,
     },
-
     "support": {
         "display_name": "Support Agent",
         "prompt_template": """You are Savvy AI, the intelligent support assistant for SwipeSavvy employees.
@@ -113,8 +119,12 @@ COMMON SUPPORT SCENARIOS YOU CAN HELP WITH:
 Remember: Your role is to assist SwipeSavvy EMPLOYEES, not to directly interact with customers.
 """,
         "allowed_tools": [
-            "lookup_user", "lookup_transaction", "get_transaction_details",
-            "create_support_ticket", "update_support_ticket", "add_ticket_note",
+            "lookup_user",
+            "lookup_transaction",
+            "get_transaction_details",
+            "create_support_ticket",
+            "update_support_ticket",
+            "add_ticket_note",
             "process_refund",  # Limited by max_transaction_amount
             "search_knowledge_base",
         ],
@@ -122,7 +132,6 @@ Remember: Your role is to assist SwipeSavvy EMPLOYEES, not to directly interact 
         "requires_approval": ["process_refund"],  # Refunds need confirmation
         "can_approve_others": False,
     },
-
     "analyst": {
         "display_name": "Analyst",
         "prompt_template": """You are Savvy AI, the intelligent support assistant for SwipeSavvy employees.
@@ -157,8 +166,12 @@ DATA ANALYSIS SUPPORT:
 Remember: This employee has READ-ONLY access. You can help them VIEW and UNDERSTAND data, but cannot execute any modifications.
 """,
         "allowed_tools": [
-            "get_analytics", "get_transaction_summary", "get_merchant_analytics",
-            "export_report", "get_user_stats", "get_revenue_metrics",
+            "get_analytics",
+            "get_transaction_summary",
+            "get_merchant_analytics",
+            "export_report",
+            "get_user_stats",
+            "get_revenue_metrics",
             "get_rewards_metrics",
         ],
         "max_transaction_amount": 0,  # Cannot process any transactions
@@ -204,7 +217,11 @@ def get_tools_for_role(role: str, permissions: Optional[List[str]] = None) -> Li
         # Map permissions to tools
         permission_tool_map = {
             "support:write": ["create_support_ticket", "update_support_ticket", "add_ticket_note"],
-            "transactions:read": ["lookup_transaction", "get_transaction_details", "get_transaction_summary"],
+            "transactions:read": [
+                "lookup_transaction",
+                "get_transaction_details",
+                "get_transaction_summary",
+            ],
             "transactions:refund": ["process_refund"],
             "users:read": ["lookup_user", "get_user_stats"],
             "merchants:read": ["lookup_merchant", "get_merchant_analytics"],
@@ -230,7 +247,7 @@ def build_role_aware_prompt(
     role: str,
     permissions: Optional[List[str]] = None,
     employee_name: Optional[str] = None,
-    additional_context: Optional[str] = None
+    additional_context: Optional[str] = None,
 ) -> str:
     """
     Build a role-aware system prompt for the AI assistant.
@@ -271,7 +288,9 @@ def build_role_aware_prompt(
     return prompt
 
 
-def check_tool_permission(role: str, tool_name: str, permissions: Optional[List[str]] = None) -> bool:
+def check_tool_permission(
+    role: str, tool_name: str, permissions: Optional[List[str]] = None
+) -> bool:
     """
     Check if a role can use a specific tool.
 

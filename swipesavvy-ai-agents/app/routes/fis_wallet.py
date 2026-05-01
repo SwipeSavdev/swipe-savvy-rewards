@@ -9,20 +9,20 @@ Handles:
 """
 
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Depends, Header, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.core.auth import verify_token_string
+from app.database import get_db
 from app.services.fis_wallet_service import (
-    get_fis_wallet_service,
-    FISWalletService,
-    WalletType,
-    TokenStatus,
     DeviceType,
+    FISWalletService,
+    TokenStatus,
+    WalletType,
+    get_fis_wallet_service,
 )
 
 logger = logging.getLogger(__name__)

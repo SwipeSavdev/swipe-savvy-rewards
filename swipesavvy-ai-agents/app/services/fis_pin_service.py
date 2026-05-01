@@ -11,11 +11,12 @@ Handles PIN operations:
 
 import logging
 import secrets
-from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field, field_validator
 
-from app.services.fis_global_service import FISGlobalService, FISAPIResponse, get_fis_service
+from app.services.fis_global_service import FISAPIResponse, FISGlobalService, get_fis_service
 
 logger = logging.getLogger(__name__)
 

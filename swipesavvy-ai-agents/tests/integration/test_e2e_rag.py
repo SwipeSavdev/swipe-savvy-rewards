@@ -6,10 +6,10 @@ Tests the complete flow:
 1. User query → RAG retrieval → Context injection → LLM response
 """
 
+import asyncio
 import os
 import sys
 from pathlib import Path
-import asyncio
 
 # Add services to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "services"))

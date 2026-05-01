@@ -11,11 +11,12 @@ and actions on behalf of employees. The loop handles:
 
 import json
 import logging
-from typing import AsyncGenerator, Dict, Any, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
+
 from together import Together
 
-from app.services.tool_registry import tool_registry
 from app.config.ai_roles import build_role_aware_prompt, get_max_transaction_amount
+from app.services.tool_registry import tool_registry
 
 logger = logging.getLogger(__name__)
 

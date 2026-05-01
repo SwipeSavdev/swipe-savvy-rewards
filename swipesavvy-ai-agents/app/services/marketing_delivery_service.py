@@ -9,12 +9,12 @@ Handles delivery of marketing campaigns via:
 Integrates with AI Marketing service for automated campaign delivery.
 """
 
-import os
-import logging
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 import asyncio
+import logging
+import os
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from app.services.aws_ses_service import AWSSESService
 from app.services.aws_sns_service import AWSSNSService

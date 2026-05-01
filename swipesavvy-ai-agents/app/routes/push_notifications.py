@@ -12,16 +12,17 @@ This module integrates with AWS SNS for push notifications
 and provides in-app notification functionality.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
-from sqlalchemy.orm import Session
-from uuid import UUID
-from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, validator
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
-from app.database import get_db
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from pydantic import BaseModel, Field, validator
+from sqlalchemy.orm import Session
+
 from app.core.auth import verify_token_string
+from app.database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +48,10 @@ in_app_service = None
 
 try:
     from app.services.aws_push_notification_service import (
-        aws_push_service as push_service,
-        Platform,
         NotificationType,
+        Platform,
     )
+    from app.services.aws_push_notification_service import aws_push_service as push_service
 
     aws_push_service = push_service
     logger.info("AWS Push Notification service initialized")
@@ -59,9 +60,9 @@ except Exception as e:
 
 try:
     from app.services.in_app_notification_service import (
-        in_app_notification_service,
         NotificationCategory,
         NotificationPriority,
+        in_app_notification_service,
     )
 
     in_app_service = in_app_notification_service

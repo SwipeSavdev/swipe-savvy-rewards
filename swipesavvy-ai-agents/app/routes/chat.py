@@ -4,19 +4,19 @@ Includes WebSocket connection handling and chat management APIs.
 """
 
 import logging
-from typing import Optional, List, Dict, Any
-from uuid import UUID
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel, Field, validator
+from sqlalchemy.orm import Session
 
+from app.core.auth import verify_jwt_token, verify_token_string
 from app.database import get_db
-from app.core.auth import verify_token_string, verify_jwt_token
-from app.services.websocket_manager import manager, WebSocketMessage
+from app.models.chat import ChatMessageStatus, ChatParticipantRole, ChatSessionStatus
 from app.services.chat_service import ChatService
-from app.models.chat import ChatMessageStatus, ChatSessionStatus, ChatParticipantRole
+from app.services.websocket_manager import WebSocketMessage, manager
 
 logger = logging.getLogger(__name__)
 

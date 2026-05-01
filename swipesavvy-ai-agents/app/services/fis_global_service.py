@@ -13,16 +13,17 @@ Handles authentication, HTTP requests, and common operations for:
 This is the base client that all FIS-specific services inherit from.
 """
 
-import os
-import logging
+import base64
 import hashlib
 import hmac
-import time
 import json
-import base64
-from typing import Optional, Dict, Any, List
+import logging
+import os
+import time
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 import httpx
 from pydantic import BaseModel, Field
 

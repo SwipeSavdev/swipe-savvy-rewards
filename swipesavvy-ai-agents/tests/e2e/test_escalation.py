@@ -3,11 +3,11 @@ End-to-End Tests for Customer Escalation Flow
 Tests escalation triggers, context preservation, and handoff
 """
 
-import pytest
-import httpx
 import time
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
+import httpx
+import pytest
 
 BASE_URL = "http://localhost:8000"
 

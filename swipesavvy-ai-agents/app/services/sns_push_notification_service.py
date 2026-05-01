@@ -13,9 +13,9 @@ Architecture:
 
 import json
 import logging
-from typing import Dict, List, Optional, Any
-from uuid import UUID, uuid4
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+from uuid import UUID, uuid4
 
 import boto3
 from botocore.exceptions import ClientError

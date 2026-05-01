@@ -4,8 +4,8 @@ Test Together.AI API connection and functionality
 """
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Load environment variables from .env
 env_path = Path(__file__).parent.parent / ".env"

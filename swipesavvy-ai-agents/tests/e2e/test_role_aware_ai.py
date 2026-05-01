@@ -3,11 +3,11 @@ End-to-End Tests for Role-Aware Agentic AI Support System
 Tests role-based access control, tool execution, and escalation flows
 """
 
-import pytest
-import httpx
 import time
-from typing import Dict, Any
+from typing import Any, Dict
 
+import httpx
+import pytest
 
 BASE_URL = "http://localhost:8000"
 

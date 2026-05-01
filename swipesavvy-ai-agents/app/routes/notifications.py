@@ -10,18 +10,20 @@ Architecture:
 - SNS manages delivery to APNs (iOS) and FCM (Android)
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+import json
+import logging
+import os
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 from uuid import UUID
-from typing import Optional, Dict, Any, List
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from app.database import get_db
+from sqlalchemy.orm import Session
+
 from app.core.auth import verify_jwt_token
 from app.core.config import settings
-from datetime import datetime
-import logging
-import json
-import os
+from app.database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +35,8 @@ preferences_service = None
 
 try:
     from app.services.sns_push_notification_service import (
-        SNSPushNotificationService,
         NotificationPreferencesService,
+        SNSPushNotificationService,
     )
 
     sns_service = SNSPushNotificationService(

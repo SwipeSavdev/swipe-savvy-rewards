@@ -10,25 +10,26 @@ This module adds missing endpoints required for passing all comprehensive tests:
 6. KYC submit
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Header, Request
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, Dict, Any, List
-from datetime import datetime
-from sqlalchemy.orm import Session
 import logging
+import os
 import re
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from pydantic import BaseModel, EmailStr, Field
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.core.auth import verify_token_string
 from app.database import get_db
 from app.models import User
-from app.core.auth import verify_token_string
-from app.models.notifications import NotificationHistory
 from app.models.forms import ContactFormSubmission, DemoRequestSubmission
-from sqlalchemy import func
+from app.models.notifications import NotificationHistory
 from app.services.aws_ses_service import (
     send_contact_form_notification,
     send_demo_request_notification,
 )
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -157,8 +158,9 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
 
 def get_user_from_token(authorization: str, db: Session) -> Optional[User]:
     """Extract user from JWT token"""
-    import jwt
     import os
+
+    import jwt
 
     if not authorization or not authorization.startswith(BEARER_PREFIX):
         return None

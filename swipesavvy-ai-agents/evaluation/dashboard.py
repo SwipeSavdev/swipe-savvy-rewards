@@ -9,16 +9,16 @@ from pathlib import Path
 def generate_dashboard(results_dir: str = "evaluation/results"):
     """Generate HTML dashboard from latest evaluation results"""
     results_path = Path(results_dir)
-    
+
     # Find latest files
     summary_files = sorted(results_path.glob("summary_*.json"))
     if not summary_files:
         print("No evaluation results found")
         return
-    
+
     with open(summary_files[-1]) as f:
         summary = json.load(f)
-    
+
     # Generate simple HTML report
     html = f"""<!DOCTYPE html>
 <html>
@@ -67,7 +67,7 @@ def generate_dashboard(results_dir: str = "evaluation/results"):
     </div>
 </body>
 </html>"""
-    
+
     output = results_path / "dashboard.html"
     output.write_text(html)
     print(f"Dashboard generated: {output}")

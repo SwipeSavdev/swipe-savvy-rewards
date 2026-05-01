@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "services" / "concierge-agent"))
 
-from conversation import get_conversation_manager, Message
+from conversation import Message, get_conversation_manager
 
 print("=" * 60)
 print("TEST 1: Create Conversation Session")

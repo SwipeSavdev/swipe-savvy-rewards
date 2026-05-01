@@ -5,10 +5,11 @@ Provides bank name lookup from routing numbers using free APIs
 with local caching for performance and reliability.
 """
 
-import httpx
 import logging
-from typing import Optional, Dict
 from functools import lru_cache
+from typing import Dict, Optional
+
+import httpx
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)

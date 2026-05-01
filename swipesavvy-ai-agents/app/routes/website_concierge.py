@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import time
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse

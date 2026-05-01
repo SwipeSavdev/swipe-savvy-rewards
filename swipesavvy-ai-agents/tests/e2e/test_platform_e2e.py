@@ -10,13 +10,13 @@ Comprehensive E2E tests for all platform components:
 Run with: pytest tests/e2e/test_platform_e2e.py -v
 """
 
-import pytest
-import httpx
-import time
 import os
-from typing import Dict, Any, Optional
+import time
 from datetime import datetime
+from typing import Any, Dict, Optional
 
+import httpx
+import pytest
 
 # Configuration - Use production URL or local based on environment
 BASE_URL = os.getenv("API_BASE_URL", "https://api.swipesavvy.com")

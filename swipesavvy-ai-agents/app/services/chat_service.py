@@ -4,23 +4,24 @@ Handles all business logic for chat operations.
 """
 
 import logging
-from typing import Optional, List, Dict, Any
-from uuid import UUID
 from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+from uuid import UUID
+
+from sqlalchemy import and_, desc, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, and_, or_
 
 from app.models.chat import (
-    ChatMessage,
-    ChatSession,
-    ChatParticipant,
-    ChatRoom,
-    ChatTypingIndicator,
-    ChatNotificationPreference,
     ChatBlockedUser,
+    ChatMessage,
     ChatMessageStatus,
-    ChatSessionStatus,
+    ChatNotificationPreference,
+    ChatParticipant,
     ChatParticipantRole,
+    ChatRoom,
+    ChatSession,
+    ChatSessionStatus,
+    ChatTypingIndicator,
 )
 
 logger = logging.getLogger(__name__)

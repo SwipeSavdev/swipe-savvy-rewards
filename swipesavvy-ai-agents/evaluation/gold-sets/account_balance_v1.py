@@ -28,7 +28,7 @@ gold_set_account_balance = [
         "requires_verification": True,
         "category": "account_balance",
         "difficulty": "easy",
-        "notes": "Most common query, should be handled quickly"
+        "notes": "Most common query, should be handled quickly",
     },
     {
         "input": "How much money do I have?",
@@ -39,7 +39,7 @@ gold_set_account_balance = [
         "requires_verification": True,
         "category": "account_balance",
         "difficulty": "easy",
-        "notes": "Natural language variation of balance query"
+        "notes": "Natural language variation of balance query",
     },
     {
         "input": "Can you check my balance?",
@@ -50,7 +50,7 @@ gold_set_account_balance = [
         "requires_verification": True,
         "category": "account_balance",
         "difficulty": "easy",
-        "notes": "Polite request form"
+        "notes": "Polite request form",
     },
     {
         "input": "balance",
@@ -61,7 +61,7 @@ gold_set_account_balance = [
         "requires_verification": True,
         "category": "account_balance",
         "difficulty": "easy",
-        "notes": "Single word query, should still understand intent"
+        "notes": "Single word query, should still understand intent",
     },
     {
         "input": "What's my available balance?",
@@ -72,7 +72,7 @@ gold_set_account_balance = [
         "requires_verification": True,
         "category": "account_balance",
         "difficulty": "easy",
-        "notes": "Specific about available vs pending"
+        "notes": "Specific about available vs pending",
     },
     {
         "input": "Do I have enough money to buy a $50 item?",
@@ -83,7 +83,7 @@ gold_set_account_balance = [
         "requires_verification": True,
         "category": "account_balance",
         "difficulty": "medium",
-        "notes": "Should check balance and compare to $50"
+        "notes": "Should check balance and compare to $50",
     },
     {
         "input": "What's my balance? I think there's an error.",
@@ -94,7 +94,7 @@ gold_set_account_balance = [
         "requires_verification": True,
         "category": "account_balance",
         "difficulty": "medium",
-        "notes": "User suspects an issue, use empathetic tone"
+        "notes": "User suspects an issue, use empathetic tone",
     },
     {
         "input": "Show me my account balance and recent transactions",
@@ -105,7 +105,7 @@ gold_set_account_balance = [
         "requires_verification": True,
         "category": "account_balance",
         "difficulty": "medium",
-        "notes": "Multi-part query requiring two tool calls"
+        "notes": "Multi-part query requiring two tool calls",
     },
     {
         "input": "I don't recognize the balance showing. Can you explain?",
@@ -116,7 +116,7 @@ gold_set_account_balance = [
         "requires_verification": True,
         "category": "account_balance",
         "difficulty": "hard",
-        "notes": "May need to show recent transactions to explain balance"
+        "notes": "May need to show recent transactions to explain balance",
     },
     {
         "input": "What's my balance in my other account?",
@@ -127,8 +127,8 @@ gold_set_account_balance = [
         "requires_verification": False,
         "category": "account_balance",
         "difficulty": "medium",
-        "notes": "Should ask for clarification - which account?"
-    }
+        "notes": "Should ask for clarification - which account?",
+    },
 ]
 
 
@@ -137,29 +137,22 @@ gold_set_metadata = {
     "created_date": "2025-12-23",
     "category": "account_balance",
     "total_examples": len(gold_set_account_balance),
-    "difficulty_distribution": {
-        "easy": 5,
-        "medium": 4,
-        "hard": 1
-    },
+    "difficulty_distribution": {"easy": 5, "medium": 4, "hard": 1},
     "coverage": [
         "Direct balance queries",
         "Natural language variations",
         "Multi-part queries",
         "Edge cases and errors",
-        "Clarification scenarios"
+        "Clarification scenarios",
     ],
-    "notes": "This is a starter gold set for Week 7 evaluation"
+    "notes": "This is a starter gold set for Week 7 evaluation",
 }
 
 
 if __name__ == "__main__":
     import json
-    
-    output = {
-        "metadata": gold_set_metadata,
-        "examples": gold_set_account_balance
-    }
-    
+
+    output = {"metadata": gold_set_metadata, "examples": gold_set_account_balance}
+
     print(json.dumps(output, indent=2))
     print(f"\nTotal examples: {len(gold_set_account_balance)}")

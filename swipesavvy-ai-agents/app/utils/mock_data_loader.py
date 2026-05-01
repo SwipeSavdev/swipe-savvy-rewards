@@ -6,14 +6,15 @@ with realistic transaction data for testing the Marketing AI system.
 """
 
 import csv
+import logging
+import os
+import random
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Tuple
+
 import psycopg2
 from psycopg2.extras import execute_batch
-import logging
-from datetime import datetime, timedelta
-import random
-from typing import List, Dict, Tuple
-import os
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

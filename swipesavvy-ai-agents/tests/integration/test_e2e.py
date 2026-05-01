@@ -3,12 +3,12 @@ End-to-End Integration Tests for SwipeSavvy AI Agents
 Tests full user journeys across all services
 """
 
-import pytest
-import httpx
 import asyncio
-from typing import Dict, Any
 import time
+from typing import Any, Dict
 
+import httpx
+import pytest
 
 BASE_URL = "http://localhost:8000"
 RAG_URL = "http://localhost:8001"

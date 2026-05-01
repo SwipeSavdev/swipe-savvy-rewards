@@ -10,11 +10,11 @@ Each tool has:
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from app.services.tool_registry import tool_registry, ToolDefinition
 from app.config.ai_roles import get_max_transaction_amount
+from app.services.tool_registry import ToolDefinition, tool_registry
 
 logger = logging.getLogger(__name__)
 

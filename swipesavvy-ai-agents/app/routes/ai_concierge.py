@@ -13,9 +13,9 @@ import json
 import logging
 import os
 import time
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from together import Together

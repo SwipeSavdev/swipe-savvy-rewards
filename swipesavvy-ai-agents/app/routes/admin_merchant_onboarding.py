@@ -5,27 +5,29 @@ Endpoints for merchant onboarding with Fiserv AccessOne North Boarding API integ
 Supports the refactored 4-step wizard with 26 essential fields and multiple owners.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File, Form, Header
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-from datetime import datetime
-from sqlalchemy.orm import Session
-from uuid import uuid4
-import logging
 import base64
-import os
 import json
+import logging
+import os
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
-from app.database import get_db
-from app.models import Merchant as MerchantModel, MerchantOnboarding as OnboardingModel
-from app.services.fiserv_boarding_service import (
-    create_fiserv_service,
-    MPAXmlBuilder,
-    FiservAttachment,
-)
-from app.services.field_derivation_service import FieldDerivationService, EssentialFields, OwnerInfo
-from app.services.aba_lookup_service import lookup_routing_number, validate_routing_number
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from app.core.auth import verify_token_string
+from app.database import get_db
+from app.models import Merchant as MerchantModel
+from app.models import MerchantOnboarding as OnboardingModel
+from app.services.aba_lookup_service import lookup_routing_number, validate_routing_number
+from app.services.field_derivation_service import EssentialFields, FieldDerivationService, OwnerInfo
+from app.services.fiserv_boarding_service import (
+    FiservAttachment,
+    MPAXmlBuilder,
+    create_fiserv_service,
+)
 
 logger = logging.getLogger(__name__)
 

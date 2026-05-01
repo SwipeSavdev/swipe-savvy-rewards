@@ -10,9 +10,9 @@ Uses AWS SNS for SMS delivery (migrated from Twilio).
 This module provides backward compatibility with existing code.
 """
 
+import logging
 import os
 from typing import Optional
-import logging
 
 from app.services.aws_sns_service import AWSSNSService, aws_sns_service
 

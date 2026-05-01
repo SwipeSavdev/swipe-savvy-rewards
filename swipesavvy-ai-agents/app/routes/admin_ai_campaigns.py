@@ -4,15 +4,17 @@ Admin Portal - AI Campaigns Management Routes
 Endpoints for managing AI marketing campaigns in the admin portal
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends, Header
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta, timezone
 import logging
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
+
+from app.core.auth import verify_token_string
 from app.database import get_db
 from app.models import AICampaign as AICampaignModel
-from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
 

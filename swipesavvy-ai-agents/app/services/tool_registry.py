@@ -9,9 +9,9 @@ The registry filters available tools based on user role and permissions.
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Any, Callable, List, Optional, Awaitable, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
-from app.config.ai_roles import get_role_config, check_tool_permission
+from app.config.ai_roles import check_tool_permission, get_role_config
 
 logger = logging.getLogger(__name__)
 

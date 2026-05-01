@@ -12,8 +12,8 @@ Handles all SMS communications using AWS Simple Notification Service (SNS):
 Replaces Twilio with AWS SNS for cost-effective, scalable SMS delivery.
 """
 
-import os
 import logging
+import os
 from typing import Optional
 
 import boto3

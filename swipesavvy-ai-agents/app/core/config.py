@@ -5,9 +5,10 @@ Centralized configuration for all SwipeSavvy services.
 Environment variables are loaded from .env file.
 """
 
-import os
 import logging
+import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
@@ -19,11 +20,11 @@ load_dotenv(env_path)
 
 class Settings:
     """Application settings with security validation"""
-    
+
     # Environment
     ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
     DEBUG = False  # Default to False for safety
-    
+
     # CORS Configuration - environment-specific
     CORS_ORIGINS = [
         "http://localhost:3000",
@@ -37,7 +38,7 @@ class Settings:
         "http://192.168.1.142:5174",
         "https://docs.swipesavvy.com",
     ]
-    
+
     # Override for production — HTTPS only, no plain HTTP origins
     if ENVIRONMENT == "production":
         CORS_ORIGINS = [
@@ -50,65 +51,64 @@ class Settings:
             "https://app.swipesavvy.com",
             "https://docs.swipesavvy.com",
         ]
-    
+
     # Database — default is for local development only
     _DEFAULT_DATABASE_URL = "postgresql://postgres:postgres@localhost/swipesavvy_dev"
     DATABASE_URL = os.getenv("DATABASE_URL", _DEFAULT_DATABASE_URL)
-    
+
     # JWT - No default value, must be provided
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
     JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
-    
+
     # Authorize.Net (Phase 10)
     AUTHORIZE_NET_API_LOGIN_ID = os.getenv("AUTHORIZE_NET_API_LOGIN_ID", "")
     AUTHORIZE_NET_TRANSACTION_KEY = os.getenv("AUTHORIZE_NET_TRANSACTION_KEY", "")
-    
+
     # Firebase (Phase 10 - Task 2)
     FIREBASE_CREDENTIALS = os.getenv("FIREBASE_CREDENTIALS", "{}")
     FIREBASE_DATABASE_URL = os.getenv("FIREBASE_DATABASE_URL", "")
-    
+
     # Redis (Phase 11)
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-    
+
     # App settings
     APP_NAME = "SwipeSavvy"
     APP_VERSION = "1.0.0"
-    
+
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-    
+
     # OpenAI (for AI features)
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-    
+
     # Email service
     SMTP_SERVER = os.getenv("SMTP_SERVER", "")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-    
+
     # Rate limiting
     RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "True").lower() == "true"
     RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))
     RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
-    
+
     def __init__(self):
         """Initialize and validate configuration on startup"""
         self._validate_environment()
         self._validate_production_config()
         self._validate_jwt_config()
         self._set_debug_mode()
-    
+
     def _validate_environment(self):
         """Validate ENVIRONMENT variable"""
         valid_envs = ["development", "staging", "production"]
         if self.ENVIRONMENT not in valid_envs:
             raise ValueError(
-                f"ENVIRONMENT must be one of {valid_envs}, "
-                f"got: {self.ENVIRONMENT}"
+                f"ENVIRONMENT must be one of {valid_envs}, " f"got: {self.ENVIRONMENT}"
             )
         logger.info(f"✓ Environment: {self.ENVIRONMENT}")
-    
+
     def _validate_production_config(self):
         """Ensure production does not run with insecure defaults"""
         if self.ENVIRONMENT == "production":
@@ -126,18 +126,18 @@ class Settings:
                 "JWT_SECRET_KEY environment variable is required. "
                 "Generate with: openssl rand -base64 32"
             )
-        
+
         if len(self.JWT_SECRET_KEY) < 32:
             raise ValueError(
                 f"JWT_SECRET_KEY must be at least 32 characters. "
                 f"Current length: {len(self.JWT_SECRET_KEY)}"
             )
-        
+
         if self.JWT_SECRET_KEY == "your-secret-key-change-in-production":
             raise ValueError("Do not use placeholder JWT_SECRET_KEY")
-        
+
         logger.info("✓ JWT configuration validated")
-    
+
     def _set_debug_mode(self):
         """Set DEBUG mode based on environment"""
         if self.ENVIRONMENT == "production":
@@ -148,7 +148,7 @@ class Settings:
             self.DEBUG = os.getenv("DEBUG", "false").lower() == "true"
             if self.DEBUG:
                 logger.warning("⚠️  WARNING: DEBUG mode enabled - do not use in production!")
-    
+
     @property
     def allowed_origins(self):
         """Get CORS origins based on environment"""

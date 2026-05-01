@@ -2,10 +2,11 @@
 Database models for form submissions (contact forms and demo requests).
 """
 
-from sqlalchemy import Column, String, Text, DateTime
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
+
+from sqlalchemy import Column, DateTime, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 
 from app.database import Base
 
@@ -14,6 +15,7 @@ class ContactFormSubmission(Base):
     """
     Stores contact form submissions from the marketing website.
     """
+
     __tablename__ = "contact_form_submissions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -29,7 +31,7 @@ class ContactFormSubmission(Base):
     referrer = Column(String(500), nullable=True)
 
     # Status tracking
-    status = Column(String(50), default='pending', index=True)  # pending, contacted, resolved, spam
+    status = Column(String(50), default="pending", index=True)  # pending, contacted, resolved, spam
     assigned_to = Column(UUID(as_uuid=True), nullable=True)  # Admin user who handled this
     notes = Column(Text, nullable=True)  # Internal notes
 
@@ -46,6 +48,7 @@ class DemoRequestSubmission(Base):
     """
     Stores demo request submissions from potential customers.
     """
+
     __tablename__ = "demo_request_submissions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -63,7 +66,9 @@ class DemoRequestSubmission(Base):
     referrer = Column(String(500), nullable=True)
 
     # Status tracking
-    status = Column(String(50), default='pending', index=True)  # pending, scheduled, completed, cancelled
+    status = Column(
+        String(50), default="pending", index=True
+    )  # pending, scheduled, completed, cancelled
     assigned_to = Column(UUID(as_uuid=True), nullable=True)  # Sales rep assigned
     demo_scheduled_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)  # Internal notes

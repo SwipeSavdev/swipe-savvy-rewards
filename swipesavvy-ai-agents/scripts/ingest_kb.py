@@ -7,10 +7,11 @@ and stores in PostgreSQL with pgvector for semantic search.
 """
 
 import os
-import sys
 import re
+import sys
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List, Tuple
+
 import psycopg2
 from psycopg2.extras import execute_values
 

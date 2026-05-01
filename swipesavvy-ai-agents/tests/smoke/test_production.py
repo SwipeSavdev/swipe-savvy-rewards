@@ -3,10 +3,11 @@ Production Smoke Tests - Validate deployment
 Run after production deployment to ensure all services are working
 """
 
-import requests
 import sys
 import time
 from typing import Dict, List, Tuple
+
+import requests
 
 # Configuration
 BASE_URL = "http://localhost:8000"

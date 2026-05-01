@@ -3,16 +3,17 @@ User Authentication Models and Services
 Provides JWT-based authentication with user management
 """
 
-from fastapi import FastAPI, HTTPException, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr
-from datetime import datetime, timedelta, timezone
-from typing import Optional, List
-import jwt
 import hashlib
-import secrets
 import os
+import secrets
+from datetime import datetime, timedelta, timezone
 from enum import Enum
+from typing import List, Optional
+
+import jwt
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, EmailStr
 
 # Error message constants
 USER_NOT_FOUND = "User not found"

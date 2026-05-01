@@ -3,11 +3,12 @@ Unit tests for Transaction tool functions
 """
 
 import pytest
+
 from tools.transactions import (
+    TransactionNotFoundError,
     get_recent_transactions,
     get_transaction_details,
     search_transactions,
-    TransactionNotFoundError,
 )
 
 

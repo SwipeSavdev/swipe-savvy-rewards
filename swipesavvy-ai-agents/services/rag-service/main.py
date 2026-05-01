@@ -12,13 +12,14 @@ Architecture:
 Status: Phase 1, Week 2-3 - Active Development
 """
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ from embeddings import get_embedding_service
 try:
     import psycopg2
     from psycopg2.extras import RealDictCursor
+
     POSTGRES_AVAILABLE = True
 except ImportError:
     POSTGRES_AVAILABLE = False
@@ -38,7 +40,7 @@ except ImportError:
 app = FastAPI(
     title="SwipeSavvy RAG Service",
     description="Knowledge base retrieval for AI agents",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 # Global instances
@@ -48,6 +50,7 @@ embedding_service = None
 
 class RAGQuery(BaseModel):
     """Request model for RAG query"""
+
     query: str
     top_k: int = 5
     min_similarity: float = 0.5
@@ -56,6 +59,7 @@ class RAGQuery(BaseModel):
 
 class RAGResult(BaseModel):
     """Single retrieval result"""
+
     content: str
     similarity: float
     title: str
@@ -66,6 +70,7 @@ class RAGResult(BaseModel):
 
 class RAGResponse(BaseModel):
     """Response model for RAG query"""
+
     results: List[RAGResult]
     total_results: int
     context: str  # Assembled context for LLM
@@ -73,6 +78,7 @@ class RAGResponse(BaseModel):
 
 class ContextRequest(BaseModel):
     """Request for context assembly"""
+
     query: str
     max_tokens: int = 2000
     top_k: int = 3
@@ -83,7 +89,9 @@ def get_db_connection():
     """Get PostgreSQL connection"""
     global db_connection
     if db_connection is None or db_connection.closed:
-        db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/swipesavvy_agents")
+        db_url = os.getenv(
+            "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/swipesavvy_agents"
+        )
         db_connection = psycopg2.connect(db_url)
     return db_connection
 
@@ -99,23 +107,23 @@ def get_embedding_service_instance():
 def assemble_context(results: List[RAGResult], query: str) -> str:
     """
     Assemble retrieved results into context for LLM prompt
-    
+
     Format:
     [Source 1: Title - Category]
     Content...
-    
+
     [Source 2: Title - Category]
     Content...
     """
     if not results:
         return "No relevant knowledge base information found."
-    
+
     context_parts = []
     for i, result in enumerate(results, 1):
         context_parts.append(
             f"[Source {i}: {result.title} - {result.category}]\n{result.content}\n"
         )
-    
+
     return "\n".join(context_parts)
 
 
@@ -129,8 +137,8 @@ async def index():
         "endpoints": [
             "GET /health - Health check",
             "POST /api/v1/rag/query - Semantic search",
-            "POST /api/v1/rag/context - Context assembly"
-        ]
+            "POST /api/v1/rag/context - Context assembly",
+        ],
     }
 
 
@@ -138,14 +146,14 @@ async def index():
 async def health():
     """Health check with database stats"""
     emb = get_embedding_service_instance()
-    
+
     health_data = {
         "status": "healthy",
         "embedding_service": emb.model,
         "embedding_dimension": emb.dimension,
-        "postgres_available": POSTGRES_AVAILABLE
+        "postgres_available": POSTGRES_AVAILABLE,
     }
-    
+
     # Check database if available
     if POSTGRES_AVAILABLE:
         try:
@@ -153,20 +161,17 @@ async def health():
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 # Count documents
                 cur.execute("SELECT COUNT(*) as count FROM kb_documents")
-                kb_docs = cur.fetchone()['count']
-                
+                kb_docs = cur.fetchone()["count"]
+
                 # Count chunks
                 cur.execute("SELECT COUNT(*) as count FROM kb_chunks")
-                kb_chunks = cur.fetchone()['count']
-                
-                health_data["knowledge_base"] = {
-                    "documents": kb_docs,
-                    "chunks": kb_chunks
-                }
+                kb_chunks = cur.fetchone()["count"]
+
+                health_data["knowledge_base"] = {"documents": kb_docs, "chunks": kb_chunks}
         except Exception as e:
             logger.error(f"RAG database health check failed: {str(e)}")
             health_data["database_error"] = "Connection failed"
-    
+
     return health_data
 
 
@@ -174,20 +179,20 @@ async def health():
 async def query(request: RAGQuery) -> RAGResponse:
     """
     Semantic search over knowledge base
-    
+
     Uses pgvector for cosine similarity search
     Returns top-k most relevant chunks with metadata
     """
     if not POSTGRES_AVAILABLE:
         raise HTTPException(status_code=503, detail="PostgreSQL not available")
-    
+
     # Get embedding for query
     emb = get_embedding_service_instance()
     query_embedding = emb.embed_text(request.query)
-    
+
     # Convert to PostgreSQL array format
     embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
-    
+
     # Execute vector search
     conn = get_db_connection()
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -204,74 +209,67 @@ async def query(request: RAGQuery) -> RAGResponse:
             WHERE 1=1
         """
         params = [embedding_str]
-        
+
         # Optional category filter
         if request.category_filter:
             sql += " AND d.category = %s"
             params.append(request.category_filter)
-        
+
         # Order by similarity and limit
         sql += " ORDER BY c.embedding <=> %s::vector LIMIT %s"
         params.extend([embedding_str, request.top_k])
-        
+
         cur.execute(sql, params)
         rows = cur.fetchall()
-    
+
     # Convert to results
     results = []
     for row in rows:
-        if row['similarity'] >= request.min_similarity:
-            results.append(RAGResult(
-                content=row['content'],
-                similarity=row['similarity'],
-                title=row['title'],
-                category=row['category'],
-                chunk_id=row['chunk_id'],
-                metadata=row.get('metadata', {})
-            ))
-    
+        if row["similarity"] >= request.min_similarity:
+            results.append(
+                RAGResult(
+                    content=row["content"],
+                    similarity=row["similarity"],
+                    title=row["title"],
+                    category=row["category"],
+                    chunk_id=row["chunk_id"],
+                    metadata=row.get("metadata", {}),
+                )
+            )
+
     # Assemble context
     context = assemble_context(results, request.query)
-    
-    return RAGResponse(
-        results=results,
-        total_results=len(results),
-        context=context
-    )
+
+    return RAGResponse(results=results, total_results=len(results), context=context)
 
 
 @app.post("/api/v1/rag/context")
 async def get_context(request: ContextRequest) -> Dict[str, Any]:
     """
     Get assembled context for LLM prompt
-    
+
     Performs semantic search and formats results as context string
     optimized for LLM injection
     """
     # Call query endpoint
     query_request = RAGQuery(
-        query=request.query,
-        top_k=request.top_k,
-        category_filter=request.category_filter
+        query=request.query, top_k=request.top_k, category_filter=request.category_filter
     )
-    
+
     response = await query(query_request)
-    
+
     return {
         "query": request.query,
         "context": response.context,
         "num_sources": len(response.results),
         "sources": [
-            {
-                "title": r.title,
-                "category": r.category,
-                "similarity": r.similarity
-            }
+            {"title": r.title, "category": r.category, "similarity": r.similarity}
             for r in response.results
-        ]
+        ],
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8001)

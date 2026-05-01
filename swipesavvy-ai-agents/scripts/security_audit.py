@@ -3,8 +3,8 @@ Security Audit Script
 Scans for common vulnerabilities and security issues
 """
 
-import subprocess
 import json
+import subprocess
 import sys
 from pathlib import Path
 

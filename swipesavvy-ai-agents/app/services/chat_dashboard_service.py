@@ -4,23 +4,24 @@ Provides statistics, performance tracking, and customer satisfaction metrics.
 """
 
 import logging
-from typing import Optional, List, Dict, Any
-from uuid import UUID
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+from uuid import UUID
+
+from sqlalchemy import and_, desc, func, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, and_, or_
 
 from app.models.chat import (
-    ChatSession,
-    ChatMessage,
-    ChatParticipant,
-    ChatTypingIndicator,
-    ChatNotificationPreference,
-    ChatBlockedUser,
     ChatAuditLog,
+    ChatBlockedUser,
+    ChatMessage,
     ChatMessageStatus,
-    ChatSessionStatus,
+    ChatNotificationPreference,
+    ChatParticipant,
     ChatParticipantRole,
+    ChatSession,
+    ChatSessionStatus,
+    ChatTypingIndicator,
 )
 
 logger = logging.getLogger(__name__)

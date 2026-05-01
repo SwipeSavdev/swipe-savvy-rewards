@@ -5,16 +5,16 @@ Handles all support ticket operations, customer verification, escalation,
 and ticket management for the support system.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends
-from pydantic import BaseModel, Field
-from typing import Optional, List
-from datetime import datetime, timedelta
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import os
 import logging
+import os
+from datetime import datetime, timedelta
+from typing import List, Optional
 
-from fastapi import Header
+import psycopg2
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from psycopg2.extras import RealDictCursor
+from pydantic import BaseModel, Field
+
 from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)

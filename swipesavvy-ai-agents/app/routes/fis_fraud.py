@@ -10,23 +10,23 @@ Handles:
 
 import logging
 from datetime import date
-from typing import Optional, List
 from decimal import Decimal
+from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Depends, Header, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.core.auth import verify_token_string
+from app.database import get_db
 from app.services.fis_fraud_service import (
-    get_fis_fraud_service,
+    AlertPreferences,
+    AlertPriority,
+    AlertStatus,
     FISFraudService,
     FraudType,
-    AlertStatus,
-    AlertPriority,
     NotificationChannel,
-    AlertPreferences,
+    get_fis_fraud_service,
 )
 
 logger = logging.getLogger(__name__)

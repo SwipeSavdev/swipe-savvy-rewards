@@ -16,17 +16,18 @@ to provide smarter, more personalized promotions based on:
 The system learns from user interactions and continuously improves targeting accuracy.
 """
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import logging
-from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Any, Optional, Tuple
-from enum import Enum
-import os
 import json
+import logging
+import math
+import os
 from collections import defaultdict
 from dataclasses import dataclass
-import math
+from datetime import datetime, timedelta, timezone
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 logger = logging.getLogger(__name__)
 

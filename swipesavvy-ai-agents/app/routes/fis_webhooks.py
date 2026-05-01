@@ -9,18 +9,18 @@ Handles incoming webhooks from FIS:
 - Wallet token events
 """
 
-import logging
-import hmac
 import hashlib
+import hmac
+import logging
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, Request, Header, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.database import get_db, SessionLocal
+from app.database import SessionLocal, get_db
 from app.services.fis_global_service import get_fis_service
 
 logger = logging.getLogger(__name__)

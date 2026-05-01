@@ -5,8 +5,9 @@ These tests verify end-to-end functionality with all services integrated.
 """
 
 import pytest
-from services.concierge_agent.main import app
 from fastapi.testclient import TestClient
+
+from services.concierge_agent.main import app
 
 client = TestClient(app)
 

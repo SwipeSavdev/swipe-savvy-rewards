@@ -9,12 +9,13 @@ Base URL: https://lsuat-api.fdportfoliomanager.com/boarding/north/NorthAsBoardin
 """
 
 import hashlib
-import httpx
 import logging
-from typing import Optional, Dict, Any, List
 from datetime import datetime
-from pydantic import BaseModel
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import httpx
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 

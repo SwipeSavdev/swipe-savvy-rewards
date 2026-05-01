@@ -2,15 +2,16 @@
 Unit tests for Guardrails service
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add services directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "services/guardrails-service"))
 
-from main import app
 from fastapi.testclient import TestClient
+from main import app
 
 client = TestClient(app)
 

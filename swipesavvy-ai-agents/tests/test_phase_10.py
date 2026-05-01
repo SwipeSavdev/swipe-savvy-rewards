@@ -4,16 +4,17 @@ Phase 10: Advanced Features - Comprehensive Test Suite
 Tests for payment processing, subscriptions, WebSocket chat, and analytics.
 """
 
-import pytest
-from fastapi.testclient import TestClient
-from uuid import uuid4
+import json
 from datetime import datetime
 from decimal import Decimal
-import json
-from app.main import app
-from app.database import get_db
-from app.models import Payment, Subscription, ChatMessage, AnalyticsEvent, User
+from uuid import uuid4
 
+import pytest
+from fastapi.testclient import TestClient
+
+from app.database import get_db
+from app.main import app
+from app.models import AnalyticsEvent, ChatMessage, Payment, Subscription, User
 
 # Test client
 client = TestClient(app)

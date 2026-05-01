@@ -5,17 +5,18 @@ This is the primary entry point for the SwipeSavvy backend API.
 It aggregates all services (AI Concierge, Support System, etc.)
 """
 
+import logging
+import os
+import sys
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-import os
-import sys
-from pathlib import Path
-import logging
+from slowapi.util import get_remote_address
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,12 +26,13 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, str(Path(__file__).parent.parent / "services"))
 sys.path.insert(0, str(Path(__file__).parent.parent / "shared"))
 
+from app import models  # This ensures all models are registered with SQLAlchemy
+
 # Import configuration
 from app.core.config import settings
 
 # Import database and models
-from app.database import init_db, Base, engine
-from app import models  # This ensures all models are registered with SQLAlchemy
+from app.database import Base, engine, init_db
 
 # Initialize database
 try:
@@ -157,8 +159,9 @@ async def health_check():
 async def readiness_check():
     """Readiness probe - is service ready to serve traffic?"""
     try:
-        from app.database import SessionLocal
         from sqlalchemy import text
+
+        from app.database import SessionLocal
 
         # Check database connectivity
         db = SessionLocal()

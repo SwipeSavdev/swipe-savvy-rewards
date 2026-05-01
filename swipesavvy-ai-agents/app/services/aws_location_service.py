@@ -16,12 +16,12 @@ Used for:
 - Delivery tracking for rewards
 """
 
-import os
+import json
 import logging
-from typing import Optional, Dict, Any, List, Tuple
+import os
 from datetime import datetime, timezone
 from enum import Enum
-import json
+from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
 from botocore.exceptions import ClientError
@@ -1006,7 +1006,7 @@ class AWSLocationService:
         Returns:
             Distance in kilometers
         """
-        from math import radians, sin, cos, sqrt, atan2
+        from math import atan2, cos, radians, sin, sqrt
 
         lon1, lat1 = point1
         lon2, lat2 = point2

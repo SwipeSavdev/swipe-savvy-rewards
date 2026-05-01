@@ -14,10 +14,10 @@ Handles all email communications using AWS Simple Email Service (SES):
 Replaces SendGrid with AWS SES for cost-effective, scalable email delivery.
 """
 
-import os
 import logging
-from typing import Optional, Dict, Any
+import os
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 import boto3
 from botocore.exceptions import ClientError
@@ -151,9 +151,9 @@ class AWSSESService:
             return True
 
         try:
+            from email.mime.application import MIMEApplication
             from email.mime.multipart import MIMEMultipart
             from email.mime.text import MIMEText
-            from email.mime.application import MIMEApplication
 
             msg = MIMEMultipart("mixed")
             msg["Subject"] = subject

@@ -4,12 +4,14 @@ Unit Tests for Authentication
 Tests for JWT token creation, verification, and error handling
 """
 
-import pytest
 from datetime import timedelta
+
+import jwt
+import pytest
 from fastapi import HTTPException
+
 from app.core.auth import create_access_token, verify_jwt_token
 from app.core.config import settings
-import jwt
 
 
 class TestTokenCreation:

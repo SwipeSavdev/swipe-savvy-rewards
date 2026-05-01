@@ -6,16 +6,17 @@ Tests all major endpoints and workflows across the platform.
 Run with: pytest tests/test_comprehensive_api.py -v --tb=short
 """
 
-import pytest
-import requests
 import json
-import time
-import uuid
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
 
 # Configuration
 import os
+import time
+import uuid
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+
+import pytest
+import requests
 
 BASE_URL = os.environ.get("BASE_URL", "http://54.224.8.14:8000")
 API_V1 = f"{BASE_URL}/api/v1"

@@ -8,37 +8,60 @@ Defines all database table models for the three databases:
 - swipesavvy_chat: Real-time chat and messaging
 """
 
-from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, UUID, ForeignKey, CheckConstraint, ARRAY, Date, Numeric, Text
+from datetime import datetime
+from uuid import uuid4
+
+from sqlalchemy import (
+    ARRAY,
+    UUID,
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.database import Base
-from uuid import uuid4
-from datetime import datetime
 
 # Constants for foreign key references
-ADMIN_USERS_ID = 'admin_users.id'
-USERS_ID = 'users.id'
-CHAT_SESSIONS_ID = 'chat_sessions.id'
-FIS_CARDS_ID = 'fis_cards.id'
-FIS_TRANSACTIONS_ID = 'fis_transactions.id'
+ADMIN_USERS_ID = "admin_users.id"
+USERS_ID = "users.id"
+CHAT_SESSIONS_ID = "chat_sessions.id"
+FIS_CARDS_ID = "fis_cards.id"
+FIS_TRANSACTIONS_ID = "fis_transactions.id"
 
 # Import chat models to register them with the database Base
 # Note: Don't import specific chat classes here as they may conflict with our own definitions
 import app.models.chat
 
-# Import notification models to register them with the database Base
-from app.models.notifications import DeviceToken, NotificationHistory, NotificationPreferences, NotificationTemplate
-
 # Import form models to register them with the database Base
 from app.models.forms import ContactFormSubmission, DemoRequestSubmission
+
+# Import notification models to register them with the database Base
+from app.models.notifications import (
+    DeviceToken,
+    NotificationHistory,
+    NotificationPreferences,
+    NotificationTemplate,
+)
 
 # ============================================
 # swipesavvy_dev Models (Admin Portal)
 # ============================================
 
+
 class User(Base):
     """Regular app users and merchants"""
+
     __tablename__ = "users"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -49,19 +72,19 @@ class User(Base):
     last_name = Column(String(100), nullable=True)
     phone = Column(String(20), nullable=True)
     date_of_birth = Column(Date, nullable=True)
-    status = Column(String(50), default='pending', nullable=False, index=True)
-    role = Column(String(50), default='user', nullable=False)
+    status = Column(String(50), default="pending", nullable=False, index=True)
+    role = Column(String(50), default="user", nullable=False)
 
     # Address fields
     street_address = Column(String(255), nullable=True)
     city = Column(String(100), nullable=True)
     state = Column(String(50), nullable=True)
     zip_code = Column(String(20), nullable=True)
-    country = Column(String(100), default='US', nullable=True)
+    country = Column(String(100), default="US", nullable=True)
 
     # KYC fields
-    kyc_tier = Column(String(20), default='tier1', nullable=False, index=True)
-    kyc_status = Column(String(50), default='pending', nullable=False, index=True)
+    kyc_tier = Column(String(20), default="tier1", nullable=False, index=True)
+    kyc_status = Column(String(50), default="pending", nullable=False, index=True)
     kyc_verified_at = Column(DateTime, nullable=True)
     ssn_last4 = Column(String(4), nullable=True)  # Last 4 digits of SSN (encrypted)
     ssn_hash = Column(String(255), nullable=True)  # Full SSN hash for verification
@@ -102,12 +125,15 @@ class User(Base):
         CheckConstraint("status IN ('active', 'inactive', 'suspended', 'deleted', 'pending')"),
         CheckConstraint("role IN ('admin', 'support', 'user', 'merchant')"),
         CheckConstraint("kyc_tier IN ('tier1', 'tier2', 'tier3')"),
-        CheckConstraint("kyc_status IN ('pending', 'in_review', 'approved', 'rejected', 'requires_info', 'expired')"),
+        CheckConstraint(
+            "kyc_status IN ('pending', 'in_review', 'approved', 'rejected', 'requires_info', 'expired')"
+        ),
     )
 
 
 class UserKYCDocument(Base):
     """User KYC document uploads and verification"""
+
     __tablename__ = "user_kyc_documents"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -118,7 +144,7 @@ class UserKYCDocument(Base):
     file_name = Column(String(255), nullable=False)
     file_size = Column(Integer, nullable=True)
     mime_type = Column(String(100), nullable=True)
-    status = Column(String(50), default='pending', nullable=False, index=True)
+    status = Column(String(50), default="pending", nullable=False, index=True)
     verification_result = Column(JSONB, default=dict, nullable=True)
     rejection_reason = Column(Text, nullable=True)
     expires_at = Column(DateTime, nullable=True)  # Document expiration
@@ -131,13 +157,16 @@ class UserKYCDocument(Base):
     user = relationship("User", back_populates="kyc_documents")
 
     __table_args__ = (
-        CheckConstraint("document_type IN ('drivers_license', 'passport', 'state_id', 'ssn_card', 'utility_bill', 'bank_statement', 'selfie')"),
+        CheckConstraint(
+            "document_type IN ('drivers_license', 'passport', 'state_id', 'ssn_card', 'utility_bill', 'bank_statement', 'selfie')"
+        ),
         CheckConstraint("status IN ('pending', 'verified', 'rejected', 'expired')"),
     )
 
 
 class UserKYCHistory(Base):
     """KYC verification history and audit trail"""
+
     __tablename__ = "user_kyc_history"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -153,7 +182,9 @@ class UserKYCHistory(Base):
     notes = Column(Text, nullable=True)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(Text, nullable=True)
-    performed_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)  # Admin who performed action
+    performed_by = Column(
+        UUID, ForeignKey(ADMIN_USERS_ID), nullable=True
+    )  # Admin who performed action
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     # Relationships
@@ -162,13 +193,14 @@ class UserKYCHistory(Base):
 
 class OFACScreeningResult(Base):
     """OFAC/Sanctions screening results"""
+
     __tablename__ = "ofac_screening_results"
 
     id = Column(UUID, primary_key=True, default=uuid4)
     user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
     screening_type = Column(String(50), nullable=False)  # ofac, pep, adverse_media
     provider = Column(String(100), nullable=True)
-    status = Column(String(50), default='pending', nullable=False, index=True)
+    status = Column(String(50), default="pending", nullable=False, index=True)
     match_score = Column(Float, nullable=True)
     matches = Column(JSONB, default=list, nullable=True)
     raw_response = Column(JSONB, default=dict, nullable=True)
@@ -179,40 +211,46 @@ class OFACScreeningResult(Base):
 
     __table_args__ = (
         CheckConstraint("screening_type IN ('ofac', 'pep', 'adverse_media', 'sanctions')"),
-        CheckConstraint("status IN ('pending', 'clear', 'potential_match', 'confirmed_match', 'false_positive')"),
+        CheckConstraint(
+            "status IN ('pending', 'clear', 'potential_match', 'confirmed_match', 'false_positive')"
+        ),
     )
 
 
 class AdminUser(Base):
     """Admin portal users with roles and permissions"""
+
     __tablename__ = "admin_users"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
-    role = Column(String(100), default='admin', nullable=False, index=True)
+    role = Column(String(100), default="admin", nullable=False, index=True)
     department = Column(String(100), nullable=True)
     permissions = Column(ARRAY(String), default=list, nullable=False)
-    status = Column(String(50), default='active', nullable=False)
+    status = Column(String(50), default="active", nullable=False)
     last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
-    
+
     # Relationships
     audit_logs = relationship("AuditLog", foreign_keys="AuditLog.user_id")
-    
+
     __table_args__ = (
-        CheckConstraint("role IN ('super_admin', 'admin', 'support_manager', 'analyst', 'viewer', 'operator')"),
+        CheckConstraint(
+            "role IN ('super_admin', 'admin', 'support_manager', 'analyst', 'viewer', 'operator')"
+        ),
         CheckConstraint("status IN ('active', 'inactive', 'suspended')"),
     )
 
 
 class Merchant(Base):
     """Merchant profiles and business data"""
+
     __tablename__ = "merchants"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
@@ -221,7 +259,7 @@ class Merchant(Base):
     country = Column(String(100), nullable=True)
     location = Column(String(255), nullable=True)
     business_type = Column(String(100), nullable=True)
-    status = Column(String(50), default='active', nullable=False, index=True)
+    status = Column(String(50), default="active", nullable=False, index=True)
     transaction_count = Column(Integer, default=0)
     success_rate = Column(Numeric(5, 2), default=100.00)
     monthly_volume = Column(Numeric(15, 2), default=0.00)
@@ -229,30 +267,29 @@ class Merchant(Base):
     verified_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    __table_args__ = (
-        CheckConstraint("status IN ('active', 'inactive', 'suspended', 'pending')"),
-    )
+
+    __table_args__ = (CheckConstraint("status IN ('active', 'inactive', 'suspended', 'pending')"),)
 
 
 class SupportTicket(Base):
     """Customer support tickets"""
+
     __tablename__ = "support_tickets"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     subject = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     customer_name = Column(String(255), nullable=False)
     customer_email = Column(String(255), nullable=False, index=True)
-    category = Column(String(100), default='general', nullable=False)
-    status = Column(String(50), default='open', nullable=False, index=True)
-    priority = Column(String(50), default='medium', nullable=False)
+    category = Column(String(100), default="general", nullable=False)
+    status = Column(String(50), default="open", nullable=False, index=True)
+    priority = Column(String(50), default="medium", nullable=False)
     assigned_to = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True, index=True)
     resolution_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     resolved_at = Column(DateTime, nullable=True)
-    
+
     __table_args__ = (
         CheckConstraint("status IN ('open', 'in_progress', 'closed', 'reopened')"),
         CheckConstraint("priority IN ('low', 'medium', 'high', 'critical')"),
@@ -261,6 +298,7 @@ class SupportTicket(Base):
 
 class FeatureFlag(Base):
     """Feature rollout flags for A/B testing"""
+
     __tablename__ = "feature_flags"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -284,13 +322,14 @@ class FeatureFlag(Base):
 
 class AICampaign(Base):
     """AI marketing campaigns with budget tracking"""
+
     __tablename__ = "ai_campaigns"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     name = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)
-    type = Column(String(100), default='email', nullable=False)
-    status = Column(String(50), default='draft', nullable=False, index=True)
+    type = Column(String(100), default="email", nullable=False)
+    status = Column(String(50), default="draft", nullable=False, index=True)
     budget = Column(Numeric(15, 2), default=0.00)
     spent = Column(Numeric(15, 2), default=0.00)
     roi = Column(Numeric(6, 2), default=0.00)
@@ -302,7 +341,7 @@ class AICampaign(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
-    
+
     __table_args__ = (
         CheckConstraint("status IN ('draft', 'active', 'paused', 'completed', 'archived')"),
     )
@@ -310,11 +349,12 @@ class AICampaign(Base):
 
 class AuditLog(Base):
     """Action audit trail for compliance"""
+
     __tablename__ = "audit_logs"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     action = Column(String(255), nullable=False)
-    action_type = Column(String(100), default='create', nullable=False)
+    action_type = Column(String(100), default="create", nullable=False)
     resource_type = Column(String(100), nullable=True)
     resource_id = Column(UUID, nullable=True)
     user_id = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=False, index=True)
@@ -322,30 +362,33 @@ class AuditLog(Base):
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(Text, nullable=True)
     changes = Column(JSONB, default=dict)
-    status = Column(String(50), default='success', nullable=False)
+    status = Column(String(50), default="success", nullable=False)
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     __table_args__ = (
         CheckConstraint("status IN ('success', 'failure')"),
-        CheckConstraint("action_type IN ('create', 'read', 'update', 'delete', 'authentication', 'system')"),
+        CheckConstraint(
+            "action_type IN ('create', 'read', 'update', 'delete', 'authentication', 'system')"
+        ),
     )
 
 
 class Setting(Base):
     """System settings and configuration"""
+
     __tablename__ = "settings"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     category = Column(String(100), nullable=False, index=True)
     key = Column(String(255), nullable=False)
     value = Column(Text, nullable=False)
-    data_type = Column(String(50), default='string', nullable=False)
+    data_type = Column(String(50), default="string", nullable=False)
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
-    
+
     __table_args__ = (
         CheckConstraint("data_type IN ('string', 'integer', 'float', 'boolean', 'json')"),
     )
@@ -354,13 +397,14 @@ class Setting(Base):
 # Placeholder tables for schema consistency (empty for now)
 class AIModel(Base):
     """AI model metadata and versions"""
+
     __tablename__ = "ai_models"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     name = Column(String(255), nullable=False)
     version = Column(String(50), nullable=False)
     model_type = Column(String(100), nullable=False)
-    status = Column(String(50), default='active', nullable=False)
+    status = Column(String(50), default="active", nullable=False)
     accuracy = Column(Float, nullable=True)
     deployment_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -369,8 +413,9 @@ class AIModel(Base):
 
 class DashboardAnalytic(Base):
     """Daily dashboard metrics"""
+
     __tablename__ = "dashboard_analytics"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     date = Column(Date, nullable=False, unique=True)
     total_users = Column(Integer, default=0)
@@ -384,10 +429,11 @@ class DashboardAnalytic(Base):
 
 class CampaignPerformance(Base):
     """Campaign performance metrics"""
+
     __tablename__ = "campaign_performance"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
-    campaign_id = Column(UUID, ForeignKey('ai_campaigns.id'), nullable=False)
+    campaign_id = Column(UUID, ForeignKey("ai_campaigns.id"), nullable=False)
     date = Column(Date, nullable=False)
     impressions = Column(Integer, default=0)
     clicks = Column(Integer, default=0)
@@ -404,60 +450,64 @@ class CampaignPerformance(Base):
 # swipesavvy_wallet Models (Payments)
 # ============================================
 
+
 class Wallet(Base):
     """User wallet accounts"""
+
     __tablename__ = "wallets"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     user_id = Column(UUID, ForeignKey(USERS_ID), unique=True, nullable=False, index=True)
     balance = Column(Numeric(15, 2), default=0.00)
-    currency = Column(String(3), default='USD', nullable=False)
-    status = Column(String(50), default='active', nullable=False, index=True)
+    currency = Column(String(3), default="USD", nullable=False)
+    status = Column(String(50), default="active", nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    __table_args__ = (
-        CheckConstraint("status IN ('active', 'frozen', 'inactive')"),
-    )
+
+    __table_args__ = (CheckConstraint("status IN ('active', 'frozen', 'inactive')"),)
 
 
 class WalletTransaction(Base):
     """Wallet transaction history"""
+
     __tablename__ = "wallet_transactions"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
-    transaction_type = Column(String(50), default='transfer', nullable=False)
+    transaction_type = Column(String(50), default="transfer", nullable=False)
     amount = Column(Numeric(15, 2), nullable=False)
-    currency = Column(String(3), default='USD', nullable=False)
-    status = Column(String(50), default='pending', nullable=False)
+    currency = Column(String(3), default="USD", nullable=False)
+    status = Column(String(50), default="pending", nullable=False)
     description = Column(Text, nullable=True)
     recipient_id = Column(UUID, ForeignKey(USERS_ID), nullable=True)
     payment_method = Column(String(100), nullable=True)
     reference_number = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
-    
+
     __table_args__ = (
-        CheckConstraint("transaction_type IN ('deposit', 'withdrawal', 'transfer', 'refund', 'payment')"),
+        CheckConstraint(
+            "transaction_type IN ('deposit', 'withdrawal', 'transfer', 'refund', 'payment')"
+        ),
         CheckConstraint("status IN ('pending', 'completed', 'failed', 'cancelled')"),
     )
 
 
 class PaymentMethod(Base):
     """Saved payment methods"""
+
     __tablename__ = "payment_methods"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
-    type = Column(String(50), default='card', nullable=False, index=True)
+    type = Column(String(50), default="card", nullable=False, index=True)
     token = Column(String(255), nullable=True)
     last_four = Column(String(4), nullable=True)
     expiry_date = Column(Date, nullable=True)
     is_default = Column(Boolean, default=False)
-    status = Column(String(50), default='active', nullable=False)
+    status = Column(String(50), default="active", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     __table_args__ = (
         CheckConstraint("type IN ('card', 'bank_account', 'mobile_wallet', 'crypto')"),
         CheckConstraint("status IN ('active', 'expired', 'inactive')"),
@@ -466,6 +516,7 @@ class PaymentMethod(Base):
 
 class PointsLedger(Base):
     """Immutable ledger for all points transactions (earn, redeem, donate, expire, adjust)."""
+
     __tablename__ = "points_ledger"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -490,19 +541,21 @@ class PointsLedger(Base):
 # Phase 10: Advanced Features Models
 # ============================================
 
+
 class Payment(Base):
     """Payment transactions via Stripe"""
+
     __tablename__ = "payments"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, index=True)
     merchant_id = Column(UUID, ForeignKey(USERS_ID), nullable=True, index=True)
     amount = Column(Numeric(10, 2), nullable=False)
-    currency = Column(String(3), default='USD', nullable=False)
+    currency = Column(String(3), default="USD", nullable=False)
     stripe_payment_intent_id = Column(String(255), unique=True, nullable=True, index=True)
     stripe_payment_id = Column(String(255), unique=True, nullable=True, index=True)
     stripe_charge_id = Column(String(255), unique=True, nullable=True)
-    status = Column(String(50), default='pending', nullable=False, index=True)
+    status = Column(String(50), default="pending", nullable=False, index=True)
     payment_method = Column(String(50), nullable=False)
     description = Column(Text, nullable=True)
     meta_data = Column(JSONB, default={}, nullable=True)
@@ -512,9 +565,11 @@ class Payment(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
-    
+
     __table_args__ = (
-        CheckConstraint("status IN ('pending', 'processing', 'succeeded', 'failed', 'refunded', 'canceled')"),
+        CheckConstraint(
+            "status IN ('pending', 'processing', 'succeeded', 'failed', 'refunded', 'canceled')"
+        ),
         CheckConstraint("amount > 0"),
         CheckConstraint("refund_amount >= 0"),
     )
@@ -522,20 +577,21 @@ class Payment(Base):
 
 class Subscription(Base):
     """Subscription management with Stripe"""
+
     __tablename__ = "subscriptions"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     user_id = Column(UUID, ForeignKey(USERS_ID), nullable=False, unique=True, index=True)
     plan = Column(String(50), nullable=False)  # 'free', 'starter', 'pro', 'enterprise'
     stripe_subscription_id = Column(String(255), unique=True, nullable=True, index=True)
     stripe_customer_id = Column(String(255), unique=True, nullable=True)
-    status = Column(String(50), default='active', nullable=False, index=True)
+    status = Column(String(50), default="active", nullable=False, index=True)
     billing_cycle_start = Column(DateTime, nullable=True)
     billing_cycle_end = Column(DateTime, nullable=True)
     current_period_start = Column(DateTime, nullable=True)
     current_period_end = Column(DateTime, nullable=True)
     amount = Column(Numeric(10, 2), nullable=True)
-    currency = Column(String(3), default='USD', nullable=False)
+    currency = Column(String(3), default="USD", nullable=False)
     auto_renew = Column(Boolean, default=True)
     trial_start = Column(DateTime, nullable=True)
     trial_end = Column(DateTime, nullable=True)
@@ -543,7 +599,7 @@ class Subscription(Base):
     cancel_reason = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     __table_args__ = (
         CheckConstraint("plan IN ('free', 'starter', 'pro', 'enterprise')"),
         CheckConstraint("status IN ('active', 'inactive', 'canceled', 'suspended', 'past_due')"),
@@ -552,12 +608,15 @@ class Subscription(Base):
 
 class AnalyticsEvent(Base):
     """Analytics event tracking for user behavior and conversions"""
+
     __tablename__ = "analytics_events"
-    
+
     id = Column(UUID, primary_key=True, default=uuid4)
     user_id = Column(UUID, ForeignKey(USERS_ID), nullable=True, index=True)
     merchant_id = Column(UUID, ForeignKey(USERS_ID), nullable=True, index=True)
-    event_type = Column(String(100), nullable=False, index=True)  # 'page_view', 'button_click', 'payment_completed', etc
+    event_type = Column(
+        String(100), nullable=False, index=True
+    )  # 'page_view', 'button_click', 'payment_completed', etc
     event_name = Column(String(255), nullable=False)
     event_category = Column(String(100), nullable=True)
     event_action = Column(String(100), nullable=True)
@@ -571,9 +630,11 @@ class AnalyticsEvent(Base):
     page_url = Column(String(500), nullable=True)
     referrer_url = Column(String(500), nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
-    
+
     __table_args__ = (
-        CheckConstraint("event_type IN ('page_view', 'button_click', 'payment_completed', 'signup', 'login', 'form_submit', 'search', 'error', 'video_play', 'download', 'share', 'add_to_cart', 'checkout', 'purchase', 'refund', 'subscription_start', 'subscription_cancel')"),
+        CheckConstraint(
+            "event_type IN ('page_view', 'button_click', 'payment_completed', 'signup', 'login', 'form_submit', 'search', 'error', 'video_play', 'download', 'share', 'add_to_cart', 'checkout', 'purchase', 'refund', 'subscription_start', 'subscription_cancel')"
+        ),
     )
 
 
@@ -581,8 +642,10 @@ class AnalyticsEvent(Base):
 # Role-Based Access Control (RBAC) Models
 # ============================================
 
+
 class Role(Base):
     """Admin roles with permissions"""
+
     __tablename__ = "roles"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -591,19 +654,18 @@ class Role(Base):
     description = Column(Text, nullable=True)
     permissions = Column(ARRAY(String), default=list, nullable=False)
     is_system = Column(Boolean, default=False)  # System roles cannot be deleted
-    status = Column(String(50), default='active', nullable=False)
+    status = Column(String(50), default="active", nullable=False)
     user_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
 
-    __table_args__ = (
-        CheckConstraint("status IN ('active', 'inactive')"),
-    )
+    __table_args__ = (CheckConstraint("status IN ('active', 'inactive')"),)
 
 
 class Policy(Base):
     """Access control policies"""
+
     __tablename__ = "policies"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -611,12 +673,14 @@ class Policy(Base):
     display_name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     resource = Column(String(100), nullable=False)  # e.g., 'merchants', 'users', 'transactions'
-    actions = Column(ARRAY(String), default=list, nullable=False)  # e.g., ['read', 'write', 'delete']
+    actions = Column(
+        ARRAY(String), default=list, nullable=False
+    )  # e.g., ['read', 'write', 'delete']
     conditions = Column(JSONB, default=dict, nullable=True)  # Optional conditions for the policy
-    effect = Column(String(10), default='allow', nullable=False)  # 'allow' or 'deny'
+    effect = Column(String(10), default="allow", nullable=False)  # 'allow' or 'deny'
     priority = Column(Integer, default=0)  # Higher priority policies evaluated first
     is_system = Column(Boolean, default=False)
-    status = Column(String(50), default='active', nullable=False)
+    status = Column(String(50), default="active", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by = Column(UUID, ForeignKey(ADMIN_USERS_ID), nullable=True)
@@ -629,6 +693,7 @@ class Policy(Base):
 
 class Permission(Base):
     """Available permissions in the system"""
+
     __tablename__ = "permissions"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -647,8 +712,10 @@ class Permission(Base):
 # Charity Onboarding Models
 # ============================================
 
+
 class Charity(Base):
     """Charity organizations for donation management"""
+
     __tablename__ = "charities"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -657,10 +724,10 @@ class Charity(Base):
     phone = Column(String(50), nullable=True)
     category = Column(String(100), nullable=False)
     registration_number = Column(String(100), unique=True, nullable=True)
-    country = Column(String(100), default='United States')
+    country = Column(String(100), default="United States")
     website = Column(String(255), nullable=True)
     documents_submitted = Column(Integer, default=0)
-    status = Column(String(50), default='incomplete', nullable=False, index=True)
+    status = Column(String(50), default="incomplete", nullable=False, index=True)
     completion_percentage = Column(Integer, default=0)
     notes = Column(Text, nullable=True)
     submitted_at = Column(DateTime, default=datetime.utcnow)
@@ -678,6 +745,7 @@ class Charity(Base):
 # Merchant Subscriptions & Preferred Merchants
 # ============================================
 
+
 class MerchantSubscription(Base):
     """
     Merchant subscription plans that determine placement priority.
@@ -690,18 +758,19 @@ class MerchantSubscription(Base):
     - bronze: Basic placement (score 25), up to 2 active deals
     - free: Minimal placement (score 0), 1 active deal
     """
+
     __tablename__ = "merchant_subscriptions"
 
     id = Column(UUID, primary_key=True, default=uuid4)
-    merchant_id = Column(UUID, ForeignKey('merchants.id'), unique=True, nullable=False, index=True)
+    merchant_id = Column(UUID, ForeignKey("merchants.id"), unique=True, nullable=False, index=True)
 
     # Subscription tier determines placement priority
-    tier = Column(String(50), default='free', nullable=False, index=True)
+    tier = Column(String(50), default="free", nullable=False, index=True)
 
     # Pricing
     monthly_fee = Column(Numeric(10, 2), default=0.00)
     annual_fee = Column(Numeric(10, 2), nullable=True)
-    billing_cycle = Column(String(20), default='monthly')  # monthly, annual
+    billing_cycle = Column(String(20), default="monthly")  # monthly, annual
 
     # Stripe billing
     stripe_subscription_id = Column(String(255), nullable=True)
@@ -720,14 +789,14 @@ class MerchantSubscription(Base):
     placement_score = Column(Integer, default=0)
 
     # Status
-    status = Column(String(50), default='active', nullable=False, index=True)
+    status = Column(String(50), default="active", nullable=False, index=True)
     trial_ends_at = Column(DateTime, nullable=True)
     current_period_start = Column(DateTime, nullable=True)
     current_period_end = Column(DateTime, nullable=True)
     canceled_at = Column(DateTime, nullable=True)
 
     # Link to onboarding (subscription selected during onboarding)
-    onboarding_id = Column(UUID, ForeignKey('merchant_onboardings.id'), nullable=True)
+    onboarding_id = Column(UUID, ForeignKey("merchant_onboardings.id"), nullable=True)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -745,10 +814,11 @@ class MerchantSubscription(Base):
 
 class PreferredMerchant(Base):
     """Preferred merchants displayed to consumers with special deals"""
+
     __tablename__ = "preferred_merchants"
 
     id = Column(UUID, primary_key=True, default=uuid4)
-    merchant_id = Column(UUID, ForeignKey('merchants.id'), nullable=False, index=True)
+    merchant_id = Column(UUID, ForeignKey("merchants.id"), nullable=False, index=True)
 
     # Display configuration
     display_name = Column(String(255), nullable=True)  # Override merchant name for display
@@ -773,7 +843,7 @@ class PreferredMerchant(Base):
     priority = Column(Integer, default=0)  # Base priority set by admin
     is_featured = Column(Boolean, default=False)  # Requires gold+ subscription
     show_banner = Column(Boolean, default=False)  # Requires platinum subscription
-    status = Column(String(50), default='active', nullable=False, index=True)
+    status = Column(String(50), default="active", nullable=False, index=True)
 
     # Validity period
     start_date = Column(DateTime, nullable=True)
@@ -801,15 +871,20 @@ class PreferredMerchant(Base):
 
 class MerchantDeal(Base):
     """Special deals and offers from preferred merchants"""
+
     __tablename__ = "merchant_deals"
 
     id = Column(UUID, primary_key=True, default=uuid4)
-    preferred_merchant_id = Column(UUID, ForeignKey('preferred_merchants.id'), nullable=False, index=True)
+    preferred_merchant_id = Column(
+        UUID, ForeignKey("preferred_merchants.id"), nullable=False, index=True
+    )
 
     # Deal details
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    deal_type = Column(String(50), nullable=False)  # percentage_off, fixed_amount, bogo, cashback_boost, points_multiplier
+    deal_type = Column(
+        String(50), nullable=False
+    )  # percentage_off, fixed_amount, bogo, cashback_boost, points_multiplier
 
     # Deal value
     discount_value = Column(Numeric(10, 2), nullable=True)  # Amount or percentage
@@ -826,7 +901,7 @@ class MerchantDeal(Base):
     image_url = Column(String(500), nullable=True)
     priority = Column(Integer, default=0)
     is_featured = Column(Boolean, default=False)
-    status = Column(String(50), default='active', nullable=False, index=True)
+    status = Column(String(50), default="active", nullable=False, index=True)
 
     # Validity
     start_date = Column(DateTime, nullable=False)
@@ -846,16 +921,19 @@ class MerchantDeal(Base):
 
     __table_args__ = (
         CheckConstraint("status IN ('active', 'inactive', 'expired', 'scheduled')"),
-        CheckConstraint("deal_type IN ('percentage_off', 'fixed_amount', 'bogo', 'cashback_boost', 'points_multiplier', 'free_item')"),
+        CheckConstraint(
+            "deal_type IN ('percentage_off', 'fixed_amount', 'bogo', 'cashback_boost', 'points_multiplier', 'free_item')"
+        ),
     )
 
 
 class MerchantOnboarding(Base):
     """Merchant onboarding for Fiserv AccessOne North Boarding API"""
+
     __tablename__ = "merchant_onboardings"
 
     id = Column(UUID, primary_key=True, default=uuid4)
-    merchant_id = Column(UUID, ForeignKey('merchants.id'), nullable=False, index=True)
+    merchant_id = Column(UUID, ForeignKey("merchants.id"), nullable=False, index=True)
 
     # Fiserv Reference IDs
     ext_ref_id = Column(String(50), unique=True, nullable=False, index=True)  # Our reference
@@ -863,7 +941,7 @@ class MerchantOnboarding(Base):
     north_number = Column(String(50), nullable=True)  # Fiserv North Number
 
     # Status tracking
-    status = Column(String(50), default='draft', nullable=False, index=True)
+    status = Column(String(50), default="draft", nullable=False, index=True)
     fiserv_status = Column(String(100), nullable=True)
     fiserv_status_message = Column(Text, nullable=True)
     step = Column(Integer, default=1)  # Current onboarding step (1-6)
@@ -879,7 +957,7 @@ class MerchantOnboarding(Base):
     business_city = Column(String(100), nullable=True)
     business_state = Column(String(50), nullable=True)
     business_zip = Column(String(20), nullable=True)
-    business_country = Column(String(100), default='US')
+    business_country = Column(String(100), default="US")
     website = Column(String(255), nullable=True)
     customer_service_phone = Column(String(20), nullable=True)
 
@@ -893,7 +971,7 @@ class MerchantOnboarding(Base):
     owner_city = Column(String(100), nullable=True)
     owner_state = Column(String(50), nullable=True)
     owner_zip = Column(String(20), nullable=True)
-    owner_country = Column(String(100), default='US')
+    owner_country = Column(String(100), default="US")
 
     # Bank Account Information (Step 3)
     bank_name = Column(String(255), nullable=True)
@@ -920,7 +998,9 @@ class MerchantOnboarding(Base):
     merchant = relationship("Merchant", backref="onboarding")
 
     __table_args__ = (
-        CheckConstraint("status IN ('draft', 'submitted', 'pending_credit', 'pending_bos', 'approved', 'rejected')"),
+        CheckConstraint(
+            "status IN ('draft', 'submitted', 'pending_credit', 'pending_bos', 'approved', 'rejected')"
+        ),
         CheckConstraint("step >= 1 AND step <= 6"),
         CheckConstraint("completion_percentage >= 0 AND completion_percentage <= 100"),
     )
@@ -930,11 +1010,13 @@ class MerchantOnboarding(Base):
 # FIS Global Card Management Models
 # ============================================
 
+
 class FISCard(Base):
     """
     FIS Global Payment One - Card records
     Stores card data for debit cards issued through FIS
     """
+
     __tablename__ = "fis_cards"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -947,14 +1029,14 @@ class FISCard(Base):
 
     # Card Details
     card_type = Column(String(20), nullable=False, index=True)  # virtual, physical
-    status = Column(String(50), default='pending_activation', nullable=False, index=True)
+    status = Column(String(50), default="pending_activation", nullable=False, index=True)
     last_four = Column(String(4), nullable=False)
     expiry_month = Column(Integer, nullable=False)
     expiry_year = Column(Integer, nullable=False)
     cardholder_name = Column(String(255), nullable=False)
 
     # Card Network
-    card_network = Column(String(20), default='visa')  # visa, mastercard
+    card_network = Column(String(20), default="visa")  # visa, mastercard
     bin = Column(String(6), nullable=True)  # Bank Identification Number
 
     # Physical Card Details
@@ -992,7 +1074,9 @@ class FISCard(Base):
 
     __table_args__ = (
         CheckConstraint("card_type IN ('virtual', 'physical')"),
-        CheckConstraint("status IN ('pending_activation', 'active', 'inactive', 'locked', 'frozen', 'lost', 'stolen', 'expired', 'closed')"),
+        CheckConstraint(
+            "status IN ('pending_activation', 'active', 'inactive', 'locked', 'frozen', 'lost', 'stolen', 'expired', 'closed')"
+        ),
         CheckConstraint("card_network IN ('visa', 'mastercard', 'discover', 'amex')"),
     )
 
@@ -1002,6 +1086,7 @@ class FISCardControl(Base):
     FIS Global Payment One - Card Controls
     Stores user-configurable card settings (spending limits, merchant controls, etc.)
     """
+
     __tablename__ = "fis_card_controls"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -1044,7 +1129,7 @@ class FISCardControl(Base):
 
     # FIS Sync
     last_synced_to_fis = Column(DateTime, nullable=True)
-    fis_sync_status = Column(String(50), default='pending')
+    fis_sync_status = Column(String(50), default="pending")
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -1059,6 +1144,7 @@ class FISPinRequest(Base):
     FIS Global Payment One - PIN Management Audit Trail
     Tracks all PIN-related operations for security and compliance
     """
+
     __tablename__ = "fis_pin_requests"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -1067,7 +1153,7 @@ class FISPinRequest(Base):
 
     # Operation Details
     operation = Column(String(50), nullable=False)  # set, change, reset, validate
-    status = Column(String(50), default='pending', nullable=False)
+    status = Column(String(50), default="pending", nullable=False)
     fis_request_id = Column(String(100), nullable=True)
 
     # Security
@@ -1104,6 +1190,7 @@ class FISTransaction(Base):
     FIS Global Payment One - Transaction Records
     Stores card transactions received from FIS (via webhooks or API polling)
     """
+
     __tablename__ = "fis_transactions"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -1116,9 +1203,9 @@ class FISTransaction(Base):
 
     # Transaction Details
     transaction_type = Column(String(50), nullable=False)  # purchase, atm_withdrawal, refund, etc.
-    status = Column(String(50), default='pending', nullable=False, index=True)
+    status = Column(String(50), default="pending", nullable=False, index=True)
     amount = Column(Numeric(12, 2), nullable=False)
-    currency = Column(String(3), default='USD')
+    currency = Column(String(3), default="USD")
     local_amount = Column(Numeric(12, 2), nullable=True)  # For international
     local_currency = Column(String(3), nullable=True)
     exchange_rate = Column(Numeric(10, 6), nullable=True)
@@ -1159,8 +1246,12 @@ class FISTransaction(Base):
     user = relationship("User", backref="fis_transactions")
 
     __table_args__ = (
-        CheckConstraint("transaction_type IN ('purchase', 'atm_withdrawal', 'refund', 'transfer', 'fee', 'adjustment', 'reversal')"),
-        CheckConstraint("status IN ('pending', 'authorized', 'completed', 'declined', 'reversed', 'disputed', 'settled')"),
+        CheckConstraint(
+            "transaction_type IN ('purchase', 'atm_withdrawal', 'refund', 'transfer', 'fee', 'adjustment', 'reversal')"
+        ),
+        CheckConstraint(
+            "status IN ('pending', 'authorized', 'completed', 'declined', 'reversed', 'disputed', 'settled')"
+        ),
     )
 
 
@@ -1169,6 +1260,7 @@ class FISWalletToken(Base):
     FIS Global Payment One - Digital Wallet Tokens
     Tracks Apple Pay, Google Pay, and other digital wallet provisioning
     """
+
     __tablename__ = "fis_wallet_tokens"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -1179,7 +1271,7 @@ class FISWalletToken(Base):
     token_id = Column(String(100), unique=True, nullable=False, index=True)
     dpan_last_four = Column(String(4), nullable=True)  # Device PAN last 4
     wallet_type = Column(String(50), nullable=False)  # apple_pay, google_pay, samsung_pay
-    token_status = Column(String(50), default='active', nullable=False)
+    token_status = Column(String(50), default="active", nullable=False)
 
     # Device Info
     device_id = Column(String(255), nullable=True)
@@ -1201,7 +1293,9 @@ class FISWalletToken(Base):
     user = relationship("User", backref="fis_wallet_tokens")
 
     __table_args__ = (
-        CheckConstraint("wallet_type IN ('apple_pay', 'google_pay', 'samsung_pay', 'fitbit_pay', 'garmin_pay')"),
+        CheckConstraint(
+            "wallet_type IN ('apple_pay', 'google_pay', 'samsung_pay', 'fitbit_pay', 'garmin_pay')"
+        ),
         CheckConstraint("token_status IN ('active', 'suspended', 'deleted', 'inactive')"),
     )
 
@@ -1211,6 +1305,7 @@ class FISKYCVerification(Base):
     FIS Global - KYC Verification Records
     Tracks identity verification through FIS
     """
+
     __tablename__ = "fis_kyc_verifications"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -1221,7 +1316,7 @@ class FISKYCVerification(Base):
 
     # Verification Details
     verification_type = Column(String(50), nullable=False)  # identity, document, address, ofac
-    status = Column(String(50), default='pending', nullable=False, index=True)
+    status = Column(String(50), default="pending", nullable=False, index=True)
     risk_score = Column(Integer, nullable=True)  # 0-100
 
     # Results
@@ -1244,8 +1339,12 @@ class FISKYCVerification(Base):
     user = relationship("User", backref="fis_kyc_verifications")
 
     __table_args__ = (
-        CheckConstraint("verification_type IN ('identity', 'document', 'address', 'ofac', 'watchlist', 'credit')"),
-        CheckConstraint("status IN ('pending', 'processing', 'approved', 'rejected', 'review_required', 'expired')"),
+        CheckConstraint(
+            "verification_type IN ('identity', 'document', 'address', 'ofac', 'watchlist', 'credit')"
+        ),
+        CheckConstraint(
+            "status IN ('pending', 'processing', 'approved', 'rejected', 'review_required', 'expired')"
+        ),
     )
 
 
@@ -1254,6 +1353,7 @@ class FISFraudAlert(Base):
     FIS Global Payment One - Fraud Alerts
     Stores fraud alerts and suspicious activity notifications from FIS
     """
+
     __tablename__ = "fis_fraud_alerts"
 
     id = Column(UUID, primary_key=True, default=uuid4)
@@ -1264,8 +1364,8 @@ class FISFraudAlert(Base):
     # Alert Details
     fis_alert_id = Column(String(100), unique=True, nullable=False, index=True)
     alert_type = Column(String(50), nullable=False)
-    severity = Column(String(20), default='medium', nullable=False)
-    status = Column(String(50), default='open', nullable=False, index=True)
+    severity = Column(String(20), default="medium", nullable=False)
+    status = Column(String(50), default="open", nullable=False, index=True)
 
     # Alert Data
     description = Column(Text, nullable=True)
@@ -1289,9 +1389,13 @@ class FISFraudAlert(Base):
     transaction = relationship("FISTransaction", backref="fraud_alerts")
 
     __table_args__ = (
-        CheckConstraint("alert_type IN ('suspicious_transaction', 'velocity_breach', 'geo_anomaly', 'device_change', 'account_takeover', 'card_testing')"),
+        CheckConstraint(
+            "alert_type IN ('suspicious_transaction', 'velocity_breach', 'geo_anomaly', 'device_change', 'account_takeover', 'card_testing')"
+        ),
         CheckConstraint("severity IN ('low', 'medium', 'high', 'critical')"),
-        CheckConstraint("status IN ('open', 'investigating', 'resolved', 'false_positive', 'escalated')"),
+        CheckConstraint(
+            "status IN ('open', 'investigating', 'resolved', 'false_positive', 'escalated')"
+        ),
     )
 
 

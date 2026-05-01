@@ -8,20 +8,21 @@ Combines behavioral pattern detection with Together.AI for:
 - Natural language insights on campaign performance
 """
 
+import json
+import logging
+import os
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import logging
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
-import json
 from together import Together
-import os
 
 from app.services.marketing_ai import (
     BehaviorAnalyzer,
-    UserBehavior,
     BehaviorPattern,
     CampaignType,
+    UserBehavior,
     get_marketing_ai_service,
 )
 

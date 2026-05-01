@@ -5,10 +5,11 @@ Handles scheduled execution of marketing AI analysis cycles
 """
 
 import logging
+import os
 from datetime import datetime, timedelta
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-import os
 
 from app.services.marketing_ai import get_marketing_ai_service
 

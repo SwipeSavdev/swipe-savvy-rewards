@@ -12,18 +12,20 @@ This service works alongside push notifications to provide a comprehensive
 notification experience within the app.
 """
 
-import os
 import json
 import logging
-from typing import Optional, Dict, Any, List
-from datetime import datetime, timezone, timedelta
+import os
+import uuid
+from datetime import datetime, timedelta, timezone
 from enum import Enum
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from sqlalchemy.orm import Session
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Enum as SQLEnum
+from sqlalchemy import Boolean, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import String, Text
 from sqlalchemy.dialects.postgresql import UUID
-import uuid
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 

@@ -3,12 +3,12 @@ End-to-End Tests for Tool Execution in Agentic AI
 Tests tool calling, execution, and result handling
 """
 
-import pytest
-import httpx
 import json
 import time
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
+import httpx
+import pytest
 
 BASE_URL = "http://localhost:8000"
 

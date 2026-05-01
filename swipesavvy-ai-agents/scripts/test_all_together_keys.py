@@ -5,8 +5,8 @@ Verifies authentication and basic functionality for each key
 """
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Load environment variables from .env
 env_path = Path(__file__).parent.parent / ".env"

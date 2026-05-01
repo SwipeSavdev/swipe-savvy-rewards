@@ -2,9 +2,10 @@
 Load testing script using Locust
 """
 
-from locust import HttpUser, task, between
 import json
 import random
+
+from locust import HttpUser, between, task
 
 
 class SwipeSavvyConciergeUser(HttpUser):

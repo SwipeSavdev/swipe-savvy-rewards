@@ -3,12 +3,13 @@ Integration Tests for AI Concierge Service
 Tests the complete pipeline: Guardrails → RAG → Together.AI → Streaming
 """
 
-import pytest
-import httpx
 import asyncio
 import json
-from typing import List, Dict
 import os
+from typing import Dict, List
+
+import httpx
+import pytest
 
 # Test Configuration
 CONCIERGE_URL = os.getenv("CONCIERGE_URL", "http://localhost:8000")
@@ -58,15 +59,15 @@ class TestGuardrailsIntegration:
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
         }
-        
+
         response = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         )
-        
+
         # Should return error or blocked message
         assert response.status_code in [400, 403, 200]
-        
+
         if response.status_code == 200:
             # If streaming response, check for blocked event
             content = response.text
@@ -79,12 +80,12 @@ class TestGuardrailsIntegration:
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
         }
-        
+
         response = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         )
-        
+
         # Guardrails should block or sanitize toxic content
         assert response.status_code in [400, 403, 200]
 
@@ -95,12 +96,12 @@ class TestGuardrailsIntegration:
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
         }
-        
+
         response = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         )
-        
+
         # Response should not echo back SSN
         content = response.text
         assert "123-45-6789" not in content
@@ -117,12 +118,12 @@ class TestRAGIntegration:
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
         }
-        
+
         response = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         )
-        
+
         assert response.status_code == 200
         # RAG should provide account context
         content = response.text
@@ -135,12 +136,12 @@ class TestRAGIntegration:
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
         }
-        
+
         response = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         )
-        
+
         assert response.status_code == 200
         content = response.text
         assert "transaction" in content.lower() or "purchase" in content.lower()
@@ -157,73 +158,73 @@ class TestTogetherAIStreaming:
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
         }
-        
+
         events: List[Dict] = []
-        
+
         async with http_client.stream(
-            'POST',
+            "POST",
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         ) as response:
             assert response.status_code == 200
-            assert response.headers.get('content-type') == 'text/event-stream; charset=utf-8'
-            
+            assert response.headers.get("content-type") == "text/event-stream; charset=utf-8"
+
             async for line in response.aiter_lines():
-                if line.startswith('data: '):
+                if line.startswith("data: "):
                     data = line[6:].strip()
-                    if data and data != '[DONE]':
+                    if data and data != "[DONE]":
                         try:
                             event = json.loads(data)
                             events.append(event)
                         except json.JSONDecodeError:
                             pass
-        
+
         # Verify streaming events
         assert len(events) > 0, "Should receive at least one streaming event"
-        
+
         # Check event types
-        event_types = [e.get('type') for e in events]
-        assert 'thinking' in event_types or 'message' in event_types
-        
+        event_types = [e.get("type") for e in events]
+        assert "thinking" in event_types or "message" in event_types
+
         # Verify final message
-        final_events = [e for e in events if e.get('type') == 'message']
+        final_events = [e for e in events if e.get("type") == "message"]
         assert len(final_events) > 0, "Should have at least one message event"
-        
+
         # Check that content is being streamed progressively
-        assert any('delta' in e or 'content' in e for e in events)
+        assert any("delta" in e or "content" in e for e in events)
 
     async def test_conversation_continuity(self, http_client):
         """Test that conversation context is maintained across messages"""
         session_id = f"test-continuity-{int(asyncio.get_event_loop().time())}"
-        
+
         # First message
         request1 = {
             "message": "My name is Alice",
             "user_id": TEST_USER_ID,
             "session_id": session_id,
         }
-        
+
         response1 = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request1,
         )
         assert response1.status_code == 200
-        
+
         # Wait a bit
         await asyncio.sleep(1)
-        
+
         # Second message - should remember context
         request2 = {
             "message": "What is my name?",
             "user_id": TEST_USER_ID,
             "session_id": session_id,
         }
-        
+
         response2 = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request2,
         )
-        
+
         assert response2.status_code == 200
         content = response2.text.lower()
         # LLM should recall the name from conversation history
@@ -236,18 +237,18 @@ class TestTogetherAIStreaming:
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
         }
-        
+
         response = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         )
-        
+
         assert response.status_code == 200
         content = response.text.lower()
-        
+
         # Response should be relevant to money transfer
-        assert any(keyword in content for keyword in ['transfer', 'send', 'money', 'payment'])
-        
+        assert any(keyword in content for keyword in ["transfer", "send", "money", "payment"])
+
         # Should be helpful (not too short)
         assert len(content) > 50, "Response should be detailed enough to be helpful"
 
@@ -262,47 +263,44 @@ class TestEndToEndPipeline:
             "message": "I want to check my checking account balance and see if I can transfer $500 to savings",
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
-            "context": {
-                "screen": "dashboard",
-                "action": "query_balance"
-            }
+            "context": {"screen": "dashboard", "action": "query_balance"},
         }
-        
+
         events: List[Dict] = []
-        
+
         async with http_client.stream(
-            'POST',
+            "POST",
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         ) as response:
             assert response.status_code == 200
-            
+
             async for line in response.aiter_lines():
-                if line.startswith('data: '):
+                if line.startswith("data: "):
                     data = line[6:].strip()
-                    if data and data != '[DONE]':
+                    if data and data != "[DONE]":
                         try:
                             event = json.loads(data)
                             events.append(event)
                         except json.JSONDecodeError:
                             pass
-        
+
         # Verify pipeline stages
         assert len(events) > 0, "Should receive streaming events"
-        
+
         # Should have thinking, message, and done events
-        event_types = [e.get('type') for e in events]
-        assert 'thinking' in event_types or 'message' in event_types
-        
+        event_types = [e.get("type") for e in events]
+        assert "thinking" in event_types or "message" in event_types
+
         # Verify session tracking
-        session_ids = [e.get('session_id') for e in events if 'session_id' in e]
+        session_ids = [e.get("session_id") for e in events if "session_id" in e]
         if session_ids:
             assert all(sid == TEST_SESSION_ID for sid in session_ids)
-        
+
         # Check message quality
-        message_events = [e for e in events if e.get('type') == 'message']
+        message_events = [e for e in events if e.get("type") == "message"]
         if message_events:
-            final_content = message_events[-1].get('content', '')
+            final_content = message_events[-1].get("content", "")
             assert len(final_content) > 0, "Should have message content"
 
     async def test_error_handling_invalid_request(self, http_client):
@@ -311,12 +309,12 @@ class TestEndToEndPipeline:
             # Missing required 'message' field
             "user_id": TEST_USER_ID,
         }
-        
+
         response = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         )
-        
+
         # Should return validation error
         assert response.status_code == 422  # Unprocessable Entity
 
@@ -327,7 +325,7 @@ class TestEndToEndPipeline:
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
         }
-        
+
         # Use shorter timeout for this test
         async with httpx.AsyncClient(timeout=5.0) as short_timeout_client:
             try:
@@ -356,15 +354,12 @@ class TestPerformance:
             }
             for i in range(5)
         ]
-        
+
         # Send 5 concurrent requests
-        tasks = [
-            http_client.post(f"{CONCIERGE_URL}/api/v1/chat", json=req)
-            for req in requests
-        ]
-        
+        tasks = [http_client.post(f"{CONCIERGE_URL}/api/v1/chat", json=req) for req in requests]
+
         responses = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         # All should complete successfully
         successful = [r for r in responses if not isinstance(r, Exception) and r.status_code == 200]
         assert len(successful) >= 4, "At least 4 out of 5 concurrent requests should succeed"
@@ -376,19 +371,21 @@ class TestPerformance:
             "user_id": TEST_USER_ID,
             "session_id": TEST_SESSION_ID,
         }
-        
+
         start_time = asyncio.get_event_loop().time()
-        
+
         response = await http_client.post(
             f"{CONCIERGE_URL}/api/v1/chat",
             json=request,
         )
-        
+
         end_time = asyncio.get_event_loop().time()
         response_time = end_time - start_time
-        
+
         assert response.status_code == 200
-        assert response_time < 5.0, f"Response should start within 5 seconds, took {response_time:.2f}s"
+        assert (
+            response_time < 5.0
+        ), f"Response should start within 5 seconds, took {response_time:.2f}s"
 
 
 if __name__ == "__main__":

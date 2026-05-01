@@ -3,12 +3,13 @@ Unit tests for Account tool functions
 """
 
 import pytest
+
 from tools.account import (
+    AccountNotFoundError,
+    UnauthorizedAccessError,
     get_account_balance,
     get_account_info,
     get_account_settings,
-    AccountNotFoundError,
-    UnauthorizedAccessError,
 )
 
 

@@ -1,14 +1,15 @@
 """
 Rewards Service - Manages user points and reward redemptions
 """
-from datetime import datetime
-from typing import List, Dict, Tuple, Optional
+
 import uuid
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 
 class RewardsService:
     """Handles rewards, points, and redemption logic"""
-    
+
     def __init__(self):
         # In-memory storage for MVP (easily replaceable with database)
         self.user_points: Dict[str, int] = {}  # user_id -> points balance
@@ -65,7 +66,7 @@ class RewardsService:
         """Initialize a new user with starting points"""
         if user_id in self.user_points:
             return False, {"error": "User already initialized"}
-        
+
         self.user_points[user_id] = starting_points
         self.transactions[user_id] = [
             {
@@ -76,14 +77,14 @@ class RewardsService:
                 "timestamp": datetime.now().isoformat(),
             }
         ]
-        
+
         return True, {"user_id": user_id, "points": starting_points}
 
     def get_user_points(self, user_id: str) -> Tuple[bool, Dict]:
         """Get current points balance for a user"""
         if user_id not in self.user_points:
             return False, {"error": "User not found"}
-        
+
         points = self.user_points[user_id]
         return True, {
             "user_id": user_id,
@@ -92,13 +93,15 @@ class RewardsService:
             "next_milestone": self._get_next_milestone(points),
         }
 
-    def add_points(self, user_id: str, amount: int, description: str = "Points earned") -> Tuple[bool, Dict]:
+    def add_points(
+        self, user_id: str, amount: int, description: str = "Points earned"
+    ) -> Tuple[bool, Dict]:
         """Add points to user account"""
         if user_id not in self.user_points:
             return False, {"error": "User not found"}
-        
+
         self.user_points[user_id] += amount
-        
+
         transaction = {
             "id": str(uuid.uuid4()),
             "type": "earned",
@@ -107,7 +110,7 @@ class RewardsService:
             "timestamp": datetime.now().isoformat(),
         }
         self.transactions[user_id].append(transaction)
-        
+
         return True, {
             "user_id": user_id,
             "new_balance": self.user_points[user_id],
@@ -119,14 +122,14 @@ class RewardsService:
         # Validate user
         if user_id not in self.user_points:
             return False, {"error": "User not found"}
-        
+
         # Validate offer
         if offer_id not in self.offers:
             return False, {"error": "Offer not found"}
-        
+
         offer = self.offers[offer_id]
         points_required = offer["points_required"]
-        
+
         # Check sufficient points
         if self.user_points[user_id] < points_required:
             return False, {
@@ -134,10 +137,10 @@ class RewardsService:
                 "required": points_required,
                 "current": self.user_points[user_id],
             }
-        
+
         # Deduct points
         self.user_points[user_id] -= points_required
-        
+
         # Create transaction
         transaction = {
             "id": str(uuid.uuid4()),
@@ -148,7 +151,7 @@ class RewardsService:
             "timestamp": datetime.now().isoformat(),
         }
         self.transactions[user_id].append(transaction)
-        
+
         return True, {
             "success": True,
             "user_id": user_id,
@@ -163,13 +166,13 @@ class RewardsService:
         """Get transaction history for a user"""
         if user_id not in self.transactions:
             return False, {"error": "User not found"}
-        
+
         transactions = self.transactions[user_id][-limit:]
-        
+
         # Calculate summary
         earned = sum(t["amount"] for t in transactions if t["type"] == "earned")
         redeemed = sum(t["amount"] for t in transactions if t["type"] == "redeemed")
-        
+
         return True, {
             "user_id": user_id,
             "transactions": transactions,
@@ -183,7 +186,7 @@ class RewardsService:
     def get_available_offers(self) -> Tuple[bool, Dict]:
         """Get all available redemption offers"""
         offers_list = list(self.offers.values())
-        
+
         return True, {
             "offers": offers_list,
             "count": len(offers_list),
@@ -203,7 +206,7 @@ class RewardsService:
     def _get_next_milestone(self, points: int) -> Dict:
         """Get next tier milestone"""
         milestones = [2000, 5000, 10000]
-        
+
         for milestone in milestones:
             if points < milestone:
                 return {
@@ -211,7 +214,7 @@ class RewardsService:
                     "points_to_go": milestone - points,
                     "tier": self._get_tier(milestone),
                 }
-        
+
         return {
             "points_needed": None,
             "points_to_go": 0,

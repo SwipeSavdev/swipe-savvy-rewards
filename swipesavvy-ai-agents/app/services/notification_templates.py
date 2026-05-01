@@ -13,8 +13,7 @@ Comprehensive email and SMS templates for the entire system workflow including:
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any
-
+from typing import Any, Dict, Optional
 
 # ============================================================================
 # EMAIL TEMPLATES

@@ -3,20 +3,19 @@ Admin Chat Dashboard API Routes
 Provides statistics, metrics, and management endpoints for the admin chat dashboard.
 """
 
+import asyncio
+import json
 import logging
-from typing import Optional, List, Dict, Any
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status, WebSocket, WebSocketDisconnect
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel, Field
-import json
-import asyncio
-from datetime import datetime
-from typing import Set, Dict
+from sqlalchemy.orm import Session
 
+from app.core.auth import verify_jwt_token, verify_token_string
 from app.database import get_db
-from app.core.auth import verify_token_string, verify_jwt_token
 from app.services.chat_dashboard_service import ChatDashboardService
 
 logger = logging.getLogger(__name__)
