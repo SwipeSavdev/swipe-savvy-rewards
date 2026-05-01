@@ -20,7 +20,7 @@
     "react-error-boundary": "^6.0.1",
     "react-grid-layout": "^2.2.2",
     "react-resizable-box": "^2.1.0",
-    "react-router-dom": "^6.23.1",
+    "react-router-dom": "^6.30.3",
     "recharts": "^3.6.0",
     "swr": "^2.3.8",
     "zustand": "^4.5.5"
