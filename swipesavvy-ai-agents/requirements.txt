@@ -64,7 +64,7 @@ pandas>=2.1.0
 numpy>=1.26.0
 
 # JWT and auth
-pyjwt>=2.8.0
+pyjwt>=2.12.0
 cryptography>=41.0.0
 passlib>=1.7.4
 bcrypt==4.0.1  # Pinned for passlib compatibility (passlib breaks with bcrypt>=4.1)
