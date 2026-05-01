@@ -430,3 +430,17 @@ class NotificationPreferencesService:
         except Exception as e:
             logger.error(f"Failed to check notification preference: {str(e)}")
             return True  # Allow by default if check fails
+
+
+# Module-level singleton, lazily initialized via init_firebase_service() at app startup.
+# Routes can import and check `if firebase_service is None` to return a 503 when Firebase
+# isn't configured (e.g. in environments without FIREBASE_CREDENTIALS_JSON).
+firebase_service: "FirebaseService | None" = None
+
+
+def init_firebase_service(credentials_json: str, database_url: str) -> "FirebaseService":
+    """Initialize the module-level firebase_service singleton."""
+    global firebase_service
+    if firebase_service is None:
+        firebase_service = FirebaseService(credentials_json, database_url)
+    return firebase_service

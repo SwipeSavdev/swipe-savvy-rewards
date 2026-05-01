@@ -18,12 +18,13 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
 from app.core.auth import verify_jwt_token
 from app.core.config import settings
 from app.database import get_db
+from app.services.firebase_service import firebase_service
 
 logger = logging.getLogger(__name__)
 

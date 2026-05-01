@@ -21,6 +21,7 @@ import logging
 import os
 from datetime import datetime, timezone
 from enum import Enum
+from math import cos, radians
 from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
