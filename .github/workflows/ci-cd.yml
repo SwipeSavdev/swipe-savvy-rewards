@@ -183,8 +183,12 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Run Trivy vulnerability scanner
-        # Report-only: existing findings (58 known vulns) shouldn't block every commit.
-        # Triage via the Security tab; flip exit-code back to 1 once the backlog is cleared.
+        # Report-only: existing findings shouldn't block every commit. Triage via Security tab.
+        # continue-on-error covers cases where the trivy-action itself returns non-zero
+        # (e.g. action setup glitches, network hiccups during DB pull) — we never want this
+        # to block Build/Deploy when both downstream consumers (deploy-staging,
+        # deploy-production) are themselves disabled placeholders.
+        continue-on-error: true
         uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.28.0
         with:
           scan-type: fs
