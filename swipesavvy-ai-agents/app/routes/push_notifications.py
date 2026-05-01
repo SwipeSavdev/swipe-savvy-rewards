@@ -47,10 +47,7 @@ aws_push_service = None
 in_app_service = None
 
 try:
-    from app.services.aws_push_notification_service import (
-        NotificationType,
-        Platform,
-    )
+    from app.services.aws_push_notification_service import NotificationType, Platform
     from app.services.aws_push_notification_service import aws_push_service as push_service
 
     aws_push_service = push_service

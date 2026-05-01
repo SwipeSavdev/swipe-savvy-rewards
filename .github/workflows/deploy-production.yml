@@ -164,7 +164,13 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy to Staging
     needs: [pre-deploy-checks, build-and-push]
-    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    # Disabled: this job's "Deploy to staging" / "Wait for staging services" / "Run smoke
+    # tests" steps are placeholder echo statements (see inline comments). They make no
+    # real API calls, then the wait loop times out at 5 minutes. Production deploys flow
+    # through Simple Deploy. Re-enable once an actual staging environment + deploy script
+    # exists. The build-and-push job above still runs, populating ghcr.io with the
+    # current image set.
+    if: false
     environment:
       name: staging
       url: https://staging.swipesavvy.com
@@ -228,7 +234,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy to Production
     needs: [pre-deploy-checks, build-and-push, deploy-staging]
-    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+    # Disabled along with deploy-staging — same placeholder echo statements with no real
+    # deployment logic. Real production deploys flow through Simple Deploy.
+    if: false
     environment:
       name: production
       url: https://swipesavvy.com

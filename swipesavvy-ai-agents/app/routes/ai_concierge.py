@@ -20,10 +20,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from together import Together
 
-from app.config.ai_roles import (
-    build_role_aware_prompt,
-    get_max_transaction_amount,
-)
+from app.config.ai_roles import build_role_aware_prompt, get_max_transaction_amount
 from app.core.auth import verify_token_string
 
 logger = logging.getLogger(__name__)
