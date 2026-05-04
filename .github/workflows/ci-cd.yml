@@ -199,7 +199,7 @@ jobs:
       - name: Run Snyk security scan
         # continue-on-error: Snyk requires SNYK_TOKEN which may not be configured in all environments
         continue-on-error: true
-        uses: snyk/actions/node@b98d498629f1c368650224d6d212bf7dfa89e4bf # v1
+        uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # v1
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
