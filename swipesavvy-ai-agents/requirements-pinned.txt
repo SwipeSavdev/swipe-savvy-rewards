@@ -22,7 +22,7 @@ pgvector==0.2.2
 fastapi>=0.109.1
 uvicorn==0.24.0
 pydantic==2.12.5
-pydantic-settings==2.7.1
+pydantic-settings==2.14.0
 
 # Security & PII Detection
 presidio-analyzer==2.2.360
