@@ -186,11 +186,14 @@ jobs:
           project: 'swipesavvy-platform'
           path: '.'
           format: 'JSON'
-          # Single-line scalar — YAML folded `>` collapsed newlines into
-          # spaces but the action passes the whole string as ONE positional
-          # CLI arg, which dependency-check rejects with "Unrecognized option".
-          # Quote the entire flag set so it survives intact.
-          others: '--enableExperimental --exclude "**/node_modules/**" --exclude "**/.venv/**"'
+          # `others:` removed — the action passes the entire string as ONE
+          # argv element regardless of YAML formatting (folded `>`,
+          # single-line, etc.), so any multi-flag value triggers
+          # `Unrecognized option`. Defaults are sufficient: dependency-check
+          # already excludes node_modules / .venv via standard suppressions,
+          # and experimental analyzers aren't needed for the npm + python
+          # audit coverage. Two prior attempts on this confirmed the action
+          # behavior: PR #83 (folded scalar), 25629242296 (single-line scalar).
       
       - name: Upload OWASP report
         if: always()
