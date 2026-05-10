@@ -24,7 +24,11 @@ on:
 
 concurrency:
   group: deploy-${{ github.ref }}
-  cancel-in-progress: false
+  # Was `false` — caused 17 cancelled runs in the last 120 days because
+  # rapid Dependabot pushes piled up behind a single deploy that never
+  # finished its placeholder sleep loop. Switching to true so the newest
+  # commit wins cleanly.
+  cancel-in-progress: true
 
 jobs:
   pre-deploy-checks:

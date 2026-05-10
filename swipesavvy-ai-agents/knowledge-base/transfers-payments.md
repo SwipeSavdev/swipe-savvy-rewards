@@ -304,7 +304,7 @@ tags: [transfers, payments, p2p, send-money, receive-money]
 
 **Transfer Support:**
 - In-app chat: Tap profile > Help > Transfers
-- Phone: 1-800-SWIPE-SAVVY (24/7)
+- Phone: +1-800-505-8769 (24/7)
 - Email: transfers@swipesavvy.com
 - Response time: <1 hour for transfer issues
 
