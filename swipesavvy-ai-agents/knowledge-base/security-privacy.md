@@ -240,7 +240,7 @@ SwipeSavvy monitors every transaction for fraud using:
    - Freeze card from web dashboard
 
 2. **Call Support:**
-   - 24/7 hotline: 1-800-SWIPE-SAVVY
+   - 24/7 hotline: +1-800-505-8769
    - Report device lost/stolen
    - Representative freezes account
    - Issue replacement card
@@ -348,7 +348,7 @@ SwipeSavvy monitors every transaction for fraud using:
 
 **Report Security Concern:**
 - Email: security@swipesavvy.com
-- 24/7 Phone: 1-800-SWIPE-SAVVY
+- 24/7 Phone: +1-800-505-8769
 - In-app: Settings > Help > Security
 
 **Related Articles:**

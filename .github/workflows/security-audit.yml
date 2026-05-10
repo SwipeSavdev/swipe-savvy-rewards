@@ -186,10 +186,11 @@ jobs:
           project: 'swipesavvy-platform'
           path: '.'
           format: 'JSON'
-          others: >
-            --enableExperimental
-            --exclude node_modules
-            --exclude .venv
+          # Single-line scalar — YAML folded `>` collapsed newlines into
+          # spaces but the action passes the whole string as ONE positional
+          # CLI arg, which dependency-check rejects with "Unrecognized option".
+          # Quote the entire flag set so it survives intact.
+          others: '--enableExperimental --exclude "**/node_modules/**" --exclude "**/.venv/**"'
       
       - name: Upload OWASP report
         if: always()
