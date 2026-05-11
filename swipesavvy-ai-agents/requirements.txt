@@ -25,7 +25,7 @@ email-validator>=2.3.0  # Required for Pydantic email validation
 python-multipart>=0.0.27  # Required for form data handling
 
 # PII detection and security
-presidio-analyzer>=2.2.0
+presidio-analyzer>=2.2.362
 presidio-anonymizer>=2.2.0
 spacy>=3.7.0
 
