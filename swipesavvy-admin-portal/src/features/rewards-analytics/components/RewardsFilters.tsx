@@ -43,16 +43,17 @@ export default function RewardsFilters({
     const start = filters.startDate
 
     const today = now.toISOString().slice(0, 10)
-    const compareDate = (date: string, daysAgo: number) => {
-      const d = new Date(now)
-      d.setDate(d.getDate() - daysAgo)
-      return d.toISOString().slice(0, 10)
-    }
 
-    if (start === compareDate(now.toISOString(), 6) && end === today) return '7d'
-    if (start === compareDate(now.toISOString(), 29) && end === today) return '30d'
-    if (start === compareDate(now.toISOString(), 89) && end === today) return '90d'
-    if (start === compareDate(now.toISOString(), 364) && end === today) return '1y'
+const compareDate = (daysAgo: number) => {
+  const d = new Date(now)
+  d.setDate(d.getDate() - daysAgo)
+  return d.toISOString().slice(0, 10)
+}
+
+if (start === compareDate(6) && end === today) return '7d'
+if (start === compareDate(29) && end === today) return '30d'
+if (start === compareDate(89) && end === today) return '90d'
+if (start === compareDate(364) && end === today) return '1y'
     return 'custom'
   })()
 
@@ -121,14 +122,15 @@ export default function RewardsFilters({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onRefresh}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
-        >
-          <RefreshCw className="h-4 w-4" />
-          {isRefreshing ? 'Refreshing' : 'Refresh'}
-        </button>
+       <button
+  type="button"
+  onClick={onRefresh}
+  disabled={isRefreshing}
+  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+>
+  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+  {isRefreshing ? 'Refreshing' : 'Refresh'}
+</button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

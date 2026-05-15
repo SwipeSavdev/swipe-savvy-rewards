@@ -6,7 +6,7 @@ const RewardsPerformanceAnalytics = lazy(
 
 export default function RewardsPerformanceAnalyticsPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading rewards analytics...</div>}>
+    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading rewards analytics…</div>}>
       <RewardsPerformanceAnalytics />
     </Suspense>
   )

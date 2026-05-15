@@ -1,38 +1,38 @@
 import {
-    getMerchantBreakdown,
-    getRedemptionFunnel,
-    getRewardsActivitySummary,
-    getTierDistribution,
-    getTopEarners,
+  getMerchantBreakdown,
+  getRedemptionFunnel,
+  getRewardsActivitySummary,
+  getTierDistribution,
+  getTopEarners,
 } from '@/services/rewardsAnalyticsService'
 import type {
-    RewardsAnalyticsFilters,
-    RewardsAnalyticsPageData
+  RewardsAnalyticsFilters,
+  RewardsAnalyticsPageData
 } from '@/types/rewardsAnalytics'
 import {
-    Clock,
-    Sparkles,
-    TrendingDown,
-    Users
+  Clock,
+  Sparkles,
+  TrendingDown,
+  Users
 } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell,
-    Line,
-    LineChart,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts'
 import useSWR from 'swr'
-import RewardsFilters from './RewardsFilters'
+import RewardsFilters from './components/RewardsFilters'
 
 const staticMerchantOptions = [
   { value: 'm_1', label: 'Northside Market' },
@@ -132,7 +132,10 @@ function summaryCard(label: string, value: string, hint: string, icon: ReactNode
 
 export default function RewardsPerformanceAnalytics() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const filters = useMemo(() => parseFilters(searchParams), [searchParams.toString()])
+  const filters = useMemo(
+  () => parseFilters(searchParams),
+  [searchParams],
+)
 
   const key = useMemo(
     () => [
@@ -155,8 +158,14 @@ export default function RewardsPerformanceAnalytics() {
   }
 
   const refresh = async () => {
-    await mutate(undefined, { revalidate: true })
-  }
+  await mutate(
+    () => fetchRewardsAnalytics(filters),
+    {
+      revalidate: true,
+      populateCache: true,
+    },
+  )
+}
 
   const selectedRange = getRangeLabel(filters)
   const loadingMessage = isLoading ? 'Loading rewards analytics…' : isValidating ? 'Updating insights…' : null
@@ -231,7 +240,7 @@ export default function RewardsPerformanceAnalytics() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2">
+        <section data-testid="rewards-line-chart" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Points issued versus redeemed</h2>
@@ -253,7 +262,7 @@ export default function RewardsPerformanceAnalytics() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section data-testid="tier-distribution-chart" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5">
             <h2 className="text-lg font-semibold text-slate-900">Tier distribution</h2>
             <p className="text-sm text-slate-500">How membership tiers stack across active rewards users.</p>
@@ -284,7 +293,7 @@ export default function RewardsPerformanceAnalytics() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2">
+        <section data-testid="top-earners-chart" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Top earners by points balance</h2>
@@ -311,7 +320,7 @@ export default function RewardsPerformanceAnalytics() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section data-testid="merchant-breakdown" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5">
             <h2 className="text-lg font-semibold text-slate-900">Redemption funnel</h2>
             <p className="text-sm text-slate-500">Eligible rewards, views, and completed redemptions.</p>

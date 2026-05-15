@@ -211,20 +211,28 @@ function shouldForceRewardsError() {
   return typeof window !== 'undefined' && (globalThis as any).__REWARDS_PERFORMANCE_TEST_ERROR === true
 }
 
+function throwRewardsAnalyticsErrorIfNeeded() {
+  if (shouldForceRewardsError()) {
+    throw new Error('Unable to load rewards analytics')
+  }
+}
+
 export async function getRewardsActivitySummary(
   params?: RewardsAnalyticsFilters,
 ): Promise<RewardsActivitySummary> {
-  if (shouldForceRewardsError()) {
-    throw new Error('Mock rewards analytics failure')
-  }
+  void params
+  throwRewardsAnalyticsErrorIfNeeded()
+
   await sleep(300)
   return demoRewardsActivitySummary
 }
 
-export async function getTopEarners(params?: RewardsAnalyticsFilters): Promise<TopEarner[]> {
-  if (shouldForceRewardsError()) {
-    throw new Error('Mock rewards analytics failure')
-  }
+export async function getTopEarners(
+  params?: RewardsAnalyticsFilters,
+): Promise<TopEarner[]> {
+  void params
+  throwRewardsAnalyticsErrorIfNeeded()
+
   await sleep(300)
   return demoRewardsTopEarners
 }
@@ -232,6 +240,9 @@ export async function getTopEarners(params?: RewardsAnalyticsFilters): Promise<T
 export async function getRedemptionFunnel(
   params?: RewardsAnalyticsFilters,
 ): Promise<RedemptionFunnelStage[]> {
+  void params
+  throwRewardsAnalyticsErrorIfNeeded()
+
   await sleep(300)
   return demoRewardsRedemptionFunnel
 }
@@ -239,6 +250,9 @@ export async function getRedemptionFunnel(
 export async function getTierDistribution(
   params?: RewardsAnalyticsFilters,
 ): Promise<TierDistributionItem[]> {
+  void params
+  throwRewardsAnalyticsErrorIfNeeded()
+
   await sleep(300)
   return demoRewardsTierDistribution
 }
@@ -246,6 +260,9 @@ export async function getTierDistribution(
 export async function getMerchantBreakdown(
   params?: RewardsAnalyticsFilters,
 ): Promise<MerchantBreakdownItem[]> {
+  void params
+  throwRewardsAnalyticsErrorIfNeeded()
+
   await sleep(300)
   return demoRewardsMerchantBreakdown
 }
