@@ -69,6 +69,12 @@ Tradeoffs:
 
 ## 3. PCI-DSS implications
 
+### Field-level redaction examples
+- Show customer display name only when the admin role allows it.
+- Otherwise show masked identifiers such as `cust_****1234`.
+- Never expose card PAN, CVV, card token, raw authorization response, or payment payloads.
+- Avoid storing sensitive report filters or customer details in browser localStorage.
+
 Rewards reports must exclude payment-sensitive data.
 What is allowed:
 - points totals, redemption rates, tier labels, merchant names, counts, performance metrics.
@@ -87,6 +93,8 @@ Key policies:
 - Event schema validation on ingest (required fields, valid amounts, known event types).
 - Duplicate and delta checks to catch repeated reward events.
 - Aggregate reconciliation between raw event totals and materialized view totals.
+
+I would also add an evaluation harness that runs known input event batches through the aggregation logic and compares the output against expected dashboard totals. This would catch issues like duplicate earn events, negative redemption values, missing merchant IDs, invalid tier changes, late-arriving events, and stale materialized views before bad data reaches the admin report.
 
 Operational tooling:
 - Scheduled validation jobs comparing daily event volumes to expected ranges.
