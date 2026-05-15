@@ -1,13 +1,3 @@
-import { sleep } from '@/utils/misc'
-import type { LoginRequest, LoginResponse } from '@/types/auth'
-import type { DashboardOverview } from '@/types/dashboard'
-import type { Paginated } from '@/types/common'
-import type { CustomerUser, AdminUser } from '@/types/users'
-import type { Merchant } from '@/types/merchants'
-import type { SupportDashboardStats, SupportTicket } from '@/types/support'
-import type { AuditLogEntry } from '@/types/audit'
-import type { FeatureFlag } from '@/types/featureFlags'
-import type { AiCampaign } from '@/types/aiMarketing'
 import {
   demoAdminUsers,
   demoAiCampaigns,
@@ -16,9 +6,32 @@ import {
   demoDashboardOverview,
   demoFeatureFlags,
   demoMerchants,
+  demoRewardsActivitySummary,
+  demoRewardsMerchantBreakdown,
+  demoRewardsRedemptionFunnel,
+  demoRewardsTierDistribution,
+  demoRewardsTopEarners,
   demoSupportStats,
   demoSupportTickets,
 } from '@/services/mockData'
+import type { AiCampaign } from '@/types/aiMarketing'
+import type { AuditLogEntry } from '@/types/audit'
+import type { LoginRequest, LoginResponse } from '@/types/auth'
+import type { Paginated } from '@/types/common'
+import type { DashboardOverview } from '@/types/dashboard'
+import type { FeatureFlag } from '@/types/featureFlags'
+import type { Merchant } from '@/types/merchants'
+import type {
+  MerchantBreakdownItem,
+  RedemptionFunnelStage,
+  RewardsActivitySummary,
+  RewardsAnalyticsFilters,
+  TierDistributionItem,
+  TopEarner,
+} from '@/types/rewardsAnalytics'
+import type { SupportDashboardStats, SupportTicket } from '@/types/support'
+import type { AdminUser, CustomerUser } from '@/types/users'
+import { sleep } from '@/utils/misc'
 
 const DEMO_EMAIL = 'admin@swipesavvy.com'
 const DEMO_PASSWORD = 'Admin123!'
@@ -137,11 +150,11 @@ export async function getSupportTickets(params?: {
 
   const filtered = searchTerm
     ? demoSupportTickets.filter(
-        (t) =>
-          t.subject.toLowerCase().includes(searchTerm) ||
-          t.customerName.toLowerCase().includes(searchTerm) ||
-          t.customerEmail.toLowerCase().includes(searchTerm),
-      )
+      (t) =>
+        t.subject.toLowerCase().includes(searchTerm) ||
+        t.customerName.toLowerCase().includes(searchTerm) ||
+        t.customerEmail.toLowerCase().includes(searchTerm),
+    )
     : demoSupportTickets
 
   return paginate(filtered, page, pageSize)
@@ -192,4 +205,47 @@ export async function getAiCampaigns(params?: {
     : demoAiCampaigns
 
   return paginate(filtered, page, pageSize)
+}
+
+function shouldForceRewardsError() {
+  return typeof window !== 'undefined' && (globalThis as any).__REWARDS_PERFORMANCE_TEST_ERROR === true
+}
+
+export async function getRewardsActivitySummary(
+  params?: RewardsAnalyticsFilters,
+): Promise<RewardsActivitySummary> {
+  if (shouldForceRewardsError()) {
+    throw new Error('Mock rewards analytics failure')
+  }
+  await sleep(300)
+  return demoRewardsActivitySummary
+}
+
+export async function getTopEarners(params?: RewardsAnalyticsFilters): Promise<TopEarner[]> {
+  if (shouldForceRewardsError()) {
+    throw new Error('Mock rewards analytics failure')
+  }
+  await sleep(300)
+  return demoRewardsTopEarners
+}
+
+export async function getRedemptionFunnel(
+  params?: RewardsAnalyticsFilters,
+): Promise<RedemptionFunnelStage[]> {
+  await sleep(300)
+  return demoRewardsRedemptionFunnel
+}
+
+export async function getTierDistribution(
+  params?: RewardsAnalyticsFilters,
+): Promise<TierDistributionItem[]> {
+  await sleep(300)
+  return demoRewardsTierDistribution
+}
+
+export async function getMerchantBreakdown(
+  params?: RewardsAnalyticsFilters,
+): Promise<MerchantBreakdownItem[]> {
+  await sleep(300)
+  return demoRewardsMerchantBreakdown
 }

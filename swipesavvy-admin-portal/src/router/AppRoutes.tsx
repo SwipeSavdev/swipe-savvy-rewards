@@ -1,5 +1,6 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import AppLayout from '@/components/layout/AppLayout'
+import { Suspense, lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 import EnhancedDashboard from '@/features/dashboard/EnhancedDashboard'
@@ -13,8 +14,8 @@ import DashboardPageNew from '@/pages/DashboardPageNew'
 import FeatureFlagsPage from '@/pages/FeatureFlagsPage'
 import IconSystemDemo from '@/pages/IconSystemDemo'
 import LoginPage from '@/pages/LoginPage'
-import MerchantsPage from '@/pages/MerchantsPage'
 import MerchantOnboardingPage from '@/pages/MerchantOnboardingPage'
+import MerchantsPage from '@/pages/MerchantsPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import PermissionsManagerPage from '@/pages/PermissionsManagerPage'
 import PolicyManagerPage from '@/pages/PolicyManagerPage'
@@ -25,6 +26,10 @@ import SupportDashboardPage from '@/pages/SupportDashboardPage'
 import SupportTicketsPage from '@/pages/SupportTicketsPage'
 import UserManagementPage from '@/pages/UserManagementPage'
 import UsersPage from '@/pages/UsersPage'
+
+const RewardsPerformanceAnalyticsPage = lazy(
+  () => import('@/pages/RewardsPerformanceAnalyticsPage'),
+)
 
 export default function AppRoutes() {
   return (
@@ -37,6 +42,14 @@ export default function AppRoutes() {
           <Route path="/dashboard" element={<DashboardPageNew />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route
+            path="/analytics/rewards-performance"
+            element={
+              <Suspense fallback={<div className="p-6 text-slate-500">Loading rewards analytics…</div>}>
+                <RewardsPerformanceAnalyticsPage />
+              </Suspense>
+            }
+          />
           <Route path="/analytics/risk-reports" element={<RiskReportsPage />} />
           <Route path="/merchants" element={<MerchantsPage />} />
           <Route path="/merchants/:merchantId/onboarding" element={<MerchantOnboardingPage />} />

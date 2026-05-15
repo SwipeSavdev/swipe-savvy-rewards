@@ -42,6 +42,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: 'users', label: 'Users', to: '/users', icon: 'users' },
       { key: 'analytics', label: 'Analytics', to: '/analytics', icon: 'chart_bar' },
+      { key: 'rewards_performance', label: 'Rewards Performance', to: '/analytics/rewards-performance', icon: 'gift' },
       { key: 'risk_reports', label: 'Risk Reports', to: '/analytics/risk-reports', icon: 'alert_circle' },
       { key: 'merchants', label: 'Merchants', to: '/merchants', icon: 'wallet' },
       { key: 'settings', label: 'Settings', to: '/settings', icon: 'settings' },

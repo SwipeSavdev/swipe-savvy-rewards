@@ -1,10 +1,17 @@
-import type { DashboardOverview, RecentActivityItem } from '@/types/dashboard'
-import type { CustomerUser, AdminUser } from '@/types/users'
-import type { Merchant } from '@/types/merchants'
-import type { SupportTicket, SupportDashboardStats } from '@/types/support'
-import type { AuditLogEntry } from '@/types/audit'
-import type { FeatureFlag } from '@/types/featureFlags'
 import type { AiCampaign } from '@/types/aiMarketing'
+import type { AuditLogEntry } from '@/types/audit'
+import type { DashboardOverview, RecentActivityItem } from '@/types/dashboard'
+import type { FeatureFlag } from '@/types/featureFlags'
+import type { Merchant } from '@/types/merchants'
+import type {
+  MerchantBreakdownItem,
+  RedemptionFunnelStage,
+  RewardsActivitySummary,
+  TierDistributionItem,
+  TopEarner,
+} from '@/types/rewardsAnalytics'
+import type { SupportDashboardStats, SupportTicket } from '@/types/support'
+import type { AdminUser, CustomerUser } from '@/types/users'
 
 function isoMinutesAgo(minutes: number) {
   return new Date(Date.now() - minutes * 60_000).toISOString()
@@ -144,10 +151,10 @@ export const demoAuditLogs: AuditLogEntry[] = Array.from({ length: 24 }).map((_,
   target:
     i % 2 === 0
       ? {
-          type: 'support_ticket',
-          id: `t_${(i % 10) + 1}`,
-          label: 'Support Ticket',
-        }
+        type: 'support_ticket',
+        id: `t_${(i % 10) + 1}`,
+        label: 'Support Ticket',
+      }
       : undefined,
   ip: '10.14.22.3',
   userAgent: 'SwipeSavvyPortal/1.0',
@@ -279,3 +286,57 @@ export const demoAiCampaigns: AiCampaign[] = [
 ]
 
 export const demoRecentActivity = demoDashboardOverview.recentActivity satisfies RecentActivityItem[]
+
+export const demoRewardsActivitySummary: RewardsActivitySummary = {
+  totals: {
+    pointsIssued: 283_400,
+    pointsRedeemed: 127_800,
+    activeEarners: 8_740,
+    activeRedeemers: 3_220,
+    redemptionRate: 45.2,
+  },
+  trend: [
+    { date: '2026-04-16', issued: 8500, redeemed: 4200 },
+    { date: '2026-04-17', issued: 9300, redeemed: 4500 },
+    { date: '2026-04-18', issued: 10100, redeemed: 5100 },
+    { date: '2026-04-19', issued: 9800, redeemed: 4700 },
+    { date: '2026-04-20', issued: 11000, redeemed: 5400 },
+    { date: '2026-04-21', issued: 11500, redeemed: 6000 },
+    { date: '2026-04-22', issued: 12400, redeemed: 6300 },
+  ],
+}
+
+export const demoRewardsTopEarners: TopEarner[] = [
+  { id: 'u_1', name: 'Jordan Kelley', tier: 'Platinum', merchant: 'Northside Market', pointsBalance: 32000, pointsEarned: 42000, pointsRedeemed: 10000 },
+  { id: 'u_2', name: 'Sasha Kim', tier: 'Gold', merchant: 'Downtown Deli', pointsBalance: 27000, pointsEarned: 34000, pointsRedeemed: 7000 },
+  { id: 'u_3', name: 'Marina Lopez', tier: 'Gold', merchant: 'City Grocer', pointsBalance: 24000, pointsEarned: 29000, pointsRedeemed: 5000 },
+  { id: 'u_4', name: 'Tyrone Brooks', tier: 'Silver', merchant: 'Lakeview Market', pointsBalance: 20000, pointsEarned: 24000, pointsRedeemed: 4000 },
+  { id: 'u_5', name: 'Diane Hart', tier: 'Bronze', merchant: 'Corner Café', pointsBalance: 17300, pointsEarned: 21000, pointsRedeemed: 3700 },
+  { id: 'u_6', name: 'Olivia Chen', tier: 'Platinum', merchant: 'Market Street', pointsBalance: 16000, pointsEarned: 23000, pointsRedeemed: 7000 },
+  { id: 'u_7', name: 'Noah Patel', tier: 'Silver', merchant: 'Commerce Co.', pointsBalance: 14500, pointsEarned: 18000, pointsRedeemed: 3500 },
+  { id: 'u_8', name: 'Priya Shah', tier: 'Bronze', merchant: 'Evergreen Foods', pointsBalance: 13200, pointsEarned: 16000, pointsRedeemed: 2800 },
+  { id: 'u_9', name: 'Evan Ross', tier: 'Gold', merchant: 'Southside Bistro', pointsBalance: 12800, pointsEarned: 15200, pointsRedeemed: 2400 },
+  { id: 'u_10', name: 'Isla Nguyen', tier: 'Silver', merchant: 'Main Street Market', pointsBalance: 11900, pointsEarned: 14500, pointsRedeemed: 2600 },
+]
+
+export const demoRewardsRedemptionFunnel: RedemptionFunnelStage[] = [
+  { stage: 'Eligible', value: 18000 },
+  { stage: 'Viewed', value: 12400 },
+  { stage: 'Redeemed', value: 8200 },
+]
+
+export const demoRewardsTierDistribution: TierDistributionItem[] = [
+  { tier: 'Bronze', count: 5200, share: 44 },
+  { tier: 'Silver', count: 3200, share: 27 },
+  { tier: 'Gold', count: 1900, share: 16 },
+  { tier: 'Platinum', count: 1200, share: 10 },
+  { tier: 'Diamond', count: 500, share: 3 },
+]
+
+export const demoRewardsMerchantBreakdown: MerchantBreakdownItem[] = [
+  { merchantId: 'm_1', merchantName: 'Northside Market', tier: 'Platinum', pointsIssued: 68000, pointsRedeemed: 31000, redemptionRate: 45.6 },
+  { merchantId: 'm_2', merchantName: 'Downtown Deli', tier: 'Gold', pointsIssued: 49000, pointsRedeemed: 21000, redemptionRate: 42.8 },
+  { merchantId: 'm_3', merchantName: 'City Grocer', tier: 'Gold', pointsIssued: 38000, pointsRedeemed: 16000, redemptionRate: 42.1 },
+  { merchantId: 'm_4', merchantName: 'Lakeview Market', tier: 'Silver', pointsIssued: 28000, pointsRedeemed: 12000, redemptionRate: 42.9 },
+  { merchantId: 'm_5', merchantName: 'Corner Café', tier: 'Bronze', pointsIssued: 21000, pointsRedeemed: 10000, redemptionRate: 47.6 },
+]
