@@ -10,7 +10,7 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
@@ -29,6 +29,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "shared"))
 from app import models  # This ensures all models are registered with SQLAlchemy
 
 # Import configuration
+from app.core.boot_validation import run_boot_validation
+from app.core.card_surface import (
+    CARD_SURFACE_ENV_VAR,
+    card_surface_enabled,
+    require_card_surface_enabled,
+)
 from app.core.config import settings
 
 # Import database and models
@@ -481,7 +487,9 @@ except Exception as e:
 try:
     from app.routes.fis_cards import router as fis_cards_router
 
-    app.include_router(fis_cards_router)
+    app.include_router(
+        fis_cards_router, dependencies=[Depends(require_card_surface_enabled)]
+    )
     logger.info("✅ FIS Card Management routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include FIS card routes: {e}")
@@ -490,7 +498,9 @@ except Exception as e:
 try:
     from app.routes.fis_transactions import router as fis_transactions_router
 
-    app.include_router(fis_transactions_router)
+    app.include_router(
+        fis_transactions_router, dependencies=[Depends(require_card_surface_enabled)]
+    )
     logger.info("✅ FIS Transaction routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include FIS transaction routes: {e}")
@@ -499,7 +509,9 @@ except Exception as e:
 try:
     from app.routes.fis_fraud import router as fis_fraud_router
 
-    app.include_router(fis_fraud_router)
+    app.include_router(
+        fis_fraud_router, dependencies=[Depends(require_card_surface_enabled)]
+    )
     logger.info("✅ FIS Fraud & Security routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include FIS fraud routes: {e}")
@@ -508,7 +520,9 @@ except Exception as e:
 try:
     from app.routes.fis_wallet import router as fis_wallet_router
 
-    app.include_router(fis_wallet_router)
+    app.include_router(
+        fis_wallet_router, dependencies=[Depends(require_card_surface_enabled)]
+    )
     logger.info("✅ FIS Digital Wallet routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include FIS wallet routes: {e}")
@@ -517,7 +531,9 @@ except Exception as e:
 try:
     from app.routes.fis_webhooks import router as fis_webhooks_router
 
-    app.include_router(fis_webhooks_router)
+    app.include_router(
+        fis_webhooks_router, dependencies=[Depends(require_card_surface_enabled)]
+    )
     logger.info("✅ FIS Webhook routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include FIS webhook routes: {e}")
@@ -562,7 +578,25 @@ async def global_exception_handler(request, exc):
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize background tasks on server startup"""
+    """
+    Validate the card/rewards surface, then initialize background tasks.
+
+    Boot validation runs FIRST and deliberately outside the try/except below.
+    It is the gate that stops a mis-provisioned production process from ever
+    becoming healthy — swallowing its failure would defeat the entire point,
+    so anything it raises propagates and the process dies. In production a
+    fatal check calls os._exit(1) directly; the orchestrator then keeps the
+    previous healthy task serving traffic.
+    """
+    await run_boot_validation()
+
+    logger.info(
+        "Card/rewards surface: %s (%s=%s)",
+        "ENABLED" if card_surface_enabled() else "DISABLED — all FIS routes return 503",
+        CARD_SURFACE_ENV_VAR,
+        os.getenv(CARD_SURFACE_ENV_VAR, "<unset>"),
+    )
+
     try:
         # Background dashboard broadcast tasks disabled due to schema mismatches
         # Re-enable after aligning ChatDashboardService models with database schema
