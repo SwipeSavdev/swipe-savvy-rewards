@@ -11,14 +11,16 @@ Handles:
 import logging
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.auth import verify_token_string
-from app.database import get_db
+from app.core.card_ownership import get_owned_fis_card_ids, verify_card_ownership
+from app.database import SessionLocal, get_db
+from app.models import FISFraudAlert
 from app.services.fis_fraud_service import (
     AlertPreferences,
     AlertPriority,
@@ -63,6 +65,132 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+# =============================================================================
+# OWNERSHIP / SCOPING (PCI DSS 7.2.1)
+# =============================================================================
+#
+# Authentication is not authorization. Every route in this module either:
+#   * takes a caller-supplied card_id  -> verify_card_ownership(...)
+#   * takes a report_id / alert_id     -> resolve the resource, then authorize
+#   * returns a COLLECTION             -> scope to the caller's own cards
+#
+# FISFraudService is a pass-through to the upstream FIS API: there is no local
+# fraud-report table, and the upstream collection endpoints accept only a
+# single OPTIONAL card_id filter, so an absent filter returns every user's
+# data. We therefore never issue an unscoped upstream collection query -- we
+# fan out across exactly the cards the caller owns and merge the results.
+
+
+def _scoped_card_ids(card_id: Optional[str], user_id: str) -> List[str]:
+    """
+    Resolve the set of cards a collection query may span.
+
+    An explicit card_id must be owned by the caller. An omitted card_id means
+    "all of mine" -- never "all of everyone's". A caller who owns no cards
+    yields an empty list, and the caller must then return an empty result
+    without contacting upstream at all.
+    """
+    if card_id:
+        verify_card_ownership(card_id, user_id)
+        return [card_id]
+    return get_owned_fis_card_ids(user_id)
+
+
+def _as_items(payload: Any) -> List[Any]:
+    """Normalise an upstream collection payload to a list so per-card results can be merged."""
+    if payload is None:
+        return []
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict):
+        for key in ("reports", "alerts", "items", "results", "data"):
+            value = payload.get(key)
+            if isinstance(value, list):
+                return value
+        return [payload]
+    return [payload]
+
+
+def _as_count(payload: Any) -> int:
+    """Normalise an upstream count payload to an int so per-card counts can be summed."""
+    if isinstance(payload, bool):
+        return 0
+    if isinstance(payload, int):
+        return payload
+    if isinstance(payload, dict):
+        for key in ("count", "unread_count", "unread", "total"):
+            value = payload.get(key)
+            if isinstance(value, int) and not isinstance(value, bool):
+                return value
+    return 0
+
+
+def _authorize_via_payload_card(
+    resource: str, resource_id: str, payload: Any, user_id: str
+) -> None:
+    """
+    Authorize a resource identified only by its own id, via the card it belongs to.
+
+    Fails CLOSED: a payload carrying no card reference cannot be proven to
+    belong to the caller, so it is refused rather than disclosed.
+    """
+    card_id = payload.get("card_id") if isinstance(payload, dict) else None
+    if not card_id:
+        logger.warning(
+            f"{resource} {resource_id} carries no card reference; "
+            f"refusing to disclose it to user {user_id}"
+        )
+        raise HTTPException(status_code=403, detail="Access denied")
+    verify_card_ownership(card_id, user_id)
+
+
+async def _authorize_alert(alert_id: str, user_id: str, fraud_service: FISFraudService) -> None:
+    """
+    Authorize access to a security alert.
+
+    Local FISFraudAlert rows carry user_id directly and are authoritative when
+    present; otherwise fall back to the owning card on the upstream payload.
+    """
+    db = SessionLocal()
+    try:
+        alert = (
+            db.query(FISFraudAlert)
+            .filter((FISFraudAlert.id == alert_id) | (FISFraudAlert.fis_alert_id == alert_id))
+            .first()
+        )
+        if alert is not None:
+            if str(alert.user_id) != str(user_id):
+                logger.warning(
+                    f"Alert ownership violation: user {user_id} attempted to access "
+                    f"alert {alert_id} owned by {alert.user_id}"
+                )
+                raise HTTPException(status_code=403, detail="Access denied")
+            return
+    finally:
+        db.close()
+
+    response = await fraud_service.get_alert(alert_id)
+    if not response.success:
+        raise HTTPException(status_code=404, detail=response.error_message or "Alert not found")
+    _authorize_via_payload_card("Alert", alert_id, response.data, user_id)
+
+
+async def _authorize_report(report_id: str, user_id: str, fraud_service: FISFraudService):
+    """
+    Authorize access to a fraud report and return the already-fetched report.
+
+    There is no local fraud-report table, so ownership is derived from the card
+    the report is filed against.
+    """
+    response = await fraud_service.get_fraud_report(report_id)
+    if not response.success:
+        raise HTTPException(
+            status_code=404, detail=response.error_message or "Fraud report not found"
+        )
+    _authorize_via_payload_card("Fraud report", report_id, response.data, user_id)
+    return response
 
 
 # =============================================================================
@@ -143,6 +271,7 @@ async def report_fraud(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Report fraud on a card."""
+    verify_card_ownership(request.card_id, user_id)
     try:
         fraud_type = FraudType(request.fraud_type)
     except ValueError:
@@ -177,15 +306,25 @@ async def get_fraud_reports(
     user_id: str = Depends(require_auth),
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
-    """Get fraud reports."""
-    response = await fraud_service.get_fraud_reports(card_id=card_id, status=status)
+    """
+    Get fraud reports belonging to the authenticated user.
 
-    if not response.success:
-        raise HTTPException(
-            status_code=400, detail=response.error_message or "Failed to get fraud reports"
-        )
+    An explicit card_id must be owned by the caller. Omitting it returns the
+    caller's OWN reports across all of their cards -- it does NOT return every
+    user's reports, which is what the unscoped upstream query used to do.
+    """
+    reports: List[Any] = []
+    for owned_card_id in _scoped_card_ids(card_id, user_id):
+        response = await fraud_service.get_fraud_reports(card_id=owned_card_id, status=status)
 
-    return {"success": True, "data": response.data}
+        if not response.success:
+            raise HTTPException(
+                status_code=400, detail=response.error_message or "Failed to get fraud reports"
+            )
+
+        reports.extend(_as_items(response.data))
+
+    return {"success": True, "data": reports}
 
 
 @router.get("/fraud/reports/{report_id}")
@@ -195,12 +334,7 @@ async def get_fraud_report(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Get fraud report details."""
-    response = await fraud_service.get_fraud_report(report_id)
-
-    if not response.success:
-        raise HTTPException(
-            status_code=404, detail=response.error_message or "Fraud report not found"
-        )
+    response = await _authorize_report(report_id, user_id, fraud_service)
 
     return {"success": True, "data": response.data}
 
@@ -213,6 +347,8 @@ async def update_fraud_report(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Update a fraud report."""
+    await _authorize_report(report_id, user_id, fraud_service)
+
     updates = {}
     if request.description is not None:
         updates["description"] = request.description
@@ -246,7 +382,14 @@ async def get_alerts(
     user_id: str = Depends(require_auth),
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
-    """Get security alerts."""
+    """
+    Get security alerts belonging to the authenticated user.
+
+    Scoped exactly like the fraud-report listing: an explicit card_id must be
+    owned by the caller, and omitting it spans only the caller's own cards.
+    """
+    scoped_card_ids = _scoped_card_ids(card_id, user_id)
+
     alert_status = None
     if status:
         try:
@@ -267,20 +410,24 @@ async def get_alerts(
                 detail=f"Invalid priority. Must be one of: {[p.value for p in AlertPriority]}",
             )
 
-    response = await fraud_service.get_alerts(
-        card_id=card_id,
-        status=alert_status,
-        priority=alert_priority,
-        start_date=start_date,
-        end_date=end_date,
-    )
-
-    if not response.success:
-        raise HTTPException(
-            status_code=400, detail=response.error_message or "Failed to get alerts"
+    alerts: List[Any] = []
+    for owned_card_id in scoped_card_ids:
+        response = await fraud_service.get_alerts(
+            card_id=owned_card_id,
+            status=alert_status,
+            priority=alert_priority,
+            start_date=start_date,
+            end_date=end_date,
         )
 
-    return {"success": True, "data": response.data}
+        if not response.success:
+            raise HTTPException(
+                status_code=400, detail=response.error_message or "Failed to get alerts"
+            )
+
+        alerts.extend(_as_items(response.data))
+
+    return {"success": True, "data": alerts}
 
 
 @router.get("/alerts/unread/count")
@@ -289,15 +436,24 @@ async def get_unread_alerts_count(
     user_id: str = Depends(require_auth),
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
-    """Get count of unread alerts."""
-    response = await fraud_service.get_unread_alerts_count(card_id)
+    """
+    Get the count of unread alerts for the authenticated user.
 
-    if not response.success:
-        raise HTTPException(
-            status_code=400, detail=response.error_message or "Failed to get alert count"
-        )
+    Scoped exactly like the alert listing: an explicit card_id must be owned by
+    the caller, and omitting it counts only the caller's own cards.
+    """
+    count = 0
+    for owned_card_id in _scoped_card_ids(card_id, user_id):
+        response = await fraud_service.get_unread_alerts_count(owned_card_id)
 
-    return {"success": True, "data": response.data}
+        if not response.success:
+            raise HTTPException(
+                status_code=400, detail=response.error_message or "Failed to get alert count"
+            )
+
+        count += _as_count(response.data)
+
+    return {"success": True, "data": {"count": count}}
 
 
 @router.get("/alerts/{alert_id}")
@@ -307,6 +463,7 @@ async def get_alert(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Get alert details."""
+    await _authorize_alert(alert_id, user_id, fraud_service)
     response = await fraud_service.get_alert(alert_id)
 
     if not response.success:
@@ -323,6 +480,7 @@ async def acknowledge_alert(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Acknowledge a security alert."""
+    await _authorize_alert(alert_id, user_id, fraud_service)
     response = await fraud_service.acknowledge_alert(alert_id=alert_id, notes=request.notes)
 
     if not response.success:
@@ -341,6 +499,7 @@ async def resolve_alert(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Resolve a security alert."""
+    await _authorize_alert(alert_id, user_id, fraud_service)
     response = await fraud_service.resolve_alert(
         alert_id=alert_id,
         resolution=request.resolution,
@@ -367,6 +526,7 @@ async def get_alert_preferences(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Get alert preferences for a card."""
+    verify_card_ownership(card_id, user_id)
     response = await fraud_service.get_alert_preferences(card_id)
 
     if not response.success:
@@ -385,6 +545,7 @@ async def set_alert_preferences(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Set alert preferences for a card."""
+    verify_card_ownership(card_id, user_id)
     # Parse notification channels
     notification_channels = []
     for ch in request.notification_channels:
@@ -432,6 +593,7 @@ async def set_travel_notice(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Set a travel notice for a card."""
+    verify_card_ownership(card_id, user_id)
     response = await fraud_service.set_travel_notice(
         card_id=card_id,
         start_date=request.start_date,
@@ -455,6 +617,7 @@ async def get_travel_notices(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Get active travel notices for a card."""
+    verify_card_ownership(card_id, user_id)
     response = await fraud_service.get_travel_notices(card_id)
 
     if not response.success:
@@ -473,6 +636,7 @@ async def cancel_travel_notice(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Cancel a travel notice."""
+    verify_card_ownership(card_id, user_id)
     response = await fraud_service.cancel_travel_notice(card_id=card_id, notice_id=notice_id)
 
     if not response.success:
@@ -495,6 +659,7 @@ async def get_risk_score(
     fraud_service: FISFraudService = Depends(get_fis_fraud_service),
 ):
     """Get current risk score for a card."""
+    verify_card_ownership(card_id, user_id)
     response = await fraud_service.get_risk_score(card_id)
 
     if not response.success:
