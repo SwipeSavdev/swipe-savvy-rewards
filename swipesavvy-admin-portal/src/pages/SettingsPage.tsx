@@ -37,8 +37,8 @@ export default function SettingsPage() {
   // Branding images state
   const [brandingImages, setBrandingImages] = useState<BrandingImage[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
-  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null)
-  const [pendingFaviconFile, setPendingFaviconFile] = useState<File | null>(null)
+  const [_pendingLogoFile, setPendingLogoFile] = useState<File | null>(null)
+  const [_pendingFaviconFile, setPendingFaviconFile] = useState<File | null>(null)
 
   // API Rate Limit tracking
   const [rateLimitUsage] = useState({
