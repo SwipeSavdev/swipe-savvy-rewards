@@ -47,17 +47,64 @@ jobs:
           UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
           DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
           NAMES: ${{ steps.meta.outputs.dependency-names }}
+          GROUP: ${{ steps.meta.outputs.dependency-group }}
         run: |
           set -euo pipefail
           ok=false
-          if [ "$UPDATE_TYPE" = "version-update:semver-patch" ]; then
+          reason=""
+
+          # KI-3894 — fetch-metadata does not always HAVE semver data. For a pip
+          # requirement-range update ("update cryptography requirement from
+          # >=43.0.0 to >=43.0.3") it returns update-type, previous-version AND
+          # new-version all EMPTY. The comparisons below then fell through to
+          # ok=false, and the notice at the end of this job announced "majors and
+          # runtime minors are deliberately not auto-merged" — untrue: that
+          # example is a PATCH bump of a security library. The policy read as
+          # though it had made a judgement when it had no data to judge with.
+          #
+          # Deriving the bump from the PR title is deliberately NOT an option: this
+          # job trusts Dependabot metadata precisely so a title regex can never be
+          # the thing gating a merge. So an absent update-type stays NOT
+          # auto-merged — it just now says that is why.
+          if [ -z "$UPDATE_TYPE" ]; then
+            reason="Dependabot reported no update-type (pip requirement-range updates return update-type, previous-version and new-version all empty). No semver data means no automatic judgement is possible — this needs a person."
+          elif [ "$UPDATE_TYPE" = "version-update:semver-patch" ]; then
             ok=true
           elif [ "$UPDATE_TYPE" = "version-update:semver-minor" ] && [ "$DEP_TYPE" = "direct:development" ]; then
             ok=true
+          elif [ "$UPDATE_TYPE" = "version-update:semver-major" ]; then
+            reason="major version bump of a ${DEP_TYPE} dependency — a major is a decision, not a chore."
+          else
+            reason="${UPDATE_TYPE} of a ${DEP_TYPE} dependency — runtime minors are deliberately left for a person."
           fi
+
           echo "auto=$ok" >> "$GITHUB_OUTPUT"
+          {
+            echo "reason<<REASON_EOF"
+            echo "$reason"
+            echo "REASON_EOF"
+          } >> "$GITHUB_OUTPUT"
+
           echo "Dependencies: $NAMES"
-          echo "update-type=$UPDATE_TYPE dependency-type=$DEP_TYPE -> auto-merge=$ok"
+          echo "update-type='${UPDATE_TYPE}' dependency-type='${DEP_TYPE}' group='${GROUP}' -> auto-merge=$ok"
+          [ -n "$reason" ] && echo "reason: $reason" || true
+
+          # Make the decision visible without opening the log. A grouped PR reports
+          # the HIGHEST bump in the group, so with grouping enabled (KI-3867) a
+          # single minor is enough to hold the whole group for review — worth being
+          # able to see at a glance rather than inferring.
+          {
+            echo "### Dependabot auto-merge"
+            echo ""
+            echo "| field | value |"
+            echo "|---|---|"
+            echo "| dependencies | ${NAMES} |"
+            echo "| update-type | ${UPDATE_TYPE:-(none reported)} |"
+            echo "| dependency-type | ${DEP_TYPE:-(none reported)} |"
+            echo "| group | ${GROUP:-(not a group)} |"
+            echo "| auto-merge | **${ok}** |"
+            if [ -n "$reason" ]; then echo ""; echo "> ${reason}"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Approve
         if: steps.decide.outputs.auto == 'true'
@@ -82,8 +129,11 @@ jobs:
       - name: Explain why it was left for a human
         if: steps.decide.outputs.auto != 'true'
         env:
-          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
           DEP_NAMES: ${{ steps.meta.outputs.dependency-names }}
-          DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
+          REASON: ${{ steps.decide.outputs.reason }}
         run: |
-          echo "::notice::Left for human review - ${UPDATE_TYPE} of a ${DEP_TYPE} dependency (${DEP_NAMES}). Majors and runtime minors are deliberately not auto-merged."
+          # KI-3894 — state the ACTUAL reason. This used to assert "Majors and
+          # runtime minors are deliberately not auto-merged" for EVERY PR it did
+          # not merge, including ones where Dependabot supplied no update-type at
+          # all and no such judgement had been made.
+          echo "::notice::Left for human review — ${DEP_NAMES}: ${REASON}"
