@@ -34,6 +34,19 @@ updates:
   - dependency-name: '*'
     update-types:
     - version-update:semver-major
+  # bcrypt is pinned at 4.0.1 ON PURPOSE. requirements.txt says why:
+  #   bcrypt==4.0.1  # Pinned for passlib compatibility (passlib breaks with bcrypt>=4.1)
+  # passlib reads bcrypt.__about__.__version__, removed in bcrypt 4.1, so its
+  # bcrypt backend stops resolving and password/PIN verification fails at
+  # RUNTIME, not at import. passlib/CryptContext is used in admin auth, RBAC
+  # and FIS PIN handling here, and no test exercises a real hash round-trip,
+  # so CI goes green on a broken build.
+  #
+  # The '*' rule above only ignores MAJORS, and 4.0.1 -> 4.3.0 is a minor, so
+  # Dependabot raised it (PR #92) while KEEPING the comment that forbids it.
+  # Ignored outright until passlib is replaced (it is unmaintained) or the
+  # compatibility is re-verified. KI-3887 / BUG-1980.
+  - dependency-name: bcrypt
   commit-message:
     prefix: chore(deps)
     prefix-development: chore(deps-dev)
