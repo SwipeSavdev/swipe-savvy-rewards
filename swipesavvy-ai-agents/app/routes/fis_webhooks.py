@@ -405,14 +405,16 @@ def store_webhook_event(
     try:
         row_id = str(uuid.uuid4())
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO fis_webhook_events
                     (id, event_id, event_type, raw_body, payload, signature,
                      event_timestamp, status, attempts, max_attempts, received_at)
                 VALUES
                     (:id, :event_id, :event_type, :raw_body, CAST(:payload AS JSONB),
                      :signature, :event_timestamp, :status, 0, :max_attempts, NOW())
-                """),
+                """
+            ),
             {
                 "id": row_id,
                 "event_id": payload.event_id,
@@ -439,12 +441,14 @@ def store_webhook_event(
 
 def _record_success(db: Session, row_id: str) -> None:
     db.execute(
-        text("""
+        text(
+            """
             UPDATE fis_webhook_events
             SET status = :status, processed_at = NOW(), last_error = NULL,
                 next_attempt_at = NULL
             WHERE id = :id
-            """),
+            """
+        ),
         {"status": STATUS_PROCESSED, "id": row_id},
     )
     db.commit()
@@ -453,12 +457,14 @@ def _record_success(db: Session, row_id: str) -> None:
 def _record_rejected(db: Session, row_id: str, reason: str) -> None:
     """Terminal, deliberate non-processing. Visible — never a silent drop."""
     db.execute(
-        text("""
+        text(
+            """
             UPDATE fis_webhook_events
             SET status = :status, processed_at = NOW(), last_error = :reason,
                 next_attempt_at = NULL
             WHERE id = :id
-            """),
+            """
+        ),
         {"status": STATUS_REJECTED, "id": row_id, "reason": reason},
     )
     db.commit()
@@ -475,12 +481,14 @@ def _record_failure(
     """
     if permanent or attempts >= max_attempts:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE fis_webhook_events
                 SET status = :status, last_error = :error, dead_lettered_at = NOW(),
                     next_attempt_at = NULL
                 WHERE id = :id
-                """),
+                """
+            ),
             {"status": STATUS_DEAD_LETTER, "error": error, "id": row_id},
         )
         db.commit()
@@ -494,11 +502,13 @@ def _record_failure(
 
     backoff = compute_retry_backoff_seconds(attempts)
     db.execute(
-        text("""
+        text(
+            """
             UPDATE fis_webhook_events
             SET status = :status, last_error = :error, next_attempt_at = :next_attempt
             WHERE id = :id
-            """),
+            """
+        ),
         {
             "status": STATUS_FAILED,
             "error": error,
@@ -540,13 +550,15 @@ def process_inbox_event(row_id: str) -> str:
     try:
         # Atomically claim the row.
         claimed = db.execute(
-            text("""
+            text(
+                """
                 UPDATE fis_webhook_events
                 SET status = :processing, attempts = attempts + 1
                 WHERE id = :id
                   AND status IN (:pending, :failed)
                 RETURNING event_type, payload, attempts, max_attempts
-                """),
+                """
+            ),
             {
                 "processing": STATUS_PROCESSING,
                 "id": row_id,
@@ -608,14 +620,16 @@ def process_due_events(limit: int = 50) -> Dict[str, int]:
     db = SessionLocal()
     try:
         rows = db.execute(
-            text("""
+            text(
+                """
                 SELECT id FROM fis_webhook_events
                 WHERE status = :pending
                    OR (status = :failed
                        AND (next_attempt_at IS NULL OR next_attempt_at <= NOW()))
                 ORDER BY received_at ASC
                 LIMIT :limit
-                """),
+                """
+            ),
             {"pending": STATUS_PENDING, "failed": STATUS_FAILED, "limit": limit},
         ).fetchall()
     finally:
@@ -646,13 +660,15 @@ def _resolve_card(db: Session, card_id: str) -> Tuple[str, str]:
     could attach a transaction to the WRONG user — unacceptable on a money path.
     """
     row = db.execute(
-        text("""
+        text(
+            """
             SELECT id, user_id
             FROM fis_cards
             WHERE fis_card_token = :card_id
                OR CAST(id AS TEXT) = :card_id
             LIMIT 1
-            """),
+            """
+        ),
         {"card_id": card_id},
     ).fetchone()
 
@@ -707,7 +723,8 @@ def _insert_wallet_transaction(
         params["conflict_status"] = on_conflict_status
 
     db.execute(
-        text(f"""
+        text(
+            f"""
             INSERT INTO wallet_transactions
                 (id, user_id, transaction_type, amount, currency, status, description,
                  external_transaction_id, related_external_id, authorization_code, created_at)
@@ -715,7 +732,8 @@ def _insert_wallet_transaction(
                 (:id, :user_id, :transaction_type, :amount, :currency, :status, :description,
                  :external_transaction_id, :related_external_id, :authorization_code, NOW())
             {conflict_clause}
-            """),
+            """
+        ),
         params,
     )
 
@@ -752,11 +770,13 @@ def handle_transaction_event(db: Session, event_type: str, data: Dict[str, Any])
 
     elif event_type == WebhookEventType.TRANSACTION_POSTED.value:
         result = db.execute(
-            text("""
+            text(
+                """
                 UPDATE wallet_transactions
                 SET status = 'completed', completed_at = NOW()
                 WHERE external_transaction_id = :ext_id
-                """),
+                """
+            ),
             {"ext_id": ext_id},
         )
         if result.rowcount == 0:
@@ -794,11 +814,13 @@ def handle_transaction_event(db: Session, event_type: str, data: Dict[str, Any])
 
     elif event_type == WebhookEventType.TRANSACTION_REVERSED.value:
         result = db.execute(
-            text("""
+            text(
+                """
                 UPDATE wallet_transactions
                 SET status = 'reversed'
                 WHERE external_transaction_id = :ext_id
-                """),
+                """
+            ),
             {"ext_id": ext_id},
         )
         if result.rowcount == 0:
@@ -822,11 +844,13 @@ def handle_transaction_event(db: Session, event_type: str, data: Dict[str, Any])
             related_external_id=ext_id,
         )
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE wallet_transactions
                 SET status = 'refunded'
                 WHERE external_transaction_id = :ext_id
-                """),
+                """
+            ),
             {"ext_id": ext_id},
         )
 
@@ -865,11 +889,13 @@ def handle_card_event(db: Session, event_type: str, data: Dict[str, Any]) -> Non
     if event_type == WebhookEventType.CARD_SHIPPED.value:
         card_uuid, _ = _resolve_card(db, card_data.card_id)
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE fis_cards
                 SET shipping_status = 'shipped', shipped_at = NOW(), updated_at = NOW()
                 WHERE id = :card_id
-                """),
+                """
+            ),
             {"card_id": card_uuid},
         )
         logger.info("Card shipped: %s, tracking: %s", card_data.card_id, card_data.tracking_number)
@@ -877,11 +903,13 @@ def handle_card_event(db: Session, event_type: str, data: Dict[str, Any]) -> Non
     elif event_type == WebhookEventType.CARD_DELIVERED.value:
         card_uuid, _ = _resolve_card(db, card_data.card_id)
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE fis_cards
                 SET shipping_status = 'delivered', delivered_at = NOW(), updated_at = NOW()
                 WHERE id = :card_id
-                """),
+                """
+            ),
             {"card_id": card_uuid},
         )
         logger.info("Card delivered: %s", card_data.card_id)
@@ -952,11 +980,13 @@ def handle_fraud_event(db: Session, event_type: str, data: Dict[str, Any]) -> No
 
     if event_type == WebhookEventType.FRAUD_CONFIRMED.value and fraud_data.transaction_id:
         db.execute(
-            text("""
+            text(
+                """
                 UPDATE wallet_transactions
                 SET status = 'fraudulent'
                 WHERE external_transaction_id = :txn_id
-                """),
+                """
+            ),
             {"txn_id": fraud_data.transaction_id},
         )
 
@@ -1006,11 +1036,13 @@ def handle_dispute_event(db: Session, event_type: str, data: Dict[str, Any]) -> 
             dispute_data.credit_amount,
         )
         row = db.execute(
-            text("""
+            text(
+                """
                 SELECT user_id FROM wallet_transactions
                 WHERE external_transaction_id = :txn_id
                 LIMIT 1
-                """),
+                """
+            ),
             {"txn_id": dispute_data.transaction_id},
         ).fetchone()
 
@@ -1206,7 +1238,8 @@ async def list_inbox_events(
     try:
         if status:
             rows = db.execute(
-                text("""
+                text(
+                    """
                     SELECT id, event_id, event_type, status, attempts, max_attempts,
                            next_attempt_at, last_error, received_at, processed_at,
                            dead_lettered_at
@@ -1214,19 +1247,22 @@ async def list_inbox_events(
                     WHERE status = :status
                     ORDER BY received_at DESC
                     LIMIT :limit
-                    """),
+                    """
+                ),
                 {"status": status, "limit": limit},
             ).fetchall()
         else:
             rows = db.execute(
-                text("""
+                text(
+                    """
                     SELECT id, event_id, event_type, status, attempts, max_attempts,
                            next_attempt_at, last_error, received_at, processed_at,
                            dead_lettered_at
                     FROM fis_webhook_events
                     ORDER BY received_at DESC
                     LIMIT :limit
-                    """),
+                    """
+                ),
                 {"limit": limit},
             ).fetchall()
 
@@ -1266,12 +1302,14 @@ async def replay_inbox_event(row_id: str, _admin=Depends(get_current_admin)) -> 
     db = SessionLocal()
     try:
         result = db.execute(
-            text("""
+            text(
+                """
                 UPDATE fis_webhook_events
                 SET status = :pending, next_attempt_at = NULL, attempts = 0,
                     dead_lettered_at = NULL
                 WHERE id = :id
-                """),
+                """
+            ),
             {"pending": STATUS_PENDING, "id": row_id},
         )
         db.commit()

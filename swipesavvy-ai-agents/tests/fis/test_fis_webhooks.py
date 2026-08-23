@@ -414,13 +414,15 @@ class TestDeadLettering:
         from app.services.auth_service import get_current_admin
 
         db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO fis_webhook_events
                     (id, event_id, event_type, raw_body, status, attempts,
                      last_error, dead_lettered_at)
                 VALUES (:id, 'evt_dead', 'transaction.authorized', '{}',
                         'dead_letter', 5, 'boom', NOW())
-                """),
+                """
+            ),
             {"id": str(uuid.uuid4())},
         )
         db.commit()

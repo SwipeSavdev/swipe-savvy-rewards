@@ -126,20 +126,24 @@ def seeded_card(db) -> Dict[str, str]:
     card_token = "fis_tok_test_0001"
 
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO users (id, email, password_hash, name, status, role)
             VALUES (:id, :email, 'x', 'Test User', 'active', 'user')
-            """),
+            """
+        ),
         {"id": user_id, "email": f"user-{user_id[:8]}@example.test"},
     )
     db.execute(
-        text("""
+        text(
+            """
             INSERT INTO fis_cards
                 (id, user_id, fis_card_token, card_type, status, last_four,
                  card_network, cardholder_name)
             VALUES
                 (:id, :user_id, :token, 'virtual', 'active', '4242', 'visa', 'Test User')
-            """),
+            """
+        ),
         {"id": card_id, "user_id": user_id, "token": card_token},
     )
     db.commit()
