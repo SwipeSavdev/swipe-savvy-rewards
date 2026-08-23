@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Python Version Check
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       
       - name: Setup Python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Dependency Validation
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       
       - name: Setup Python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Linting & Type Checking
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       
       - name: Setup Python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
@@ -94,20 +94,44 @@ jobs:
           python -m pip install -r requirements-pinned.txt
           python -m pip install black flake8 mypy
       
+      # These three steps were each swallowed THREE times over -- `| head -20`
+      # (the pipeline exits with head's 0), `|| true`, and
+      # `continue-on-error: true`. Any one of those alone makes the step
+      # unfailable, so none of them has ever gated anything.
+      #
+      # Measured on main 2026-08-23 before changing anything:
+      #   black --check                      CLEAN (124 files)
+      #   flake8 --select=E9,F63,F7,F82      0 violations
+      #   flake8 (full, max-line-length=100) 317 violations
+      #   mypy --ignore-missing-imports      955 errors in 65 files
+      #
+      # So the first two can be enforced today at zero cost, and are. The other
+      # two cannot, and stay informational rather than being quietly presented
+      # as coverage.
       - name: Run Black formatting check
         working-directory: swipesavvy-ai-agents
-        run: python -m black --check app/ tests/ 2>&1 | head -20 || true
-        continue-on-error: true
-      
-      - name: Run Flake8 linting
+        run: python -m black --check app/ tests/
+
+      # The bug-catching subset only: E9 syntax errors, F63/F7 broken
+      # constructs, F82 undefined names. These are defects, not style, and
+      # there are none today. Full-style flake8 runs below without blocking.
+      - name: Run Flake8 (errors and undefined names)
         working-directory: swipesavvy-ai-agents
-        run: python -m flake8 app/ tests/ --max-line-length=100 2>&1 | head -20 || true
-        continue-on-error: true
-      
-      - name: Run MyPy type checking
+        run: python -m flake8 app/ tests/ --select=E9,F63,F7,F82 --show-source
+
+      # INFORMATIONAL -- 317 style violations on main (176 F401 unused imports,
+      # 32 E402, 23 C901, ...). Non-blocking on purpose, and labelled so it is
+      # not mistaken for a gate. Tracked to be cleared and then enforced.
+      - name: Run Flake8 (full style, informational)
         working-directory: swipesavvy-ai-agents
-        run: python -m mypy app/ --ignore-missing-imports 2>&1 | head -20 || true
         continue-on-error: true
+        run: python -m flake8 app/ tests/ --max-line-length=100 --count
+
+      # INFORMATIONAL -- 955 errors in 65 files on main. Same reasoning.
+      - name: Run MyPy type checking (informational)
+        working-directory: swipesavvy-ai-agents
+        continue-on-error: true
+        run: python -m mypy app/ --ignore-missing-imports
 
   tests:
     runs-on: ubuntu-latest
@@ -138,7 +162,7 @@ jobs:
           - 6379:6379
     
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       
       - name: Setup Python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
@@ -187,7 +211,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Security Audit
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       
       - name: Setup Python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0

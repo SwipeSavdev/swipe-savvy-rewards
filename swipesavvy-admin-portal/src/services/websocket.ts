@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * WebSocket Connection Manager for Dashboard Real-Time Updates
