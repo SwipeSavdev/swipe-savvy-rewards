@@ -57,16 +57,16 @@ const createApi = () => {
           const res = await mockApi.getSupportTickets(params)
           return { tickets: res.items, total: res.total, page: res.page, pageSize: res.pageSize }
         },
-        async createTicket(data: any) {
+        async createTicket(_data: any) {
           throw new Error('Create ticket not implemented in mock API')
         },
-        async updateTicket(id: string, data: any) {
+        async updateTicket(_id: string, _data: any) {
           throw new Error('Update ticket not implemented in mock API')
         },
-        async updateTicketStatus(id: string, status: string) {
+        async updateTicketStatus(_id: string, _status: string) {
           throw new Error('Update status not implemented in mock API')
         },
-        async deleteTicket(id: string) {
+        async deleteTicket(_id: string) {
           throw new Error('Delete ticket not implemented in mock API')
         },
       },
@@ -80,13 +80,13 @@ const createApi = () => {
         async getAdminUsers(params?: any) {
           return mockApi.getAdminUsers(params)
         },
-        async createUser(data: any) {
+        async createUser(_data: any) {
           throw new Error('Create user not implemented in mock API')
         },
-        async getUser(userId: string) {
+        async getUser(_userId: string) {
           throw new Error('Get user not implemented in mock API')
         },
-        async updateUserStatus(userId: string, status: string) {
+        async updateUserStatus(_userId: string, _status: string) {
           throw new Error('Update user status not implemented in mock API')
         },
         async getStats() {
@@ -100,13 +100,13 @@ const createApi = () => {
         async getAdminUsers(params?: any) {
           return mockApi.getAdminUsers(params)
         },
-        async createAdminUser(data: any) {
+        async createAdminUser(_data: any) {
           throw new Error('Create admin user not implemented in mock API')
         },
-        async updateAdminUser(id: string, data: any) {
+        async updateAdminUser(_id: string, _data: any) {
           throw new Error('Update admin user not implemented in mock API')
         },
-        async deleteAdminUser(id: string) {
+        async deleteAdminUser(_id: string) {
           throw new Error('Delete admin user not implemented in mock API')
         },
       },
@@ -117,10 +117,10 @@ const createApi = () => {
         async getMerchants(params?: any) {
           return mockApi.getMerchants(params)
         },
-        async getMerchant(merchantId: string) {
+        async getMerchant(_merchantId: string) {
           throw new Error('Get merchant not implemented in mock API')
         },
-        async updateMerchantStatus(id: string, status: string) {
+        async updateMerchantStatus(_id: string, _status: string) {
           throw new Error('Update merchant status not implemented in mock API')
         },
         async createMerchant(data: any) {
@@ -129,13 +129,13 @@ const createApi = () => {
         async updateMerchant(merchantId: string, data: any) {
           return { success: true, merchant: { id: merchantId, ...data } }
         },
-        async deleteMerchant(merchantId: string) {
+        async deleteMerchant(_merchantId: string) {
           return { success: true }
         },
         async getStats() {
           return { total_merchants: 10, active_merchants: 8, suspended_merchants: 2, total_monthly_volume: 250000, avg_success_rate: 95.5, top_performer: 'Acme Corp' }
         },
-        async getOnboarding(merchantId: string) {
+        async getOnboarding(_merchantId: string) {
           return { success: true, has_onboarding: false, onboarding: null }
         },
         async startOnboarding(merchantId: string) {
@@ -144,35 +144,35 @@ const createApi = () => {
         async updateOnboarding(merchantId: string, data: any) {
           return { success: true, onboarding: { ...data, merchant_id: merchantId } }
         },
-        async submitOnboarding(merchantId: string) {
+        async submitOnboarding(_merchantId: string) {
           return { success: true, message: 'Submitted (mock)', onboarding: { status: 'submitted' } }
         },
-        async getOnboardingStatus(merchantId: string) {
+        async getOnboardingStatus(_merchantId: string) {
           return { success: true, status: 'submitted', fiserv_status: 'Pending' }
         },
         async uploadOnboardingDocument(merchantId: string, docType: string, file: File) {
           return { success: true, document: { id: `doc-${Date.now()}`, type: docType, filename: file.name } }
         },
-        async resubmitOnboarding(merchantId: string) {
+        async resubmitOnboarding(_merchantId: string) {
           return { success: true }
         },
-        async resubmitToCredit(merchantId: string) {
+        async resubmitToCredit(_merchantId: string) {
           return { success: true }
         },
-        async resubmitToBOS(merchantId: string) {
+        async resubmitToBOS(_merchantId: string) {
           return { success: true }
         },
-        async deleteOnboarding(merchantId: string) {
+        async deleteOnboarding(_merchantId: string) {
           return { success: true }
         },
         // E-Signature mock methods
-        async sendEsignRequest(merchantId: string, data: { signer_name: string; signer_email: string; signer_title?: string }) {
+        async sendEsignRequest(_merchantId: string, _data: { signer_name: string; signer_email: string; signer_title?: string }) {
           return { success: true, document_id: `esign-${Date.now()}`, message: 'E-signature request sent (mock)' }
         },
-        async checkEsignStatus(merchantId: string, documentId: string) {
+        async checkEsignStatus(_merchantId: string, _documentId: string) {
           return { completed: false, status: 'pending', signed_at: undefined }
         },
-        async resendEsignRequest(merchantId: string, documentId: string) {
+        async resendEsignRequest(_merchantId: string, _documentId: string) {
           return { success: true, message: 'E-signature request resent (mock)' }
         },
       },
@@ -210,19 +210,19 @@ const createApi = () => {
         async getSettings() {
           return { success: true, settings: {} }
         },
-        async updateSettings(data: any) {
+        async updateSettings(_data: any) {
           return { success: true }
         },
-        async uploadBrandingImage(formData: FormData) {
+        async uploadBrandingImage(_formData: FormData) {
           return { success: true, image: null }
         },
-        async deleteBrandingImage(imageId: string) {
+        async deleteBrandingImage(_imageId: string) {
           return { success: true }
         },
         async getBrandingImages() {
           return { images: [] }
         },
-        async uploadBrandingAsset(type: string, file: File) {
+        async uploadBrandingAsset(_type: string, _file: File) {
           return { success: true }
         },
         async getApiQuotas() {
@@ -230,7 +230,7 @@ const createApi = () => {
         },
       },
       auditLogsApi: {
-        async listLogs(page?: any, perPage?: any, action?: string, actor?: string) {
+        async listLogs(page?: any, perPage?: any, _action?: string, _actor?: string) {
           const res = await mockApi.getAuditLogs({ page, pageSize: perPage })
           return { logs: res.items, total: res.total, page: res.page, per_page: res.pageSize }
         },
@@ -252,7 +252,7 @@ const createApi = () => {
         async updateCampaign(campaignId: string, data: any) {
           return { success: true, id: campaignId, ...data }
         },
-        async generateCopy(data: any) {
+        async generateCopy(_data: any) {
           return {
             headline: 'AI Generated Headline',
             description: 'AI Generated Description',
@@ -260,7 +260,7 @@ const createApi = () => {
             selling_points: ['Point 1', 'Point 2'],
           }
         },
-        async getAudienceInsights(data: any) {
+        async getAudienceInsights(_data: any) {
           return {
             characteristics: 'Your audience characteristics',
             opportunities: ['Opportunity 1', 'Opportunity 2'],
@@ -275,7 +275,7 @@ const createApi = () => {
       },
       // Charity API (mock)
       charityApi: {
-        async listCharities(params?: any) {
+        async listCharities(_params?: any) {
           return [
             { id: '1', name: 'Red Cross', email: 'contact@redcross.org', category: 'humanitarian', status: 'approved', completionPercentage: 100 },
             { id: '2', name: 'UNICEF', email: 'info@unicef.org', category: 'children', status: 'pending', completionPercentage: 75 },
@@ -290,7 +290,7 @@ const createApi = () => {
         async updateCharity(charityId: string, data: any) {
           return { success: true, charity: { id: charityId, ...data } }
         },
-        async deleteCharity(charityId: string) {
+        async deleteCharity(_charityId: string) {
           return { success: true }
         },
         async approveCharity(charityId: string) {

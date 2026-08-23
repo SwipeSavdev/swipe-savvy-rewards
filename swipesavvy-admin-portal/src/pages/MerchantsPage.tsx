@@ -113,7 +113,7 @@ export default function MerchantsPage() {
     try {
       const res = await Api.merchantsApi.getStats()
       setStats(res)
-    } catch (e) {
+    } catch (_e) {
       console.warn('Could not fetch merchant stats')
     }
   }
@@ -295,7 +295,7 @@ export default function MerchantsPage() {
           await Api.merchantsApi.startOnboarding(merchantId)
           navigate(`/merchants/${merchantId}/onboarding`)
           return // Exit early - don't call closeAll which resets state
-        } catch (onboardingError: any) {
+        } catch (_onboardingError: any) {
           pushToast({
             variant: 'warning',
             title: 'Merchant Created',

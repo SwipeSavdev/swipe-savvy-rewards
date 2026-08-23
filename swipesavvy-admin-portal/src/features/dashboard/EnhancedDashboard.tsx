@@ -184,7 +184,7 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
   const [editMode, setEditMode] = useState(false);
   const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
 
-  const toggleWidgetVisibility = useCallback(
+  const _toggleWidgetVisibility = useCallback(
     (widgetId: string) => {
       const updated = widgets.map((w) =>
         w.id === widgetId ? { ...w, visible: !w.visible } : w
