@@ -30,7 +30,7 @@ interface SubscriptionTier {
   annual_savings: number
 }
 
-interface Subscription {
+interface _Subscription {
   id: string
   merchant_id: string
   tier: string
@@ -154,7 +154,7 @@ export default function PreferredMerchantsPage() {
   // Filters
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
-  const [category, setCategory] = useState('all')
+  const [category, _setCategory] = useState('all')
   const [tierFilter, setTierFilter] = useState('all')
 
   // Modals
