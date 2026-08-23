@@ -482,6 +482,14 @@ class WalletTransaction(Base):
     recipient_id = Column(UUID, ForeignKey(USERS_ID), nullable=True)
     payment_method = Column(String(100), nullable=True)
     reference_number = Column(String(255), nullable=True)
+
+    # External (processor-supplied) natural keys. The primary key stays a real
+    # uuid; FIS-supplied ids and derived keys live here. Mirrors the pattern
+    # already used by fis_transactions.fis_transaction_id.
+    external_transaction_id = Column(String(255), unique=True, nullable=True, index=True)
+    related_external_id = Column(String(255), nullable=True, index=True)
+    authorization_code = Column(String(50), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
 
@@ -489,7 +497,14 @@ class WalletTransaction(Base):
         CheckConstraint(
             "transaction_type IN ('deposit', 'withdrawal', 'transfer', 'refund', 'payment')"
         ),
-        CheckConstraint("status IN ('pending', 'completed', 'failed', 'cancelled')"),
+        # Widened for card settlement outcomes delivered by FIS webhooks. Each of
+        # declined/reversed/refunded/fraudulent is a distinct outcome with no
+        # lossless mapping onto the original four values.
+        CheckConstraint(
+            "status IN ('pending', 'completed', 'failed', 'cancelled', "
+            "'declined', 'reversed', 'refunded', 'fraudulent')",
+            name="ck_wallet_transactions_status",
+        ),
     )
 
 
@@ -1399,6 +1414,57 @@ class FISFraudAlert(Base):
     )
 
 
+class FISWebhookEvent(Base):
+    """
+    FIS Global Payment One - durable webhook inbox.
+
+    Every authenticated inbound webhook is written here, in its own transaction,
+    BEFORE the endpoint acknowledges receipt. Processing then reads from this
+    table. That ordering is what converts an in-process failure from silent data
+    loss into recoverable work: if the process dies mid-handler the row is still
+    ``pending``/``failed`` and the retry sweeper picks it up.
+
+    ``event_id`` is UNIQUE — that is the idempotency backstop, so a duplicate
+    delivery is a no-op at the inbox layer regardless of what the downstream
+    handlers do.
+    """
+
+    __tablename__ = "fis_webhook_events"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+
+    # Idempotency key supplied by FIS.
+    event_id = Column(String(255), nullable=False, unique=True, index=True)
+    event_type = Column(String(100), nullable=False, index=True)
+
+    # Exact bytes as received — lets us re-verify the signature on replay and
+    # keeps a forensic record that does not depend on our own parsing.
+    raw_body = Column(Text, nullable=False)
+    payload = Column(JSONB, nullable=True)
+
+    signature = Column(String(255), nullable=True)
+    event_timestamp = Column(String(64), nullable=True)
+
+    # pending | processing | processed | failed | dead_letter | rejected
+    status = Column(String(20), nullable=False, default="pending", index=True)
+    attempts = Column(Integer, nullable=False, default=0)
+    max_attempts = Column(Integer, nullable=False, default=5)
+    next_attempt_at = Column(DateTime(timezone=True), nullable=True)
+    last_error = Column(Text, nullable=True)
+
+    received_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
+    dead_lettered_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'processing', 'processed', 'failed', "
+            "'dead_letter', 'rejected')",
+            name="ck_fis_webhook_events_status",
+        ),
+    )
+
+
 # Export all models
 __all__ = [
     # Core models
@@ -1455,4 +1521,6 @@ __all__ = [
     "FISWalletToken",
     "FISKYCVerification",
     "FISFraudAlert",
+    # FIS webhook durable inbox
+    "FISWebhookEvent",
 ]
