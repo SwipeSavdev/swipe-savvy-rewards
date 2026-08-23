@@ -195,7 +195,7 @@ export default function CharityOnboardingPage() {
   )
 
   const fetchApplications = async () => {
-    let mounted = true
+    const mounted = true
     try {
       setLoading(true)
       setError(null)
