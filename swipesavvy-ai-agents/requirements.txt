@@ -5,7 +5,7 @@ together>=1.2.0
 openai>=1.0.0
 
 # Embedding models
-sentence-transformers>=2.2.0  # Local embeddings
+sentence-transformers>=6.0.0  # Local embeddings
 tiktoken>=0.5.0  # Token counting
 
 # Database
