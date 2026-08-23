@@ -53,7 +53,7 @@ updates:
   commit-message:
     prefix: chore(deps)
     prefix-development: chore(deps-dev)
-  groups: &id001
+  groups:
     python-runtime:
       patterns:
       - '*'
@@ -89,7 +89,30 @@ updates:
   labels:
   - dependencies
   - python
-  groups: *id001
+  groups:
+    python-runtime:
+      patterns:
+      - '*'
+      exclude-patterns:
+      - pytest*
+      - black
+      - flake8
+      - mypy
+      - isort
+      - ruff
+      - coverage*
+      update-types:
+      - minor
+      - patch
+    python-tooling:
+      patterns:
+      - pytest*
+      - black
+      - flake8
+      - mypy
+      - isort
+      - ruff
+      - coverage*
 - package-ecosystem: npm
   directory: /swipesavvy-customer-website-nextjs
   schedule:
@@ -102,7 +125,7 @@ updates:
   labels:
   - dependencies
   - npm
-  groups: &id002
+  groups:
     js-runtime:
       patterns:
       - '*'
@@ -146,7 +169,38 @@ updates:
   labels:
   - dependencies
   - npm
-  groups: *id002
+  groups:
+    js-runtime:
+      patterns:
+      - '*'
+      exclude-patterns:
+      - '@types/*'
+      - eslint*
+      - '@typescript-eslint/*'
+      - prettier*
+      - vite
+      - vitest
+      - msw
+      - '@testing-library/*'
+      - jest*
+      - postcss
+      - tailwindcss
+      update-types:
+      - minor
+      - patch
+    js-tooling:
+      patterns:
+      - '@types/*'
+      - eslint*
+      - '@typescript-eslint/*'
+      - prettier*
+      - vite
+      - vitest
+      - msw
+      - '@testing-library/*'
+      - jest*
+      - postcss
+      - tailwindcss
 - package-ecosystem: npm
   directory: /swipesavvy-mobile-app-v2
   schedule:
@@ -159,7 +213,38 @@ updates:
   labels:
   - dependencies
   - npm
-  groups: *id002
+  groups:
+    js-runtime:
+      patterns:
+      - '*'
+      exclude-patterns:
+      - '@types/*'
+      - eslint*
+      - '@typescript-eslint/*'
+      - prettier*
+      - vite
+      - vitest
+      - msw
+      - '@testing-library/*'
+      - jest*
+      - postcss
+      - tailwindcss
+      update-types:
+      - minor
+      - patch
+    js-tooling:
+      patterns:
+      - '@types/*'
+      - eslint*
+      - '@typescript-eslint/*'
+      - prettier*
+      - vite
+      - vitest
+      - msw
+      - '@testing-library/*'
+      - jest*
+      - postcss
+      - tailwindcss
 - package-ecosystem: github-actions
   directory: /
   schedule:
