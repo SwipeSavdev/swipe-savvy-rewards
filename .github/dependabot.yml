@@ -1,96 +1,175 @@
+# Dependabot configuration.
+#
+# GROUPING (added 2026-08-23, KI-3867). Without groups Dependabot opens one PR per
+# package PER DIRECTORY, which is how this repo accumulated axios x3, pyjwt x2,
+# brace-expansion x2, postcss x4 and react-router x2 as separate PRs — each needing
+# its own approval under the `main` ruleset, and each going DIRTY whenever a sibling
+# merged first. Grouping collapses them into one reviewable PR per family.
+#
+# The grouping mirrors shop-savvy-pos, which already had it and did not develop the
+# same backlog. Runtime and tooling are deliberately separate groups: tooling can be
+# auto-merged on green CI (see .github/workflows/dependabot-automerge.yml), runtime
+# should be looked at.
+#
+# Majors stay excluded from the minor/patch runtime groups and arrive as their own
+# PRs, which is what you want — a major is a decision, not a chore.
 version: 2
 updates:
-  # Python dependencies via pip
-  - package-ecosystem: "pip"
-    directory: "/swipesavvy-ai-agents"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "03:00"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "security-team"
-    labels:
-      - "dependencies"
-      - "python"
-    allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
-    ignore:
-      # Ignore major version bumps unless critical security fix
-      - dependency-name: "*"
-        update-types:
-          - "version-update:semver-major"
-    commit-message:
-      prefix: "chore(deps)"
-      prefix-development: "chore(deps-dev)"
-
-  # Python dependencies for admin portal
-  - package-ecosystem: "pip"
-    directory: "/swipesavvy-admin-portal"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "03:15"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "security-team"
-    labels:
-      - "dependencies"
-      - "python"
-
-  # npm dependencies for customer website
-  - package-ecosystem: "npm"
-    directory: "/swipesavvy-customer-website-nextjs"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "03:30"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "security-team"
-    labels:
-      - "dependencies"
-      - "npm"
-
-  # npm dependencies for wallet web
-  - package-ecosystem: "npm"
-    directory: "/swipesavvy-wallet-web"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "03:45"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "security-team"
-    labels:
-      - "dependencies"
-      - "npm"
-
-  # npm dependencies for mobile app
-  - package-ecosystem: "npm"
-    directory: "/swipesavvy-mobile-app-v2"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "04:00"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "security-team"
-    labels:
-      - "dependencies"
-      - "npm"
-
-  # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "04:15"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "security-team"
-    labels:
-      - "dependencies"
-      - "github-actions"
+- package-ecosystem: pip
+  directory: /swipesavvy-ai-agents
+  schedule:
+    interval: weekly
+    day: monday
+    time: 03:00
+  open-pull-requests-limit: 10
+  reviewers:
+  - security-team
+  labels:
+  - dependencies
+  - python
+  allow:
+  - dependency-type: direct
+  - dependency-type: indirect
+  ignore:
+  - dependency-name: '*'
+    update-types:
+    - version-update:semver-major
+  # bcrypt is pinned at 4.0.1 ON PURPOSE. requirements.txt says why:
+  #   bcrypt==4.0.1  # Pinned for passlib compatibility (passlib breaks with bcrypt>=4.1)
+  # passlib reads bcrypt.__about__.__version__, removed in bcrypt 4.1, so its
+  # bcrypt backend stops resolving and password/PIN verification fails at
+  # RUNTIME, not at import. passlib/CryptContext is used in admin auth, RBAC
+  # and FIS PIN handling here, and no test exercises a real hash round-trip,
+  # so CI goes green on a broken build.
+  #
+  # The '*' rule above only ignores MAJORS, and 4.0.1 -> 4.3.0 is a minor, so
+  # Dependabot raised it (PR #92) while KEEPING the comment that forbids it.
+  # Ignored outright until passlib is replaced (it is unmaintained) or the
+  # compatibility is re-verified. KI-3887 / BUG-1980.
+  - dependency-name: bcrypt
+  commit-message:
+    prefix: chore(deps)
+    prefix-development: chore(deps-dev)
+  groups: &id001
+    python-runtime:
+      patterns:
+      - '*'
+      exclude-patterns:
+      - pytest*
+      - black
+      - flake8
+      - mypy
+      - isort
+      - ruff
+      - coverage*
+      update-types:
+      - minor
+      - patch
+    python-tooling:
+      patterns:
+      - pytest*
+      - black
+      - flake8
+      - mypy
+      - isort
+      - ruff
+      - coverage*
+- package-ecosystem: pip
+  directory: /swipesavvy-admin-portal
+  schedule:
+    interval: weekly
+    day: monday
+    time: 03:15
+  open-pull-requests-limit: 10
+  reviewers:
+  - security-team
+  labels:
+  - dependencies
+  - python
+  groups: *id001
+- package-ecosystem: npm
+  directory: /swipesavvy-customer-website-nextjs
+  schedule:
+    interval: weekly
+    day: monday
+    time: 03:30
+  open-pull-requests-limit: 10
+  reviewers:
+  - security-team
+  labels:
+  - dependencies
+  - npm
+  groups: &id002
+    js-runtime:
+      patterns:
+      - '*'
+      exclude-patterns:
+      - '@types/*'
+      - eslint*
+      - '@typescript-eslint/*'
+      - prettier*
+      - vite
+      - vitest
+      - msw
+      - '@testing-library/*'
+      - jest*
+      - postcss
+      - tailwindcss
+      update-types:
+      - minor
+      - patch
+    js-tooling:
+      patterns:
+      - '@types/*'
+      - eslint*
+      - '@typescript-eslint/*'
+      - prettier*
+      - vite
+      - vitest
+      - msw
+      - '@testing-library/*'
+      - jest*
+      - postcss
+      - tailwindcss
+- package-ecosystem: npm
+  directory: /swipesavvy-wallet-web
+  schedule:
+    interval: weekly
+    day: monday
+    time: 03:45
+  open-pull-requests-limit: 10
+  reviewers:
+  - security-team
+  labels:
+  - dependencies
+  - npm
+  groups: *id002
+- package-ecosystem: npm
+  directory: /swipesavvy-mobile-app-v2
+  schedule:
+    interval: weekly
+    day: monday
+    time: 04:00
+  open-pull-requests-limit: 10
+  reviewers:
+  - security-team
+  labels:
+  - dependencies
+  - npm
+  groups: *id002
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+    time: 04:15
+  open-pull-requests-limit: 10
+  reviewers:
+  - security-team
+  labels:
+  - dependencies
+  - github-actions
+  groups:
+    gha:
+      patterns:
+      - '*'
