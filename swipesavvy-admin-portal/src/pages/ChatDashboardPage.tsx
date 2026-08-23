@@ -61,7 +61,7 @@ const ChatDashboardPage: React.FC = () => {
         return;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/api/v1/admin/chat-dashboard/overview`, {
+      const _response = await axios.get(`${API_BASE_URL}/api/v1/admin/chat-dashboard/overview`, {
         params: {
           timeRange: filters.timeRange,
           limit: filters.sessionLimit,
