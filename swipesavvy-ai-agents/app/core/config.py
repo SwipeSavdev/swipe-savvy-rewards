@@ -88,6 +88,34 @@ class Settings:
     SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 
+    # =========================================================================
+    # Card / rewards surface safety
+    #
+    # Enforcement does NOT live here — it lives in app/core/card_surface.py
+    # (request-time gate) and app/core/boot_validation.py (startup gate),
+    # both of which read the environment at call time so an operator flipping
+    # a variable does not depend on import ordering. These attributes are the
+    # central, discoverable declaration of the contract and its defaults.
+    # =========================================================================
+
+    # Master kill switch for the FIS-backed card/rewards surface. OFF unless
+    # explicitly enabled. While off, every FIS route returns 503.
+    CARD_SURFACE_ENABLED = os.getenv("CARD_SURFACE_ENABLED", "false").lower() == "true"
+
+    # FIS Global Payment One credentials. Absence NEVER implies mock mode.
+    FIS_CLIENT_ID = os.getenv("FIS_CLIENT_ID", "")
+    FIS_CLIENT_SECRET = os.getenv("FIS_CLIENT_SECRET", "")
+    FIS_WEBHOOK_SECRET = os.getenv("FIS_WEBHOOK_SECRET", "")
+    FIS_ENVIRONMENT = os.getenv("FIS_ENVIRONMENT", "sandbox")
+
+    # Explicit opt-in to FABRICATED FIS responses. Refused in production.
+    FIS_MOCK_MODE = os.getenv("FIS_MOCK_MODE", "false").lower() == "true"
+
+    # KYC / sanctions providers. Empty means "not contracted" — production
+    # refuses to boot with a stub here while the card surface is enabled.
+    KYC_PROVIDER = os.getenv("KYC_PROVIDER", "")
+    OFAC_SCREENING_PROVIDER = os.getenv("OFAC_SCREENING_PROVIDER", "")
+
     # Rate limiting
     RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "True").lower() == "true"
     RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))
