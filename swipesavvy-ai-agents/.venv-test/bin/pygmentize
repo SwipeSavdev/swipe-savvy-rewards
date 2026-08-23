@@ -1,6 +1,0 @@
-#!/private/tmp/claude-501/-Volumes-Novus-Developer-shop-savvy-pos/76c32732-0172-4166-b144-d36ca1e10f56/scratchpad/rewards-idor/swipesavvy-ai-agents/.venv-test/bin/python3
-import sys
-from pygments.cmdline import main
-if __name__ == '__main__':
-    sys.argv[0] = sys.argv[0].removesuffix('.exe')
-    sys.exit(main())
