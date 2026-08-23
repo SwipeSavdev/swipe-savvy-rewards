@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.auth import verify_token_string
+from app.core.card_ownership import verify_card_ownership
 from app.database import get_db
 from app.services.fis_wallet_service import (
     DeviceType,
@@ -124,6 +125,7 @@ async def get_apple_pay_eligibility(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Check if a card is eligible for Apple Pay."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.get_apple_pay_eligibility(card_id)
 
     if not response.success:
@@ -142,6 +144,7 @@ async def provision_apple_pay(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Provision a card for Apple Pay."""
+    verify_card_ownership(card_id, user_id)
     try:
         device_type = DeviceType(request.device_type)
     except ValueError:
@@ -179,6 +182,7 @@ async def get_google_pay_eligibility(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Check if a card is eligible for Google Pay."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.get_google_pay_eligibility(card_id)
 
     if not response.success:
@@ -197,6 +201,7 @@ async def provision_google_pay(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Provision a card for Google Pay."""
+    verify_card_ownership(card_id, user_id)
     try:
         device_type = DeviceType(request.device_type)
     except ValueError:
@@ -233,6 +238,7 @@ async def get_google_pay_push_token(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Get push provisioning token for Google Pay."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.get_google_pay_push_token(
         card_id=card_id, wallet_account_id=request.wallet_account_id
     )
@@ -258,6 +264,7 @@ async def provision_samsung_pay(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Provision a card for Samsung Pay."""
+    verify_card_ownership(card_id, user_id)
     try:
         device_type = DeviceType(request.device_type)
     except ValueError:
@@ -300,6 +307,7 @@ async def get_wallet_tokens(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Get all wallet tokens for a card."""
+    verify_card_ownership(card_id, user_id)
     parsed_wallet_type = None
     if wallet_type:
         try:
@@ -340,6 +348,7 @@ async def get_token(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Get details of a specific wallet token."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.get_token(card_id=card_id, token_id=token_id)
 
     if not response.success:
@@ -357,6 +366,7 @@ async def suspend_token(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Suspend a wallet token."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.suspend_token(
         card_id=card_id, token_id=token_id, reason=request.reason
     )
@@ -377,6 +387,7 @@ async def resume_token(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Resume a suspended wallet token."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.resume_token(card_id=card_id, token_id=token_id)
 
     if not response.success:
@@ -396,6 +407,7 @@ async def delete_token(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Delete a wallet token."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.delete_token(
         card_id=card_id, token_id=token_id, reason=request.reason
     )
@@ -416,6 +428,7 @@ async def suspend_all_tokens(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Suspend all wallet tokens for a card."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.suspend_all_tokens(card_id=card_id, reason=request.reason)
 
     if not response.success:
@@ -434,6 +447,7 @@ async def delete_all_tokens(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Delete all wallet tokens for a card."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.delete_all_tokens(card_id=card_id, reason=request.reason)
 
     if not response.success:
@@ -452,6 +466,7 @@ async def get_token_activity(
     wallet_service: FISWalletService = Depends(get_fis_wallet_service),
 ):
     """Get activity history for a token."""
+    verify_card_ownership(card_id, user_id)
     response = await wallet_service.get_token_activity(card_id=card_id, token_id=token_id)
 
     if not response.success:
