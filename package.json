@@ -50,7 +50,7 @@
     "react-native-web": "^0.21.2",
     "react-native-worklets": "0.5.1",
     "react-router-dom": "^6.20.0",
-    "recharts": "^2.10.3",
+    "recharts": "^3.10.1",
     "tailwindcss": "^3.3.6",
     "zustand": "^4.5.7"
   },
