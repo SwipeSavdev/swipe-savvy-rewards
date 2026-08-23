@@ -40,11 +40,7 @@ import os
 from dataclasses import dataclass
 from typing import Awaitable, Callable, List, Optional, Union
 
-from app.core.card_surface import (
-    CARD_SURFACE_ENV_VAR,
-    card_surface_enabled,
-    env_flag,
-)
+from app.core.card_surface import CARD_SURFACE_ENV_VAR, card_surface_enabled, env_flag
 
 logger = logging.getLogger(__name__)
 
@@ -104,8 +100,7 @@ async def check_card_surface_kill_switch() -> str:
             f"card processor and sponsor bank agreements are signed."
         )
     return (
-        f"{CARD_SURFACE_ENV_VAR} is ON — the card/rewards surface is LIVE and "
-        f"serving requests."
+        f"{CARD_SURFACE_ENV_VAR} is ON — the card/rewards surface is LIVE and " f"serving requests."
     )
 
 

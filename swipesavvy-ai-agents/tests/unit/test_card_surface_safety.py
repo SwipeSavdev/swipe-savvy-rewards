@@ -48,10 +48,7 @@ from app.core.card_surface import (  # noqa: E402
     CARD_SURFACE_ENV_VAR,
     card_surface_enabled,
 )
-from app.services.fis_global_service import (  # noqa: E402
-    FISGlobalService,
-    FISNotConfiguredError,
-)
+from app.services.fis_global_service import FISGlobalService, FISNotConfiguredError  # noqa: E402
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -194,9 +191,7 @@ class TestMockMarker:
         import httpx
 
         service = FISGlobalService(client_id="id", client_secret="secret")
-        parsed = service._parse_response(
-            httpx.Response(200, json={"card_id": "real_card"})
-        )
+        parsed = service._parse_response(httpx.Response(200, json={"card_id": "real_card"}))
         assert parsed.success is True
         assert parsed.mock is False
 
@@ -309,7 +304,12 @@ class TestBootValidation:
                 "PYTHONPATH": REPO_ROOT,
             }
         )
-        for var in ("FIS_CLIENT_ID", "FIS_CLIENT_SECRET", "KYC_PROVIDER", "OFAC_SCREENING_PROVIDER"):
+        for var in (
+            "FIS_CLIENT_ID",
+            "FIS_CLIENT_SECRET",
+            "KYC_PROVIDER",
+            "OFAC_SCREENING_PROVIDER",
+        ):
             env.pop(var, None)
 
         result = subprocess.run(
@@ -383,12 +383,12 @@ def client():
 class TestKillSwitch:
     #: One representative route per gated FIS router.
     GATED_ROUTES = [
-        ("POST", "/api/v1/fis/cards/issue/virtual"),      # fis_cards
-        ("GET", "/api/v1/fis/cards"),                      # fis_cards
+        ("POST", "/api/v1/fis/cards/issue/virtual"),  # fis_cards
+        ("GET", "/api/v1/fis/cards"),  # fis_cards
         ("GET", "/api/v1/fis/cards/card_1/transactions"),  # fis_transactions
-        ("GET", "/api/v1/fis/alerts"),                     # fis_fraud
+        ("GET", "/api/v1/fis/alerts"),  # fis_fraud
         ("POST", "/api/v1/fis/cards/card_1/wallet/apple-pay/provision"),  # fis_wallet
-        ("POST", "/api/v1/webhooks/fis"),                  # fis_webhooks
+        ("POST", "/api/v1/webhooks/fis"),  # fis_webhooks
     ]
 
     def test_kill_switch_defaults_to_off(self, monkeypatch):

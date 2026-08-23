@@ -487,9 +487,7 @@ except Exception as e:
 try:
     from app.routes.fis_cards import router as fis_cards_router
 
-    app.include_router(
-        fis_cards_router, dependencies=[Depends(require_card_surface_enabled)]
-    )
+    app.include_router(fis_cards_router, dependencies=[Depends(require_card_surface_enabled)])
     logger.info("✅ FIS Card Management routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include FIS card routes: {e}")
@@ -509,9 +507,7 @@ except Exception as e:
 try:
     from app.routes.fis_fraud import router as fis_fraud_router
 
-    app.include_router(
-        fis_fraud_router, dependencies=[Depends(require_card_surface_enabled)]
-    )
+    app.include_router(fis_fraud_router, dependencies=[Depends(require_card_surface_enabled)])
     logger.info("✅ FIS Fraud & Security routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include FIS fraud routes: {e}")
@@ -520,9 +516,7 @@ except Exception as e:
 try:
     from app.routes.fis_wallet import router as fis_wallet_router
 
-    app.include_router(
-        fis_wallet_router, dependencies=[Depends(require_card_surface_enabled)]
-    )
+    app.include_router(fis_wallet_router, dependencies=[Depends(require_card_surface_enabled)])
     logger.info("✅ FIS Digital Wallet routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include FIS wallet routes: {e}")
@@ -531,9 +525,7 @@ except Exception as e:
 try:
     from app.routes.fis_webhooks import router as fis_webhooks_router
 
-    app.include_router(
-        fis_webhooks_router, dependencies=[Depends(require_card_surface_enabled)]
-    )
+    app.include_router(fis_webhooks_router, dependencies=[Depends(require_card_surface_enabled)])
     logger.info("✅ FIS Webhook routes included")
 except Exception as e:
     logger.warning(f"⚠️ Could not include FIS webhook routes: {e}")
