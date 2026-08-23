@@ -21,8 +21,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.auth import verify_token_string
-from app.database import SessionLocal, get_db
-from app.models import FISCard
+from app.core.card_ownership import verify_card_ownership
+from app.database import get_db
 from app.services.fis_card_controls_service import (
     AlertPreferences,
     ChannelControls,
@@ -69,36 +69,6 @@ def require_auth(authorization: Optional[str] = Header(None)) -> str:
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-
-# =============================================================================
-# CARD OWNERSHIP VERIFICATION (PCI DSS 7.2.1)
-# =============================================================================
-
-
-def verify_card_ownership(card_id: str, user_id: str) -> None:
-    """
-    Verify the authenticated user owns the specified card.
-    Raises 403 if the card does not belong to the user, 404 if card not found.
-    """
-    db = SessionLocal()
-    try:
-        card = (
-            db.query(FISCard)
-            .filter((FISCard.id == card_id) | (FISCard.fis_card_id == card_id))
-            .first()
-        )
-
-        if not card:
-            raise HTTPException(status_code=404, detail="Card not found")
-
-        if str(card.user_id) != str(user_id):
-            logger.warning(
-                f"Card ownership violation: user {user_id} attempted to access card {card_id} owned by {card.user_id}"
-            )
-            raise HTTPException(status_code=403, detail="Access denied")
-    finally:
-        db.close()
 
 
 # =============================================================================
