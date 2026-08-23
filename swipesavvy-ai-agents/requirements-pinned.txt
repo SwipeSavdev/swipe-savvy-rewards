@@ -25,7 +25,7 @@ pydantic==2.12.5
 pydantic-settings==2.14.2
 
 # Security & PII Detection
-presidio-analyzer==2.2.360
+presidio-analyzer==2.2.362
 presidio-anonymizer==2.2.28
 spacy==3.8.11
 
@@ -39,7 +39,7 @@ sentry-sdk>=2.0.0
 python-json-logger==2.0.7
 
 # Authentication & Crypto
-pyjwt==2.12.0
+pyjwt==2.13.0
 cryptography>=43.0.0
 
 # Rate Limiting
