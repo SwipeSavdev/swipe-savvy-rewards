@@ -9,7 +9,7 @@ import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
-import { Activity, BarChart3, CheckCircle, Crown, FlaskConical, Pause, Play, Plus, Target, Trash2, TrendingUp, XCircle } from 'lucide-react'
+import { Activity, BarChart3, CheckCircle, Crown, FlaskConical, Pause, Play, Plus, Target, Trash2, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
@@ -296,7 +296,7 @@ export default function ABTestingPanel() {
 
               {/* Variant Comparison */}
               <div className="flex gap-4">
-                {test.variants.map((variant, idx) => (
+                {test.variants.map((variant, _idx) => (
                   <div
                     key={variant.id}
                     className={`min-w-[140px] rounded-lg border p-3 ${
