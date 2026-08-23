@@ -239,7 +239,11 @@ jobs:
             echo "OK  every schedule.time is quoted"
           fi
 
-          # (2) every declared directory must actually contain a manifest
+          # (2) every declared directory must actually contain a manifest.
+          # This job runs setup-python, which shadows the runner's system python3
+          # (that one ships PyYAML; a fresh setup-python interpreter does not), so
+          # install it explicitly rather than relying on what happens to be there.
+          python3 -m pip install --quiet --disable-pip-version-check pyyaml
           python3 - <<'PY'
           import os, re, sys, yaml
           cfg = yaml.safe_load(open('.github/dependabot.yml'))
