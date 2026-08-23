@@ -20,7 +20,7 @@ updates:
   schedule:
     interval: weekly
     day: monday
-    time: 03:00
+    time: "03:00"
   open-pull-requests-limit: 10
   reviewers:
   - security-team
@@ -82,7 +82,7 @@ updates:
   schedule:
     interval: weekly
     day: monday
-    time: 03:15
+    time: "03:15"
   open-pull-requests-limit: 10
   reviewers:
   - security-team
@@ -118,7 +118,7 @@ updates:
   schedule:
     interval: weekly
     day: monday
-    time: 03:30
+    time: "03:30"
   open-pull-requests-limit: 10
   reviewers:
   - security-team
@@ -162,7 +162,7 @@ updates:
   schedule:
     interval: weekly
     day: monday
-    time: 03:45
+    time: "03:45"
   open-pull-requests-limit: 10
   reviewers:
   - security-team
@@ -206,7 +206,7 @@ updates:
   schedule:
     interval: weekly
     day: monday
-    time: 04:00
+    time: "04:00"
   open-pull-requests-limit: 10
   reviewers:
   - security-team
@@ -250,7 +250,7 @@ updates:
   schedule:
     interval: weekly
     day: monday
-    time: 04:15
+    time: "04:15"
   open-pull-requests-limit: 10
   reviewers:
   - security-team
