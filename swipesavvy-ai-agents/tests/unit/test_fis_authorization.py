@@ -52,7 +52,12 @@ def wallet_requests(card_id):
         ("apple_pay_provision", "POST", f"{base}/apple-pay/provision", apple),
         ("google_pay_eligibility", "GET", f"{base}/google-pay/eligibility", None),
         ("google_pay_provision", "POST", f"{base}/google-pay/provision", google),
-        ("google_pay_push_token", "POST", f"{base}/google-pay/push-token", {"wallet_account_id": "w1"}),
+        (
+            "google_pay_push_token",
+            "POST",
+            f"{base}/google-pay/push-token",
+            {"wallet_account_id": "w1"},
+        ),
         ("samsung_pay_provision", "POST", f"{base}/samsung-pay/provision", samsung),
         ("list_tokens", "GET", f"{base}/tokens", None),
         ("get_token", "GET", f"{base}/tokens/{TOKEN}", None),
@@ -93,7 +98,9 @@ def test_wallet_delete_all_tokens_cross_user_is_denied(wallet_client, user_a, us
     """Confirmed exploit path: deleting another user's wallet tokens."""
     client, service = wallet_client()
     r = client.request(
-        "DELETE", f"{WALLET}/{user_b.card_id}/wallet/tokens", json={"reason": "x"},
+        "DELETE",
+        f"{WALLET}/{user_b.card_id}/wallet/tokens",
+        json={"reason": "x"},
         headers=user_a.headers,
     )
     assert r.status_code == 403
@@ -140,7 +147,12 @@ def fraud_card_requests(card_id):
         ("set_alert_preferences", "PUT", f"{FRAUD}/cards/{card_id}/alerts/preferences", prefs),
         ("set_travel_notice", "POST", f"{FRAUD}/cards/{card_id}/travel-notices", notice),
         ("get_travel_notices", "GET", f"{FRAUD}/cards/{card_id}/travel-notices", None),
-        ("cancel_travel_notice", "DELETE", f"{FRAUD}/cards/{card_id}/travel-notices/{NOTICE}", None),
+        (
+            "cancel_travel_notice",
+            "DELETE",
+            f"{FRAUD}/cards/{card_id}/travel-notices/{NOTICE}",
+            None,
+        ),
         ("get_risk_score", "GET", f"{FRAUD}/cards/{card_id}/risk-score", None),
     ]
 
@@ -197,7 +209,9 @@ def test_fraud_report_listing_without_card_id_is_scoped_to_caller(fraud_client, 
     Previously this issued ONE unscoped upstream query, which returns every
     user's reports platform-wide.
     """
-    client, service = fraud_client({"get_fraud_reports": lambda kw: {"reports": [{"card_id": kw["card_id"]}]}})
+    client, service = fraud_client(
+        {"get_fraud_reports": lambda kw: {"reports": [{"card_id": kw["card_id"]}]}}
+    )
     r = client.get(f"{FRAUD}/fraud/reports", headers=user_a.headers)
     assert r.status_code == 200
 
@@ -211,7 +225,9 @@ def test_fraud_report_listing_without_card_id_is_scoped_to_caller(fraud_client, 
 
 
 def test_alert_listing_without_card_id_is_scoped_to_caller(fraud_client, user_a, user_b):
-    client, service = fraud_client({"get_alerts": lambda kw: {"alerts": [{"card_id": kw["card_id"]}]}})
+    client, service = fraud_client(
+        {"get_alerts": lambda kw: {"alerts": [{"card_id": kw["card_id"]}]}}
+    )
     r = client.get(f"{FRAUD}/alerts", headers=user_a.headers)
     assert r.status_code == 200
 
@@ -257,7 +273,9 @@ def test_listing_spans_every_card_the_caller_owns(fraud_client, user_a):
     from tests.unit.conftest import _make_card
 
     second = _make_card(user_a.user_id, f"card_a2_{uuid.uuid4().hex[:10]}")
-    client, service = fraud_client({"get_fraud_reports": lambda kw: {"reports": [{"card_id": kw["card_id"]}]}})
+    client, service = fraud_client(
+        {"get_fraud_reports": lambda kw: {"reports": [{"card_id": kw["card_id"]}]}}
+    )
     r = client.get(f"{FRAUD}/fraud/reports", headers=user_a.headers)
     assert r.status_code == 200
     assert sorted(service.cards_queried("get_fraud_reports")) == sorted([user_a.card_id, second])
@@ -284,7 +302,8 @@ def test_fraud_report_detail_allowed_for_owner(fraud_client, user_a):
 def test_fraud_report_update_of_another_users_card_is_denied(fraud_client, user_a, user_b):
     client, service = fraud_client({"get_fraud_report": {"card_id": user_b.card_id}})
     r = client.put(
-        f"{FRAUD}/fraud/reports/report_123", json={"description": "hijacked"},
+        f"{FRAUD}/fraud/reports/report_123",
+        json={"description": "hijacked"},
         headers=user_a.headers,
     )
     assert r.status_code == 403

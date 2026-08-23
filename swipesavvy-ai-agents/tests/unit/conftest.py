@@ -32,7 +32,6 @@ os.environ.setdefault("CARD_SURFACE_ENABLED", "true")
 import pytest  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
-
 from sqlalchemy import JSON, String  # noqa: E402
 from sqlalchemy.dialects.postgresql import JSONB  # noqa: E402
 
@@ -40,7 +39,6 @@ from app.core.auth import create_access_token  # noqa: E402
 from app.database import SessionLocal, engine  # noqa: E402
 from app.models import FISCard, FISFraudAlert  # noqa: E402
 from app.services.fis_global_service import FISAPIResponse  # noqa: E402
-
 
 # =============================================================================
 # DATABASE

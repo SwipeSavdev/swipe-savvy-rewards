@@ -70,14 +70,14 @@ def test_parameterised_route_is_declared_after_every_literal_sibling():
     catch_all = f"{PREFIX}/{{card_id}}/transactions/{{transaction_id}}"
 
     positions = [
-        i for i, r in enumerate(app.routes)
-        if isinstance(r, APIRoute) and r.path == catch_all
+        i for i, r in enumerate(app.routes) if isinstance(r, APIRoute) and r.path == catch_all
     ]
     assert positions, "catch-all route not found"
     catch_all_at = min(positions)
 
     shadowed = [
-        r.path for i, r in enumerate(app.routes)
+        r.path
+        for i, r in enumerate(app.routes)
         if isinstance(r, APIRoute)
         and i > catch_all_at
         and r.path.startswith(f"{PREFIX}/{{card_id}}/transactions/")
