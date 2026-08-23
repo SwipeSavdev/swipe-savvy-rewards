@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings 0 || true",
+    "lint": "eslint . --max-warnings 242",
     "type-check": "tsc -b --noEmit",
     "test": "true",
     "test:e2e": "playwright test",
