@@ -34,18 +34,6 @@ updates:
   - dependency-name: '*'
     update-types:
     - version-update:semver-major
-  # bcrypt is pinned at 4.0.1 ON PURPOSE. requirements.txt says why:
-  #   bcrypt==4.0.1  # Pinned for passlib compatibility (passlib breaks with bcrypt>=4.1)
-  # passlib reads bcrypt.__about__.__version__, removed in bcrypt 4.1, so its
-  # bcrypt backend stops resolving and password/PIN verification fails at
-  # RUNTIME, not at import. passlib/CryptContext is used in admin auth, RBAC
-  # and FIS PIN handling here, and no test exercises a real hash round-trip,
-  # so CI goes green on a broken build.
-  #
-  # The '*' rule above only ignores MAJORS, and 4.0.1 -> 4.3.0 is a minor, so
-  # Dependabot raised it (PR #92) while KEEPING the comment that forbids it.
-  # Ignored outright until passlib is replaced (it is unmaintained) or the
-  # compatibility is re-verified. KI-3887 / BUG-1980.
   - dependency-name: bcrypt
     update-types:
     - version-update:semver-minor
@@ -77,86 +65,6 @@ updates:
       - isort
       - ruff
       - coverage*
-- package-ecosystem: pip
-  directory: /swipesavvy-admin-portal
-  schedule:
-    interval: weekly
-    day: monday
-    time: "03:15"
-  open-pull-requests-limit: 10
-  reviewers:
-  - security-team
-  labels:
-  - dependencies
-  - python
-  groups:
-    python-runtime:
-      patterns:
-      - '*'
-      exclude-patterns:
-      - pytest*
-      - black
-      - flake8
-      - mypy
-      - isort
-      - ruff
-      - coverage*
-      update-types:
-      - minor
-      - patch
-    python-tooling:
-      patterns:
-      - pytest*
-      - black
-      - flake8
-      - mypy
-      - isort
-      - ruff
-      - coverage*
-- package-ecosystem: npm
-  directory: /swipesavvy-customer-website-nextjs
-  schedule:
-    interval: weekly
-    day: monday
-    time: "03:30"
-  open-pull-requests-limit: 10
-  reviewers:
-  - security-team
-  labels:
-  - dependencies
-  - npm
-  groups:
-    js-runtime:
-      patterns:
-      - '*'
-      exclude-patterns:
-      - '@types/*'
-      - eslint*
-      - '@typescript-eslint/*'
-      - prettier*
-      - vite
-      - vitest
-      - msw
-      - '@testing-library/*'
-      - jest*
-      - postcss
-      - tailwindcss
-      update-types:
-      - minor
-      - patch
-    js-tooling:
-      patterns:
-      - '@types/*'
-      - eslint*
-      - '@typescript-eslint/*'
-      - prettier*
-      - vite
-      - vitest
-      - msw
-      - '@testing-library/*'
-      - jest*
-      - postcss
-      - tailwindcss
 - package-ecosystem: npm
   directory: /swipesavvy-wallet-web
   schedule:
@@ -201,8 +109,60 @@ updates:
       - jest*
       - postcss
       - tailwindcss
+- package-ecosystem: pip
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+    time: "03:15"
+  open-pull-requests-limit: 10
+  reviewers:
+  - security-team
+  labels:
+  - dependencies
+  - python
+  groups:
+    python-runtime:
+      patterns:
+      - '*'
+      exclude-patterns:
+      - pytest*
+      - black
+      - flake8
+      - mypy
+      - isort
+      - ruff
+      - coverage*
+      update-types:
+      - minor
+      - patch
+    python-tooling:
+      patterns:
+      - pytest*
+      - black
+      - flake8
+      - mypy
+      - isort
+      - ruff
+      - coverage*
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+    time: "04:15"
+  open-pull-requests-limit: 10
+  reviewers:
+  - security-team
+  labels:
+  - dependencies
+  - github-actions
+  groups:
+    gha:
+      patterns:
+      - '*'
 - package-ecosystem: npm
-  directory: /swipesavvy-mobile-app-v2
+  directory: /
   schedule:
     interval: weekly
     day: monday
@@ -245,19 +205,47 @@ updates:
       - jest*
       - postcss
       - tailwindcss
-- package-ecosystem: github-actions
-  directory: /
+- package-ecosystem: npm
+  directory: /swipesavvy-admin-portal
   schedule:
     interval: weekly
     day: monday
-    time: "04:15"
+    time: "04:30"
   open-pull-requests-limit: 10
   reviewers:
   - security-team
   labels:
   - dependencies
-  - github-actions
+  - npm
   groups:
-    gha:
+    js-runtime:
       patterns:
       - '*'
+      exclude-patterns:
+      - '@types/*'
+      - eslint*
+      - '@typescript-eslint/*'
+      - prettier*
+      - vite
+      - vitest
+      - msw
+      - '@testing-library/*'
+      - jest*
+      - postcss
+      - tailwindcss
+      update-types:
+      - minor
+      - patch
+    js-tooling:
+      patterns:
+      - '@types/*'
+      - eslint*
+      - '@typescript-eslint/*'
+      - prettier*
+      - vite
+      - vitest
+      - msw
+      - '@testing-library/*'
+      - jest*
+      - postcss
+      - tailwindcss
