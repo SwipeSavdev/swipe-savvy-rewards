@@ -27,7 +27,35 @@ from typing import Any, Dict, List, Optional
 import httpx
 from pydantic import BaseModel, Field
 
+from app.core.card_surface import env_flag
+
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# MOCK-MODE CONFIGURATION
+# =============================================================================
+
+#: Explicit opt-in for fabricated FIS responses. Mock mode is NEVER inferred
+#: from missing credentials — that inference is what let a mis-provisioned
+#: production deploy fabricate KYC approvals.
+FIS_MOCK_MODE_ENV_VAR = "FIS_MOCK_MODE"
+
+#: Off unless an operator asks for it, by name.
+FIS_MOCK_MODE_DEFAULT = "false"
+
+
+class FISNotConfiguredError(RuntimeError):
+    """
+    Raised when a FIS request is attempted with no credentials and no explicit
+    mock mode.
+
+    Deliberately an exception rather than a ``success=False`` response: a
+    declined-looking response body is exactly the kind of thing a caller
+    quietly swallows and treats as a business outcome. A missing-credentials
+    condition is an operational fault and must be impossible to confuse with
+    a decision FIS made.
+    """
 
 
 # =============================================================================
@@ -114,6 +142,13 @@ class FISAPIResponse(BaseModel):
     error_message: Optional[str] = None
     request_id: Optional[str] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+    #: True when this response was FABRICATED locally and never touched FIS.
+    #: Every caller, log line and audit record can now tell a synthetic
+    #: "approved" from a real one. Real responses always carry mock=False.
+    #: Defaults to False so a response that forgets to set it is treated as
+    #: real (and therefore held to the real-response bar) rather than
+    #: silently excused as a mock.
+    mock: bool = False
 
 
 class FISCardData(BaseModel):
@@ -173,6 +208,7 @@ class FISGlobalService:
         api_url: Optional[str] = None,
         environment: Optional[str] = None,
         webhook_secret: Optional[str] = None,
+        mock_mode: Optional[bool] = None,
     ):
         """
         Initialize FIS Global service.
@@ -183,6 +219,11 @@ class FISGlobalService:
             api_url: FIS API base URL
             environment: 'sandbox' or 'production'
             webhook_secret: Secret for verifying webhook signatures
+            mock_mode: Explicit opt-in to FABRICATED responses. ``None``
+                (the default) falls back to the ``FIS_MOCK_MODE`` env var,
+                which itself defaults to off. Mock mode is never inferred
+                from the absence of credentials, and is never honoured when
+                ``ENVIRONMENT=production``.
         """
         self.client_id = client_id or os.getenv("FIS_CLIENT_ID", "")
         self.client_secret = client_secret or os.getenv("FIS_CLIENT_SECRET", "")
@@ -207,13 +248,62 @@ class FISGlobalService:
         # HTTP client
         self._client: Optional[httpx.AsyncClient] = None
 
-        # Check if service is configured
-        self.mock_mode = not (self.client_id and self.client_secret)
+        # ------------------------------------------------------------------
+        # Mock mode is an EXPLICIT OPT-IN. It is never inferred.
+        #
+        # This used to read `not (self.client_id and self.client_secret)`,
+        # which meant the ABSENCE of credentials silently switched the whole
+        # FIS integration into a fabricator: a production deploy that failed
+        # to inject its secrets booted "healthy" and returned synthetic KYC
+        # approvals and card issuances that no caller could distinguish from
+        # real ones. Configuration failure must never look like success.
+        #
+        # Now: mock mode requires someone to have asked for it, by name.
+        # ------------------------------------------------------------------
+        self.credentials_present = bool(self.client_id and self.client_secret)
+
+        if mock_mode is not None:
+            requested_mock = bool(mock_mode)
+            mock_source = "constructor argument"
+        else:
+            requested_mock = env_flag(FIS_MOCK_MODE_ENV_VAR, FIS_MOCK_MODE_DEFAULT)
+            mock_source = f"{FIS_MOCK_MODE_ENV_VAR} env var"
+
+        # Mock mode is NEVER honoured in production, regardless of who asked.
+        # A production process that requests fabrication is a misconfiguration
+        # we refuse to act on; boot validation turns this into a hard failure.
+        self.is_production = os.getenv("ENVIRONMENT", "development").strip().lower() == "production"
+
+        if requested_mock and self.is_production:
+            logger.critical(
+                "FIS mock mode was requested via %s but ENVIRONMENT=production. "
+                "REFUSING to fabricate FIS responses in production. Real FIS "
+                "credentials are required; requests will fail loudly instead.",
+                mock_source,
+            )
+            self.mock_mode = False
+        else:
+            self.mock_mode = requested_mock
 
         if self.mock_mode:
             logger.warning(
-                "FIS Global service running in MOCK mode - "
-                "FIS_CLIENT_ID and FIS_CLIENT_SECRET not configured"
+                "FIS Global service running in EXPLICIT MOCK mode (%s). "
+                "All FIS responses are FABRICATED and carry mock=True. "
+                "No card, KYC or wallet result from this process is real.",
+                mock_source,
+            )
+        elif not self.credentials_present:
+            # Not fatal at construction time: a module-level singleton is built
+            # at import, and crashing the import would take down unrelated
+            # routes. The refusal happens at the network boundary instead —
+            # see _make_request — so nothing can be fabricated, and boot
+            # validation surfaces this state before traffic arrives.
+            logger.error(
+                "FIS Global service is NOT CONFIGURED - FIS_CLIENT_ID and "
+                "FIS_CLIENT_SECRET are absent and %s is not enabled. Every FIS "
+                "request will FAIL with FISNotConfiguredError rather than return "
+                "fabricated data.",
+                FIS_MOCK_MODE_ENV_VAR,
             )
         else:
             logger.info(f"FIS Global service initialized - Environment: {self.environment.value}")
@@ -336,6 +426,19 @@ class FISGlobalService:
         """
         if self.mock_mode:
             return self._mock_response(method, endpoint, data)
+
+        if not self.credentials_present:
+            # The single most important line in this file. Previously control
+            # fell into _mock_response here and the caller received a
+            # fabricated success.
+            raise FISNotConfiguredError(
+                f"Refusing to call FIS: {method} {endpoint} requires FIS_CLIENT_ID and "
+                f"FIS_CLIENT_SECRET, which are not configured, and {FIS_MOCK_MODE_ENV_VAR} "
+                f"is not enabled. Provision the FIS credentials, or set "
+                f"{FIS_MOCK_MODE_ENV_VAR}=true in a NON-PRODUCTION environment to use "
+                f"clearly-marked fabricated responses. This request was NOT sent and "
+                f"NO result was invented."
+            )
 
         client = await self._get_client()
         token = await self._get_auth_token()
@@ -469,7 +572,9 @@ class FISGlobalService:
         return hmac.compare_digest(expected_signature, signature)
 
     # =========================================================================
-    # MOCK RESPONSES (for development without FIS credentials)
+    # FABRICATED RESPONSES — reachable ONLY via explicit FIS_MOCK_MODE=true,
+    # never via missing credentials, and never in production. Every response
+    # built below carries mock=True so no caller can mistake it for real.
     # =========================================================================
 
     def _mock_response(
@@ -503,6 +608,7 @@ class FISGlobalService:
 
         # Default mock response
         return FISAPIResponse(
+            mock=True,
             success=True,
             data={"message": "Mock response", "endpoint": endpoint},
             request_id=self._generate_request_id(),
@@ -514,6 +620,7 @@ class FISGlobalService:
 
         card_id = f"card_{uuid.uuid4().hex[:12]}"
         return FISAPIResponse(
+            mock=True,
             success=True,
             data={
                 "card_id": card_id,
@@ -532,6 +639,7 @@ class FISGlobalService:
     def _mock_card_activation(self, data: Optional[Dict] = None) -> FISAPIResponse:
         """Mock card activation response"""
         return FISAPIResponse(
+            mock=True,
             success=True,
             data={
                 "status": "active",
@@ -545,6 +653,7 @@ class FISGlobalService:
         """Mock card lock/unlock response"""
         is_lock = "lock" in endpoint and "unlock" not in endpoint
         return FISAPIResponse(
+            mock=True,
             success=True,
             data={
                 "status": "locked" if is_lock else "active",
@@ -557,6 +666,7 @@ class FISGlobalService:
     def _mock_card_details(self) -> FISAPIResponse:
         """Mock card details response"""
         return FISAPIResponse(
+            mock=True,
             success=True,
             data={
                 "card_id": "card_mock123456",
@@ -576,6 +686,7 @@ class FISGlobalService:
     def _mock_pin_operation(self, endpoint: str, data: Optional[Dict] = None) -> FISAPIResponse:
         """Mock PIN operation response"""
         return FISAPIResponse(
+            mock=True,
             success=True,
             data={
                 "message": "PIN operation completed successfully",
@@ -588,6 +699,7 @@ class FISGlobalService:
     def _mock_transactions(self) -> FISAPIResponse:
         """Mock transactions list response"""
         return FISAPIResponse(
+            mock=True,
             success=True,
             data={
                 "transactions": [
@@ -624,6 +736,7 @@ class FISGlobalService:
         import uuid
 
         return FISAPIResponse(
+            mock=True,
             success=True,
             data={
                 "token_id": f"dpan_{uuid.uuid4().hex[:16]}",
@@ -638,6 +751,7 @@ class FISGlobalService:
     def _mock_kyc_operation(self, endpoint: str, data: Optional[Dict] = None) -> FISAPIResponse:
         """Mock KYC operation response"""
         return FISAPIResponse(
+            mock=True,
             success=True,
             data={
                 "verification_id": f"kyc_{self._generate_request_id()}",

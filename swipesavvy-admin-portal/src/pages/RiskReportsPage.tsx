@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ComposedChart, Line, Area } from 'recharts'
 import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, Shield, Users, Activity, ChevronRight, RefreshCw, Download, Filter, ArrowLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
+import _axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
+const _API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const _USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 // Chart colors
 const CHART_COLORS = {
@@ -202,8 +202,8 @@ export default function RiskReportsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedYear, setSelectedYear] = useState<1 | 2 | 3>(1)
   const [refreshing, setRefreshing] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [_loading, setLoading] = useState(true)
+  const [_error, _setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations'>('overview')
 
   // Fetch risk data on mount
