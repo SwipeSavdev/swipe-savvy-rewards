@@ -250,11 +250,21 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
     transaction_type VARCHAR(50) DEFAULT 'transfer' CHECK (transaction_type IN ('deposit', 'withdrawal', 'transfer', 'payment', 'refund')),
     amount DECIMAL(15, 2) NOT NULL,
     currency VARCHAR(3) DEFAULT 'USD',
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'cancelled')),
+    -- Widened for card settlement outcomes delivered by FIS webhooks. Each of
+    -- declined/reversed/refunded/fraudulent is a distinct outcome with no
+    -- lossless mapping onto the original four values.
+    status VARCHAR(50) DEFAULT 'pending' CONSTRAINT ck_wallet_transactions_status CHECK (status IN ('pending', 'completed', 'failed', 'cancelled', 'declined', 'reversed', 'refunded', 'fraudulent')),
     description TEXT,
     recipient_id UUID,
     payment_method VARCHAR(100),
     reference_number VARCHAR(255) UNIQUE,
+    -- External (processor-supplied) natural keys. The primary key stays a real
+    -- uuid; FIS-supplied ids and derived keys (rfnd_*, dispute_credit_*) live
+    -- here. external_transaction_id carries the UNIQUE constraint that makes
+    -- webhook inserts idempotent.
+    external_transaction_id VARCHAR(255) UNIQUE,
+    related_external_id VARCHAR(255),
+    authorization_code VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP
 );
@@ -263,6 +273,41 @@ CREATE INDEX IF NOT EXISTS idx_wallet_tx_user ON wallet_transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_wallet_tx_status ON wallet_transactions(status);
 CREATE INDEX IF NOT EXISTS idx_wallet_tx_created ON wallet_transactions(created_at);
 CREATE INDEX IF NOT EXISTS idx_wallet_tx_ref ON wallet_transactions(reference_number);
+CREATE INDEX IF NOT EXISTS idx_wallet_tx_external ON wallet_transactions(external_transaction_id);
+CREATE INDEX IF NOT EXISTS idx_wallet_tx_related_external ON wallet_transactions(related_external_id);
+
+-- ============================================
+-- FIS Webhook Durable Inbox
+-- ============================================
+-- Every authenticated inbound FIS webhook is written here, in its own
+-- transaction, BEFORE the endpoint acknowledges receipt. Processing reads back
+-- from this table. That ordering is what turns an in-process failure from
+-- silent data loss into recoverable work.
+CREATE TABLE IF NOT EXISTS fis_webhook_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    -- Idempotency backstop: a redelivery of the same event_id is a no-op.
+    event_id VARCHAR(255) NOT NULL UNIQUE,
+    event_type VARCHAR(100) NOT NULL,
+    -- Exact bytes as received, so the signature can be re-verified on replay.
+    raw_body TEXT NOT NULL,
+    payload JSONB,
+    signature VARCHAR(255),
+    event_timestamp VARCHAR(64),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CONSTRAINT ck_fis_webhook_events_status CHECK (status IN ('pending', 'processing', 'processed', 'failed', 'dead_letter', 'rejected')),
+    attempts INTEGER NOT NULL DEFAULT 0,
+    max_attempts INTEGER NOT NULL DEFAULT 5,
+    next_attempt_at TIMESTAMPTZ,
+    last_error TEXT,
+    received_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMPTZ,
+    dead_lettered_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS ix_fis_webhook_events_status ON fis_webhook_events(status);
+CREATE INDEX IF NOT EXISTS ix_fis_webhook_events_event_type ON fis_webhook_events(event_type);
+CREATE INDEX IF NOT EXISTS ix_fis_webhook_events_received_at ON fis_webhook_events(received_at);
+-- Drives the retry sweeper: "give me everything due for another attempt".
+CREATE INDEX IF NOT EXISTS ix_fis_webhook_events_due ON fis_webhook_events(status, next_attempt_at);
 
 -- Wallets Table
 CREATE TABLE IF NOT EXISTS wallets (
