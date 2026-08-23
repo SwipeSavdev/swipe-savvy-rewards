@@ -205,6 +205,72 @@ jobs:
           [ -f .env.staging ] && echo "✅ .env.staging exists" || echo "⚠️ .env.staging missing"
           [ -f .env.production ] && echo "✅ .env.production exists" || echo "⚠️ .env.production missing"
 
+      # KI-3893 / KI-3887 — two Dependabot config failure modes that are INVISIBLE
+      # to every ordinary check, including `yaml.safe_load` and GitHub's own
+      # "Dependabot config file validation":
+      #
+      #  1. An unquoted `time: 03:00`. Dependabot parses YAML 1.1 with Ruby, which
+      #     reads that as the SEXAGESIMAL INTEGER 180, and the schema wants a
+      #     string. PyYAML only applies sexagesimal WITHOUT a leading zero, so it
+      #     returns the string "03:00" and every local validation passes while
+      #     Dependabot reports a type error and stops raising ANY PR for the repo.
+      #     This must be checked on the RAW TEXT — a YAML-parsing check cannot see it.
+      #
+      #  2. A `directory:` that contains no manifest. Dependabot does not error on
+      #     this; the entry silently does nothing. Three of six entries pointed at
+      #     paths with no package.json / requirements.txt (one was an orphaned,
+      #     empty git submodule), while the root package.json, the root
+      #     requirements.txt and swipesavvy-admin-portal's package.json — 103
+      #     packages in total — had no coverage at all.
+      - name: Validate Dependabot config (KI-3893 / KI-3887)
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          CFG=.github/dependabot.yml
+          fail=0
+
+          # (1) raw-text check: schedule.time must be quoted
+          if grep -nE '^[[:space:]]*time:[[:space:]]*[0-9]{1,2}:[0-9]{2}[[:space:]]*$' "$CFG"; then
+            echo "::error::Unquoted schedule.time above. Dependabot's Ruby YAML 1.1 parser reads"
+            echo "  time: 03:00   as the integer 180 and rejects the whole config, silently"
+            echo "  stopping every update for this repo. Quote it:  time: \"03:00\""
+            fail=1
+          else
+            echo "OK  every schedule.time is quoted"
+          fi
+
+          # (2) every declared directory must actually contain a manifest.
+          # This job runs setup-python, which shadows the runner's system python3
+          # (that one ships PyYAML; a fresh setup-python interpreter does not), so
+          # install it explicitly rather than relying on what happens to be there.
+          python3 -m pip install --quiet --disable-pip-version-check pyyaml
+          python3 - <<'PY'
+          import os, re, sys, yaml
+          cfg = yaml.safe_load(open('.github/dependabot.yml'))
+          MANIFEST = {
+              'npm': lambda d: os.path.exists(os.path.join(d, 'package.json')),
+              'pip': lambda d: any(re.match(r'requirements.*\.txt$', f)
+                                   for f in (os.listdir(d) if os.path.isdir(d) else [])),
+              'github-actions': lambda d: os.path.isdir('.github/workflows'),
+          }
+          bad = []
+          for u in cfg.get('updates', []):
+              eco, raw = u['package-ecosystem'], u['directory']
+              d = '.' + raw if raw != '/' else '.'
+              check = MANIFEST.get(eco)
+              if check and not check(d):
+                  bad.append('%s %s' % (eco, raw))
+          if bad:
+              print('::error::Dependabot entries whose directory holds no manifest '
+                    '(these do nothing, silently):')
+              for b in bad:
+                  print('  - ' + b)
+              sys.exit(1)
+          print('OK  all %d entries resolve to a real manifest' % len(cfg.get('updates', [])))
+          PY
+
+          [ "$fail" = "0" ]
+
   # Report summary
   security-summary:
     name: Security Scan Summary
