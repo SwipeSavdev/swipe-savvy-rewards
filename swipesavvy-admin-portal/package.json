@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 242",
     "type-check": "tsc -b --noEmit",
-    "test": "true",
+    "test": "echo 'admin-portal has no tests configured (KI-3890/BUG-1983). This exits 0 so CI is not blocked, but Frontend CI has NO test coverage for this package \u2014 do not read its green as coverage.' && exit 0",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug"
