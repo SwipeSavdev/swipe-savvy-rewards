@@ -151,10 +151,10 @@ export default function UserManagementPage() {
 
   // Dynamic categories - can be extended by users
   const [permissionCategories, setPermissionCategories] = useState<string[]>(DEFAULT_PERMISSION_permissionCategories)
-  const [policyCategories, setPolicyCategories] = useState<string[]>(DEFAULT_POLICY_permissionCategories)
-  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false)
+  const [_policyCategories, _setPolicyCategories] = useState<string[]>(DEFAULT_POLICY_permissionCategories)
+  const [_showAddCategoryModal, _setShowAddCategoryModal] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
-  const [categoryType, setCategoryType] = useState<'permission' | 'policy'>('permission')
+  const [_categoryType, _setCategoryType] = useState<'permission' | 'policy'>('permission')
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [newUser, setNewUser] = useState<{
     name: string

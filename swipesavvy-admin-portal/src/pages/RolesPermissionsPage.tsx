@@ -631,7 +631,7 @@ export default function RolesPermissionsPage() {
     [],
   )
 
-  const getPermissionLabel = (permId: string) => {
+  const _getPermissionLabel = (permId: string) => {
     return AVAILABLE_PERMISSIONS.find((p) => p.id === permId)?.label || permId
   }
 
