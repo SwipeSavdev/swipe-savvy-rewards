@@ -22,6 +22,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.auth import verify_token_string
+from app.core.card_surface import require_card_surface_enabled
 from app.database import get_db
 from app.models import User
 from app.models.forms import ContactFormSubmission, DemoRequestSubmission
@@ -546,39 +547,61 @@ async def website_concierge_chat(request: WebsiteConciergeRequest, db: Session =
 # ============================================
 
 
-@router.post("/api/v1/kyc/submit")
+@router.post(
+    "/api/v1/kyc/submit",
+    dependencies=[Depends(require_card_surface_enabled)],
+)
 async def kyc_submit(
     request: KYCSubmitRequest,
-    authorization: Optional[str] = Header(None),
+    user_id: str = Depends(require_auth),
     db: Session = Depends(get_db),
 ):
     """
     Submit KYC verification documents.
 
-    Initiates the KYC verification process for the authenticated user.
+    KYC is part of the card surface, so this endpoint is gated by
+    CARD_SURFACE_ENABLED and returns 503 while the surface is dark.
+
+    Two things were wrong here and are fixed above:
+
+    1. Authentication checked only that an ``Authorization`` header was
+       PRESENT — any non-empty string, valid or not, was accepted. It now
+       depends on ``require_auth``, which requires a Bearer scheme and
+       verifies the token signature via ``verify_token_string``.
+    2. It returned ``success: true, status: "pending_review"`` while
+       persisting nothing and notifying no one. A caller had no way to know
+       their documents went nowhere.
+
+    Persistence and real provider submission are NOT implemented here on
+    purpose: there is no contracted KYC provider yet (see KYC_PROVIDER in
+    app/core/boot_validation.py). Rather than keep inventing a plausible
+    receipt, the endpoint now refuses while the surface is dark, and when
+    the surface is switched on it fails loudly instead of lying.
     """
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authentication required")
-
-    import uuid
-
-    submission_id = str(uuid.uuid4())
-
     valid_document_types = ["drivers_license", "passport", "id_card", "state_id"]
     if request.document_type not in valid_document_types:
         raise HTTPException(
             status_code=422, detail=f"Invalid document_type. Must be one of: {valid_document_types}"
         )
 
-    logger.info(f"KYC submission started: {submission_id}")
-
-    return {
-        "success": True,
-        "submission_id": submission_id,
-        "status": "pending_review",
-        "message": "Your documents have been submitted for verification. This process typically takes 1-2 business days.",
-        "estimated_completion": "48 hours",
-    }
+    logger.error(
+        "KYC submission attempted by user %s with the card surface ENABLED, but no "
+        "KYC provider is contracted or wired up. Refusing to return a fabricated "
+        "receipt.",
+        user_id,
+    )
+    raise HTTPException(
+        status_code=503,
+        detail={
+            "success": False,
+            "error_code": "KYC_PROVIDER_NOT_CONFIGURED",
+            "detail": (
+                "KYC verification is not available: no identity-verification "
+                "provider is configured. Your documents were NOT submitted and "
+                "NOT stored."
+            ),
+        },
+    )
 
 
 # ============================================
