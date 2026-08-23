@@ -5,32 +5,32 @@ together>=1.2.0
 openai>=1.0.0
 
 # Embedding models
-sentence-transformers>=2.2.0  # Local embeddings
-tiktoken>=0.5.0  # Token counting
+sentence-transformers>=2.7.0  # Local embeddings
+tiktoken>=0.14.0  # Token counting
 
 # Database
-psycopg2-binary>=2.9.9
-sqlalchemy>=2.0.0
-redis>=5.0.0
+psycopg2-binary>=2.9.12
+sqlalchemy>=2.0.52
+redis>=5.3.1
 
 # Vector databases
-pinecone-client>=3.0.0  # If using Pinecone
-pgvector>=0.2.0  # If using pgvector
+pinecone-client>=3.2.2  # If using Pinecone
+pgvector>=0.5.0  # If using pgvector
 
 # Web framework
 fastapi>=0.104.0
-uvicorn>=0.24.0
-pydantic>=2.5.0
+uvicorn>=0.52.4
+pydantic>=2.13.4
 email-validator>=2.3.0  # Required for Pydantic email validation
 python-multipart>=0.0.31  # Required for form data handling
 
 # PII detection and security
-presidio-analyzer>=2.2.362
-presidio-anonymizer>=2.2.0
-spacy>=3.7.0
+presidio-analyzer>=2.2.364
+presidio-anonymizer>=2.2.364
+spacy>=3.8.15
 
 # Utilities
-python-dotenv>=1.2.2
+python-dotenv>=1.2.3
 requests>=2.33.1
 httpx>=0.28.1
 
@@ -59,8 +59,8 @@ mypy>=1.20.2
 isort>=5.12.0
 
 # Evaluation
-pandas>=2.1.0
-numpy>=1.26.0
+pandas>=2.3.3
+numpy>=1.26.4
 
 # JWT and auth
 pyjwt>=2.13.0
@@ -69,10 +69,10 @@ passlib>=1.7.4
 bcrypt==4.0.1  # Pinned for passlib compatibility (passlib breaks with bcrypt>=4.1)
 
 # Rate limiting
-slowapi>=0.1.9
+slowapi>=0.1.10
 
 # Background tasks
-celery>=5.3.0
+celery>=5.6.3
 
 # NLP models (download separately)
 # python -m spacy download en_core_web_lg
