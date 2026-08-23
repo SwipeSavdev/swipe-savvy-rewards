@@ -1,0 +1,89 @@
+name: Dependabot auto-merge
+
+# WHY THIS EXISTS (KI-3867)
+#
+# `main` requires one approving review. Dependabot cannot approve its own PRs and
+# no human was doing it, so dependency PRs simply accumulated — the oldest in this
+# repo had been open since 2026-05-10, more than three months, with fully green CI
+# the whole time. That is not a CI problem or a security posture; it is an
+# unattended queue, and a queue of unmerged SECURITY patches is the worst kind.
+#
+# This approves and enables auto-merge for the updates where a human review adds
+# nothing: patch bumps, and minor bumps of development/test-only dependencies.
+# GitHub still holds the merge until every required check passes — auto-merge is a
+# queue, not a bypass. A failing check means it never lands.
+#
+# DELIBERATELY NOT AUTO-MERGED, so they still reach a person:
+#   * every major version bump,
+#   * minor bumps of runtime dependencies (an axios or httpx minor has broken
+#     things before),
+#   * anything Dependabot flags as a security update to a runtime dependency —
+#     those want eyes precisely because they are urgent.
+
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@08eff52bf64351f401fb50d4972fa95b9f2c2d1b # v2.4.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # `update-type` is semver-relative to the OLD version, and `dependency-type`
+      # distinguishes a prod dependency from a dev one. Both come from Dependabot
+      # itself rather than being parsed out of the PR title, which is why this is
+      # trustworthy where a title regex would not be.
+      - name: Decide
+        id: decide
+        env:
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+          DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
+          NAMES: ${{ steps.meta.outputs.dependency-names }}
+        run: |
+          set -euo pipefail
+          ok=false
+          if [ "$UPDATE_TYPE" = "version-update:semver-patch" ]; then
+            ok=true
+          elif [ "$UPDATE_TYPE" = "version-update:semver-minor" ] && [ "$DEP_TYPE" = "direct:development" ]; then
+            ok=true
+          fi
+          echo "auto=$ok" >> "$GITHUB_OUTPUT"
+          echo "Dependencies: $NAMES"
+          echo "update-type=$UPDATE_TYPE dependency-type=$DEP_TYPE -> auto-merge=$ok"
+
+      - name: Approve
+        if: steps.decide.outputs.auto == 'true'
+        env:
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+          DEP_NAMES: ${{ steps.meta.outputs.dependency-names }}
+          DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr review --approve "$PR_URL" --body \
+            "Auto-approved — ${UPDATE_TYPE} of ${DEP_NAMES} (${DEP_TYPE}). Auto-merge is enabled; GitHub holds this until every required check passes."
+
+      - name: Enable auto-merge
+        if: steps.decide.outputs.auto == 'true'
+        run: |
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Explain why it was left for a human
+        if: steps.decide.outputs.auto != 'true'
+        env:
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+          DEP_NAMES: ${{ steps.meta.outputs.dependency-names }}
+          DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
+        run: |
+          echo "::notice::Left for human review - ${UPDATE_TYPE} of a ${DEP_TYPE} dependency (${DEP_NAMES}). Majors and runtime minors are deliberately not auto-merged."
