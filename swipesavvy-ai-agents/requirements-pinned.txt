@@ -7,30 +7,30 @@
 together==1.5.35
 openai>=1.30.0
 sentence-transformers==2.2.2
-tiktoken==0.12.0
+tiktoken==0.14.0
 
 # Database & ORM
-psycopg2-binary==2.9.11
-sqlalchemy==2.0.48
+psycopg2-binary==2.9.12
+sqlalchemy==2.0.52
 redis==5.0.1
 
 # Vector Databases
 pinecone-client==3.0.2
-pgvector==0.2.2
+pgvector==0.5.0
 
 # Web Framework
-fastapi>=0.109.1
-uvicorn==0.24.0
-pydantic==2.12.5
-pydantic-settings==2.14.2
+fastapi>=0.141.1
+uvicorn==0.52.4
+pydantic==2.13.4
+pydantic-settings==2.15.0
 
 # Security & PII Detection
-presidio-analyzer==2.2.362
-presidio-anonymizer==2.2.28
-spacy==3.8.11
+presidio-analyzer==2.2.364
+presidio-anonymizer==2.2.364
+spacy==3.8.15
 
 # Utilities
-python-dotenv==1.2.2
+python-dotenv==1.2.3
 requests>=2.33.1
 httpx==0.28.1
 
@@ -43,11 +43,11 @@ pyjwt==2.13.0
 cryptography>=43.0.0
 
 # Rate Limiting
-slowapi==0.1.9
+slowapi==0.1.10
 
 # Background Tasks
-celery==5.3.4
-kombu==5.3.4
+celery==5.6.3
+kombu==5.6.2
 
 # Data Science
 pandas==2.1.3
