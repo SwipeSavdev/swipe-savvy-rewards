@@ -22,14 +22,14 @@ const DEFAULT_REVENUE_DATA = [
   { month: 'Dec', revenue: 95000, transactions: 2850, users: 1720 },
 ]
 
-const transactionTypeData = [
+const _transactionTypeData = [
   { name: 'Card Payments', value: 45, fill: '#3b82f6' },
   { name: 'Mobile Wallet', value: 30, fill: '#8b5cf6' },
   { name: 'Bank Transfer', value: 15, fill: '#10b981' },
   { name: 'Cash Back', value: 10, fill: '#f59e0b' },
 ]
 
-const merchantPerformance = [
+const _merchantPerformance = [
   { name: 'Retail', transactions: 4500, revenue: 125000 },
   { name: 'Food & Beverage', transactions: 3200, revenue: 89000 },
   { name: 'Healthcare', transactions: 1800, revenue: 156000 },
@@ -49,13 +49,13 @@ const dailyActivity = [
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState('30d')
   const [revenueData, setRevenueData] = useState(DEFAULT_REVENUE_DATA)
-  const [transactionTypeData, setTransactionTypeData] = useState([
+  const [transactionTypeData, _setTransactionTypeData] = useState([
     { name: 'Card Payments', value: 45, fill: '#3b82f6' },
     { name: 'Mobile Wallet', value: 30, fill: '#8b5cf6' },
     { name: 'Bank Transfer', value: 15, fill: '#10b981' },
     { name: 'Cash Back', value: 10, fill: '#f59e0b' },
   ])
-  const [merchantPerformance, setMerchantPerformance] = useState([
+  const [merchantPerformance, _setMerchantPerformance] = useState([
     { name: 'Retail', transactions: 4500, revenue: 125000 },
     { name: 'Food & Beverage', transactions: 3200, revenue: 89000 },
     { name: 'Healthcare', transactions: 1800, revenue: 156000 },
@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
       }
 
       // Fetch overview stats and chart data in parallel
-      const [overviewRes, transactionRes, revenueRes] = await Promise.all([
+      const [overviewRes, transactionRes, _revenueRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/v1/admin/analytics/overview`),
         axios.get(`${API_BASE_URL}/api/v1/admin/analytics/transactions`, { params: { days } }),
         axios.get(`${API_BASE_URL}/api/v1/admin/analytics/revenue`, { params: { days } }),

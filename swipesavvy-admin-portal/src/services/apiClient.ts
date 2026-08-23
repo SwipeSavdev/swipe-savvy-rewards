@@ -200,7 +200,7 @@ interface ApiLoadingState {
 }
 
 // Simple loading state management without external dependencies
-let apiLoadingState: ApiLoadingState = {
+const apiLoadingState: ApiLoadingState = {
   loadingCount: 0,
   isLoading: false,
   startLoading() {
@@ -302,7 +302,7 @@ async function fetchApi(endpoint: string, options: RequestInit = {}, retries = 3
               // Retry original request with new token
               return fetchApi(endpoint, options, 1)
             }
-          } catch (error) {
+          } catch (_error) {
             // Refresh failed - redirect to login
             sessionStorage.removeItem(TOKEN_KEY)
             sessionStorage.removeItem(USER_KEY)
@@ -1248,7 +1248,7 @@ export const marketingAnalyticsApi = {
   async getAnalytics(dateRange = '30d') {
     try {
       return await fetchApi(`/api/marketing/analytics?date_range=${dateRange}`)
-    } catch (error) {
+    } catch (_error) {
       // Return mock data if API not available
       console.warn('[marketingAnalyticsApi] API not available, using mock data')
       return {
@@ -1341,7 +1341,7 @@ export const abTestingApi = {
         ...(status && { status }),
       })
       return await fetchApi(`/api/marketing/ab-tests?${params}`)
-    } catch (error) {
+    } catch (_error) {
       // Return mock data if API not available
       console.warn('[abTestingApi] API not available, using mock data')
       return {
@@ -1417,7 +1417,7 @@ export const abTestingApi = {
         method: 'POST',
         body: JSON.stringify(data),
       })
-    } catch (error) {
+    } catch (_error) {
       // Mock create for demo
       console.warn('[abTestingApi] Create API not available, using mock')
       return {
@@ -1454,7 +1454,7 @@ export const abTestingApi = {
       return await fetchApi(`/api/marketing/ab-tests/${testId}/start`, {
         method: 'POST',
       })
-    } catch (error) {
+    } catch (_error) {
       // Mock start for demo
       console.warn('[abTestingApi] Start API not available, using mock')
       return { status: 'success', test_status: 'running' }
@@ -1466,7 +1466,7 @@ export const abTestingApi = {
       return await fetchApi(`/api/marketing/ab-tests/${testId}/pause`, {
         method: 'POST',
       })
-    } catch (error) {
+    } catch (_error) {
       console.warn('[abTestingApi] Pause API not available, using mock')
       return { status: 'success', test_status: 'paused' }
     }
@@ -1477,7 +1477,7 @@ export const abTestingApi = {
       return await fetchApi(`/api/marketing/ab-tests/${testId}/stop`, {
         method: 'POST',
       })
-    } catch (error) {
+    } catch (_error) {
       console.warn('[abTestingApi] Stop API not available, using mock')
       return { status: 'success', test_status: 'completed' }
     }
@@ -1489,7 +1489,7 @@ export const abTestingApi = {
         method: 'POST',
         body: JSON.stringify({ variant_id: variantId }),
       })
-    } catch (error) {
+    } catch (_error) {
       console.warn('[abTestingApi] Promote API not available, using mock')
       return { status: 'success', promoted_variant: variantId }
     }
@@ -1508,7 +1508,7 @@ export const abTestingApi = {
       return await fetchApi(`/api/marketing/ab-tests/${testId}`, {
         method: 'DELETE',
       })
-    } catch (error) {
+    } catch (_error) {
       console.warn('[abTestingApi] Delete API not available, using mock')
       return { status: 'success' }
     }
@@ -1527,7 +1527,7 @@ export const audienceSegmentsApi = {
         per_page: perPage.toString(),
       })
       return await fetchApi(`/api/marketing/audience-segments?${params}`)
-    } catch (error) {
+    } catch (_error) {
       // Return mock data if API not available
       console.warn('[audienceSegmentsApi] API not available, using mock data')
       return {
@@ -1612,7 +1612,7 @@ export const audienceSegmentsApi = {
         method: 'POST',
         body: JSON.stringify(data),
       })
-    } catch (error) {
+    } catch (_error) {
       // Mock create for demo
       console.warn('[audienceSegmentsApi] Create API not available, using mock')
       return {
@@ -1640,7 +1640,7 @@ export const audienceSegmentsApi = {
       return await fetchApi(`/api/marketing/audience-segments/${segmentId}`, {
         method: 'DELETE',
       })
-    } catch (error) {
+    } catch (_error) {
       console.warn('[audienceSegmentsApi] Delete API not available, using mock')
       return { status: 'success' }
     }
@@ -1659,7 +1659,7 @@ export const audienceSegmentsApi = {
         method: 'POST',
         body: JSON.stringify({ rule_groups: ruleGroups }),
       })
-    } catch (error) {
+    } catch (_error) {
       // Mock preview calculation
       console.warn('[audienceSegmentsApi] Preview API not available, using mock')
       const totalRules = ruleGroups.reduce((sum, g) => sum + g.rules.length, 0)

@@ -240,7 +240,7 @@ export default function AISupportConciergePage() {
         }
         break
 
-      case 'tool_call':
+      case 'tool_call': {
         const newExecution: ToolExecution = {
           id: `tool-${Date.now()}`,
           tool: event.tool || '',
@@ -252,8 +252,9 @@ export default function AISupportConciergePage() {
           m.id === assistantMsgId ? { ...m, toolExecutions: [...toolExecutions] } : m
         ))
         break
+      }
 
-      case 'tool_result':
+      case 'tool_result': {
         const lastExecution = toolExecutions.find(t => t.tool === event.tool && t.status === 'executing')
         if (lastExecution) {
           lastExecution.status = event.success ? 'completed' : 'failed'
@@ -263,8 +264,9 @@ export default function AISupportConciergePage() {
           ))
         }
         break
+      }
 
-      case 'approval_required':
+      case 'approval_required': {
         const approvalExecution = toolExecutions.find(t => t.tool === event.tool && t.status === 'executing')
         if (approvalExecution) {
           approvalExecution.status = 'approval_required'
@@ -274,6 +276,7 @@ export default function AISupportConciergePage() {
           ))
         }
         break
+      }
 
       case 'done':
         setMessages(prev => prev.map(m =>
