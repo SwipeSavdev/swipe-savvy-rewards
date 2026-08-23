@@ -23,7 +23,7 @@ window.addEventListener('unhandledrejection', (event) => {
   } else if (event.reason) {
     try {
       console.error('Rejection details:', JSON.stringify(event.reason, null, 2))
-    } catch (e) {
+    } catch (_e) {
       console.error('Rejection (raw):', event.reason)
     }
   }
