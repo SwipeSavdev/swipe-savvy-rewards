@@ -1,5 +1,5 @@
 # Together.AI SDK
-together>=1.2.0
+together>=2.31.0
 
 # OpenAI (for embeddings)
 openai>=1.0.0
