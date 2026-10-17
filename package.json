@@ -51,7 +51,7 @@
     "react-native-worklets": "0.5.1",
     "react-router-dom": "^6.30.6",
     "recharts": "^2.10.3",
-    "tailwindcss": "^3.3.6",
+    "tailwindcss": "^4.3.3",
     "zustand": "^4.5.7"
   },
   "devDependencies": {
