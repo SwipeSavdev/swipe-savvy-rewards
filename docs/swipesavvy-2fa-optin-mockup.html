@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2FA / OTP Opt-In Mockup - AWS 10DLC Compliance</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { text-align: center; color: #1a1a2e; margin-bottom: 8px; font-size: 28px; font-weight: 800; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 24px; font-size: 14px; }
+
+    .key-requirement {
+      background: #e3f2fd;
+      border: 2px solid #1976d2;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .key-requirement-icon { font-size: 28px; }
+    .key-requirement-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0d47a1;
+    }
+
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 3px solid #1976d2;
+    }
+    .section-number {
+      width: 40px; height: 40px;
+      background: #1976d2; color: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700;
+    }
+    .section-title { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+    .section-desc { font-size: 13px; color: #666; margin-top: 2px; }
+
+    .flow-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    .phone-wrapper { text-align: center; }
+    .step-label {
+      background: #1976d2; color: white;
+      padding: 8px 16px; border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+      display: inline-block; margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .step-label.success { background: #4caf50; }
+    .arrow {
+      display: flex; align-items: center;
+      color: #1976d2; font-size: 32px; font-weight: bold;
+      margin-top: 240px;
+    }
+    .phone {
+      width: 280px; height: 580px;
+      background: #1a1a2e;
+      border-radius: 36px; padding: 10px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      display: inline-block;
+    }
+    .phone-screen {
+      width: 100%; height: 100%;
+      background: #fff;
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+    .notch {
+      width: 100px; height: 26px;
+      background: #1a1a2e;
+      border-radius: 0 0 16px 16px;
+      position: absolute; top: 0; left: 50%;
+      transform: translateX(-50%); z-index: 10;
+    }
+    .status-bar {
+      height: 40px; background: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 16px; font-size: 12px; font-weight: 600;
+    }
+    .form-header {
+      background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%);
+      padding: 16px; text-align: center; color: white;
+    }
+    .form-title { font-size: 16px; font-weight: 700; }
+    .form-subtitle { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+    .form-body { padding: 14px; }
+
+    .intro-text {
+      font-size: 11px;
+      color: #444;
+      line-height: 1.5;
+      margin-bottom: 14px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 3px solid #1976d2;
+    }
+
+    .channel-list {
+      display: flex; flex-direction: column;
+      gap: 10px; margin-bottom: 14px;
+    }
+    .channel-option {
+      display: flex; align-items: center;
+      gap: 10px; padding: 12px;
+      border: 2px solid #ddd; border-radius: 10px;
+      background: #fff;
+      transition: all 0.2s;
+    }
+    .channel-option.selected {
+      border-color: #1976d2;
+      background: #e3f2fd;
+    }
+    .radio-circle {
+      width: 18px; height: 18px;
+      border: 2px solid #999;
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .channel-option.selected .radio-circle {
+      border-color: #1976d2;
+    }
+    .channel-option.selected .radio-circle::after {
+      content: '';
+      width: 10px; height: 10px;
+      background: #1976d2;
+      border-radius: 50%;
+      position: absolute; top: 2px; left: 2px;
+    }
+    .channel-icon {
+      width: 28px; height: 28px;
+      background: #f0f0f0;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .channel-option.selected .channel-icon {
+      background: #1976d2;
+      color: white;
+    }
+    .channel-text { flex: 1; }
+    .channel-name {
+      font-size: 11px; font-weight: 700;
+      color: #1a1a2e;
+    }
+    .channel-detail {
+      font-size: 9px; color: #666;
+      margin-top: 1px;
+    }
+
+    .legal-text {
+      font-size: 9px; color: #666;
+      line-height: 1.5; margin-top: 8px;
+      padding: 8px; background: #fafafa;
+      border-radius: 6px;
+    }
+    .submit-btn {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+      color: white; border: none;
+      border-radius: 8px; font-size: 13px;
+      font-weight: 700; margin-top: 10px;
+    }
+
+    /* OTP Entry screen */
+    .otp-display {
+      text-align: center;
+      padding: 20px 14px;
+    }
+    .otp-icon-large {
+      width: 60px; height: 60px;
+      background: #e3f2fd;
+      color: #1976d2;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 14px;
+    }
+    .otp-headline {
+      font-size: 14px; font-weight: 700;
+      color: #1a1a2e; margin-bottom: 6px;
+    }
+    .otp-sub {
+      font-size: 11px; color: #666;
+      margin-bottom: 16px; line-height: 1.4;
+    }
+    .otp-boxes {
+      display: flex; justify-content: center; gap: 6px;
+      margin-bottom: 16px;
+    }
+    .otp-box {
+      width: 32px; height: 38px;
+      border: 2px solid #1976d2;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700;
+      color: #1a1a2e;
+      background: #fff;
+    }
+    .resend-row {
+      font-size: 10px;
+      color: #1976d2;
+      margin-top: 10px;
+    }
+    .resend-row a { color: #1976d2; text-decoration: underline; }
+
+    /* Compliance verification box */
+    .compliance-section {
+      background: #e8f5e9;
+      border: 2px solid #4caf50;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .compliance-header {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2e7d32;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .compliance-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .compliance-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: #333;
+      background: white;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+    .compliance-item strong { color: #1a1a2e; }
+    .check-icon {
+      color: #4caf50;
+      font-size: 16px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    /* Sample SMS */
+    .sample-sms-section {
+      background: #fff;
+      border: 2px solid #1976d2;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 24px;
+    }
+    .sample-sms-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0d47a1;
+      margin-bottom: 12px;
+    }
+    .sample-sms-body {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #333;
+      border-left: 4px solid #1976d2;
+    }
+    .char-count {
+      text-align: right;
+      font-size: 11px;
+      color: #4caf50;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>2FA / OTP Opt-In: Dedicated Use Case</h1>
+    <p class="subtitle">AWS 10DLC Compliance — Separate from Marketing &amp; Account Notifications, with Alternative Verification Methods</p>
+
+    <div class="key-requirement">
+      <span class="key-requirement-icon">&#128274;</span>
+      <span class="key-requirement-text">2FA messaging is its own dedicated use case. SMS is one of several delivery options &mdash; users can also choose Email, Voice Call, or Authenticator App.</span>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <div>
+          <div class="section-title">2FA Method Selection &amp; OTP Entry Flow</div>
+          <div class="section-desc">User chooses preferred verification channel &mdash; SMS is never the only option</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="phone-wrapper">
+          <span class="step-label">Step 1: Choose Verification Method</span>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="notch"></div>
+              <div class="status-bar">
+                <span>9:41</span>
+                <span>&#128246; &#128267;</span>
+              </div>
+              <div class="form-header">
+                <div class="form-title">Two-Factor Authentication</div>
+                <div class="form-subtitle">Secure your Swipe Savvy account</div>
+              </div>
+              <div class="form-body">
+                <p class="intro-text">
+                  Choose how you would like to receive your one-time verification code. You can change this anytime in Account &rsaquo; Security.
+                </p>
+
+                <div class="channel-list">
+                  <div class="channel-option selected">
+                    <div class="radio-circle"></div>
+                    <div class="channel-icon">&#128241;</div>
+                    <div class="channel-text">
+                      <div class="channel-name">Text Message (SMS)</div>
+                      <div class="channel-detail">Code sent to (555) 234-5678</div>
+                    </div>
+                  </div>
+                  <div class="channel-option">
+                    <div class="radio-circle"></div>
+                    <div class="channel-icon">&#9993;</div>
+                    <div class="channel-text">
+                      <div class="channel-name">Email</div>
+                      <div class="channel-detail">Code sent to john@email.com</div>
+                    </div>
+                  </div>
+                  <div class="channel-option">
+                    <div class="radio-circle"></div>
+                    <div class="channel-icon">&#128222;</div>
+                    <div class="channel-text">
+                      <div class="channel-name">Voice Call</div>
+                      <div class="channel-detail">Automated call reads code</div>
+                    </div>
+                  </div>
+                  <div class="channel-option">
+                    <div class="radio-circle"></div>
+                    <div class="channel-icon">&#128737;</div>
+                    <div class="channel-text">
+                      <div class="channel-name">Authenticator App</div>
+                      <div class="channel-detail">Google Authenticator, Authy, 1Password</div>
+                    </div>
+                  </div>
+                </div>
+
+                <p class="legal-text">
+                  By selecting <strong>Text Message (SMS)</strong>, you agree to receive one-time verification codes via SMS. <strong>1 msg per request.</strong> Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.<br><br>
+                  See our <a href="https://www.swipesavvy.com/legal/sms-terms" style="color:#0d47a1; text-decoration:underline;">SMS Terms</a> and <a href="https://www.swipesavvy.com/legal/privacy" style="color:#0d47a1; text-decoration:underline;">Privacy Policy</a>.
+                </p>
+
+                <button class="submit-btn">Continue &rarr;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">&rarr;</div>
+
+        <div class="phone-wrapper">
+          <span class="step-label success">Step 2: Enter Code</span>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="notch"></div>
+              <div class="status-bar">
+                <span>9:41</span>
+                <span>&#128246; &#128267;</span>
+              </div>
+              <div class="form-header" style="background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);">
+                <div class="form-title">Enter Verification Code</div>
+                <div class="form-subtitle">A code was sent to your phone</div>
+              </div>
+              <div class="form-body">
+                <div class="otp-display">
+                  <div class="otp-icon-large">&#128241;</div>
+                  <div class="otp-headline">Check your messages</div>
+                  <div class="otp-sub">
+                    We sent a 6-digit code to<br>
+                    <strong>(555) 234-5678</strong><br>
+                    The code expires in 10 minutes.
+                  </div>
+                  <div class="otp-boxes">
+                    <div class="otp-box">1</div>
+                    <div class="otp-box">2</div>
+                    <div class="otp-box">3</div>
+                    <div class="otp-box">4</div>
+                    <div class="otp-box">5</div>
+                    <div class="otp-box">6</div>
+                  </div>
+                  <button class="submit-btn" style="background: linear-gradient(135deg, #2e7d32, #4caf50);">Verify &rarr;</button>
+                  <div class="resend-row">
+                    Did not receive it? <a>Resend code</a> or <a>Try a different method</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sample-sms-section">
+      <div class="sample-sms-title">Sample 2FA SMS Body (sent only after the user selects "Text Message"):</div>
+      <div class="sample-sms-body">
+        Swipe Savvy: Your verification code is <strong>123456</strong>. Expires in 10 min. Do not share. Reply HELP for help, STOP to opt out.
+      </div>
+      <div class="char-count">&#10003; 130 characters (within 160 limit) &mdash; 1 msg per request</div>
+    </div>
+
+    <div class="compliance-section" style="margin-top: 24px;">
+      <div class="compliance-header">
+        <span>&#10003;</span> 2FA Use Case Compliance Verification
+      </div>
+      <div class="compliance-grid">
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Dedicated Use Case:</strong> 2FA / OTP is registered as its own campaign, separate from marketing &amp; account notifications</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Alternative Methods:</strong> Email, Voice Call, and Authenticator App offered alongside SMS</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>SMS Not Forced:</strong> User actively selects SMS as one of four options &mdash; default is unselected</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Transactional Only:</strong> OTP messages contain only the code &mdash; never promotional or marketing content</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Clear Disclosure:</strong> Frequency (1 msg per request), msg &amp; data rates, STOP / HELP, Privacy &amp; SMS Terms links disclosed</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Channel Switch Anytime:</strong> User can change verification method in Account &rsaquo; Security at any time</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

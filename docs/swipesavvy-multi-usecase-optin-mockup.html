@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Use-Case Opt-In Mockup - AWS 10DLC Compliance</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { text-align: center; color: #1a1a2e; margin-bottom: 8px; font-size: 28px; font-weight: 800; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 24px; font-size: 14px; }
+
+    .key-requirement {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .key-requirement-icon { font-size: 28px; }
+    .key-requirement-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: #856404;
+    }
+
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 3px solid #2e7d32;
+    }
+    .section-number {
+      width: 40px; height: 40px;
+      background: #2e7d32; color: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700;
+    }
+    .section-title { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+    .section-desc { font-size: 13px; color: #666; margin-top: 2px; }
+
+    .flow-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    .phone-wrapper { text-align: center; }
+    .step-label {
+      background: #ff9800; color: white;
+      padding: 8px 16px; border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+      display: inline-block; margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .step-label.success { background: #4caf50; }
+    .arrow {
+      display: flex; align-items: center;
+      color: #2e7d32; font-size: 32px; font-weight: bold;
+      margin-top: 280px;
+    }
+    .phone {
+      width: 290px; height: 620px;
+      background: #1a1a2e;
+      border-radius: 36px; padding: 10px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      display: inline-block;
+    }
+    .phone-screen {
+      width: 100%; height: 100%;
+      background: #fff;
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+    .notch {
+      width: 100px; height: 26px;
+      background: #1a1a2e;
+      border-radius: 0 0 16px 16px;
+      position: absolute; top: 0; left: 50%;
+      transform: translateX(-50%); z-index: 10;
+    }
+    .status-bar {
+      height: 40px; background: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 16px; font-size: 12px; font-weight: 600;
+    }
+    .form-header {
+      background: linear-gradient(135deg, #1f4f91 0%, #2a6bc1 100%);
+      padding: 16px; text-align: center; color: white;
+    }
+    .form-title { font-size: 16px; font-weight: 700; }
+    .form-subtitle { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+    .form-body { padding: 14px; }
+    .form-group { margin-bottom: 12px; }
+    .form-label {
+      font-size: 10px; color: #666;
+      margin-bottom: 4px; display: block; font-weight: 600;
+    }
+    .form-input {
+      width: 100%; padding: 10px 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px; font-size: 12px;
+    }
+
+    .consent-block {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 2px solid #e0e0e0;
+    }
+    .consent-block.checked-account { border-color: #2e7d32; background: #f1f8e9; }
+    .consent-block.checked-fraud { border-color: #d32f2f; background: #ffebee; }
+    .consent-block.checked-marketing { border-color: #f57c00; background: #fff3e0; }
+    .consent-row {
+      display: flex; align-items: flex-start;
+      gap: 10px;
+    }
+    .checkbox {
+      width: 22px; height: 22px;
+      border: 3px solid #999;
+      border-radius: 4px; flex-shrink: 0;
+      margin-top: 1px; background: #fff;
+    }
+    .checkbox.checked-account {
+      background: #2e7d32; border-color: #2e7d32;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 14px; font-weight: bold;
+    }
+    .checkbox.checked-fraud {
+      background: #d32f2f; border-color: #d32f2f;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 14px; font-weight: bold;
+    }
+    .checkbox.checked-marketing {
+      background: #f57c00; border-color: #f57c00;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 14px; font-weight: bold;
+    }
+    .consent-text { flex: 1; }
+    .consent-name {
+      font-size: 11px; font-weight: 700;
+      color: #1a1a2e; margin-bottom: 3px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .badge {
+      font-size: 8px; font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge.account { background: #2e7d32; color: white; }
+    .badge.fraud { background: #d32f2f; color: white; }
+    .badge.marketing { background: #f57c00; color: white; }
+    .consent-detail {
+      font-size: 9px; color: #555;
+      line-height: 1.45;
+    }
+    .consent-frequency {
+      font-size: 8px; color: #777;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .unchecked-note {
+      background: #ffebee;
+      border: 2px solid #e53935;
+      border-radius: 6px; padding: 8px 10px;
+      font-size: 9px; color: #c62828;
+      margin: 10px 0;
+      display: flex; align-items: center; gap: 6px;
+      font-weight: 600;
+    }
+
+    .legal-text {
+      font-size: 8px; color: #666;
+      line-height: 1.5; margin-top: 8px;
+      padding: 8px;
+      background: #fafafa;
+      border-radius: 6px;
+    }
+    .submit-btn {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #1f4f91, #2a6bc1);
+      color: white; border: none;
+      border-radius: 8px; font-size: 13px;
+      font-weight: 700; margin-top: 10px;
+    }
+    .submit-btn.disabled { background: #bbb; color: #666; }
+
+    /* Compliance verification box */
+    .compliance-section {
+      background: #e8f5e9;
+      border: 2px solid #4caf50;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .compliance-header {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2e7d32;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .compliance-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .compliance-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: #333;
+      background: white;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+    .compliance-item strong { color: #1a1a2e; }
+    .check-icon {
+      color: #4caf50;
+      font-size: 16px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    /* Use case legend */
+    .usecase-legend {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .usecase-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border-top: 4px solid;
+    }
+    .usecase-card.account { border-color: #2e7d32; }
+    .usecase-card.fraud { border-color: #d32f2f; }
+    .usecase-card.marketing { border-color: #f57c00; }
+    .usecase-card-title {
+      font-size: 13px; font-weight: 700;
+      color: #1a1a2e; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .usecase-card-sample {
+      background: #f8f9fa;
+      border-left: 3px solid #ccc;
+      padding: 8px 10px;
+      font-size: 11px; line-height: 1.5;
+      color: #333; margin-bottom: 8px;
+      border-radius: 4px;
+    }
+    .usecase-card.account .usecase-card-sample { border-left-color: #2e7d32; }
+    .usecase-card.fraud .usecase-card-sample { border-left-color: #d32f2f; }
+    .usecase-card.marketing .usecase-card-sample { border-left-color: #f57c00; }
+    .usecase-card-meta {
+      font-size: 10px; color: #666;
+      line-height: 1.5;
+    }
+    .usecase-card-meta strong { color: #1a1a2e; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Multi-Use-Case Opt-In: Three Independent Consent Checkboxes</h1>
+    <p class="subtitle">AWS 10DLC Compliance &mdash; Account Notifications, Fraud &amp; Security Alerts, and Promotional Offers each have their own opt-in</p>
+
+    <div class="key-requirement">
+      <span class="key-requirement-icon">&#9888;&#65039;</span>
+      <span class="key-requirement-text">CRITICAL: Each use case has its own UNCHECKED checkbox. Users must actively opt in to each one independently. Fraud alerts are NOT bundled with account or marketing messages.</span>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <div>
+          <div class="section-title">Multi-Use-Case Consent Workflow</div>
+          <div class="section-desc">Three independent opt-ins &mdash; each maps to a separately-registered SMS use case</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="phone-wrapper">
+          <span class="step-label">Default: All Boxes UNCHECKED</span>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="notch"></div>
+              <div class="status-bar">
+                <span>9:41</span>
+                <span>&#128246; &#128267;</span>
+              </div>
+              <div class="form-header">
+                <div class="form-title">Create Account</div>
+                <div class="form-subtitle">Join Swipe Savvy Rewards</div>
+              </div>
+              <div class="form-body">
+                <div class="form-group">
+                  <label class="form-label">Full Name *</label>
+                  <input type="text" class="form-input" value="John Smith">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email *</label>
+                  <input type="text" class="form-input" value="john@email.com">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number *</label>
+                  <input type="text" class="form-input" value="(555) 234-5678">
+                </div>
+
+                <div class="consent-block">
+                  <div class="consent-row">
+                    <div class="checkbox"></div>
+                    <div class="consent-text">
+                      <div class="consent-name">
+                        Account Notifications
+                        <span class="badge account">Use Case 1</span>
+                      </div>
+                      <div class="consent-detail">Transaction confirmations, balance updates, account activity summaries.</div>
+                      <div class="consent-frequency">Up to 1 msg/day. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="consent-block">
+                  <div class="consent-row">
+                    <div class="checkbox"></div>
+                    <div class="consent-text">
+                      <div class="consent-name">
+                        Fraud &amp; Security Alerts
+                        <span class="badge fraud">Use Case 2</span>
+                      </div>
+                      <div class="consent-detail">Suspicious-activity warnings, unauthorized-access notifications, login alerts.</div>
+                      <div class="consent-frequency">Message frequency varies (event-driven). Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="consent-block">
+                  <div class="consent-row">
+                    <div class="checkbox"></div>
+                    <div class="consent-text">
+                      <div class="consent-name">
+                        Promotional Offers
+                        <span class="badge marketing">Use Case 3</span>
+                      </div>
+                      <div class="consent-detail">Rewards updates, exclusive offers, loyalty program promotions.</div>
+                      <div class="consent-frequency">Up to 4 msgs/month. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="unchecked-note">
+                  <span>&#9888;&#65039;</span> All three boxes UNCHECKED by default. Consent is not required for purchase.
+                </div>
+
+                <p class="legal-text" style="font-size:9px; line-height:1.55; color:#333; margin-top:10px; padding:10px; background:#fafafa; border-radius:6px;">
+                  <strong>Message frequency varies</strong> by category (see each box above). <strong>Msg &amp; data rates may apply.</strong> Reply <strong>STOP</strong> to cancel a category, <strong>HELP</strong> for help (text HELP for help). For full details see our <a href="https://www.swipesavvy.com/legal/sms-terms" style="color:#0d47a1; text-decoration:underline; font-weight:700;">SMS Terms &amp; Conditions</a> and <a href="https://www.swipesavvy.com/legal/privacy" style="color:#0d47a1; text-decoration:underline; font-weight:700;">Privacy Policy</a>.
+                </p>
+
+                <button class="submit-btn disabled">Create Account</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">&rarr;</div>
+
+        <div class="phone-wrapper">
+          <span class="step-label success">User Selects Independently</span>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="notch"></div>
+              <div class="status-bar">
+                <span>9:41</span>
+                <span>&#128246; &#128267;</span>
+              </div>
+              <div class="form-header">
+                <div class="form-title">Create Account</div>
+                <div class="form-subtitle">Join Swipe Savvy Rewards</div>
+              </div>
+              <div class="form-body">
+                <div class="form-group">
+                  <label class="form-label">Full Name *</label>
+                  <input type="text" class="form-input" value="John Smith">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email *</label>
+                  <input type="text" class="form-input" value="john@email.com">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number *</label>
+                  <input type="text" class="form-input" value="(555) 234-5678">
+                </div>
+
+                <div class="consent-block checked-account">
+                  <div class="consent-row">
+                    <div class="checkbox checked-account">&#10003;</div>
+                    <div class="consent-text">
+                      <div class="consent-name">
+                        Account Notifications
+                        <span class="badge account">Use Case 1</span>
+                      </div>
+                      <div class="consent-detail">Transaction confirmations, balance updates, account activity summaries.</div>
+                      <div class="consent-frequency">Up to 1 msg/day. Reply STOP to opt out.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="consent-block checked-fraud">
+                  <div class="consent-row">
+                    <div class="checkbox checked-fraud">&#10003;</div>
+                    <div class="consent-text">
+                      <div class="consent-name">
+                        Fraud &amp; Security Alerts
+                        <span class="badge fraud">Use Case 2</span>
+                      </div>
+                      <div class="consent-detail">Suspicious-activity warnings, unauthorized-access notifications, login alerts.</div>
+                      <div class="consent-frequency">As needed (event-driven). Reply STOP to opt out.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="consent-block">
+                  <div class="consent-row">
+                    <div class="checkbox"></div>
+                    <div class="consent-text">
+                      <div class="consent-name">
+                        Promotional Offers
+                        <span class="badge marketing">Use Case 3</span>
+                      </div>
+                      <div class="consent-detail">Rewards updates, exclusive offers, loyalty program promotions.</div>
+                      <div class="consent-frequency">Up to 4 msgs/month. Reply STOP to opt out.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <p class="legal-text">
+                  By checking a box, you consent to receive automated SMS messages from Swipe Savvy for that category only. Consent is not a condition of purchase. Msg &amp; data rates may apply. Reply STOP at any time to cancel a category, HELP for help. Manage preferences anytime in Account &rsaquo; Notifications.
+                </p>
+
+                <button class="submit-btn">Create Account &rarr;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="usecase-legend">
+      <div class="usecase-card account">
+        <div class="usecase-card-title"><span style="color:#2e7d32;">&#9679;</span> Account Notifications</div>
+        <div class="usecase-card-sample">
+          Swipe Savvy: Your purchase of $24.50 at Joe's Diner was approved. New balance: $312.40. Reply STOP to opt out, HELP for help.
+        </div>
+        <div class="usecase-card-meta">
+          <strong>Use case:</strong> Account / transactional<br>
+          <strong>Frequency:</strong> Up to 1 msg/day<br>
+          <strong>Triggered by:</strong> Account activity events
+        </div>
+      </div>
+      <div class="usecase-card fraud">
+        <div class="usecase-card-title"><span style="color:#d32f2f;">&#9679;</span> Fraud &amp; Security Alerts</div>
+        <div class="usecase-card-sample">
+          Swipe Savvy Security: We detected an unusual sign-in from a new device. If this was not you, reply NO or call 1-800-505-8769. Reply STOP to opt out, HELP for help.
+        </div>
+        <div class="usecase-card-meta">
+          <strong>Use case:</strong> Fraud / security<br>
+          <strong>Frequency:</strong> Event-driven (as needed)<br>
+          <strong>Triggered by:</strong> Suspicious activity, new-device sign-in, password change
+        </div>
+      </div>
+      <div class="usecase-card marketing">
+        <div class="usecase-card-title"><span style="color:#f57c00;">&#9679;</span> Promotional Offers</div>
+        <div class="usecase-card-sample">
+          Swipe Savvy: Earn 2x rewards points on coffee purchases this week at participating locations! Reply STOP to opt out, HELP for help.
+        </div>
+        <div class="usecase-card-meta">
+          <strong>Use case:</strong> Marketing / promotional<br>
+          <strong>Frequency:</strong> Up to 4 msgs/month<br>
+          <strong>Triggered by:</strong> Promotional campaigns
+        </div>
+      </div>
+    </div>
+
+    <div class="compliance-section" style="margin-top: 24px;">
+      <div class="compliance-header">
+        <span>&#10003;</span> Multi-Use-Case Compliance Verification
+      </div>
+      <div class="compliance-grid">
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Three Separate Use Cases:</strong> Account, Fraud, and Promotional are registered as independent campaigns</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>All UNCHECKED by Default:</strong> No box is pre-selected; user must actively opt in to each</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Independent Toggles:</strong> User can opt in to fraud alerts only, or marketing only, or any combination</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Per-Category STOP:</strong> Replying STOP unsubscribes from the category that sent the last message</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Frequency Disclosed Per Category:</strong> Each consent block lists its own message frequency</div>
+        </div>
+        <div class="compliance-item">
+          <span class="check-icon">&#10003;</span>
+          <div><strong>Consent Not Required for Purchase:</strong> Clearly stated; rewards membership works without SMS</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
