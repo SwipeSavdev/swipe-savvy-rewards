@@ -35,7 +35,7 @@ requests>=2.33.1
 httpx==0.28.1
 
 # Monitoring & Logging
-sentry-sdk>=2.0.0
+sentry-sdk>=2.68.0
 python-json-logger==2.0.7
 
 # Authentication & Crypto
