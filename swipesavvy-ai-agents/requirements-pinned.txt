@@ -6,7 +6,7 @@
 # LLM & AI Frameworks
 together==1.5.35
 openai>=1.30.0
-sentence-transformers==2.2.2
+sentence-transformers==6.0.0
 tiktoken==0.12.0
 
 # Database & ORM
