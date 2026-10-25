@@ -15,7 +15,7 @@ sqlalchemy==2.0.48
 redis==5.0.1
 
 # Vector Databases
-pinecone-client==3.0.2
+pinecone-client==6.0.0
 pgvector==0.2.2
 
 # Web Framework

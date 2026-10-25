@@ -14,7 +14,7 @@ sqlalchemy>=2.0.0
 redis>=5.0.0
 
 # Vector databases
-pinecone-client>=3.0.0  # If using Pinecone
+pinecone-client>=6.0.0  # If using Pinecone
 pgvector>=0.2.0  # If using pgvector
 
 # Web framework
